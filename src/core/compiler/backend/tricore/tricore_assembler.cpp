@@ -219,7 +219,7 @@ Assembler::PreparedArgs Assembler::loadArgsToRegsAndPrepDest(MachineType const d
     assert((!forceDstArg0Diff || !StackElement::equalsVariable(&dstRegElem.elem, &inputArgs[0])) && "Error, used forbidden arg as dest");
     assert((!forceDstArg1Diff || !StackElement::equalsVariable(&dstRegElem.elem, &inputArgs[1])) && "Error, used forbidden arg as dest");
   }
-
+  // coverity[autosar_cpp14_a16_2_3_violation]
   PreparedArgs preparedArgs{};
   preparedArgs.dest.elem = backend_.common_.getResultStackElement(&dstRegElem.elem, dstType);
   preparedArgs.dest.reg = dstRegElem.reg;

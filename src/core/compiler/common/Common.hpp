@@ -190,30 +190,21 @@ public:
   /// @return Stack::iterator Iterator to the base of the current frame (NOTE: Might be an invalid pointer)
   Stack::iterator getCurrentFrameBase() const VB_NOEXCEPT;
 
-  ///
   /// @brief Find the base (iterator to the bottommost StackElement) of a valent block starting at the given position
   ///
   /// @param belowIt iterator that represents the next element of the first valent block.
   /// @return Stack::iterator Base of the valent block
-  Stack::iterator findBaseOfValentBlockBelow(Stack::iterator belowIt) const VB_NOEXCEPT;
+  /// @throws ValidationException Stack frame underflow
+  Stack::iterator findBaseOfValentBlockBelow(Stack::iterator const belowIt) const VB_NOEXCEPT;
+
+  /// @brief Find the base (iterator to the bottommost StackElement) of a valent block
+  /// @param rootNode iterator that represents the root node of the valent block.
+  /// @return Stack::iterator Base of the valent block
+  static Stack::iterator findBaseOfValentBlock(Stack::iterator const rootNode) VB_NOEXCEPT;
 
   /// @brief Skip n valent blocks from stack top
   /// @param count Number of valent blocks to skip
   Stack::iterator skipValentBlock(uint32_t const count) const VB_NOEXCEPT;
-
-  ///
-  /// @brief Backtrack from the given pointer to an element on the stack and record arguments for an instruction until
-  /// either top of the Valent Block or a deferred action is found
-  ///
-  /// @param stepIt Iterator where to start iterating
-  /// @param top Top of the valent block
-  /// @param recordedArgs Array for collecting the arguments
-  /// @param numRecordedArgs Number of currently collected arguments
-  /// @param instructionPtr Iterator to the instruction operand
-  /// @param instructionArity Arity of the instruction operand
-  /// @return bool Whether the valent block is finished
-  bool backtrackAndRecordArgs(Stack::iterator &stepIt, Stack::iterator const top, std::array<Stack::iterator, 3> &recordedArgs,
-                              uint32_t &numRecordedArgs, Stack::iterator &instructionPtr, uint32_t &instructionArity) const VB_NOEXCEPT;
 
   ///
   /// @brief Condense multiple valent blocks and return the base of the last (lowest) one
@@ -609,8 +600,8 @@ private:
   /// @param instructionPtr Iterator to a StackElement that represents a DEFERREDACTION
   /// @param arg0Ptr First input operand
   /// @param arg1Ptr Second input operand
-  /// @return Output BranchCondition (not UNCONDITIONAL) and next StackElement iterator
-  ConditionResult evaluateCondition(Stack::iterator const instructionPtr, Stack::iterator const arg0Ptr, Stack::iterator const arg1Ptr) const;
+  /// @return Output BranchCondition (not UNCONDITIONAL)
+  BranchCondition evaluateCondition(Stack::iterator const instructionPtr, Stack::iterator const arg0Ptr, Stack::iterator const arg1Ptr) const;
 
   ///
   /// @brief Evaluate a specific DEFERRED ACTION with up to two input operands
@@ -620,8 +611,8 @@ private:
   /// @param arg1Ptr Second input operand
   /// @param arg2Ptr Third input operand
   /// @param targetHint Optional target hint that can be used as a scratch register if the underlying MachineType matches
-  void evaluateInstruction(Stack::iterator const instructionPtr, Stack::iterator const arg0Ptr, Stack::iterator const arg1Ptr,
-                           Stack::iterator const arg2Ptr, StackElement const *const targetHint) const;
+  StackElement evaluateInstruction(Stack::iterator const instructionPtr, Stack::iterator const arg0Ptr, Stack::iterator const arg1Ptr,
+                                   Stack::iterator const arg2Ptr, StackElement const *const targetHint) const;
 
   ///
   /// @brief Condense (resolve) a valent block consisting of one or multiple StackElements into a single semantically
@@ -636,6 +627,27 @@ private:
   ConditionResult condenseValentBlockCoreBelow(bool const comparison, Stack::iterator const belowIt, StackElement const *const enforcedTarget) const;
 
   ///
+  /// @brief Condense (resolve) a scratch register in the valent block tree
+  /// @param rootNode iterator that represents the first valent block.
+  /// @param enforcedTarget Optional StackElement representing a storage location where the result should be put
+  void condenseScratchRegBelow(Stack::iterator const rootNode, StackElement const *const enforcedTarget) const;
+
+  /// @brief Get the first operand of a deferred action, which is the left child in valent block tree
+  /// @param instruction Iterator to a deferred action
+  /// @return Iterator to the left child of the deferred action
+  static Stack::iterator getFirstOperand(Stack::iterator const instruction) VB_NOEXCEPT;
+
+  /// @brief calculate left sibling of a node in valent block tree
+  /// @param node Iterator to a node in the valent block tree
+  /// @return Iterator to the left sibling of the node
+  static Stack::iterator calculateLeftSibling(Stack::iterator const node) VB_NOEXCEPT;
+
+  /// @brief replace a Stack element on condense tree to keep the original parent and sibling
+  /// @param originElement The original StackElement to replace
+  /// @param newElement The new StackElement to replace the original
+  static void replaceInCondenseTree(StackElement &originElement, StackElement const &newElement) VB_NOEXCEPT;
+
+  ///
   /// @brief Check whether a register is a volatile used as callScrRegs
   ///
   /// @param reg Register to check
@@ -645,6 +657,16 @@ private:
   /// @brief Check whether the current frame is empty
   /// @return True if the current frame is empty
   bool currentFrameEmpty() const VB_NOEXCEPT;
+
+  /// @brief Check whether a stack element is in a register or constant
+  /// @param it Iterator to the stack element
+  /// @return True if the stack element is in a register or constant
+  bool stackElementInRegOrConst(Stack::iterator const it) const VB_NOEXCEPT;
+
+  /// @brief Check whether StackElement is a scratch register and only used once on the stack
+  /// @param element Iterator to the stack element
+  /// @return True if the stack element is a scratch register and only used once on the stack
+  static bool scratchRegOnlyOnceOnStack(Stack::iterator const element) VB_NOEXCEPT;
 };
 
 } // namespace vb

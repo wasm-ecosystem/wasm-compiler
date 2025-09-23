@@ -222,101 +222,49 @@ void Common::popReturnValueElems(Stack::iterator const returnValuesBase, uint32_
   }
 }
 
-bool Common::backtrackAndRecordArgs(Stack::iterator &stepIt, Stack::iterator const top, std::array<Stack::iterator, 3> &recordedArgs,
-                                    uint32_t &numRecordedArgs, Stack::iterator &instructionPtr, uint32_t &instructionArity) const VB_NOEXCEPT {
-  // Reset stuff
-  numRecordedArgs = 0U;
-  instructionPtr = Stack::iterator();
-
-  while (true) {
-    if (stepIt == top) {
-      // We reached the top
-      // In case of a comparison, we are done if we reach the top and there are zero actual elements left in the
-      // Valent Block
-      if (numRecordedArgs == 0U) {
-        stepIt = top;
-      } else {
-        assert((numRecordedArgs == 1U) && "to many recorded args when condensation finishing");
-        stepIt = recordedArgs[0];
-      }
-      return true;
-    } else if (stepIt->type == StackType::DEFERREDACTION) {
-      // If we find a deferred action, we record the arity and return to the caller so it can decide to emit code
-      // for it
-      instructionPtr = stepIt;
-      instructionArity = getArithArity(stepIt->data.deferredAction.opcode);
-
-      assert(instructionArity <= 3U && "Instruction arity too high, not supported");
-      assert(numRecordedArgs <= instructionArity && "Too many arguments recorded");
-
-      if (numRecordedArgs > 0U) {
-        // Let caller find this element again, so we discard the last recorded lowest recorded arg and decrement
-        // numRecordedArgs
-        stepIt = recordedArgs[0].next(); // Will be decremented at end of while loop
-        --numRecordedArgs;
-        // Reorder the arguments (we are now finding them from bottom to top instead of top to bottom in the
-        // caller side) Max two arguments found, third one will be found by caller
-        recordedArgs[0] = recordedArgs[numRecordedArgs];
-      }
-      return false;
-    } else {
-      // Some value, record the found arg
-      recordedArgs[numRecordedArgs] = stepIt;
-      numRecordedArgs++;
-      assert(numRecordedArgs <= 3U);
-    }
-    ++stepIt;
-  }
-}
-
-void Common::evaluateInstruction(Stack::iterator const instructionPtr, Stack::iterator const arg0Ptr, Stack::iterator const arg1Ptr,
-                                 Stack::iterator const arg2Ptr, StackElement const *const targetHint) const {
+StackElement Common::evaluateInstruction(Stack::iterator const instructionPtr, Stack::iterator const arg0Ptr, Stack::iterator const arg1Ptr,
+                                         Stack::iterator const arg2Ptr, StackElement const *const targetHint) const {
 #if ENABLE_EXTENSIONS
   if (compiler_.dwarfGenerator_ != nullptr) {
     compiler_.dwarfGenerator_->startOp(instructionPtr.unwrap());
   }
 #endif
   OPCode const opCode{instructionPtr->data.deferredAction.opcode};
+  StackElement result{};
   if (opCode == OPCode::SELECT) {
     assert(arg1Ptr.unwrap() && arg2Ptr.unwrap() && "Select needs 3 results");
 
-    StackElement const result{compiler_.backend_.emitSelect(*arg0Ptr, *arg1Ptr, *arg2Ptr, targetHint)};
+    result = compiler_.backend_.emitSelect(*arg0Ptr, *arg1Ptr, *arg2Ptr, targetHint);
 
-    static_cast<void>(compiler_.stack_.erase(instructionPtr));
     removeReference(arg1Ptr);
     static_cast<void>(compiler_.stack_.erase(arg1Ptr));
     removeReference(arg2Ptr);
     static_cast<void>(compiler_.stack_.erase(arg2Ptr));
 
-    replaceAndUpdateReference(arg0Ptr, result);
   } else if ((static_cast<uint32_t>(opCode) >= static_cast<uint32_t>(OPCode::I32_LOAD)) &&
              (static_cast<uint32_t>(opCode) <= static_cast<uint32_t>(OPCode::I64_LOAD32_U))) {
-    StackElement const result{
-        compiler_.backend_.executeLinearMemoryLoad(opCode, instructionPtr->data.deferredAction.dataOffset, arg0Ptr, targetHint)};
-    static_cast<void>(compiler_.stack_.erase(instructionPtr));
-    replaceAndUpdateReference(arg0Ptr, result);
+    result = compiler_.backend_.executeLinearMemoryLoad(opCode, instructionPtr->data.deferredAction.dataOffset, arg0Ptr, targetHint);
   } else {
     // Regular deferred action: arithmetic etc.
     // coverity[autosar_cpp14_a5_3_2_violation]
-    StackElement const resultElement{
-        compiler_.backend_.emitDeferredAction(instructionPtr->data.deferredAction.opcode, arg0Ptr.raw(), arg1Ptr.raw(), targetHint)};
+    result = compiler_.backend_.emitDeferredAction(instructionPtr->data.deferredAction.opcode, arg0Ptr.raw(), arg1Ptr.raw(), targetHint);
 
-    static_cast<void>(compiler_.stack_.erase(instructionPtr));
     if (!arg1Ptr.isEmpty()) {
       removeReference(arg1Ptr);
       static_cast<void>(compiler_.stack_.erase(arg1Ptr));
     }
-    replaceAndUpdateReference(arg0Ptr, resultElement);
   }
+  removeReference(arg0Ptr);
+  static_cast<void>(compiler_.stack_.erase(arg0Ptr));
 #if ENABLE_EXTENSIONS
   if (compiler_.dwarfGenerator_ != nullptr) {
     compiler_.dwarfGenerator_->finishOp();
   }
 #endif
+  return result;
 }
 
-Common::ConditionResult Common::evaluateCondition(Stack::iterator const instructionPtr, Stack::iterator const arg0Ptr,
-                                                  Stack::iterator const arg1Ptr) const {
+BranchCondition Common::evaluateCondition(Stack::iterator const instructionPtr, Stack::iterator const arg0Ptr, Stack::iterator const arg1Ptr) const {
   // Emit comparison and set the corresponding branch condition for a later
   // branch or select Invert condition flag if the comparison was reversed
   // coverity[autosar_cpp14_a5_3_2_violation]
@@ -324,16 +272,15 @@ Common::ConditionResult Common::evaluateCondition(Stack::iterator const instruct
   BC const branchCond{reversed ? reverseBC(BCforOPCode(instructionPtr->data.deferredAction.opcode))
                                : BCforOPCode(instructionPtr->data.deferredAction.opcode)};
 
-  static_cast<void>(compiler_.stack_.erase(instructionPtr));
   // Remove from stack completely, no result
   if (!arg1Ptr.isEmpty()) {
     removeReference(arg1Ptr);
     static_cast<void>(compiler_.stack_.erase(arg1Ptr));
   }
   removeReference(arg0Ptr);
-  Stack::iterator const it{compiler_.stack_.erase(arg0Ptr)};
+  static_cast<void>(compiler_.stack_.erase(arg0Ptr));
 
-  return ConditionResult{it, branchCond};
+  return branchCond;
 }
 
 Stack::iterator Common::getCurrentFrameBase() const VB_NOEXCEPT {
@@ -344,19 +291,18 @@ Stack::iterator Common::getCurrentFrameBase() const VB_NOEXCEPT {
   }
 }
 
-Stack::iterator Common::findBaseOfValentBlockBelow(Stack::iterator belowIt) const VB_NOEXCEPT {
-  Stack::iterator const frameBase{getCurrentFrameBase()};
-  static_cast<void>(frameBase);
-  uint32_t subunitsToSkip{1U};
-  while (subunitsToSkip > 0U) {
-    assert(belowIt != frameBase);
-    --belowIt;
-    subunitsToSkip--;
-    if (belowIt->type == StackType::DEFERREDACTION) {
-      subunitsToSkip += getArithArity(belowIt->data.deferredAction.opcode);
-    }
+Stack::iterator Common::findBaseOfValentBlock(Stack::iterator const rootNode) VB_NOEXCEPT {
+  Stack::iterator valentBlockTop{rootNode};
+
+  while (valentBlockTop->type == StackType::DEFERREDACTION) {
+    valentBlockTop = getFirstOperand(valentBlockTop);
   }
-  return belowIt;
+
+  return valentBlockTop;
+}
+
+Stack::iterator Common::findBaseOfValentBlockBelow(Stack::iterator const belowIt) const VB_NOEXCEPT {
+  return findBaseOfValentBlock(belowIt.prev());
 }
 
 Stack::iterator Common::condenseMultipleValentBlocksBelow(Stack::iterator belowIt, uint32_t const valentBlockCount) const {
@@ -466,6 +412,70 @@ BC Common::condenseComparisonBelow(Stack::iterator const belowIt) const {
   return BC::NEQZ;
 }
 
+bool Common::scratchRegOnlyOnceOnStack(Stack::iterator const element) VB_NOEXCEPT {
+  StackType const baseType{element->getBaseType()};
+  if ((baseType == StackType::SCRATCHREGISTER) ||
+      ((baseType == StackType::TEMP_RESULT) && (element->data.variableData.location.calculationResult.storageType == StorageType::REGISTER))) {
+    StackElement::Data::VariableData::IndexData const &indexData{element->data.variableData.indexData};
+    bool const onlyOnceOnStack{indexData.prevOccurrence.isEmpty() && indexData.nextOccurrence.isEmpty()};
+    // GCOVR_EXCL_START
+    assert((baseType != StackType::TEMP_RESULT) || onlyOnceOnStack);
+    // GCOVR_EXCL_STOP
+    return onlyOnceOnStack;
+  } else {
+    return false;
+  }
+}
+
+void Common::condenseScratchRegBelow(Stack::iterator const rootNode, StackElement const *const enforcedTarget) const {
+  if (rootNode->type != StackType::DEFERREDACTION) {
+    return;
+  }
+  Stack::iterator const valentBlockTop{findBaseOfValentBlock(rootNode)};
+
+  Stack::iterator currentIt{valentBlockTop};
+
+  while (currentIt != rootNode) {
+    if (currentIt->type == StackType::DEFERREDACTION) {
+      Stack::iterator const instructionPtr{currentIt};
+      uint32_t const instructionArity{getArithArity(currentIt->data.deferredAction.opcode)};
+      std::array<Stack::iterator, 3U> args{{Stack::iterator(), Stack::iterator(), Stack::iterator()}};
+      Stack::iterator param{instructionPtr.prev()};
+      for (uint32_t i{0U}; i < instructionArity; i++) {
+        uint32_t const index{instructionArity - i - 1U};
+        args[index] = param;
+        param = param->sibling;
+      }
+
+      bool needCondense{false};
+      if (instructionArity == 1U) {
+        if (args[0]->getBaseType() == StackType::SCRATCHREGISTER) {
+          needCondense = true;
+        }
+      } else {
+        bool argsHasScratchReg{scratchRegOnlyOnceOnStack(args[0]) || scratchRegOnlyOnceOnStack(args[1])};
+        bool argsAreRegOrConst{stackElementInRegOrConst(args[1]) && stackElementInRegOrConst(args[0])};
+        if (instructionArity == 3U) {
+          argsHasScratchReg = argsHasScratchReg || scratchRegOnlyOnceOnStack(args[2]);
+          argsAreRegOrConst = argsAreRegOrConst && stackElementInRegOrConst(args[2]);
+        }
+
+        needCondense = argsHasScratchReg && argsAreRegOrConst;
+      }
+
+      if (needCondense) {
+        bool const propagateTargetHint{compiler_.backend_.checkIfEnforcedTargetIsOnlyInArgs(
+            Span<Stack::iterator>{args.data(), static_cast<size_t>(instructionArity)}, enforcedTarget)};
+        StackElement const *const targetHint{propagateTargetHint ? enforcedTarget : nullptr};
+        StackElement const result{evaluateInstruction(instructionPtr, args[0], args[1], args[2], targetHint)};
+        replaceAndUpdateReference(instructionPtr, result);
+      }
+    }
+
+    currentIt = currentIt.next();
+  }
+}
+
 Common::ConditionResult Common::condenseValentBlockCoreBelow(bool const comparison, Stack::iterator const belowIt,
                                                              StackElement const *const enforcedTarget) const {
   assert(!(comparison && enforcedTarget) && "No target allowed for comparison");
@@ -480,74 +490,69 @@ Common::ConditionResult Common::condenseValentBlockCoreBelow(bool const comparis
     assert(!enforcedTarget->isStackMemory() && "TEMPSTACK not allowed as enforced target");
     compiler_.backend_.spillFromStack(*enforcedTarget, RegMask::none(), false, false, findBaseOfValentBlockBelow(belowIt), belowIt);
   }
-
-  Stack::iterator instructionPtr{};
-  // coverity[autosar_cpp14_m8_5_2_violation]
-  std::array<Stack::iterator, 3> recordedArgs{};
-  uint32_t numRecordedArgs{0U};
-  uint32_t instructionArity{0U};
-  BC branchCond{BC::UNCONDITIONAL};
-
   Stack::iterator const frameBase{getCurrentFrameBase()};
   static_cast<void>(frameBase);
-  Stack::iterator currentIt{belowIt};
+  BC branchCond{BC::UNCONDITIONAL};
+
+  Stack::iterator currentIt{belowIt.prev()};
+  // coverity[autosar_cpp14_a5_3_2_violation]
+  condenseScratchRegBelow(currentIt, enforcedTarget);
+  Stack::iterator const vbBase{currentIt};
+  Stack::iterator condenseResult{currentIt};
   while (true) {
-    assert(frameBase != currentIt);
-    --currentIt;
     if (currentIt->type == StackType::DEFERREDACTION) {
+      // GCOVR_EXCL_START
+      assert(currentIt != frameBase && "No valent block found");
+      // GCOVR_EXCL_STOP
       // Entering a new valent block
-      instructionPtr = currentIt;
-      instructionArity = getArithArity(instructionPtr->data.deferredAction.opcode);
+      Stack::iterator const instructionPtr{currentIt};
+      uint32_t const instructionArity{getArithArity(currentIt->data.deferredAction.opcode)};
+      std::array<Stack::iterator, 3U> args{{Stack::iterator(), Stack::iterator(), Stack::iterator()}};
       // Reset already recorded stuff
-      numRecordedArgs = 0U;
-    } else {
-      // We have encountered a variable
-      // If we have an instruction queued up, we need to check whether we
-      // already have enough arguments
-      if (!instructionPtr.isEmpty()) {
-        assert(instructionArity >= 1U && "wrong instructionArity");
-        if (numRecordedArgs < (instructionArity - 1U)) {
-          recordedArgs[numRecordedArgs & 0b11U] = currentIt;
-          numRecordedArgs++;
-          continue;
-        } else {
-          // Emit, we have gathered all arguments for the instruction
-          assert(numRecordedArgs == instructionArity - 1 && "Wrong number of arguments");
-          assert(numRecordedArgs <= 2U && "Too many arguments recorded");
-          std::array<Stack::iterator, 3U> args{{currentIt, Stack::iterator(), Stack::iterator()}};
-          if (numRecordedArgs == 1U) {
-            args[1] = recordedArgs[0];
-          } else if (numRecordedArgs == 2U) {
-            args[1] = recordedArgs[1];
-            args[2] = recordedArgs[0];
-          } else {
-            // no action when numRecordedArgs == 0
-          }
-
-          bool const propagateTargetHint{compiler_.backend_.checkIfEnforcedTargetIsOnlyInArgs(
-              Span<Stack::iterator>{args.data(), static_cast<size_t>(instructionArity)}, enforcedTarget)};
-          StackElement const *const targetHint{propagateTargetHint ? enforcedTarget : nullptr};
-          bool const isConditionStart{comparison && (instructionPtr.next() == belowIt)};
-
-          if ((isConditionStart && (instructionPtr->data.deferredAction.opcode >= OPCode::I32_EQZ)) &&
-              (instructionPtr->data.deferredAction.opcode <= OPCode::F64_GE)) {
-            ConditionResult const result{evaluateCondition(instructionPtr, currentIt, args[1])};
-            branchCond = result.branchCond;
-            currentIt = result.base;
-          } else {
-            evaluateInstruction(instructionPtr, currentIt, args[1], args[2], targetHint);
-          }
+      Stack::iterator argsCursor{currentIt};
+      bool deferredActionInArgs{false};
+      for (uint32_t i{0U}; i < instructionArity; i++) {
+        uint32_t const index{instructionArity - i - 1U};
+        // GCOVR_EXCL_START
+        assert(index < args.size());
+        // GCOVR_EXCL_STOP
+        --argsCursor;
+        args[index] = argsCursor;
+        if (args[index]->type == StackType::DEFERREDACTION) {
+          deferredActionInArgs = true;
+          currentIt = args[index];
+          break;
         }
       }
-      if (backtrackAndRecordArgs(currentIt, belowIt, recordedArgs, numRecordedArgs, instructionPtr, instructionArity)) {
-        break;
+      if (!deferredActionInArgs) {
+        bool const propagateTargetHint{compiler_.backend_.checkIfEnforcedTargetIsOnlyInArgs(
+            Span<Stack::iterator>{args.data(), static_cast<size_t>(instructionArity)}, enforcedTarget)};
+        StackElement const *const targetHint{propagateTargetHint ? enforcedTarget : nullptr};
+        bool const isConditionStart{comparison && (instructionPtr.next() == belowIt)};
+
+        if ((isConditionStart && (instructionPtr->data.deferredAction.opcode >= OPCode::I32_EQZ)) &&
+            (instructionPtr->data.deferredAction.opcode <= OPCode::F64_GE)) {
+          branchCond = evaluateCondition(instructionPtr, args[0], args[1]);
+          currentIt = instructionPtr->parent;
+          condenseResult = currentIt;
+          static_cast<void>(compiler_.stack_.erase(instructionPtr));
+        } else {
+          StackElement const result{evaluateInstruction(instructionPtr, args[0], args[1], args[2], targetHint)};
+          replaceAndUpdateReference(instructionPtr, result);
+          condenseResult = instructionPtr;
+          if (currentIt == vbBase) {
+            break;
+          }
+          currentIt = instructionPtr->parent;
+        }
       }
-      assert(numRecordedArgs <= 2U && "Regular condensation found too many arguments");
+    } else {
+      break;
     }
   }
 
   if (enforcedTarget != nullptr) {
-    VariableStorage srcStorage{compiler_.moduleInfo_.getStorage(*currentIt)};
+    VariableStorage srcStorage{compiler_.moduleInfo_.getStorage(*condenseResult)};
     VariableStorage const dstStorage{compiler_.moduleInfo_.getStorage(*enforcedTarget)};
     if (srcStorage.machineType != dstStorage.machineType) {
       assert(MachineTypeUtil::isInt(srcStorage.machineType) && MachineTypeUtil::isInt(dstStorage.machineType));
@@ -555,9 +560,9 @@ Common::ConditionResult Common::condenseValentBlockCoreBelow(bool const comparis
     }
     compiler_.backend_.emitMoveImpl(dstStorage, srcStorage, false, false);
 
-    replaceAndUpdateReference(currentIt, *enforcedTarget);
+    replaceAndUpdateReference(condenseResult, *enforcedTarget);
   }
-  return {currentIt, branchCond};
+  return {condenseResult, branchCond};
 }
 
 void Common::dropValentBlock() const VB_NOEXCEPT {
@@ -576,65 +581,17 @@ void Common::dropValentBlock() const VB_NOEXCEPT {
     return;
   }
 
-  Stack::iterator instructionPtr{nullptr};
-  // coverity[autosar_cpp14_m8_5_2_violation]
-  std::array<Stack::iterator, 3U> recordedArgs{};
-  Stack::iterator const frameBase{getCurrentFrameBase()};
-  static_cast<void>(frameBase);
-  Stack::iterator currentIt{compiler_.stack_.end()};
-
-  uint32_t numRecordedArgs{0U};
-  uint32_t instructionArity{0U};
-
+  Stack::iterator const vbBase{compiler_.stack_.last()};
+  Stack::iterator currentIt{findBaseOfValentBlock(vbBase)};
   while (true) {
-    assert(currentIt != frameBase);
-    --currentIt;
-    if (currentIt->type == StackType::DEFERREDACTION) {
-      // Entering a new valent block
-      instructionPtr = currentIt;
-      instructionArity = getArithArity(instructionPtr->data.deferredAction.opcode);
-      numRecordedArgs = 0U;
-    } else {
-      // We have encountered a variable
-      // If we have an instruction queued up, we need to check whether we
-      // already have enough arguments
-      if (instructionPtr.isEmpty()) {
-        // if we have no instruction that is waiting, we directly return that element
-        assert(numRecordedArgs == 0U && "More args than needed");
-        removeReference(currentIt);
-        // We already have a finished result
-        break;
-      }
-      assert(instructionArity >= 1U && "wrong instructionArity");
-      if (numRecordedArgs < (instructionArity - 1U)) {
-        // coverity[autosar_cpp14_a5_2_5_violation]
-        recordedArgs[numRecordedArgs & 0b11U] = currentIt;
-        numRecordedArgs++;
-      } else {
-        // Emit, we have gathered all arguments for the instruction
-        assert(numRecordedArgs == instructionArity - 1 && "Wrong number of args");
-        if (instructionArity >= 2U) {
-          removeReference(recordedArgs[0]);
-          static_cast<void>(compiler_.stack_.erase(recordedArgs[0]));
-          if (instructionArity == 3U) {
-            removeReference(recordedArgs[1]);
-            static_cast<void>(compiler_.stack_.erase(recordedArgs[1]));
-          }
-        }
-        removeReference(currentIt);
-        currentIt->type = StackType::CONSTANT;
-
-        static_cast<void>(compiler_.stack_.erase(instructionPtr));
-
-        if (backtrackAndRecordArgs(currentIt, compiler_.stack_.end(), recordedArgs, numRecordedArgs, instructionPtr, instructionArity)) {
-          break;
-        }
-        assert(numRecordedArgs <= 3U && "Regular condensation found too many arguments");
-      }
+    bool const dropEnd{currentIt == vbBase};
+    removeReference(currentIt);
+    static_cast<void>(compiler_.stack_.erase(currentIt));
+    if (dropEnd) {
+      break;
     }
+    currentIt = currentIt.next();
   }
-
-  static_cast<void>(compiler_.stack_.erase(currentIt));
 }
 
 void Common::pushAndUpdateReference(StackElement const &element) const {
@@ -647,9 +604,17 @@ void Common::popAndUpdateReference() const VB_NOEXCEPT {
   compiler_.stack_.pop();
 }
 
+void Common::replaceInCondenseTree(StackElement &originElement, StackElement const &newElement) VB_NOEXCEPT {
+  Stack::iterator const parent{originElement.parent};
+  Stack::iterator const sibling{originElement.sibling};
+  originElement = newElement;
+  originElement.parent = parent;
+  originElement.sibling = sibling;
+}
+
 void Common::replaceAndUpdateReference(Stack::iterator const originalElement, StackElement const &newElement) const VB_NOEXCEPT {
   removeReference(originalElement);
-  *originalElement = newElement;
+  replaceInCondenseTree(*originalElement, newElement);
   addReference(originalElement);
 }
 
@@ -759,7 +724,7 @@ uint32_t Common::getNumUsedTempStackSlots() const VB_NOEXCEPT {
 void Common::removeReference(Stack::iterator const element) const VB_NOEXCEPT {
   StackType const elementBaseType{element->getBaseType()};
 
-  if ((elementBaseType == StackType::CONSTANT) || (elementBaseType == StackType::INVALID)) {
+  if (((elementBaseType == StackType::CONSTANT) || (elementBaseType == StackType::INVALID)) || (elementBaseType == StackType::DEFERREDACTION)) {
     return;
   }
   assert((elementBaseType == StackType::SCRATCHREGISTER || elementBaseType == StackType::LOCAL || elementBaseType == StackType::GLOBAL ||
@@ -1299,9 +1264,59 @@ Stack::iterator Common::skipValentBlock(uint32_t const count) const VB_NOEXCEPT 
   return cursor;
 }
 
+Stack::iterator Common::getFirstOperand(Stack::iterator const instruction) VB_NOEXCEPT {
+  // GCOVR_EXCL_START
+  assert(instruction->type == StackType::DEFERREDACTION);
+  // GCOVR_EXCL_STOP
+
+  Stack::iterator paramIt{instruction.prev()};
+
+  while (!paramIt->sibling.isEmpty()) {
+    paramIt = paramIt->sibling;
+  }
+
+  return paramIt;
+}
+
+Stack::iterator Common::calculateLeftSibling(Stack::iterator const node) VB_NOEXCEPT {
+  Stack::iterator currentIt{node};
+  if (currentIt->type == StackType::DEFERREDACTION) {
+    currentIt = findBaseOfValentBlock(currentIt);
+  }
+  return currentIt.prev();
+}
+
 Stack::iterator Common::pushDeferredAction(StackElement const &deferredAction) {
   hasPendingSideEffectInstructions_ = (hasPendingSideEffectInstructions_ || (deferredAction.data.deferredAction.sideEffect != 0U));
-  return compiler_.stack_.push(deferredAction);
+  uint32_t const instructionArity{getArithArity(deferredAction.data.deferredAction.opcode)};
+  Stack::iterator const paramStart{compiler_.stack_.last()};
+
+  Stack::iterator const instructionIt{compiler_.stack_.push(deferredAction)};
+
+  paramStart->parent = instructionIt;
+  Stack::iterator currentIt{paramStart};
+  for (uint32_t i{instructionArity}; i > 1U; i--) {
+    Stack::iterator const sibling{calculateLeftSibling(currentIt)};
+    sibling->parent = instructionIt;
+    currentIt->sibling = sibling;
+    currentIt = sibling;
+  }
+
+  instructionIt->parent = compiler_.stack_.end();
+  return instructionIt;
+}
+
+bool Common::stackElementInRegOrConst(Stack::iterator const it) const VB_NOEXCEPT {
+  if (it->getBaseType() == StackType::DEFERREDACTION) {
+    return false;
+  } else if (it->getBaseType() == StackType::CONSTANT) {
+    return true;
+  } else {
+    VariableStorage const storage{compiler_.moduleInfo_.getStorage(*it)};
+    assert(((storage.type != StorageType::INVALID) && (storage.type != StorageType::STACK_REG)) &&
+           "Invalid storage type for stack element in reg or const check");
+    return storage.type == StorageType::REGISTER;
+  }
 }
 
 } // namespace vb

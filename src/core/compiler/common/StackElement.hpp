@@ -45,6 +45,8 @@ class StackElement final {
 public:
   static constexpr uint32_t tempStackSlotSize{8U}; ///< temp stack slot size, currently only 8 since there is no SIMD
   StackType type;                                  ///< Type of this StackElement
+  List_iterator<StackElement> parent;              ///< parent node in the valent block tree
+  List_iterator<StackElement> sibling;             ///< left sibling node in the valent block tree
 
   /// @brief DeferredAction as StackElement
   struct DeferredAction final {

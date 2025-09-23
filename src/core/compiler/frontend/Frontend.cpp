@@ -1877,7 +1877,7 @@ void Frontend::parseCodeSection() {
         if (!currentFrameIsUnreachable()) {
           // We handle the SELECT instruction as a regular deferred action, the evaluation mechanisms will be able to
           // handle this
-          Stack::iterator const iterator{stack_.push(StackElement::action(instruction))};
+          Stack::iterator const iterator{common_.pushDeferredAction(StackElement::action(instruction))};
           static_cast<void>(iterator);
 #if ENABLE_EXTENSIONS
           if (compiler_.dwarfGenerator_ != nullptr) {

@@ -402,6 +402,7 @@ Assembler::ActionResult Assembler::selectInstr(Span<AbstrInstr const> const &ins
       }
       if (argsMatched) {
         emitActionArg(actionArg, inputStorages[matchedArgIndexToUseAsDst], inputStorages[matchedArgIndexToUseAsDst ^ 1U]);
+        // coverity[autosar_cpp14_a16_2_3_violation]
         Assembler::ActionResult actionResult{};
         actionResult.reversed = matchedArgIndexToUseAsDst != 0U;
         actionResult.element =
