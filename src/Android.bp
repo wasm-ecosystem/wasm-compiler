@@ -1,0 +1,56 @@
+filegroup {
+    name: "common_sources",
+    srcs: [
+        "core/common/**/*.cpp",
+        "core/common/**/*.h",
+    ],
+    path: ".",
+}
+
+filegroup {
+    name: "compiler",
+    srcs: [
+        ":common_sources",
+        "core/compiler/**/*.cpp",
+        "core/compiler/**/*.h",
+    ],
+    path: ".",
+}
+
+filegroup {
+    name: "runtime",
+    srcs: [
+        ":common_sources",
+        "core/runtime/**/*.cpp",
+        "core/runtime/**/*.h",
+    ],
+    path: ".",
+}
+
+filegroup {
+    name: "utils",
+    srcs: [
+        ":common_sources",
+        "utils/**/*.cpp",
+        "utils/**/*.h",
+    ],
+    path: ".",
+}
+
+filegroup{
+    "name": "WasmModule",
+    srcs:[
+        "src/WasmModule/*.cpp",
+        "src/WasmModule/*.hpp",
+    ]
+}
+
+filegroup{
+    name: "warp",
+    srcs: [
+        ":compiler",
+        ":runtime",
+        ":WasmModule",
+        ":utils",
+    ],
+}

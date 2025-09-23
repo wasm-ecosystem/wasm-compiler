@@ -1,0 +1,3 @@
+#!/usr/bin/bash
+
+${QNX_HOST}/usr/bin/ntox86_64-nm $@

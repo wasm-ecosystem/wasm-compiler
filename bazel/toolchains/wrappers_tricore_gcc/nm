@@ -1,0 +1,3 @@
+#!/usr/bin/bash
+
+${TRICORE_GCC_PATH}/tricore-elf-nm $@

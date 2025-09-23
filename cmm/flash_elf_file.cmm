@@ -1,0 +1,136 @@
+; --------------------------------------------------------------------------------
+; @Title: Demo script for TC499XE-ASTEP on TriBoard-TC499A-COM (Flash, sieve app)
+; @Description:
+;   Programs the sieve demo application (single-core) into the processor
+;   internal flash and sets up a demo debug scenario. This script can be used
+;   as a template for flashing an application.
+; @Keywords: TC4xx, flash, Infineon, TriCore
+; @Author: MEI
+; @Board: TriBoard-TC499A-COM
+; @Chip: TC499XE-ASTEP
+; @Copyright: (C) 1989-2021 Lauterbach GmbH, licensed for use with TRACE32(R) only
+; --------------------------------------------------------------------------------
+; $Id: demo_flash.cmm 18843 2022-01-25 16:11:42Z meick $
+
+
+; --------------------------------------------------------------------------------
+; initialize and start the debugger
+PARAMETERS &elfFilePat
+
+SYStem.RESet
+SYStem.CPU TC499XE-ASTEP
+
+SYStem.Up
+
+; --------------------------------------------------------------------------------
+; Flash programming
+LOCAL &elfFile &progFlash &bmhdResult
+&elfFile="&elfFilePat"
+; prepare flash programming (declarations)
+DO ~~/demo/tricore/flash/tc49x-astep.cmm CPU=TC499XE-ASTEP PREPAREONLY
+
+; ==== Step 0: Initialize DSPR/PSPR ====
+DO ~~~~/meminit.cmm "CPU0.PSPR"
+DO ~~~~/meminit.cmm "CPU0.DSPR"
+
+; ==== Step 1: Program TriCore code ====
+
+
+; enable flash programming
+FLASH.ReProgram ALL
+
+; load demo application
+Data.LOAD.Elf "&elfFile" /SingleLine
+
+FLASH.ReProgram OFF
+
+
+; ==== Step 2: Write boot mode header ====
+
+PRIVATE &progUcb &ucbDiff &supported &diffAddress &DMU_GP_HOST_CONFIRMA &result
+&progUcb=FALSE()
+; Check if UCB is in state UNLOCKED. Other states are not supported by this script
+&DMU_GP_HOST_CONFIRMA=Data.Long(ANC:0xF8040530)
+&supported=(((&DMU_GP_HOST_CONFIRMA)&(0x00030000))==0x00010000)
+
+IF !&supported
+(
+  DIALOG.MESSAGE "UCB_RTC_BMHD0 is not in state unlocked or unread"
+)
+
+; Check if we need to program the BMHD
+&ucbDiff=FALSE()
+IF &supported
+(
+  Data.LOAD.Elf "&elfFile" ANC:0xAE404800++0x7FF /DIFF
+  &ucbDiff=FOUND()
+)
+
+IF (&ucbDiff)
+(
+  DIALOG.YESNO "Configure UCB_RTC_BMHD0 to start demo application?"
+  ENTRY &progUcb
+)
+
+IF (&progUcb)
+(
+  ; programming UCB_RTC_BMHD0
+  IF (&ucbDiff)
+  (
+    ; activate UCB_RTC_BMHD0 modification
+    DO ~~/demo/tricore/flash/tc4xx-ucb.cmm UCB=UCB_RTC_BMHD0 ACTIVATE
+
+    ; load data of UCB_RTC_BMHD0
+    Data.LOAD.Elf "&elfFile" ANC:0xAE404800++0x7FF 
+
+    ; Perform a formal verification of the UCB_RTC_BMHD0 content.
+    ; If the content is formally correct then program the changes to the device.
+    ; If the check detected invalid content the flash programming is aborted.
+    ; In any case NOP protection is restored for UCB_RTC_BMHD0 range.
+    DO ~~/demo/tricore/flash/tc4xx-ucb.cmm UCB=UCB_RTC_BMHD0 PROGRAM
+    ENTRY &result
+
+    IF ("&result"!="UCBOK")
+      ENDDO
+
+    Data.LOAD.Elf "&elfFile" ANC:0xAE404800++0x7FF /DIFF
+    IF FOUND()
+    (
+      &diffAddress=TRACK.ADDRESS()
+      DIALOG.MESSAGE "File &elfFile has not been fully flashed, difference found at address &diffAddress (BMHD0_COPY)"
+      ENDDO
+    )
+  )
+
+)
+; ==== Step 3: Verify programming ====
+
+Data.LOAD.Elf "&elfFile" /DIFF /SingleLine
+IF FOUND()
+(
+  ; maybe some sections are still declared as NOP?
+  &diffAddress=TRACK.ADDRESS()
+  DIALOG.MESSAGE "File &elfFile has not been fully flashed, difference found at address &diffAddress (check flash declaration)"
+)
+
+
+; --------------------------------------------------------------------------------
+; configure USR access to read 64-bit STM registers
+Data.USRACCESS 0xC0000000 0xD0000000 1024. ~~/demo/tricore/etc/usraccess/usraccess.gnu.bin
+
+; --------------------------------------------------------------------------------
+; start program execution
+Go.direct main
+
+; --------------------------------------------------------------------------------
+; open some windows
+WinCLEAR
+WinPOS 0% 0% 100% 50%
+List.auto
+WinPOS 0% 50% 50% 50%
+Frame.view /Locals /Caller
+WinPOS 50% 50% 50% 50%
+Var.Watch
+Register.view /SpotLight
+
+ENDDO

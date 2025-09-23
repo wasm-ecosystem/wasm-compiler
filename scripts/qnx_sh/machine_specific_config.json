@@ -1,0 +1,24 @@
+{
+    "m_pp" : {
+      "host_ip_address_1"   : "160.48.199.77",
+      "target_ip_address_1" : "160.48.199.34",
+      "broadcast_1"         : "160.48.199.255",
+      "host_ip_address_2"   : "192.168.1.99",
+      "target_ip_address_2" : "192.168.1.23",
+      "broadcast_2"         : "192.168.1.255",
+      "host_ip_address_3"   : "169.254.21.88",
+      "target_ip_address_3" : "169.254.21.103",
+      "broadcast_3"         : "169.254.255.255"
+    },
+    "m_high_pp" : {
+      "host_ip_address_1"   : "160.48.199.77",
+      "target_ip_address_1" : "160.48.199.101",
+      "broadcast_1"         : "160.48.199.255",
+      "host_ip_address_2"   : "192.168.1.99",
+      "target_ip_address_2" : "192.168.1.23",
+      "broadcast_2"         : "192.168.1.255",
+      "host_ip_address_3"   : "169.254.21.88",
+      "target_ip_address_3" : "169.254.21.103",
+      "broadcast_3"         : "169.254.255.255"
+    }
+}

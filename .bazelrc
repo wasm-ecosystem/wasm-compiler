@@ -1,0 +1,9 @@
+build --extra_toolchains=//bazel/toolchains:x86_64_linux_toolchain,//bazel/toolchains:aarch64_linux_toolchain,//bazel/toolchains:x86_64_qnx_toolchain,//bazel/toolchains:aarch64_qnx_toolchain,//bazel/toolchains:tricore_gcc_toolchain,//bazel/toolchains:tricore_tasking_toolchain
+build --incompatible_enable_cc_toolchain_resolution
+
+
+build:debug -c dbg
+build:debug --copt=-g
+
+build:GCC_warning_as_error --copt=-Werror
+build:Tasking_warning_as_error --copt=--warnings-as-errors --copt=--pass-c=--warnings-as-errors=505,524,545,587 --copt=-DNDEBUG=1 --copt=--pass-c++=--no-warnings=68 --copt=--pass-c++=--no-warnings=161 --copt=--pass-c++=--no-warnings=1383 --copt=--pass-c++=--no-warnings=1385 --copt=--pass-c=--no-warnings=501 --copt=--pass-c=--no-warnings=507 --copt=--pass-c=--no-warnings=553 --copt=--pass-c=--no-warnings=560 --copt=--pass-c=--no-warnings=562

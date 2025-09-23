@@ -1,0 +1,5 @@
+
+LOCAL &elfFile
+&elfFile="~~~~/../build_tasking/bin/vb_debugger_fuzz.elf"
+
+DO ~~~~/flash_elf_file.cmm "&elfFile"

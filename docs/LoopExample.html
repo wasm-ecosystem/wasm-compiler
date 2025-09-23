@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+
+    <title>reveal.js</title>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reset.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/theme/black.css" />
+
+    <!-- Theme used for syntax highlighted code -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/highlight/monokai.css" />
+  </head>
+  <body>
+    <div class="reveal">
+      <div class="slides">
+        <section>
+          <div style="display: flex">
+            <div style="flex: 1">
+              <pre><code style="font-size:large;">export function foo(): i32 {
+	let v = 0;
+	for (let i = 0; i < 10; i++) {
+		v += i;
+	}
+	return v;
+}
+</code></pre>
+            </div>
+            <div style="flex: 1">
+              <pre><code style="font-size:large;">(module
+(func $assembly/index/foo (result i32)
+(local $0 i32)
+(local $1 i32)
+loop $for-loop|0
+	local.get $0
+	i32.const 10
+	i32.lt_s
+	if
+		local.get $0
+		local.get $1
+		i32.add
+		local.set $1
+		local.get $0
+		i32.const 1
+		i32.add
+		local.set $0
+		br $for-loop|0
+	end
+end
+local.get $1
+)
+)</code></pre>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <h3>init local</h3>
+          <div style="display: flex">
+            <div style="flex: 1">
+              <pre><code style="font-size:large;"  data-line-numbers="4-5">
+(module
+	(func $assembly/index/foo (result i32)
+	(local $0 i32)
+	(local $1 i32)
+	loop $for-loop|0
+		local.get $0
+		i32.const 10
+		i32.lt_s
+		if
+			local.get $0
+			local.get $1
+			i32.add
+			local.set $1
+			local.get $0
+			i32.const 1
+			i32.add
+			local.set $0
+			br $for-loop|0
+		end
+	end
+	local.get $1
+	)
+)</code></pre>
+            </div>
+            <div style="flex: 1">
+              <pre><code style="font-size:large;" code data-line-numbers="10-11">
+158  sub  sp, sp, #0x90
+15c  ldur  x9, [x29, #-0x90]
+160  mov  w10, #0
+164  str  w10, [x9, #8]
+168  ldurb  w11, [x29, #-8]
+16c  cbz  w11, 0x178
+170  mov  w0, w11
+174  b  0xb8
+178  mov  w19, #0
+17c  mov  w8, #0
+180  ldurb  w11, [x29, #-8]
+184  cbz  w11, 0x190
+188  mov  w0, w11
+18c  b  0xb8
+190  cmp  w19, #0xa
+194  b.ge  0x1a4
+198  add  w8, w19, w8
+19c  add  w19, w19, #1
+1a0  b  0x180
+1a4  mov  w0, w8
+1a8  add  sp, sp, #0x90
+1ac  ret  </code></pre>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <h3>check asynchronous interrupts</h3>
+          <div style="display: flex">
+            <div style="flex: 1">
+              <pre><code style="font-size:large;"  data-line-numbers="6">
+(module
+	(func $assembly/index/foo (result i32)
+	(local $0 i32)
+	(local $1 i32)
+	loop $for-loop|0
+		local.get $0
+		i32.const 10
+		i32.lt_s
+		if
+			local.get $0
+			local.get $1
+			i32.add
+			local.set $1
+			local.get $0
+			i32.const 1
+			i32.add
+			local.set $0
+			br $for-loop|0
+		end
+	end
+	local.get $1
+	)
+)</code></pre>
+            </div>
+            <div style="flex: 1">
+              <pre><code style="font-size:large;" code data-line-numbers="12-15">
+158  sub  sp, sp, #0x90
+15c  ldur  x9, [x29, #-0x90]
+160  mov  w10, #0
+164  str  w10, [x9, #8]
+168  ldurb  w11, [x29, #-8]
+16c  cbz  w11, 0x178
+170  mov  w0, w11
+174  b  0xb8
+178  mov  w19, #0
+17c  mov  w8, #0
+180  ldurb  w11, [x29, #-8]
+184  cbz  w11, 0x190
+188  mov  w0, w11
+18c  b  0xb8
+190  cmp  w19, #0xa
+194  b.ge  0x1a4
+198  add  w8, w19, w8
+19c  add  w19, w19, #1
+1a0  b  0x180
+1a4  mov  w0, w8
+1a8  add  sp, sp, #0x90
+1ac  ret  </code></pre>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <div style="display: flex">
+            <div style="flex: 1">
+              <pre><code style="font-size:large;"  data-line-numbers="7-10">
+(module
+	(func $assembly/index/foo (result i32)
+	(local $0 i32)
+	(local $1 i32)
+	loop $for-loop|0
+		local.get $0
+		i32.const 10
+		i32.lt_s
+		if
+			local.get $0
+			local.get $1
+			i32.add
+			local.set $1
+			local.get $0
+			i32.const 1
+			i32.add
+			local.set $0
+			br $for-loop|0
+		end
+	end
+	local.get $1
+	)
+)</code></pre>
+            </div>
+            <div style="flex: 1">
+              <pre><code style="font-size:large;" code data-line-numbers="16-18,22">
+158  sub  sp, sp, #0x90
+15c  ldur  x9, [x29, #-0x90]
+160  mov  w10, #0
+164  str  w10, [x9, #8]
+168  ldurb  w11, [x29, #-8]
+16c  cbz  w11, 0x178
+170  mov  w0, w11
+174  b  0xb8
+178  mov  w19, #0
+17c  mov  w8, #0
+180  ldurb  w11, [x29, #-8]
+184  cbz  w11, 0x190
+188  mov  w0, w11
+18c  b  0xb8
+190  cmp  w19, #0xa
+;; How can we know the target address?
+194  b.ge  0x1a4
+198  add  w8, w19, w8
+19c  add  w19, w19, #1
+1a0  b  0x180
+1a4  mov  w0, w8
+1a8  add  sp, sp, #0x90
+1ac  ret  </code></pre>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <div style="display: flex">
+            <div style="flex: 1">
+              <pre><code style="font-size:large;"  data-line-numbers="11-14">
+(module
+	(func $assembly/index/foo (result i32)
+	(local $0 i32)
+	(local $1 i32)
+	loop $for-loop|0
+		local.get $0
+		i32.const 10
+		i32.lt_s
+		if
+			local.get $0
+			local.get $1
+			i32.add
+			local.set $1
+			local.get $0
+			i32.const 1
+			i32.add
+			local.set $0
+			br $for-loop|0
+		end
+	end
+	local.get $1
+	)
+)</code></pre>
+            </div>
+            <div style="flex: 1">
+              <pre><code style="font-size:large;" code data-line-numbers="18">
+158  sub  sp, sp, #0x90
+15c  ldur  x9, [x29, #-0x90]
+160  mov  w10, #0
+164  str  w10, [x9, #8]
+168  ldurb  w11, [x29, #-8]
+16c  cbz  w11, 0x178
+170  mov  w0, w11
+174  b  0xb8
+178  mov  w19, #0
+17c  mov  w8, #0
+180  ldurb  w11, [x29, #-8]
+184  cbz  w11, 0x190
+188  mov  w0, w11
+18c  b  0xb8
+190  cmp  w19, #0xa
+194  b.ge  0x1a4
+198  add  w8, w19, w8
+19c  add  w19, w19, #1
+1a0  b  0x180
+1a4  mov  w0, w8
+1a8  add  sp, sp, #0x90
+1ac  ret  </code></pre>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <div style="display: flex">
+            <div style="flex: 1">
+              <pre><code style="font-size:large;"  data-line-numbers="15-18">
+(module
+	(func $assembly/index/foo (result i32)
+	(local $0 i32)
+	(local $1 i32)
+	loop $for-loop|0
+		local.get $0
+		i32.const 10
+		i32.lt_s
+		if
+			local.get $0
+			local.get $1
+			i32.add
+			local.set $1
+			local.get $0
+			i32.const 1
+			i32.add
+			local.set $0
+			br $for-loop|0
+		end
+	end
+	local.get $1
+	)
+)</code></pre>
+            </div>
+            <div style="flex: 1">
+              <pre><code style="font-size:large;" code data-line-numbers="19">
+158  sub  sp, sp, #0x90
+15c  ldur  x9, [x29, #-0x90]
+160  mov  w10, #0
+164  str  w10, [x9, #8]
+168  ldurb  w11, [x29, #-8]
+16c  cbz  w11, 0x178
+170  mov  w0, w11
+174  b  0xb8
+178  mov  w19, #0
+17c  mov  w8, #0
+180  ldurb  w11, [x29, #-8]
+184  cbz  w11, 0x190
+188  mov  w0, w11
+18c  b  0xb8
+190  cmp  w19, #0xa
+194  b.ge  0x1a4
+198  add  w8, w19, w8
+19c  add  w19, w19, #1
+1a0  b  0x180
+1a4  mov  w0, w8
+1a8  add  sp, sp, #0x90
+1ac  ret  </code></pre>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <h3>jump to beginning of loop</h3>
+          <div style="display: flex">
+            <div style="flex: 1">
+              <pre><code style="font-size:large;"  data-line-numbers="19">
+(module
+	(func $assembly/index/foo (result i32)
+	(local $0 i32)
+	(local $1 i32)
+	loop $for-loop|0
+		local.get $0
+		i32.const 10
+		i32.lt_s
+		if
+			local.get $0
+			local.get $1
+			i32.add
+			local.set $1
+			local.get $0
+			i32.const 1
+			i32.add
+			local.set $0
+			br $for-loop|0
+		end
+	end
+	local.get $1
+	)
+)</code></pre>
+            </div>
+            <div style="flex: 1">
+              <pre><code style="font-size:large;" code data-line-numbers="12,20">
+158  sub  sp, sp, #0x90
+15c  ldur  x9, [x29, #-0x90]
+160  mov  w10, #0
+164  str  w10, [x9, #8]
+168  ldurb  w11, [x29, #-8]
+16c  cbz  w11, 0x178
+170  mov  w0, w11
+174  b  0xb8
+178  mov  w19, #0
+17c  mov  w8, #0
+180  ldurb  w11, [x29, #-8]
+184  cbz  w11, 0x190
+188  mov  w0, w11
+18c  b  0xb8
+190  cmp  w19, #0xa
+194  b.ge  0x1a4
+198  add  w8, w19, w8
+19c  add  w19, w19, #1
+1a0  b  0x180
+1a4  mov  w0, w8
+1a8  add  sp, sp, #0x90
+1ac  ret  </code></pre>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/reveal.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/notes/notes.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/markdown/markdown.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/5.1.0/plugin/highlight/highlight.js"></script>
+    <script>
+      // More info about initialization & config:
+      // - https://revealjs.com/initialization/
+      // - https://revealjs.com/config/
+      Reveal.initialize({
+        hash: true,
+        // Learn about plugins: https://revealjs.com/plugins/
+        plugins: [RevealMarkdown, RevealHighlight, RevealNotes],
+      });
+    </script>
+  </body>
+</html>

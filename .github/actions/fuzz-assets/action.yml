@@ -1,0 +1,20 @@
+name: "fuzz-assets"
+description: "run fuzz for fuzzAssets in x86 and aarch64"
+inputs:
+  cmake_flags:
+    description: "additional cmake flags"
+    required: false
+  cpp_flags:
+    description: "additional c++ flags"
+    required: false
+
+runs:
+  using: "composite"
+  steps:
+    - shell: bash
+      run: |
+        cmake -B build_fuzz -DVB_ENABLE_DEV_FEATURE=OFF -DENABLE_FUZZ=1 ${{ inputs.cmake_flags }} -DCMAKE_CXX_FLAGS="${{ inputs.cpp_flags }}"
+        cmake --build build_fuzz --target vb_fuzz
+
+    - shell: bash
+      run: build_fuzz/bin/vb_fuzz --reproduceWithModule tests/fuzzAssets

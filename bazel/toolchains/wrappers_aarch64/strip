@@ -1,0 +1,3 @@
+#!/usr/bin/bash
+
+${QNX_HOST}/usr/bin/aarch64-unknown-nto-qnx7.1.0-strip $@

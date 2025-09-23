@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+    <title>WebAssembly WARP Compiler Explorer</title>
+    <link
+      rel="stylesheet"
+      data-name="vs/editor/editor.main"
+      href="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.52.2/min/vs/editor/editor.main.css"
+    />
+    <style>
+      .center-marker {
+        width: 0;
+        height: 0;
+        border-top: 10px solid transparent;
+        border-bottom: 10px solid transparent;
+        border-left: 10px solid black;
+        margin: 0px auto;
+      }
+    </style>
+    <style id="render-color">
+      .line-color-0 {
+        background-color: rgba(249, 138, 138, 0.75);
+      }
+      .line-color-1 {
+        background-color: rgba(247, 199, 173, 0.75);
+      }
+      .line-color-2 {
+        background-color: rgba(45, 244, 154, 0.75);
+      }
+      .line-color-3 {
+        background-color: rgba(246, 230, 89, 0.75);
+      }
+      .line-color-4 {
+        background-color: rgba(169, 179, 254, 0.75);
+      }
+      .line-color-5 {
+        background-color: rgba(209, 171, 245, 0.75);
+      }
+      .line-color-6 {
+        background-color: rgba(255, 185, 219, 0.75);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app" style="display: flex; flex-direction: row">
+      <div style="width: 50%; border: 1px solid grey">
+        <form id="input-config">
+          <fieldset>
+            <table>
+              <tr>
+                <th scope="col" style="padding: 0px 8px">
+                  <label for="target_native">native</label>
+                </th>
+                <th scope="col" style="padding: 0px 8px">
+                  <label for="target_x86_64">x86_64</label>
+                </th>
+                <th scope="col" style="padding: 0px 8px">
+                  <label for="target_x86_64_active">x86_64_active</label>
+                </th>
+                <th scope="col" style="padding: 0px 8px">
+                  <label for="target_aarch64">aarch64</label>
+                </th>
+                <th scope="col" style="padding: 0px 8px">
+                  <label for="target_aarch64_active">aarch64_active</label>
+                </th>
+                <th scope="col" style="padding: 0px 8px">
+                  <label for="target_tricore">tricore</label>
+                </th>
+              </tr>
+              <tr>
+                <td style="text-align: center">
+                  <input type="radio" id="target_native" name="target" value="native" checked />
+                </td>
+                <td style="text-align: center">
+                  <input type="radio" id="target_x86_64" name="target" value="x86_64" />
+                </td>
+                <td style="text-align: center">
+                  <input type="radio" id="target_x86_64_active" name="target" value="x86_64_active" />
+                </td>
+                <td style="text-align: center">
+                  <input type="radio" id="target_aarch64" name="target" value="aarch64" />
+                </td>
+                <td style="text-align: center">
+                  <input type="radio" id="target_aarch64_active" name="target" value="aarch64_active" />
+                </td>
+                <td style="text-align: center">
+                  <input type="radio" id="target_tricore" name="target" value="tricore" />
+                </td>
+              </tr>
+            </table>
+          </fieldset>
+        </form>
+        <div id="wat-container"></div>
+      </div>
+      &nbsp; &nbsp;
+      <div style="width: 50%; border: 1px solid grey">
+        <div>
+          <details style="padding-left: 1%">
+            <summary>disassembly configuration</summary>
+            <ul id="output-config"></ul>
+          </details>
+        </div>
+        <div id="assembly-container"></div>
+      </div>
+    </div>
+
+    <script>
+      var require = { paths: { vs: "https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.52.2//min/vs" } };
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.52.2/min/vs/loader.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.52.2/min/vs/editor/editor.main.js"></script>
+
+    <script>
+      const InitWat = `
+(module
+ (type $0 (func))
+ (type $1 (func (param i32 i32 i32 i32)))
+ (type $2 (func (param i32)))
+ (import "env" "abort" (func $~lib/builtins/abort (param i32 i32 i32 i32)))
+ (import "index" "info" (func $assembly/index/info))
+ (global $assembly/index/v (mut i32) (i32.const 0))
+ (global $~lib/memory/__data_end i32 (i32.const 204))
+ (global $~lib/memory/__stack_pointer (mut i32) (i32.const 32972))
+ (global $~lib/memory/__heap_base i32 (i32.const 32972))
+ (memory $0 1)
+ (table $0 1 1 funcref)
+ (elem $0 (i32.const 1))
+ (export "v" (global $assembly/index/v))
+ (export "f" (func $assembly/index/f))
+ (export "memory" (memory $0))
+ (func $assembly/index/A#foo (param $this i32)
+  call $assembly/index/info
+ )
+ (func $~stack_check
+  global.get $~lib/memory/__stack_pointer
+  global.get $~lib/memory/__data_end
+  i32.lt_s
+  if
+   i32.const 32992
+   i32.const 33040
+   i32.const 1
+   i32.const 1
+   call $~lib/builtins/abort
+   unreachable
+  end
+ )
+ (func $assembly/index/f
+  (local $0 i32)
+  (local $a i32)
+  (local $2 i32)
+  global.get $~lib/memory/__stack_pointer
+  i32.const 12
+  i32.sub
+  global.set $~lib/memory/__stack_pointer
+  call $~stack_check
+  global.get $~lib/memory/__stack_pointer
+  i64.const 0
+  i64.store
+  global.get $~lib/memory/__stack_pointer
+  i32.const 0
+  i32.store offset=8
+  global.get $~lib/memory/__stack_pointer
+  global.get $~lib/memory/__stack_pointer
+  global.get $assembly/index/v
+  local.tee $0
+  i32.store
+  local.get $0
+  if (result i32)
+   local.get $0
+  else
+   i32.const 32
+   i32.const 160
+   i32.const 11
+   i32.const 11
+   call $~lib/builtins/abort
+   unreachable
+  end
+  local.tee $a
+  i32.store offset=4
+  local.get $a
+  local.set $2
+  global.get $~lib/memory/__stack_pointer
+  local.get $2
+  i32.store offset=8
+  local.get $2
+  call $assembly/index/A#foo
+  local.get $a
+  local.set $2
+  global.get $~lib/memory/__stack_pointer
+  local.get $2
+  i32.store offset=8
+  local.get $2
+  call $assembly/index/A#foo
+  local.get $a
+  local.set $2
+  global.get $~lib/memory/__stack_pointer
+  local.get $2
+  i32.store offset=8
+  local.get $2
+  call $assembly/index/A#foo
+  local.get $a
+  local.set $2
+  global.get $~lib/memory/__stack_pointer
+  local.get $2
+  i32.store offset=8
+  local.get $2
+  call $assembly/index/A#foo
+  local.get $a
+  local.set $2
+  global.get $~lib/memory/__stack_pointer
+  local.get $2
+  i32.store offset=8
+  local.get $2
+  call $assembly/index/A#foo
+  global.get $~lib/memory/__stack_pointer
+  i32.const 12
+  i32.add
+  global.set $~lib/memory/__stack_pointer
+ )
+)
+`;
+    </script>
+    <script>
+      const rangeContains = (pos, start, end) => {
+        if (pos[0] < start[0]) return false;
+        if (pos[0] > end[0]) return false;
+        if (pos[0] == start[0] && pos[1] < start[1]) return false;
+        if (pos[0] == end[0] && pos[1] > end[1]) return false;
+        return true;
+      };
+      function getAverage(array) {
+        const sum = array.reduce((acc, val) => acc + val, 0);
+        return sum / array.length;
+      }
+    </script>
+    <script>
+      const colorsLength = document.getElementById("render-color").sheet.rules.length;
+    </script>
+    <script>
+      let watContainer = document.getElementById("wat-container");
+      let assemblyContainer = document.getElementById("assembly-container");
+
+      let inputConfig = document.getElementById("input-config");
+      let outputConfig = document.getElementById("output-config");
+
+      // init size
+      const HEIGHT = window.innerHeight - 5;
+      watContainer.style.height = `${window.innerHeight * 0.8}px`;
+      assemblyContainer.style.height = `${window.innerHeight * 0.8}px`;
+
+      let watEditor = monaco.editor.create(watContainer, { value: InitWat });
+      let assemblyEditor = monaco.editor.create(assemblyContainer, { value: "" });
+
+      let response = undefined;
+
+      let _clearDecorations = null;
+      let setClearDecorations = (newClearDecorations) => {
+        _clearDecorations?.();
+        _clearDecorations = newClearDecorations;
+      };
+      let callClearDecorations = () => {
+        _clearDecorations?.();
+        _clearDecorations = null;
+      };
+
+      const fetchDisassembly = async () => {
+        response = undefined;
+        try {
+          response = await (
+            await fetch(`/api/dis/${inputConfig.elements.target.value}`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: watEditor.getValue(),
+            })
+          ).json();
+          console.log(response);
+        } catch (e) {
+          assemblyEditor.setScrollTop(assemblyEditor.getTopForLineNumber(1), monaco.editor.ScrollType.Smooth);
+          assemblyEditor.setValue(`network error, ${e}`);
+          return;
+        }
+        if (response.error) {
+          assemblyEditor.setScrollTop(assemblyEditor.getTopForLineNumber(1), monaco.editor.ScrollType.Smooth);
+          assemblyEditor.setValue(response.error);
+          return;
+        }
+        assemblyEditor.setValue(response.text);
+
+        const sortedLine = Object.entries(response.mapping.debug_line)
+          // convert from k-v to array
+          .map(([k, v]) => [parseInt(k), v])
+          // sort by wat debug_line number to avoid using the same style for adjacent rows
+          .sort((a, b) => a[0] - b[0]);
+        console.log(sortedLine);
+        response.mapping.lineRevert = {};
+        sortedLine.forEach(([watLine, disLines]) => {
+          disLines.forEach((disLine) => {
+            response.mapping.lineRevert[disLine] = watLine;
+          });
+        });
+
+        let currentAssemblyDecorations = assemblyEditor.createDecorationsCollection(
+          sortedLine
+            .map(([_, disLines], index) =>
+              disLines.map((disLine) => {
+                return {
+                  zIndex: 0,
+                  range: new monaco.Range(disLine + 1, 1, disLine + 1, 1),
+                  options: {
+                    isWholeLine: true,
+                    inlineClassName: `line-color-${index % colorsLength}`,
+                  },
+                };
+              })
+            )
+            .flat()
+        );
+        let currentWatDecorations = watEditor.createDecorationsCollection(
+          sortedLine.map(([watLine, _], index) => {
+            return {
+              zIndex: 0,
+              range: new monaco.Range(watLine + 1, 1, watLine + 1, 1),
+              options: {
+                isWholeLine: true,
+                inlineClassName: `line-color-${index % colorsLength}`,
+              },
+            };
+          })
+        );
+        setClearDecorations(() => {
+          console.log("clear decorations");
+          currentAssemblyDecorations.clear();
+          currentWatDecorations.clear();
+        });
+
+        const watEditorPosition = watEditor.getPosition();
+        updateAssemblyEditorView(watEditorPosition.lineNumber, watEditorPosition.column);
+        let lis = [];
+        for (let k in response.config) {
+          lis.push(`<li style="margin-right: 20px">${k}: ${response.config[k]}</li>`);
+        }
+        outputConfig.innerHTML = lis.join("");
+      };
+
+      const updateAssemblyEditorView = (watLine, column) => {
+        const getMappingByLineInfo = () => {
+          const lineInfo = response?.mapping?.debug_line;
+          if (lineInfo == undefined) return false;
+          const tryScrollEditorToMappedLine = (line) => {
+            const assemblyLines = lineInfo[line - 1];
+            if (assemblyLines == undefined || assemblyLines.length == 0) return false;
+            assemblyEditor.revealLineInCenter(getAverage(assemblyLines) + 1, monaco.editor.ScrollType.Smooth);
+            return true;
+          };
+          if (tryScrollEditorToMappedLine(watLine)) return true;
+          for (let i = 1; i < 3; i++) {
+            // find the nearest line
+            if (tryScrollEditorToMappedLine(watLine - i)) return true;
+            if (tryScrollEditorToMappedLine(watLine + i)) return true;
+          }
+          return true;
+        };
+        if (getMappingByLineInfo()) return;
+        const wat_func = response?.mapping?.wat_func;
+        if (wat_func == undefined) return;
+        for (let i = 0, k = wat_func.length; i < k; i++) {
+          if (rangeContains([watLine - 1, column - 1], wat_func[i].start, wat_func[i].end)) {
+            assemblyEditor.setScrollTop(
+              assemblyEditor.getTopForLineNumber(response.mapping.disassembly_func[i] + 1),
+              monaco.editor.ScrollType.Smooth
+            );
+            break;
+          }
+        }
+      };
+      const updateWatEditorView = (assemblyLine, _) => {
+        const lineRevertInfo = response?.mapping?.lineRevert;
+        if (lineRevertInfo == undefined) return;
+        const tryScrollEditorToMappedLine = (line) => {
+          const watLine = lineRevertInfo[line - 1];
+          if (watLine == undefined) return false;
+          watEditor.revealLineInCenter(watLine + 1, monaco.editor.ScrollType.Smooth);
+          return true;
+        };
+        if (tryScrollEditorToMappedLine(assemblyLine)) return;
+        for (let i = 1; i < 3; i++) {
+          // find the nearest line
+          if (tryScrollEditorToMappedLine(assemblyLine - i)) return;
+          if (tryScrollEditorToMappedLine(assemblyLine + i)) return;
+        }
+      };
+
+      fetchDisassembly();
+
+      watEditor.onDidChangeModelContent(() => {
+        callClearDecorations();
+        fetchDisassembly();
+      });
+      watEditor.onDidChangeCursorSelection(({ selection: { positionColumn: column, positionLineNumber: line } }) => {
+        updateAssemblyEditorView(line, column);
+      });
+      assemblyEditor.onDidChangeCursorSelection(
+        ({ selection: { positionColumn: column, positionLineNumber: line } }) => {
+          updateWatEditorView(line, column);
+        }
+      );
+
+      watEditor.addOverlayWidget({
+        getId: () => "center-marker",
+        getDomNode: () => {
+          const domNode = document.createElement("div");
+          domNode.className = "center-marker";
+          return domNode;
+        },
+        getPosition: () => {
+          return {
+            preference: {
+              left: 0,
+              top: watEditor.getLayoutInfo().height / 2,
+            },
+          };
+        },
+      });
+      assemblyEditor.addOverlayWidget({
+        getId: () => "center-marker",
+        getDomNode: () => {
+          const domNode = document.createElement("div");
+          domNode.className = "center-marker";
+          return domNode;
+        },
+        getPosition: () => {
+          return {
+            preference: {
+              left: 0,
+              top: assemblyEditor.getLayoutInfo().height / 2,
+            },
+          };
+        },
+      });
+
+      inputConfig.addEventListener("input", fetchDisassembly);
+    </script>
+  </body>
+</html>

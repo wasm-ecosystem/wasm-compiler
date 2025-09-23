@@ -1,0 +1,190 @@
+name: OSS Scan
+
+on:
+  pull_request:
+    types: [opened, synchronize, labeled, unlabeled]
+  merge_group:
+
+jobs:
+  oss-scan:
+    runs-on: cawe-linux-x64-compute-small
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Clone BMW CI Config
+        run: |
+          git clone https://${{ secrets.TECH_USER_CC_GITHUB_TOKEN }}@${{ vars.INTERNAL_CCG_URL }}/oss/ci-config.git ci-config
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Create Python virtual environment
+        run: |
+          python -m venv venv
+          echo "VIRTUAL_ENV=$PWD/venv" >> $GITHUB_ENV
+          echo "$PWD/venv/bin" >> $GITHUB_PATH
+
+      - name: Install uv in virtual environment
+        run: |
+          source venv/bin/activate
+          pip install uv
+
+      - name: Configure Artifactory access
+        run: |
+          echo "machine ${{ vars.INTERNAL_ARTIFACTORY_URL }} login ${{ secrets.TECH_USER_CODECRAFT_ACCOUNT }} password ${{ secrets.TECH_USER_COMMON_ARTIFACTORY_TOKEN }}" > ~/.netrc
+
+      - name: Install internal content scan dependencies
+        run: |
+          source venv/bin/activate
+          cd ci-config/scripts/bmw-content-scan
+          uv pip install -e .
+
+      - name: Prepare source code for scanning
+        run: |
+          mkdir -p temp_scan
+          # Create a temporary directory structure expected by the scanner
+          # Format: temp_scan/<git_sha>/<source_files>
+          COMMIT_SHA="${{ github.event.pull_request.head.sha || github.sha }}"
+          mkdir -p "temp_scan/${COMMIT_SHA}"
+
+          # Create symbolic links to source files for faster setup
+          ln -s "$(pwd)/src" "temp_scan/${COMMIT_SHA}/src"
+
+          # Also link other relevant directories that might contain code
+          if [ -d "include" ]; then
+            ln -s "$(pwd)/include" "temp_scan/${COMMIT_SHA}/include"
+          fi
+          if [ -d "tests" ]; then
+            ln -s "$(pwd)/tests" "temp_scan/${COMMIT_SHA}/tests"
+          fi
+          if [ -d "demo" ]; then
+            ln -s "$(pwd)/demo" "temp_scan/${COMMIT_SHA}/demo"
+          fi
+          if [ -d "extensions" ]; then
+            ln -s "$(pwd)/extensions" "temp_scan/${COMMIT_SHA}/extensions"
+          fi
+          if [ -d "binding" ]; then
+            ln -s "$(pwd)/binding" "temp_scan/${COMMIT_SHA}/binding"
+          fi
+          if [ -d "scripts" ]; then
+            ln -s "$(pwd)/scripts" "temp_scan/${COMMIT_SHA}/scripts"
+          fi
+
+      - name: Run BMW content scan
+        run: |
+          source venv/bin/activate
+          mkdir -p scan_results
+
+          # Run the BMW content scanner
+          bmw-content-scan scan temp_scan scan_results \
+            --ignore-file-ending .so \
+            --ignore-file-ending .a \
+            --ignore-file-ending .o \
+            --ignore-file-ending .wasm \
+            --ignore-file-ending .wat \
+            --ignore-file-ending .wast \
+            --ignore-file-ending .bin \
+            --ignore-file-ending .exe \
+            --ignore-file-ending .dll \
+            --ignore-file-ending .dylib \
+            --ignore-file-ending .png \
+            --ignore-file-ending .jpg \
+            --ignore-file-ending .jpeg \
+            --ignore-file-ending .gif \
+            --ignore-file-ending .pdf \
+            --ignore-file-ending .zip \
+            --ignore-file-ending .tar \
+            --ignore-file-ending .gz
+
+      - name: Check scan results and report violations
+        run: |
+          source venv/bin/activate
+          test $(jq length scan_results/findings.json) -eq 0 || (echo "BMW content violations found!" && jq . scan_results/findings.json && exit 1)
+
+      - name: Check Apache license headers
+        run: |
+          echo "Checking for Apache license headers in C/C++ files..."
+
+          # Find C/C++ files and check for Apache license headers using grep
+          missing_licenses=""
+          while IFS= read -r -d '' file; do
+            if ! grep -q "SPDX-License-Identifier: Apache-2.0\|Apache License" "$file"; then
+              missing_licenses="$missing_licenses$file"$'\n'
+            fi
+          done < <(find src -type f \( -name "*.hpp" -o -name "*.h" -o -name "*.c" -o -name "*.cpp" \) -not -path "*/BUILD" -not -name "CMakeLists.txt" -print0)
+
+          if [ -n "$missing_licenses" ]; then
+            echo "Files missing Apache license headers:"
+            echo "$missing_licenses"
+            echo "All C/C++ source files must have Apache license headers!"
+            exit 1
+          else
+            echo "All C/C++ files have Apache license headers."
+          fi
+
+      - name: License compatibility check with Licensee
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ruby ruby-dev build-essential cmake pkg-config libssl-dev
+          sudo gem install licensee
+
+          echo "Detecting licenses in Git submodules..."
+
+          # Get list of actual Git submodules
+          git submodule foreach --quiet 'echo $sm_path' > submodule_paths.txt
+
+          # Check each Git submodule
+          while read -r submodule_path; do
+            if [ -d "$submodule_path" ]; then
+              echo "Checking $submodule_path:"
+              license=$(licensee detect "$submodule_path" --json | jq -r '.licenses[0].key // "unknown"')
+              echo "  Detected license: $license"
+              
+              case "$license" in
+                "gpl-2.0"|"gpl-3.0"|"lgpl-2.1"|"lgpl-3.0"|"agpl-3.0"|"mpl-2.0"|"epl-1.0"|"cddl-1.0")
+                  echo "  INCOMPATIBLE: $license is not compatible with Apache 2.0"
+                  exit 1
+                  ;;
+                "mit"|"bsd-2-clause"|"bsd-3-clause"|"apache-2.0"|"isc"|"unlicense")
+                  echo "  COMPATIBLE: $license is compatible with Apache 2.0"
+                  ;;
+                *)
+                  echo "  WARNING: Could not determine compatibility for $license"
+                  ;;
+              esac
+            fi
+          done < submodule_paths.txt
+
+            echo "License compatibility check completed"
+
+      - name: Secret leak detection with TruffleHog
+        run: |
+          echo "Installing TruffleHog from GitHub release..."
+
+          # Download and install TruffleHog from specific release
+          curl -sSfL https://github.com/trufflesecurity/trufflehog/releases/download/v3.90.6/trufflehog_3.90.6_linux_amd64.tar.gz -o trufflehog.tar.gz
+          tar -xzf trufflehog.tar.gz
+          chmod +x trufflehog
+          sudo mv trufflehog /usr/bin/
+
+          # Scan the repository for secrets
+          echo "Scanning repository for secrets..."
+          trufflehog filesystem . --no-update --no-verification --json > trufflehog_results.json || true
+
+          # Check if any secrets were found
+          secret_count=$(jq length trufflehog_results.json)
+          if [ "$secret_count" -gt 0 ]; then
+            echo "Found $secret_count potential secrets:"
+            jq -r '.[] | "File: \(.SourceMetadata.Data.Filesystem.file) | Type: \(.DetectorName) | Line: \(.SourceMetadata.Data.Filesystem.line)"' trufflehog_results.json
+            echo ""
+            echo "Please review and remove any actual secrets from the codebase"
+            exit 1
+          else
+            echo "No secrets detected by TruffleHog"
+          fi

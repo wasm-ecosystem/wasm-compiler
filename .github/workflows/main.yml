@@ -1,0 +1,243 @@
+name: Main
+
+on:
+  pull_request:
+  merge_group:
+
+concurrency:
+  group: "${{ github.workflow }} @ ${{ github.event.pull_request.head.label || github.head_ref || github.ref }}"
+  cancel-in-progress: true
+
+jobs:
+  small_checks:
+    runs-on: ${{ github.repository_owner == 'CDCFW' && 'cawe-linux-x64-compute-small' || 'ubuntu-latest' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/check
+        with:
+          doxygen: true
+          clang-format: true
+          clang-format-dirs: "src;fuzz;demo;tests;disassembler;binding"
+          cspell: true
+          cspell-dirs: "src;tests"
+          cspell-config: "./cspell.json"
+
+  codegen_test:
+    runs-on: ${{ github.repository_owner == 'CDCFW' && 'cawe-linux-x64-compute-large' || 'ubuntu-latest' }}
+    container:
+      image: ubuntu:24.04
+      options: --user root
+    steps:
+      - name: Install dependencies
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends \
+          bash build-essential ca-certificates clang llvm llvm-18-tools libclang-rt-18-dev cppcheck git lld \
+          ninja-build unzip valgrind wget python3 python3-pip python3-venv cmake jq binaryen nodejs npm gcc-11 g++-11
+      - name: Install wabt
+        run: |
+          wget https://github.com/WebAssembly/wabt/releases/download/1.0.36/wabt-1.0.36-ubuntu-20.04.tar.gz
+          tar -xzf wabt-1.0.36-ubuntu-20.04.tar.gz
+          echo "$PWD/wabt-1.0.36/bin" >> $GITHUB_PATH
+      - name: Install capstone
+        run: |
+          git clone https://github.com/capstone-engine/capstone.git \
+          && cd capstone \
+          && git checkout 6.0.0-Alpha4 \
+          && mkdir build \
+          && cd build \
+          && cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_POSITION_INDEPENDENT_CODE=ON .. \
+          && cmake --build . --parallel \
+          && cmake --install . --prefix=/usr \
+          && cd / && rm -rf capstone
+      - name: Update nodejs
+        run: |
+          npm install n -g && n stable
+      - name: Install bazel
+        run: |
+          wget https://github.com/bazelbuild/bazel/releases/download/7.0.0/bazel-7.0.0-linux-x86_64
+          mv bazel-7.0.0-linux-x86_64 /usr/local/bin/bazel
+          chmod 777 /usr/local/bin/bazel
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - run: cp $(which FileCheck-18) /usr/bin/FileCheck
+      - name: setup wasm-tools
+        run: |
+          ./.github/scripts/install_wasm_tools.sh
+          echo "$(pwd)/wasm-tools" >> $GITHUB_PATH
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: activate virtual environment
+        shell: bash
+        run: |
+          set -ex
+          python3 -m venv ${GITHUB_WORKSPACE}/venv
+          source ${GITHUB_WORKSPACE}/venv/bin/activate
+          echo "VIRTUAL_ENV=${VIRTUAL_ENV}" >> $GITHUB_ENV
+          echo "${VIRTUAL_ENV}/bin" >> $GITHUB_PATH
+      - name: python deps
+        run: pip3 install wasmtime
+      - name: binding
+        run: python3 binding/binding_all.py --venv-dir ${GITHUB_WORKSPACE}/venv
+      - name: file check test
+        run: python3 scripts/test.py --no-color
+
+  x86-64_linux_cmake_build_test:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - buildType: "gccDebug"
+            buildArgs: "-DENABLE_WERROR=1 -DENABLE_SANITIZE=1 -DENABLE_COVERAGE=1 -DENABLE_DIS=1 -DCMAKE_BUILD_TYPE:STRING=Debug -DENABLE_CLANG_TIDY=1"
+          - buildType: "gccRelease"
+            buildArgs: "-DENABLE_WERROR=1  -DENABLE_COVERAGE=1 -DCMAKE_BUILD_TYPE:STRING=Release"
+          - buildType: "clangDebug"
+            buildArgs: "-DENABLE_WERROR=1  -DCMAKE_BUILD_TYPE:STRING=Debug -DCMAKE_C_COMPILER=clang -DENABLE_COVERAGE=1 -DENABLE_CLANG_TIDY=1"
+          - buildType: "clangRelease"
+            buildArgs: "-DENABLE_WERROR=1 -DCMAKE_C_COMPILER=clang -DENABLE_COVERAGE=1 -DCMAKE_BUILD_TYPE:STRING=Release"
+    uses: ./.github/workflows/execute.yml
+    secrets: inherit
+    with:
+      arch: "x86_64"
+      os: "linux"
+      run: |
+        set -ex
+        mkdir -p build
+        cd build && cmake .. ${{ matrix.buildArgs }}
+        make -j $(nproc)
+        make coverage
+        ./bin/vb_demo ../wasm_examples/log.wasm
+
+  x86-64_linux_bazel_build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - buildType: "bazelx86_64"
+            buildArgs: "//demo:vb_demo --platforms=//bazel/platforms:x86_64_linux"
+          - buildType: "bazelaarch64"
+            buildArgs: "//demo:vb_demo --platforms=//bazel/platforms:aarch64_linux"
+    uses: ./.github/workflows/execute.yml
+    secrets: inherit
+    with:
+      arch: "x86_64"
+      os: "linux"
+      run: |
+        bazel --batch clean --expunge
+        bazel --batch build ${{ matrix.buildArgs }}
+
+  aarch64_linux_cmake_build_test:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - buildType: "Debug"
+            buildArgs: "-DENABLE_WERROR=1 -DENABLE_FUZZ=1 -DENABLE_COVERAGE=1 -DCMAKE_BUILD_TYPE:STRING=Debug -DENABLE_CLANG_TIDY=1"
+          - buildType: "Release"
+            buildArgs: "-DENABLE_WERROR=1 -DENABLE_FUZZ=1 -DENABLE_COVERAGE=1 -DCMAKE_BUILD_TYPE:STRING=Release"
+    uses: ./.github/workflows/execute.yml
+    secrets: inherit
+    with:
+      arch: "aarch64"
+      os: "linux"
+      run: |
+        set -ex
+        mkdir -p build
+        cd build && cmake .. ${{ matrix.buildArgs }}
+        make -j $(nproc)
+        make coverage
+        ./bin/vb_demo ../wasm_examples/log.wasm
+
+  aarch64_extra:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - buildType: "Analytics"
+            buildArgs: "-DVB_ENABLE_DEV_FEATURE=OFF -DENABLE_WERROR=1 -DENABLE_ANALYTICS=1 -DCMAKE_BUILD_TYPE=RELEASE -DENABLE_CLANG_TIDY=1"
+            cppFlags: ""
+          - buildType: "Bench"
+            buildArgs: "-DVB_ENABLE_DEV_FEATURE=OFF -DENABLE_WERROR=1 -DENABLE_BENCH=1 -DCMAKE_BUILD_TYPE=RELEASE -DENABLE_CLANG_TIDY=1"
+            cppFlags: "-DINTERRUPTION_REQUEST=0 -DEAGER_ALLOCATION=1"
+    uses: ./.github/workflows/execute.yml
+    secrets: inherit
+    with:
+      arch: "aarch64"
+      os: "linux"
+      run: |
+        set -ex
+        mkdir -p build
+        cd build && cmake .. ${{ matrix.buildArgs }} -DCMAKE_CXX_FLAGS="${{ matrix.cppFlags }}"
+        make -j $(nproc)
+
+  x86-64_extra:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - buildType: "Analytics"
+            buildArgs: "-DVB_ENABLE_DEV_FEATURE=OFF -DENABLE_WERROR=1 -DENABLE_ANALYTICS=1 -DCMAKE_BUILD_TYPE=RELEASE -DENABLE_CLANG_TIDY=1"
+            cppFlags: ""
+          - buildType: "Bench"
+            buildArgs: "-DVB_ENABLE_DEV_FEATURE=OFF -DENABLE_WERROR=1 -DENABLE_BENCH=1 -DCMAKE_BUILD_TYPE=RELEASE -DENABLE_CLANG_TIDY=1"
+            cppFlags: "-DINTERRUPTION_REQUEST=0 -DEAGER_ALLOCATION=1"
+    uses: ./.github/workflows/execute.yml
+    secrets: inherit
+    with:
+      arch: "x86_64"
+      os: "linux"
+      run: |
+        set -ex
+        mkdir -p build
+        cd build && cmake .. ${{ matrix.buildArgs }} -DCMAKE_CXX_FLAGS="${{ matrix.cppFlags }}"
+        make -j $(nproc)
+
+  tricore_linux_cmake_build_test:
+    uses: ./.github/workflows/execute.yml
+    secrets: inherit
+    with:
+      arch: "tricore"
+      os: "linux"
+      run: |
+        set -ex
+        python3 ./tests/spectest.py -f
+
+        cmake . -B build_tricore -DCMAKE_BUILD_TYPE=Debug -DENABLE_WERROR=1 -DCMAKE_C_COMPILER=/usr/bin/tricore-elf-gcc -DVB_ENABLE_DEV_FEATURE=OFF -DCMAKE_CXX_COMPILER=/usr/bin/tricore-elf-g++ -DENABLE_SPECTEST=1 -DENABLE_DEMO=1 -DTEST_VARIANTS=1 -DDISABLE_SPECTEST_WAST=1 -DDISABLE_SPECTEST_JSON=1 -DENABLE_STANDALONE_TEST=1
+        cmake --build build_tricore --parallel
+        python3 scripts/tricore_qemu_execute.py qemu-system-tricore -semihosting -display none -M tricore_tsim162 -kernel build_tricore/bin/vb_spectest_binary_standalone_0
+        python3 scripts/tricore_qemu_execute.py qemu-system-tricore -semihosting -display none -M tricore_tsim162 -kernel build_tricore/bin/vb_spectest_binary_standalone_1
+        qemu-system-tricore -semihosting -display none -M tricore_tsim162 -kernel build_tricore/bin/vb_demo
+
+  tricore_linux_cmake_build_unittest:
+    uses: ./.github/workflows/execute.yml
+    secrets: inherit
+    with:
+      arch: "tricore"
+      os: "linux"
+      run: |
+        set -ex
+        cmake . -B build_tricore_unittest -DCMAKE_BUILD_TYPE=Debug -DBACKEND=tricore -DENABLE_UNITTEST=1 -DVB_ENABLE_DEV_FEATURE=OFF 
+        cmake --build build_tricore_unittest --parallel
+        ./build_tricore_unittest/tests/unittests/Unittests
+
+  all-green:
+    runs-on: ubuntu-latest
+    if: always()
+
+    needs:
+      - small_checks
+      - codegen_test
+      - x86-64_linux_cmake_build_test
+      - x86-64_linux_bazel_build
+      - aarch64_linux_cmake_build_test
+      - tricore_linux_cmake_build_test
+      - tricore_linux_cmake_build_unittest
+
+    steps:
+      - name: Decide whether the needed jobs succeeded or failed
+        uses: re-actors/alls-green@release/v1
+        with:
+          jobs: ${{ toJSON(needs) }}

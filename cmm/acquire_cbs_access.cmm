@@ -1,0 +1,148 @@
+; --------------------------------------------------------------------------------
+; @Title: Helper script to gain access to a peripheral block
+; @Description:
+;   DO acquire_cbs_access.cmm "<bus-master> <prot-addr> <accen-rda-addr> <accen-wra-addr>"
+;      <bus-master>     Bus master to do the unlock. Must be part of the current debug session.
+;                       Currently supported values "CPUcs".
+;      <prot-addr>      Address of the relevant PROT register.
+;      <accen-rd-addr>  Address of the ACCEN_RDA register to modify.
+;      <accen-wra-addr> Address of the ACCEN_WRA register to modify.
+;
+;      return value:   TRUE() if successfull. FALSE() otherwise. Errors will be printed to the area window.
+;   
+;   Example: 
+;      DO acquire_cbs_access.cmm "CPUcs" "ANC:0xF0000150" "ANC:0xF000015C" "ANC:0xF0000154"
+;      To gain access to WDTSEC
+;
+; @Keywords: AURIX, TC4xx, Infineon, PROT, APU
+; @Author: MEI
+; @Board: TriBoard-TC499a
+; @Chip: TC499XE-Astep
+; @Copyright: (C) 1989-2021 Lauterbach GmbH, licensed for use with TRACE32(R) only
+; --------------------------------------------------------------------------------
+; $Id: acquire_cbs_access.cmm 19002 2022-02-28 11:45:12Z meick $
+
+
+PRIVATE &valRd &valWr &cbsMask &okRd &okWr
+PARAMETERS &master &addrProt &addrAccenRd &addrAccenWr
+
+&cbsMask=(1.<<28.)
+
+
+&valRd=Data.Long(&addrAccenRd)
+&okRd=(((&valRd)&(&cbsMask))>0)
+
+IF "&addrAccenWr"!=""
+(
+  &valWr=Data.Long(&addrAccenWr)
+  &okWr=(((&valWr)&(&cbsMask))>0)
+)
+ELSE
+(
+  &okWr=TRUE()
+)
+
+IF (&okRd)&&(&okWr)
+(
+  ENDDO "TRUE()"
+)
+
+PRIVATE &logCore &physCore &coreBackup
+
+IF "&master"=="CPUcs"
+(
+  &physCore=7.
+)
+ELSE
+(
+  PRINT %ERROR "master &master not supported"
+  ENDDO "FALSE()"
+)
+IF !CORE.ISASSIGNED(&physCore)
+(
+  PRINT %ERROR "core &physCore for master &master not assigned"
+  ENDDO "FALSE()"
+)
+&logCore=CORE.PHYSICALTOLOGICAL(&physCore)
+&coreBackup=CORE()
+CORE.select &logCore
+Data.USRACCESS 0xC0000000 0xD0000000 1024. ~~/demo/tricore/etc/usraccess/usraccess.gnu.bin
+
+PRIVATE &initProtVal &protState &tmpProtVal &restoreProtVal &successProt
+
+&initProtVal=Data.Long(&addrProt)
+&protState=((&initProtVal)&(0x7))
+&restoreProtVal=0x0
+
+IF (&protState==0x4)
+(
+  ; in run state - try to go to config state
+  &tmpProtVal=((&initProtVal)&(~0x7))|0x1
+  GOSUB WriteAndVerify "&addrProt" "&tmpProtVal|0x8" "&tmpProtVal"
+  RETURNVALUES &successProt
+  &restoreProtVal=&initProtVal
+)
+ELSE IF (&protState>=0x4)
+(
+  PRINT %ERROR "PROT state &protState not supported"
+  ENDDO "FALSE()"
+)
+ELSE
+(
+  &successProt=TRUE()
+)
+
+PRIVATE &successRd
+IF !(&okRd)&&(&successProt)
+(
+  &valRd=(&valRd)|(&cbsMask)
+  GOSUB WriteAndVerify "&addrAccenRd" "&valRd"
+  RETURNVALUES  &successRd
+)
+ELSE
+(
+  &successRd=TRUE()
+)
+
+PRIVATE &successWr
+IF !(&okWr)&&(&successProt)
+(
+  &valWr=(&valWr)|(&cbsMask)
+  GOSUB WriteAndVerify "&addrAccenWr" "&valWr"
+  RETURNVALUES &successWr
+)
+ELSE
+(
+  &successWr=TRUE()
+)
+
+IF (&restoreProtVal)!=0x0
+(
+  GOSUB WriteAndVerify "&addrProt" "&restoreProtVal|0x8" "&restoreProtVal"
+  RETURNVALUES &successProt
+)
+
+CORE.select &coreBackup
+
+PRIVATE &success
+&success=(&successRd)&&(&successWr)&&(&successProt)
+
+ENDDO "&success"
+
+
+SUBROUTINE WriteAndVerify
+(
+  PRIVATE &addrOffset &rdVal &success
+  PARAMETERS &addr &wrVal &verifyVal
+  IF "&verifyVal"==""
+  (
+    &verifyVal="&wrVal"
+  )
+  &addrOffset=ADDRESS.OFFSET(&addr)
+  Data.Set USR:(&addrOffset) %Long (&wrVal)
+  &rdVal=Data.Long(&addr)
+  &success=((&rdVal)==(&verifyVal))
+
+  RETURN "&success"
+
+)

@@ -1,0 +1,16 @@
+[submodule "spectest"]
+	path = tests/testsuite/spectest
+	url = https://github.com/WebAssembly/testsuite
+
+[submodule "thirdparty/json"]
+	path = thirdparty/json
+	url = https://github.com/nlohmann/json.git
+[submodule "thirdparty/cxxopts"]
+	path = thirdparty/cxxopts
+	url = https://github.com/jarro2783/cxxopts
+[submodule "thirdparty/berkeley-softfloat-3"]
+	path = thirdparty/berkeley-softfloat-3
+	url = https://github.com/ucb-bar/berkeley-softfloat-3
+[submodule "thirdparty/pybind11"]
+	path = thirdparty/pybind11
+	url = https://github.com/pybind/pybind11.git

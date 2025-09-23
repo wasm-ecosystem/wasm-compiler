@@ -1,0 +1,104 @@
+name: Fuzz
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 1 * * *"
+
+env:
+  upload_script: |
+    const log = require("fs").readFileSync(process.env["OUT_FILE"], { encoding: "utf8" });
+    if (log.length == 0) return;
+
+    const title = `Detect Bug by Fuzz in ${new Date().toISOString()}`;
+    const body = [
+      "This issue was automatically created by [unix-fuzz action](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}).",
+      "```",
+      ...log.split("\n").slice(-50),
+      "```",
+    ].join("\n");
+
+    github.rest.issues.create({
+      owner: "${{ github.repository_owner }}",
+      repo: "${{ github.event.repository.name }}",
+      title,
+      body,
+    });
+
+jobs:
+  unix-fuzz:
+    strategy:
+      fail-fast: false
+      max-parallel: 16
+      matrix:
+        branch: ["", "release/3.x"]
+        build_type: ["-DCMAKE_BUILD_TYPE=Debug", "-DCMAKE_BUILD_TYPE=Release"]
+        reg_mode: ["-DVB_FORCE_HIGH_REGISTER_PRESSURE", ""]
+        active_mode:
+          [
+            "",
+            "-DACTIVE_STACK_OVERFLOW_CHECK=1 -DLINEAR_MEMORY_BOUNDS_CHECKS=1 -DACTIVE_DIV_CHECK=1",
+          ]
+        runner: [ubuntu-latest, cawe-linux-arm64-compute-small]
+        include:
+          - runner: ubuntu-latest
+            image: wasm-common-ci-cdc-generic-x86_64
+          - runner: cawe-linux-arm64-compute-small
+            image: wasm-common-ci-cdc-generic-aarch64
+    runs-on: ${{ matrix.runner }}
+    container:
+      image: ${{ vars.CONTAINER_PATH }}/${{ matrix.image }}:main
+      credentials:
+        username: ${{ secrets.TECH_USER_QNUMBER }}
+        password: ${{ secrets.TECH_USER_ATC_GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+          ref: ${{ matrix.branch }}
+
+      - uses: ./.github/actions/fuzz-unix
+        id: fuzz
+        with:
+          timeout: 3600
+          cmake_flags: ${{ matrix.build_type }}
+          cpp_flags: ${{ matrix.reg_mode }} ${{ matrix.active_mode }}
+      - uses: actions/github-script@v7
+        if: failure()
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: ${{ env.upload_script }}
+        env:
+          OUT_FILE: ${{ steps.fuzz.outputs.log_file }}
+
+  qemu-fuzz:
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        branch: ["", "release/3.x"]
+        reg_mode: ["", "-DVB_FORCE_HIGH_REGISTER_PRESSURE"]
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ vars.CONTAINER_PATH }}/wasm-common-ci-cdc-tricore-qemu:main
+      credentials:
+        username: ${{ secrets.TECH_USER_QNUMBER }}
+        password: ${{ secrets.TECH_USER_ATC_GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+          ref: ${{ matrix.branch }}
+
+      - uses: ./.github/actions/fuzz-qemu
+        id: fuzz
+        with:
+          timeout: 3600
+          cpp_flags: ${{ matrix.reg_mode }}
+      - uses: actions/github-script@v7
+        if: failure()
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: ${{ env.upload_script }}
+        env:
+          OUT_FILE: ${{ steps.fuzz.outputs.log_file }}

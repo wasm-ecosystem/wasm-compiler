@@ -1,0 +1,140 @@
+name: Small Checks (Linux x86_64)
+
+inputs:
+  cspell:
+    description: Execute cspell check
+    type: boolean
+    required: false
+    default: false
+
+  cspell-dirs:
+    description: Source directories for cspell using a semicolon as delimiter, defaults to *
+    type: string
+    required: false
+    default: "*"
+
+  cspell-config:
+    description: Path of cspell.json
+    required: false
+    type: string
+    default: "./cspell.json"
+
+  doxygen:
+    description: Execute doxygen check
+    type: boolean
+    required: false
+    default: false
+
+  clang-format:
+    description: Execute clang-format check
+    type: boolean
+    required: false
+    default: false
+
+  clang-format-dirs:
+    description: Source directories for clang-format using a semicolon as delimiter, defaults to *
+    type: string
+    required: false
+    default: "*"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up environment
+      shell: bash
+      run: |
+        set -ex
+        sudo apt-get update
+        sudo apt-get install -y --no-install-recommends nodejs npm clang-format doxygen
+        sudo npm install -g cspell
+
+    - name: cspell
+      if: inputs.cspell == true
+      working-directory: source-repo
+      shell: bash
+      run: |
+          set -ex
+          dirs="${{ inputs.cspell-dirs }}"
+          echo "$dirs"
+          dirs=$(if [ "$dirs" = "*" ]; then echo "**"; else echo "$dirs"; fi)
+          dirs=$(echo "$dirs" | sed "s/;$//" | sed "s/;;*/,/g")
+          if [[ "$dirs" == *","* ]]; then
+            dirs="{$dirs}"
+          fi
+          cspell --config ${{ inputs.cspell-config }} "$dirs/**/*.{h,c,hpp,cpp,cc,ipp}"
+
+    - name: clang-format
+      if: inputs.clang-format == true
+      working-directory: source-repo
+      shell: bash
+      run: |
+          set -ex
+          dirs="${{ inputs.clang-format-dirs }}"
+          dirs=$(echo "$dirs" | tr ";" " ")
+          find $dirs -regex ".*\\.\\(cpp\\|hpp\\|c\\|h\\|ipp\\)" | xargs clang-format -style=file --Werror --dry-run -i
+
+    - name: doxygen
+      if: inputs.doxygen == true
+      working-directory: source-repo
+      shell: bash
+      run: |
+          set -ex
+          doxygen Doxyfile
+
+    # bazel format
+    - name: Install wget
+      shell: bash
+      run: sudo apt-get update && sudo apt-get install -y wget
+    - name: Download and install buildifier
+      shell: bash
+      run: |
+        wget https://github.com/bazelbuild/buildtools/releases/download/v7.3.1/buildifier-linux-amd64 -O buildifier
+        chmod +x buildifier
+        sudo mv buildifier /usr/local/bin/
+    - if: always()
+      shell: bash
+      run: |
+        echo bazel-format: >> format-report.txt
+        echo \`\`\`diff >> format-report.txt
+    - name: format check
+      shell: bash
+      run: |
+        buildifier -mode=diff -r . >> format-report.txt
+    - if: always()
+      shell: bash
+      run: |
+        echo \`\`\` >> format-report.txt
+    - name: lint check
+      shell: bash
+      run: |
+        echo bazel-lint: >> format-report.txt
+        buildifier --lint=warn -r . 2>> format-report.txt
+
+    - uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+        cache: "pip"
+    - shell: bash
+      run: pip install black==24.4.2
+    - if: always()
+      shell: bash
+      run: |
+        echo python-format: >> format-report.txt
+        echo \`\`\`diff >> format-report.txt
+        python -m black --check --diff . --extend-exclude thirdparty >> format-report.txt
+    - if: always()
+      shell: bash
+      run: |
+        echo \`\`\` >> format-report.txt
+
+    - uses: thollander/actions-comment-pull-request@v2
+      if: failure()
+      with:
+        filePath: format-report.txt
+        comment_tag: format
+    - uses: thollander/actions-comment-pull-request@v2
+      if: success() && github.event_name == 'pull_request'
+      with:
+        message: |
+          :white_check_mark: format check passed.
+        comment_tag: format

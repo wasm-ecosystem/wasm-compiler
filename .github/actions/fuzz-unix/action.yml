@@ -1,0 +1,44 @@
+name: "fuzz-unix"
+description: "run fuzz for x86 and aarch64"
+inputs:
+  timeout:
+    description: "fuzz timeout"
+    required: true
+  cmake_flags:
+    description: "additional cmake flags"
+    required: false
+  cpp_flags:
+    description: "additional c++ flags"
+    required: false
+outputs:
+  log_file:
+    description: "fuzz log"
+    value: ${{ steps.set-output.outputs.log_file }}
+
+runs:
+  using: "composite"
+  steps:
+    - shell: bash
+      id: set-output
+      run: echo "log_file=$(pwd)/build_fuzz/log" >> $GITHUB_OUTPUT
+
+    - shell: bash
+      run: |
+        cmake -B build_fuzz -DVB_ENABLE_DEV_FEATURE=OFF -DENABLE_FUZZ=1 ${{ inputs.cmake_flags }} -DCMAKE_CXX_FLAGS="${{ inputs.cpp_flags }}"
+        cmake --build build_fuzz --target vb_fuzz
+    - shell: bash
+      run: |
+        mkdir -p /dev/shm/wasm-fuzz
+
+    - shell: bash
+      id: timestamp
+      run: echo "time=$(date +%s)" >> $GITHUB_OUTPUT
+
+    - shell: bash
+      run: build_fuzz/bin/vb_fuzz /dev/shm/wasm-fuzz --exit-on-first-error --timeout ${{ inputs.timeout }} 2>&1 | tee ${{ steps.set-output.outputs.log_file }}
+
+    - uses: actions/upload-artifact@v3
+      if: failure()
+      with:
+        name: fuzz_failed_modules-${{ github.run_id }}-${{ steps.timestamp.outputs.time }}
+        path: /dev/shm/wasm-fuzz

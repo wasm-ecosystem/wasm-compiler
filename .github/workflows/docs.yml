@@ -1,0 +1,57 @@
+name: DocCheck
+
+on:
+  pull_request:
+    types: [opened, synchronize, labeled, unlabeled]
+
+concurrency:
+  group: "${{ github.workflow }} @ ${{ github.event.pull_request.head.label || github.head_ref || github.ref }}"
+  cancel-in-progress: true
+
+jobs:
+  check-release-note:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            src-changed:
+              - 'src/**'
+            release-note-changed:
+              - 'RELEASENOTES.md'
+
+      - name: check 'NFC' or 'InternalChange' tag
+        uses: actions/github-script@v7
+        with:
+          result-encoding: string
+          script: |
+            const { SRC_CHANGED, RELEASE_NOTE_CHANGED } = process.env;
+            const { data } = await github.rest.pulls.get({
+              pull_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            })
+            const has_nfc_label = data.labels.some(label => label.name === 'NFC');
+            const has_internal_change_label = data.labels.some(label => label.name === 'InternalChange');
+            console.log(`is src changed: ${SRC_CHANGED}, is release note changed: ${RELEASE_NOTE_CHANGED}, has nfc label: ${has_nfc_label}, has internal change label: ${has_internal_change_label}`);
+            if (SRC_CHANGED == 'true' && RELEASE_NOTE_CHANGED == 'false' && !has_nfc_label && !has_internal_change_label) {
+              process.exit(-1);
+            }
+        env:
+          SRC_CHANGED: ${{ steps.changes.outputs.src-changed }}
+          RELEASE_NOTE_CHANGED: ${{ steps.changes.outputs.release-note-changed }}
+
+      - uses: CDCFW/actions-comment-pull-request@v2
+        if: failure()
+        with:
+          message: |
+            :x: release-note-check: please update release note or add 'NFC' or 'InternalChange' in PR.
+          comment_tag: release-note-check
+      - uses: CDCFW/actions-comment-pull-request@v2
+        if: success()
+        with:
+          message: |
+            :white_check_mark: release-note-check.
+          comment_tag: release-note-check

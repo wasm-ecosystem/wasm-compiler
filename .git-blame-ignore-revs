@@ -1,0 +1,20 @@
+b421ed08c4f69002c0457436f96985c24e872297  # Fix coverity check
+94a786aebf6ae8b1332712e07fe9d239be67f092  # Fix coverity check
+d9552aba2bf5f479593db101aecbf9c3f43ddcea  # Fix coverity check
+17dbdef2c3b5b055652ff85c2125a57cb8e00632  # Fix coverity check
+99385d22fe64b08bffde5ac4fc8603cac09c1a0d  # Fix coverity check
+149dd147af23edce8f8d185742b87b8e01373ed9  # Fix coverity check
+136e0e05815a98c6ac29ee1290fce577a3b5f538  # Fix coverity check
+c41c554e073f0d46ee82a6e486e5c9479f04536c  # Reformat
+981880ed885e6da00434865af2a0a585d23ed8da  # Klocwork
+157fb00a201931da087672f313ad183c5281aa48  # Klocwork
+3ff326fa8302b9157622023ab5c876299ed2d5a3  # Klocwork
+eb3f62fc4ca48d08032835ab67e9a9742914b008  # Klocwork
+90a4299387f706b515a4f63fc95b0eebbd057a8a  # Klocwork
+21ee25f05189ef2226bc7b646466536ee7ac835d  # Klocwork
+bafaf5daec1160de485308eb55a0f0f311275739  # Klocwork
+df99bac3101b414cc555f976fa1b629b7e2f5a1f  # Klocwork
+88d1abeaf8914a7ac5ba9ff651672ed4851e73b1  # Klocwork
+ef1d3e2d8264b212b1baa03af2946a25b1a2b31e  # Format all codes using clang-format again.
+ac3fe3bb19b60e4249934997ef208521e231e6c9  # Revert format
+90b232f4860e96d83641466a8c8ede1a77c19164  # Format 

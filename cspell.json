@@ -1,0 +1,13 @@
+{
+    "language": "en",
+    "dictionaryDefinitions": [
+        {
+            "name": "project-words",
+            "path": "cspell/project-words.txt",
+            "addWords": true
+        }
+    ],
+    "dictionaries": [
+        "project-words"
+    ]
+}

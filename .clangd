@@ -1,0 +1,8 @@
+Diagnostics:
+  ClangTidy:
+    FastCheckFilter: None
+---
+If:
+  PathMatch: .*_cc.cpp
+Index:
+  Background: Skip

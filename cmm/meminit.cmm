@@ -1,0 +1,171 @@
+; --------------------------------------------------------------------------------
+; @Title: Helper script to initiliaze memories of TC499XE-Astep
+; @Description:
+;   DO meminit.cmm "pattern"
+;      Intializes all memories matching pattern. Initialization is done throug VMT.
+;   
+;   Example: 
+;      DO meminit.cmm "CPU*.PSPR"
+;      Initializes all program scratch pad RAMs
+
+; @Keywords: AURIX, TC4xx, Infineon, memory
+; @Author: MEI
+; @Board: TriBoard-TC499a
+; @Chip: TC499XE-Astep
+; @Copyright: (C) 1989-2021 Lauterbach GmbH, licensed for use with TRACE32(R) only
+; --------------------------------------------------------------------------------
+; $Id: meminit.cmm 19009 2022-02-28 15:20:20Z meick $
+
+
+PARAMETERS &parNamesPat
+
+IF !SYStem.Up()
+(
+    PRINT %ERROR "script requires system to be up"
+    ENDDO
+)
+IF STATE.RUN()
+(
+    PRINT %ERROR "script requires system to be stopped"
+    ENDDO
+)
+
+LOCAL &namePat &oneMatched &accenCs
+&namePat="&parNamesPat"
+&oneMatched=FALSE()
+&accenCs=";"
+
+GOSUB InitIfNameMatches "CPU0.DSPR" "0." "0."
+GOSUB InitIfNameMatches "CPU0.PSPR" "0." "2."
+GOSUB InitIfNameMatches "CPU0.DLMU" "0." "4."
+
+GOSUB InitIfNameMatches "CPU1.DSPR" "0." "5."
+GOSUB InitIfNameMatches "CPU1.PSPR" "0." "7."
+GOSUB InitIfNameMatches "CPU1.DLMU" "0." "9."
+
+GOSUB InitIfNameMatches "CPU2.DSPR" "0." "10."
+GOSUB InitIfNameMatches "CPU2.PSPR" "0." "12."
+GOSUB InitIfNameMatches "CPU2.DLMU" "0." "14."
+
+GOSUB InitIfNameMatches "CPU3.DSPR" "0." "15."
+GOSUB InitIfNameMatches "CPU3.PSPR" "0." "17."
+GOSUB InitIfNameMatches "CPU3.DLMU" "0." "19."
+
+GOSUB InitIfNameMatches "CPU4.DSPR" "1." "20."
+GOSUB InitIfNameMatches "CPU4.PSPR" "1." "22."
+GOSUB InitIfNameMatches "CPU4.DLMU" "1." "24."
+
+GOSUB InitIfNameMatches "CPU5.DSPR" "1." "25."
+GOSUB InitIfNameMatches "CPU5.PSPR" "1." "27."
+GOSUB InitIfNameMatches "CPU5.DLMU" "1." "29."
+
+GOSUB InitIfNameMatches "LMU0" "3." "0."
+GOSUB InitIfNameMatches "LMU1" "3." "1."
+GOSUB InitIfNameMatches "LMU2" "3." "2."
+GOSUB InitIfNameMatches "LMU3" "3." "3."
+GOSUB InitIfNameMatches "LMU4" "3." "4."
+GOSUB InitIfNameMatches "LMU5" "3." "5."
+GOSUB InitIfNameMatches "LMU6" "3." "6."
+GOSUB InitIfNameMatches "LMU7" "3." "7."
+
+GOSUB InitIfNameMatches "SCR.XRAM" "4." "6."
+GOSUB InitIfNameMatches "SCR.RAMINT" "4." "7."
+
+GOSUB InitCsIfNameMatches "CPUcs.DSPR" "4." "0."
+GOSUB InitCsIfNameMatches "CPUcs.PSPR" "4." "2."
+GOSUB InitCsIfNameMatches "CPUcs.DLMU" "4." "4."
+
+IF !(&oneMatched)
+(
+  PRINT %Error "The pattern &namePat did not match any memory"
+)
+
+
+ENDDO
+
+InitIfNameMatches:
+(
+    PRIVATE &vmtBase &memtestAddr &sshBase
+    PARAMETERS &name &vmt &ssh
+    
+    IF !STRing.COMPARE("&name","&namePat")
+        RETURN
+        
+    &oneMatched=TRUE()
+            
+    &vmtBase=0xF0400000+(0x20000*&vmt)
+    
+    &memtestAddr=&vmtBase+0x80
+    &sshBase=&vmtBase+0x1000+(&ssh*0x200)
+    
+    GOSUB InitOne "&memtestAddr" "&sshBase" "&ssh"
+    
+    RETURN
+)
+
+InitOne:
+(
+    PRIVATE &memtestBackup &mcontrolAddr &mcontrolBackup &mstatusAddr &mstatus
+    PARAMETERS &memtestAddr &sshBase &ssh
+    
+    &memtestBackup=Data.Long(ANC:&memtestAddr)
+    Data.Set ANC:&memtestAddr %Long (&memtestBackup)|(0x1<<&ssh)
+    
+    &mcontrolAddr=&sshBase+0xC
+    &mstatusAddr=&sshBase+0x10
+    &mcontrolBackup=Data.Long(ANC:&mcontrolAddr)
+    // set SRAM_CLR
+    Data.Set ANC:&mcontrolAddr %Long (&mcontrolBackup)|(0x1<<15.)
+    // set START
+    Data.Set ANC:&mcontrolAddr %Long (&mcontrolBackup)|(0x1<<15.)|(0x1)
+    // wait for MSTATUS.DONE = 0
+    &mstatus=Data.Long(ANC:&mstatusAddr)
+    WHILE ((&mstatus)&0x1)!=0x0
+    (
+        &mstatus=Data.Long(ANC:&mstatusAddr)
+    )
+    // reset START
+    Data.Set ANC:&mcontrolAddr %Long (&mcontrolBackup)|(0x1<<15.)    
+    // wait for MSTATUS.DONE = 1
+    &mstatus=Data.Long(ANC:&mstatusAddr)
+    WHILE ((&mstatus)&0x1)!=0x1
+    (
+        &mstatus=Data.Long(ANC:&mstatusAddr)
+    )    
+    // reset SRAM_CLR
+    Data.Set ANC:&mcontrolAddr %Long (&mcontrolBackup)
+    
+    Data.Set &memtestAddr %Long &memtestBackup
+    
+    RETURN
+)
+
+InitCsIfNameMatches:
+(
+    PRIVATE &vmtBase &memtestAddr &sshBase &accessOk
+    PARAMETERS &name &vmt &ssh
+    
+    IF !STRing.COMPARE("&name","&namePat")
+        RETURN
+        
+    &oneMatched=TRUE()
+    
+    &vmtBase=0xF0400000+(0x20000*&vmt)
+    
+    DO ~~~~/acquire_cbs_access.cmm "CPUcs" "ANC:(&vmtBase+0x2C)" "ANC:(&vmtBase+0x68)" "ANC:(&vmtBase+0x60)"
+    RETURNVALUES &accessOk    
+    
+    IF !(&accessOk)
+    (
+        PRINT %ERROR "cannot init &name: no access to VMT&(vmt)."
+        RETURN
+    )
+    &accenCs="&(accenCs)&(vmt);"
+      
+    &memtestAddr=&vmtBase+0xB4
+    &sshBase=&vmtBase+0x11000+(&ssh*0x200)        
+    
+    GOSUB InitOne "&memtestAddr" "&sshBase" "&ssh"
+        
+    RETURN
+)

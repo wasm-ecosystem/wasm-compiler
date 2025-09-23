@@ -1,0 +1,74 @@
+name: Bench
+
+on:
+  pull_request:
+
+concurrency:
+  group: "${{ github.workflow }} @ ${{ github.event.pull_request.head.label || github.head_ref || github.ref }}"
+  cancel-in-progress: true
+
+jobs:
+  run-bench:
+    runs-on: [atc-ubuntu-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - name: install deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install wabt -y --no-install-recommends
+
+      - name: run benchmark for merge commit
+        id: merge-bench
+        uses: ./.github/actions/bench
+        with:
+          ref: ${{ github.ref }}
+
+      - name: run benchmark for base commit
+        id: base-bench
+        uses: ./.github/actions/bench
+        with:
+          ref: ${{ github.base_ref }}
+
+      - name: create diff
+        id: create-diff
+        run: |
+          echo "${{ steps.base-bench.outputs.result }}" > base.txt
+          echo "${{ steps.base-bench.outputs.detail }}" > base_detail.txt
+
+          echo "${{ steps.merge-bench.outputs.result }}" > merge.txt
+          echo "${{ steps.merge-bench.outputs.detail }}" > merge_detail.txt
+
+          echo "result_diff<<EOF" >> $GITHUB_OUTPUT
+          echo "$(diff base.txt merge.txt)" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+          echo "detail_diff<<EOF" >> $GITHUB_OUTPUT
+          echo "$(diff base_detail.txt merge_detail.txt)" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - uses: CDCFW/actions-comment-pull-request@v2
+        with:
+          message: |
+            ```diff
+            ${{ steps.create-diff.outputs.result_diff }}
+            ```
+            <details>
+
+            <summary>detail report</summary>
+
+            # diff
+
+            ```diff
+            ${{ steps.create-diff.outputs.detail_diff }}
+            ```
+
+            # before
+
+            ${{ steps.base-bench.outputs.detail }}
+
+            # after
+
+            ${{ steps.merge-bench.outputs.detail }}
+
+            </details>
+          comment_tag: bench

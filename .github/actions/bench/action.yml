@@ -1,0 +1,66 @@
+name: "bench"
+description: "run benchmark"
+inputs:
+  ref:
+    description: "wasm-compiler commit sha"
+    required: true
+outputs:
+  result:
+    description: "result"
+    value: ${{ steps.load_result.outputs.result }}
+  detail:
+    description: "detail"
+    value: ${{ steps.load_result.outputs.detail }}
+
+runs:
+  using: "composite"
+  steps:
+    # setup python 3.13
+    - uses: actions/setup-python@v5
+      with:
+        python-version: "3.13"
+    - shell: bash
+      name: activate virtual environment
+      run: |
+        set -ex
+        python3 -m venv ${GITHUB_WORKSPACE}/venv
+        source ${GITHUB_WORKSPACE}/venv/bin/activate
+        echo "VIRTUAL_ENV=${VIRTUAL_ENV}" >> $GITHUB_ENV
+        echo "${VIRTUAL_ENV}/bin" >> $GITHUB_PATH
+    - shell: bash
+      name: install deps
+      run: |
+        pip3 install wasmtime==35.0.0
+    # prepare repo
+    - uses: actions/checkout@v4
+      with:
+        ref: ${{ inputs.ref }}
+        submodules: true
+        path: build_bench_tmp/wasm-compiler
+    - uses: actions/checkout@v4
+      with:
+        repository: "CDCFW/wasm-compiler-benchmark"
+        path: build_bench_tmp/wasm-compiler-benchmark
+    - shell: bash
+      run: make noimports
+      working-directory: build_bench_tmp/wasm-compiler-benchmark/compilation
+
+    - shell: bash
+      name: binding
+      run: python3 build_bench_tmp/wasm-compiler/binding/binding_all.py --venv-dir ${GITHUB_WORKSPACE}/venv
+    - shell: bash
+      name: benchmark
+      run: python3 build_bench_tmp/wasm-compiler/scripts/run_analysis.py -i build_bench_tmp/wasm-compiler-benchmark -o result.txt --detail detail.txt
+    - shell: bash
+      run: cat result.txt && cat detail.txt
+    - shell: bash
+      id: load_result
+      run: |
+        set -ex
+        echo "result<<EOF" >> $GITHUB_OUTPUT
+        echo "$(cat result.txt)" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+
+        echo "detail<<EOF" >> $GITHUB_OUTPUT
+        echo "$(cat detail.txt)" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT

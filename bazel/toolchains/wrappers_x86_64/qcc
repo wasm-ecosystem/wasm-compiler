@@ -1,0 +1,18 @@
+#!/usr/bin/bash
+
+${QNX_HOST}/usr/bin/qcc $@
+
+cursor=0
+
+for arg in "$@"; do
+
+    # Upon finding the compiler flag
+    if [[ "$arg" = "-o" ]]; then
+       cursor=1
+    elif (($cursor == 1)); then
+        
+        dep_file="${arg%.o}.d"
+        touch $dep_file
+        cursor=2
+    fi
+done

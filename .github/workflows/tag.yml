@@ -1,0 +1,23 @@
+name: Tag for master
+
+on:
+  push:
+    branches: ["master", "release/*"]
+
+jobs:
+  TagForMaster:
+    runs-on: [atc-ubuntu-latest]
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: -1
+          token: ${{ secrets.TECH_USER_ATC_GITHUB_TOKEN }}
+      - name: tag
+        run: |
+          version_info=$(sed -n '/^##/{s/^##//;s/ //g;p;q;}' RELEASENOTES.md)
+          new_tag_name=$version_info
+          echo "new_tag_name will be: $new_tag_name"
+          git config user.name '${{ vars.INTERNAL_TECH_USER_NAME }}'
+          git config user.email '${{ vars.INTERNAL_TECH_USER_EMAIL }}'
+          git tag -a $new_tag_name -m '[GITHUB CI] push new tag'
+          git push origin HEAD:${{ github.ref_name }} $new_tag_name
