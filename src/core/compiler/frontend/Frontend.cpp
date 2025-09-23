@@ -1524,7 +1524,7 @@ void Frontend::parseCodeSection() {
             }
             moduleInfo_.fnc.lastBlockReference = lastBlock->data.blockInfo.prevBlockReference;
 
-            static_cast<void>(stack_.erase(lastBlock));
+            popBlockAndPushReturnValues(lastBlock);
             if (blockHasReturnElement && originalFrameUnreachable) {
               pushDummyResultOnUnreachable(blockSigIndex);
             }
@@ -1562,7 +1562,7 @@ void Frontend::parseCodeSection() {
             moduleInfo_.fnc.lastBlockReference = lastBlock;
             originalFrameUnreachable = currentFrameIsUnreachable();
 
-            static_cast<void>(stack_.erase(ifBlock));
+            popBlockAndPushReturnValues(ifBlock);
 
             for (Stack::iterator it{stack_.last()}; it != outerIfBlock; --it) {
               common_.addReference(it);
@@ -1588,7 +1588,7 @@ void Frontend::parseCodeSection() {
           uint32_t const lastBlockResultsStackStartOffset{lastBlock->data.blockInfo.blockResultsStackOffset};
           moduleInfo_.fnc.lastBlockReference = lastBlock->data.blockInfo.prevBlockReference;
 
-          static_cast<void>(stack_.erase(lastBlock));
+          popBlockAndPushReturnValues(lastBlock);
 
           // push back return element from block, always reachable
           if (blockHasReturnElement) {
@@ -3198,5 +3198,18 @@ void Frontend::startCompilation(bool const forceHighRegisterPressureForTesting) 
     compiler_.getAnalytics()->notifySerializationDone(memory_.size());
   }
 #endif
+}
+
+void Frontend::popBlockAndPushReturnValues(Stack::iterator const blockIt) VB_NOEXCEPT {
+  if (blockIt != stack_.last()) {
+    Stack::SubChain const returnValues{stack_.split(blockIt)};
+    // GCOVR_EXCL_START
+    assert(blockIt == stack_.last());
+    // GCOVR_EXCL_STOP
+    stack_.pop();
+    stack_.contactAtEnd(returnValues);
+  } else {
+    stack_.pop();
+  }
 }
 } // namespace vb

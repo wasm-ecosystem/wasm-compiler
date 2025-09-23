@@ -43,6 +43,41 @@ public:
   using iterator = List_iterator<StackElement>;             ///< iterator
   using const_iterator = List_const_iterator<StackElement>; ///< const_iterator
 
+  /// @brief SubChain of the stack
+  class SubChain final {
+  public:
+    /// @brief Constructor
+    /// @param begin Begin iterator of the subchain
+    /// @param end End iterator of the subchain
+    inline SubChain(iterator const begin, iterator const end) VB_NOEXCEPT : begin_(begin), end_(end), size_(1U) {
+      iterator it{begin};
+      while (it != end) {
+        ++it;
+        size_++;
+      }
+    }
+
+    /// @brief Returns the size of the subchain
+    inline uint32_t size() const VB_NOEXCEPT {
+      return size_;
+    }
+
+    /// @brief Returns the begin iterator of the subchain
+    inline iterator begin() const VB_NOEXCEPT {
+      return begin_;
+    }
+
+    /// @brief Returns the end iterator of the subchain
+    inline iterator end() const VB_NOEXCEPT {
+      return end_;
+    }
+
+  private:
+    iterator begin_; ///< Begin iterator of the subchain
+    iterator end_;   ///< End iterator of the subchain
+    uint32_t size_;  ///< Size of the subchain
+  };
+
   ///
   /// @brief Default constructor
   ///
@@ -131,6 +166,14 @@ public:
   /// @param ptr Pointer points to the StackElement
   /// @return An valid iterator if the element is on the stack, empty iterator otherwise
   iterator find(StackElement const *const ptr) VB_NOEXCEPT;
+
+  /// @brief split a sub chain from [position.next, end)
+  /// @param position Iterator to split the stack at
+  SubChain split(iterator const position) VB_NOEXCEPT;
+
+  /// @brief contact a sub chain at the end of the stack
+  /// @param chain SubChain to contact at the end of the stack
+  void contactAtEnd(SubChain const &chain) VB_NOEXCEPT;
 
   ///
   /// @brief Init the stack, allocate the sentinel node

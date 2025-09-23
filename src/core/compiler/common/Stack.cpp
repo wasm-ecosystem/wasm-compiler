@@ -77,4 +77,33 @@ Stack::iterator Stack::find(StackElement const *const ptr) VB_NOEXCEPT {
   return Stack::iterator();
 }
 
+Stack::SubChain Stack::split(iterator const position) VB_NOEXCEPT {
+  // GCOVR_EXCL_START
+  assert(size_ > 0U);
+  // GCOVR_EXCL_STOP
+  SubChain const subChain{position.next(), last()};
+
+  position.current_->next = sentinel_;
+  subChain.begin().current_->prev = nullptr;
+  sentinel_->prev = position.current_;
+
+  size_ -= subChain.size();
+
+  return subChain;
+}
+
+void Stack::contactAtEnd(SubChain const &chain) VB_NOEXCEPT {
+  Stack::iterator const chainStart{chain.begin()};
+  Stack::iterator const chainEnd{chain.end()};
+
+  node *const originalLast{sentinel_->prev};
+  originalLast->next = chainStart.current_;
+  chainStart.current_->prev = originalLast;
+
+  sentinel_->prev = chainEnd.current_;
+  chainEnd.current_->next = sentinel_;
+
+  size_ += chain.size();
+}
+
 } // namespace vb

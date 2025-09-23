@@ -298,6 +298,10 @@ private:
   ///
   uint32_t getSigIndexForBlock(WasmType const wasmType) const VB_NOEXCEPT;
 
+  /// @brief Pop a block and push the return values onto the stack
+  /// @param blockIt Iterator to the block to be popped
+  void popBlockAndPushReturnValues(Stack::iterator const blockIt) VB_NOEXCEPT;
+
   BytecodeReader br_;                          ///< Bytecode reader
   Span<NativeSymbol const> const &symbolList_; ///< NativeSymbols that can be imported
   ModuleInfo &moduleInfo_;                     ///< Reference to the ModuleInfo
