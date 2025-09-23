@@ -560,6 +560,11 @@ std::string DisassemblerImpl::disassemble(uint8_t const *const binaryData, size_
   consumeU32("Size of link data");                                                                                                       // OPBVMET0
   printSectionInfo("More Info");
 
+  uint32_t const tableEntryFunctionCount = consumeU32("Number of function table entries");
+  for (size_t i = 0; i < tableEntryFunctionCount; i++) {
+    consumeU32("Wrapper function offset in binary module");
+  }
+
   //
   // Table
   //
@@ -586,19 +591,15 @@ std::string DisassemblerImpl::disassemble(uint8_t const *const binaryData, size_
   //
   // Exported Functions
   //
-  consumeU32("Section size (excl. this value)");                                                 // OPBVEF13
-  uint32_t const numExportedFunctions = consumeU32("Number of exported functions");              // OPBVEF12
-  for (size_t i = 0; i < numExportedFunctions; i++) {                                            //
-    uint32_t const numFncTableEntries = consumeU32("Number of table entries for this function"); // OPBVEF11
-    for (size_t j = 0; j < numFncTableEntries; j++) {
-      consumeU32("Table index");
-    } // OPBVEF10
-    consumeU32("WebAssembly function index");                                 // OPBVEF9
-    uint32_t const exportNameLength = consumeU32("Export name length");       // OPBVEF8
-    consumeStr(exportNameLength, "Export name, padded to 4B");                // OPBVEF7, OPBVEF6
-    uint32_t const signatureLength = consumeU32("Function signature length"); // OPBVEF5
-    consumeStr(signatureLength, "Function signature, padded to 4B");          // OPBVEF4, OPBVEF3
-    uint32_t const callWrapperSize = consumeU32("Function wrapper size");     // OPBVEF2
+  consumeU32("Section size (excl. this value)");                                    // OPBVEF13
+  uint32_t const numExportedFunctions = consumeU32("Number of exported functions"); // OPBVEF12
+  for (size_t i = 0; i < numExportedFunctions; i++) {                               //
+    consumeU32("WebAssembly function index");                                       // OPBVEF9
+    uint32_t const exportNameLength = consumeU32("Export name length");             // OPBVEF8
+    consumeStr(exportNameLength, "Export name, padded to 4B");                      // OPBVEF7, OPBVEF6
+    uint32_t const signatureLength = consumeU32("Function signature length");       // OPBVEF5
+    consumeStr(signatureLength, "Function signature, padded to 4B");                // OPBVEF4, OPBVEF3
+    uint32_t const callWrapperSize = consumeU32("Function wrapper size");           // OPBVEF2
     consumeBin(callWrapperSize, "Function wrapper, translates C++ ABI to Wasm ABI, padded to 4B", 2,
                true); // OPBVEF1, OPBVEF0
   }

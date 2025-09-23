@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 #include <array>
 #include <atomic>
 #include <chrono>
@@ -90,9 +89,6 @@ void iterateExportedFunctions(
   uint32_t const numExportedFunctions = vb::readNextValue<uint32_t>(&stepPtr);
 
   for (uint32_t i = 0; i < numExportedFunctions; i++) {
-    uint32_t const numTableIndices = vb::readNextValue<uint32_t>(&stepPtr);
-    stepPtr -= numTableIndices * 4;
-
     uint32_t const fncIndex = vb::readNextValue<uint32_t>(&stepPtr);
     static_cast<void>(fncIndex);
 

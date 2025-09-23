@@ -201,6 +201,10 @@ private:
   ///
   void serializeTableBinarySection();
 
+  /// @brief Serialize the table entry functions section in the output binary. It sorts an array of offset to BinaryModule end of all table C++ to
+  /// Wasm wrapper functions
+  void serializeTableEntryFunctionWrapperSection();
+
   ///
   /// @brief Serialize the module metadata section in the output binary
   ///

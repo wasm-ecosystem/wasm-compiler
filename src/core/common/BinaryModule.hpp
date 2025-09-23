@@ -57,6 +57,14 @@ public:
   inline uint8_t const *getEndAddress() const VB_NOEXCEPT {
     return endAddress_;
   }
+
+  ///@brief convert offset to start to offset to end
+  ///@param offsetToStart offset to start
+  ///@return offset to end
+  inline uint32_t offsetToEnd(uint32_t const offsetToStart) const VB_NOEXCEPT {
+    return static_cast<uint32_t>(pSubAddr(endAddress_, startAddress_)) - offsetToStart;
+  }
+
   ///@see moduleBinaryLength_
   inline uint32_t getModuleBinaryLength() const VB_NOEXCEPT {
     return moduleBinaryLength_;
@@ -166,10 +174,21 @@ public:
     return pCast<TrapFncPtr>(trapFncAddress);
   }
 
+  /// @brief get the start address of table entry functions(the C++ to Wasm wrapper function) pointer array
+  inline uint8_t const *getTableEntryFunctionsStart() const VB_NOEXCEPT {
+    return tableEntryFunctionsStart_;
+  }
+
+  /// @brief get the size of Wasm table
+  inline uint32_t getTableSize() const VB_NOEXCEPT {
+    return tableSize_;
+  }
+
 private:
   uint8_t const *startAddress_;                           ///< Start address of the Binary Module
   uint8_t const *endAddress_;                             ///< End address of the Binary Module
   uint8_t const *landingPadAddress_;                      ///< Start address of landing pad
+  uint8_t const *tableEntryFunctionsStart_;               ///< Start address of table entry functions section exclude the size field
   uint8_t const *tableStart_;                             ///< Start address of Table
   uint8_t const *linkStatusStart_;                        ///< Start address of Link Status of Imported Functions
   uint8_t const *exportedFunctionsEnd_;                   ///< End address of exported functions section exclude the size field
@@ -185,6 +204,7 @@ private:
   uint32_t linkDataLength_;                               ///< Sum of byte-widths of variables kept in the link data.
   uint32_t moduleBinaryLength_;                           ///< Length of the binary module exclude the size of length field itself
   uint32_t stacktraceEntryCount_;                         ///< Stacktrace record count
+  uint32_t tableSize_;                                    ///< size of Wasm table
   bool debugMode_;                                        ///< If the the Binary Module is debug build or release build
 };
 

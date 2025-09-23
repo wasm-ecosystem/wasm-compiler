@@ -667,9 +667,6 @@ uint32_t Runtime::findExportedFunctionByName(char const *const name, size_t name
   uint32_t const numExportedFunctions{readNextValue<uint32_t>(&exportedFunctionCursor)};
 
   for (uint32_t i{0U}; i < numExportedFunctions; i++) {
-    uint32_t const numTableIndices{readNextValue<uint32_t>(&exportedFunctionCursor)};
-    exportedFunctionCursor = pSubI(exportedFunctionCursor, numTableIndices * 4U);
-
     uint32_t const fncIndex{readNextValue<uint32_t>(&exportedFunctionCursor)};
     static_cast<void>(fncIndex);
 
@@ -692,38 +689,14 @@ uint32_t Runtime::findExportedFunctionByName(char const *const name, size_t name
 }
 
 uint32_t Runtime::findFunctionByExportedTableIndex(uint32_t const tableIndex) const {
-  uint8_t const *exportedFunctionsCursor{binaryModule_.getExportedFunctionsEnd()};
-  uint32_t const numExportedFunctions{readNextValue<uint32_t>(&exportedFunctionsCursor)};
+  uint32_t const *const tableEntryStart{vb::pCast<uint32_t const *>(binaryModule_.getTableEntryFunctionsStart())};
 
-  for (uint32_t i{0U}; i < numExportedFunctions; i++) {
-    uint32_t const numTableIndices{readNextValue<uint32_t>(&exportedFunctionsCursor)};
-
-    uint32_t foundTableIndex{0xFF'FF'FF'FFU};
-    for (uint32_t j{0U}; j < numTableIndices; j++) {
-      uint32_t const evalTableIndex{readNextValue<uint32_t>(&exportedFunctionsCursor)};
-      if (evalTableIndex == tableIndex) {
-        foundTableIndex = evalTableIndex;
-      }
+  if (tableIndex < binaryModule_.getTableSize()) {
+    uint32_t const functionOffsetToStart{tableEntryStart[tableIndex]};
+    if (functionOffsetToStart != 0xFF'FF'FF'FFU) {
+      uint32_t const offsetToEnd{binaryModule_.offsetToEnd(functionOffsetToStart)};
+      return offsetToEnd;
     }
-
-    uint32_t const foundFunctionIndex{readNextValue<uint32_t>(&exportedFunctionsCursor)};
-    static_cast<void>(foundFunctionIndex);
-
-    uint32_t const exportNameLength{readNextValue<uint32_t>(&exportedFunctionsCursor)};
-    exportedFunctionsCursor = pSubI(exportedFunctionsCursor, roundUpToPow2(exportNameLength, 2U));
-
-    char const *const exportName{pCast<char const *>(exportedFunctionsCursor)};
-    static_cast<void>(exportName);
-
-    if (foundTableIndex != 0xFF'FF'FF'FFU) { //
-      return static_cast<uint32_t>(pSubAddr(binaryModule_.getEndAddress(), exportedFunctionsCursor));
-    }
-
-    uint32_t const signatureLength{readNextValue<uint32_t>(&exportedFunctionsCursor)};
-    exportedFunctionsCursor = pSubI(exportedFunctionsCursor, roundUpToPow2(signatureLength, 2U));
-
-    uint32_t const functionCallWrapperSize{readNextValue<uint32_t>(&exportedFunctionsCursor)};
-    exportedFunctionsCursor = pSubI(exportedFunctionsCursor, roundUpToPow2(functionCallWrapperSize, 2U));
   }
 
   throw RuntimeError(ErrorCode::Function_not_found);

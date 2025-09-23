@@ -86,8 +86,6 @@ Example Data    				| Size         	| Description
 ``` ```							| N				| Padding to align to 4B (OPBVEF7)
 ```00 00 00 08```				| 4 (uint32_t)  | Export name length (OPBVEF8)
 ```00 00 00 00```				| 4 (uint32_t)	| Function index (OPBVEF9)
-```00 00 00 00```				| 4 (uint32_t)	| Exported table index (OPBVEF10)
-```00 00 00 00```				| 4 (uint32_t)	| Number of table indices for this function (OPBVEF11)
 ```00 00 00 01```				| 4 (uint32_t)  | Number of exported functions (OPBVEF12)
 ```00 00 00 32```				| 4 (uint32_t)  | Section size excl. this (size) (OPBVEF13)
 &nbsp;|| **Link Status of Imported Functions**
@@ -104,6 +102,10 @@ Example Data    				| Size         	| Description
 ```00 00 00 00```				| 4 (uint32_t)  | Entry 3: Offset from here (OPBVT0)
 ```00 00 00 00```				| 4 (uint32_t)  | Entry 3: Functype (OPBVT1)
 ```00 00 00 03```				| 4 (uint32_t)  | Number of entries (OPBVT2)
+&nbsp;|| **Table Function Entry for C++**
+```00 00 00 00```				| 4 (uint32_t)  | Entry 1: FunctionOffset (OBBTE1)
+```00 00 00 00```				| 4 (uint32_t)  | Entry 2: FunctionOffset (OBBTE1)
+```00 00 00 03```				| 4 (uint32_t)  | Number of entries (OBBTE0)
 &nbsp;|| **More Info**
 ```00 00 00 0c```				| 4 (uint32_t)  | Sum of byte-widths of variables kept in the link data. This takes into account globals that are dynamically imported (where the pointer has to be stored in RAM dynamically), mutable globals that are defined in the module and functions that are dynamically imported (OPBVMET0)
 ```00 00 00 01```				| 4 (uint32_t)  | Offset from here for the landing pad, 0xFFFFFFFF = no landing pad (OPBVMET1)

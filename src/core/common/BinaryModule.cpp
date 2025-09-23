@@ -14,6 +14,7 @@
 /// See the License for the specific language governing permissions and
 /// limitations under the License.
 ///
+#include <cassert>
 #include <cstdint>
 
 #include "BinaryModule.hpp"
@@ -56,9 +57,20 @@ void BinaryModule::init(Span<uint8_t const> const &module) {
   }
 
   linkDataLength_ = readNextValue<uint32_t>(&stepPtr); // OPBVMET0;
+  // Table Function Entry for C++ section
+  uint32_t const numTableFunctionEntries{readNextValue<uint32_t>(&stepPtr)};                   // OBBTE0
+  stepPtr = pSubI(stepPtr, numTableFunctionEntries * static_cast<uint32_t>(sizeof(uint32_t))); // Skip table function entries (OBBTE1)
+  tableEntryFunctionsStart_ = stepPtr;
+
   // Table section
   uint32_t const numTableEntries{readNextValue<uint32_t>(&stepPtr)}; // OPBVT2
-  stepPtr = pSubI(stepPtr, numTableEntries * (4U + 4U));             // Skip table entries (OPBVT0 + OPBVT1)
+
+  // GCOVR_EXCL_START
+  assert((numTableFunctionEntries == numTableEntries) && "Mismatch of number of table entries");
+  // GCOVR_EXCL_STOP
+  tableSize_ = numTableEntries;
+
+  stepPtr = pSubI(stepPtr, numTableEntries * (4U + 4U)); // Skip table entries (OPBVT0 + OPBVT1)
   tableStart_ = stepPtr;
   // Link Status section
   uint32_t const numLinkStatusEntries{readNextValue<uint32_t>(&stepPtr)};      // OPBILS3
@@ -71,7 +83,7 @@ void BinaryModule::init(Span<uint8_t const> const &module) {
   uint32_t const exportedFunctionsSectionSize{readNextValue<uint32_t>(&stepPtr)}; // OPBVEF12
   exportedFunctionsEnd_ = stepPtr;
   // Skip exported functions (OPBVEF0, OPBVEF1, OPBVEF2, OPBVEF3, OPBVEF4,
-  // OPBVEF5, OPBVEF6, OPBVEF7, OPBVEF8, OPBVEF9, OPBVEF10, OPBVEF11, OPBVEF12,
+  // OPBVEF5, OPBVEF6, OPBVEF7, OPBVEF8, OPBVEF9, OPBVEF12,
   // OPBVEF13)
   stepPtr = pSubI(stepPtr, exportedFunctionsSectionSize);
 

@@ -685,15 +685,16 @@ void Frontend::parseTableSection() {
 
     // Initialize space in memory for storing all table elements, even if not
     // all table elements are defined
-    moduleInfo_.tableElements.setOffset(memory_.alignForType<uint32_t>(), memory_);
-    memory_.step(moduleInfo_.tableInitialSize * static_cast<uint32_t>(sizeof(uint32_t)));
+    moduleInfo_.tableElements.setOffset(memory_.alignForType<ModuleInfo::TableElement>(), memory_);
+    memory_.step(moduleInfo_.tableInitialSize * static_cast<uint32_t>(sizeof(ModuleInfo::TableElement)));
     for (uint32_t j{0U}; j < moduleInfo_.tableInitialSize; j++) {
       // Dummy (unknown) function index, initialize all elements with
       // unknownValues so they can later be differentiated from an actual
       // function index without needing another bool flag determining whether
       // the value has been set
       constexpr uint32_t unknownValue{0xFFFFFFFFU};
-      moduleInfo_.tableElements[j] = unknownValue;
+      moduleInfo_.tableElements[j].fncIndex = unknownValue;
+      moduleInfo_.tableElements[j].exportWrapperOffset = unknownValue;
     }
   }
 }
@@ -998,7 +999,7 @@ void Frontend::parseElementSection() {
         throw ValidationException(ErrorCode::Function_index_out_of_range);
       }
 
-      moduleInfo_.tableElements[offset + j] = elementFunctionIndex;
+      moduleInfo_.tableElements[offset + j].fncIndex = elementFunctionIndex;
 
       // Produce wrapper for imported functions present in table so they can be
       // indirectly called via the Wasm calling convention, the native Wasm
@@ -2753,12 +2754,9 @@ void Frontend::serializeExportedFunctionBinarySection() {
   uint32_t const sectionStartSize{compiler_.output_.size()};
   uint32_t numberOfExportedFunctions{0U};
 
-  memory_.step(moduleInfo_.tableInitialSize);
-  uint8_t *const tableFunctionFinished{pSubI(memory_.ptr(), moduleInfo_.tableInitialSize)};
-  static_cast<void>(std::memset(tableFunctionFinished, 0x00, static_cast<size_t>(moduleInfo_.tableInitialSize)));
   // coverity[autosar_cpp14_a8_5_2_violation]
-  auto const produceWrapper = [this, tableFunctionFinished, &numberOfExportedFunctions](char const *const exportName, uint32_t const exportNameLength,
-                                                                                        uint32_t const fncIndex, bool const isDirectExport) {
+  auto const produceWrapper = [this, &numberOfExportedFunctions](char const *const exportName, uint32_t const exportNameLength,
+                                                                 uint32_t const fncIndex, bool const isDirectExport) {
     // coverity[autosar_cpp14_a5_1_8_violation]
     writePaddedBinaryBlob(FunctionRef<void()>([this, fncIndex]() {
       compiler_.backend_.emitFunctionEntryPoint(fncIndex);
@@ -2778,6 +2776,7 @@ void Frontend::serializeExportedFunctionBinarySection() {
     // NOLINTNEXTLINE(clang-analyzer-core.NonNullParamChecker,clang-analyzer-unix.cstring.NullArg)
     static_cast<void>(std::memcpy(pSubI(compiler_.output_.ptr(), signatureStepLength), signature, static_cast<size_t>(signatureLength)));
     compiler_.output_.write<uint32_t>(signatureLength); // OPBVEF5
+    uint32_t const functionEntryPointOffset{compiler_.output_.size()};
 
     if (exportNameLength > 0U) {
       uint32_t const nameStepLength{roundUpToPow2(exportNameLength, 2U)};
@@ -2788,19 +2787,15 @@ void Frontend::serializeExportedFunctionBinarySection() {
     compiler_.output_.write<uint32_t>(exportNameLength);                           // OPBVEF8
     compiler_.output_.write<uint32_t>(isDirectExport ? fncIndex : 0xFF'FF'FF'FFU); // OPBVEF9
 
-    uint32_t numExportedTableIndices{0U};
     if (moduleInfo_.hasTable && moduleInfo_.tableIsExported) {
       // double loop, maybe optimize that in some
       for (uint32_t j{0U}; j < moduleInfo_.tableInitialSize; j++) {
-        if (moduleInfo_.tableElements[j] == fncIndex) {
-          assert(moduleInfo_.tableElements[j] != 0xFF'FF'FF'FF && "Function index out of range");
-          compiler_.output_.write<uint32_t>(j); // OPBVEF10
-          numExportedTableIndices++;
-          *pAddI(tableFunctionFinished, j) = 0x1U;
+        if (moduleInfo_.tableElements[j].fncIndex == fncIndex) {
+          assert(moduleInfo_.tableElements[j].fncIndex != 0xFF'FF'FF'FF && "Function index out of range");
+          moduleInfo_.tableElements[j].exportWrapperOffset = functionEntryPointOffset;
         }
       }
     }
-    compiler_.output_.write<uint32_t>(numExportedTableIndices); // OPBVEF11
     numberOfExportedFunctions++;
   };
 
@@ -2829,27 +2824,15 @@ void Frontend::serializeExportedFunctionBinarySection() {
   if (moduleInfo_.hasTable && moduleInfo_.tableIsExported) {
     for (uint32_t i{0U}; i < moduleInfo_.tableInitialSize; i++) {
       // Check if already exported
-      if (*pAddI(tableFunctionFinished, i) != 0x00U) {
+      if (moduleInfo_.tableElements[i].exportWrapperOffset != 0xFF'FF'FF'FFU) {
         continue;
       }
-      if (moduleInfo_.tableElements[i] == 0xFF'FF'FF'FFU) {
-        // Empty table element
-        *pAddI(tableFunctionFinished, i) = 0x01U;
+      if (moduleInfo_.tableElements[i].fncIndex == 0xFF'FF'FF'FFU) {
         continue;
       }
-      produceWrapper("", 0U, moduleInfo_.tableElements[i], false);
+      produceWrapper("", 0U, moduleInfo_.tableElements[i].fncIndex, false);
     }
   }
-
-  if (moduleInfo_.hasTable && moduleInfo_.tableIsExported) {
-    for (uint32_t i{0U}; i < moduleInfo_.tableInitialSize; i++) {
-      static_cast<void>(i);
-      assert(tableFunctionFinished[i] != 0x00 && "Missed table function");
-    }
-  }
-
-  // Remove temporarily allocated memory again
-  memory_.resize(memory_.size() - moduleInfo_.tableInitialSize);
 
   compiler_.output_.write<uint32_t>(numberOfExportedFunctions);            // OPBVEF12
   uint32_t const sectionSize{compiler_.output_.size() - sectionStartSize}; //
@@ -2873,7 +2856,7 @@ void Frontend::serializeLinkStatusSection() {
 void Frontend::serializeTableBinarySection() {
   constexpr uint32_t unknownValue{0xFF'FF'FF'FFU};
   for (uint32_t i{0U}; i < moduleInfo_.tableInitialSize; i++) {
-    uint32_t const elementFunctionIndex{moduleInfo_.tableElements[i]};
+    uint32_t const elementFunctionIndex{moduleInfo_.tableElements[i].fncIndex};
 
     if (elementFunctionIndex == unknownValue) {
       // Write function binary offset and signature index
@@ -2895,6 +2878,14 @@ void Frontend::serializeTableBinarySection() {
     }
   }
   compiler_.output_.write<uint32_t>(moduleInfo_.tableInitialSize); // OPBVT2
+}
+
+void Frontend::serializeTableEntryFunctionWrapperSection() {
+  for (uint32_t i{0U}; i < moduleInfo_.tableInitialSize; i++) {
+    uint32_t const functionEnctryOffset{moduleInfo_.tableElements[i].exportWrapperOffset};
+    compiler_.output_.write<uint32_t>(functionEnctryOffset); // OBBTE1
+  }
+  compiler_.output_.write<uint32_t>(moduleInfo_.tableInitialSize); // OBBTE0
 }
 
 // Serialize general metadata about the module, like how much link data
@@ -3191,6 +3182,7 @@ void Frontend::startCompilation(bool const forceHighRegisterPressureForTesting) 
   serializeExportedFunctionBinarySection();
   serializeLinkStatusSection();
   serializeTableBinarySection();
+  serializeTableEntryFunctionWrapperSection();
   serializeModuleMetadataBinarySection();
 
 #if ENABLE_EXTENSIONS

@@ -239,13 +239,19 @@ public:
     return false;
   }
 
-  bool hasTable = false;                 ///< Whether this WebAssembly module has a table
-  bool tableHasSizeLimit = false;        ///< Whether the table of this WebAssembly module has a size limit
-  bool tableIsExported = false;          ///< Whether the table of this WebAssembly module is exported
-  uint32_t tableInitialSize = 0U;        ///< Initial size of the table of this WebAssembly module
-  uint32_t tableMaximumSize = 0U;        ///< Maximum size of the table of this WebAssembly module
-  OffsetHandler<uint32_t> tableElements; ///< Array of the function indices (as uint32_t) of the elements in the table
-                                         ///< of this WebAssembly module
+  /// @brief Definition of an element in the table of this WebAssembly module
+  struct TableElement final {
+    uint32_t fncIndex;            ///< Function index of the function in this WebAssembly module
+    uint32_t exportWrapperOffset; ///< Offset of the C++ to Wasm wrapper function in output binary
+  };
+
+  bool hasTable = false;                     ///< Whether this WebAssembly module has a table
+  bool tableHasSizeLimit = false;            ///< Whether the table of this WebAssembly module has a size limit
+  bool tableIsExported = false;              ///< Whether the table of this WebAssembly module is exported
+  uint32_t tableInitialSize = 0U;            ///< Initial size of the table of this WebAssembly module
+  uint32_t tableMaximumSize = 0U;            ///< Maximum size of the table of this WebAssembly module
+  OffsetHandler<TableElement> tableElements; ///< Array of the function indices (as uint32_t) of the elements in the table
+                                             ///< of this WebAssembly module
 
   bool hasMemory = false;          ///< Whether this WebAssembly module has a linear memory
   bool memoryHasSizeLimit = false; ///< Whether the linear memory of this WebAssembly module has a size limit

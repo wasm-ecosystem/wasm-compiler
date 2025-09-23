@@ -1161,7 +1161,7 @@ void Common::emitIsFunctionLinkedCompileTimeOpt(Stack::iterator const fncTableId
 
   bool linkStatus{false};
   if (functionTableIndex < compiler_.moduleInfo_.tableInitialSize) {
-    uint32_t const fncIndex{compiler_.moduleInfo_.tableElements[functionTableIndex]};
+    uint32_t const fncIndex{compiler_.moduleInfo_.tableElements[functionTableIndex].fncIndex};
     if (fncIndex != 0xFFFFFFFFU) {
       linkStatus = compiler_.moduleInfo_.functionIsLinked(fncIndex);
     } else {
