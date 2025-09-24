@@ -4,7 +4,7 @@
 
 ## Special Thanks
 
-This project was originally created by [Dr. Fabian Scheidl](https://github.com/fscheidl), based on his research and the paper (see [Citation](#citation)).
+This project was originally created by [Fabian Scheidl](https://github.com/fscheidl), based on his research and the paper (see [Citation](#citation)).
 ---
 
 [Getting Started using WARP](docs/GettingStarted.md) | [Information for Contributors](docs/InfoForContributors.md)
