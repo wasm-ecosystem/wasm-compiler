@@ -103,7 +103,9 @@ jobs:
             set -ex
             python3 tests/spectest.py
             mkdir -p build_qnx
-            cd  build_qnx && cmake .. -DCMAKE_TOOLCHAIN_FILE=../cmake/QNXx86_64Toolchain.cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=qcc -DCMAKE_C_COMPILER=qcc -DVB_ENABLE_DEV_FEATURE=OFF -DENABLE_WERROR=1 -DENABLE_SPECTEST=1 -DENABLE_DEMO=1 -DTEST_VARIANTS=1 -DDISABLE_SPECTEST_WAST=1 -DENABLE_FUZZ=1 && \
+            cd build_qnx
+            export QNXLM_LICENSE_FILE=${{ vars.INTERNAL_QNX_LICENSE_SERVER }}
+            cmake .. -DCMAKE_TOOLCHAIN_FILE=../cmake/QNXx86_64Toolchain.cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=qcc -DCMAKE_C_COMPILER=qcc -DVB_ENABLE_DEV_FEATURE=OFF -DENABLE_WERROR=1 -DENABLE_SPECTEST=1 -DENABLE_DEMO=1 -DTEST_VARIANTS=1 -DDISABLE_SPECTEST_WAST=1 -DENABLE_FUZZ=1
             cmake --build . --parallel
             cd ..
             cat ./build_qnx/compile_commands.json | jq -r '.[].file' | xargs -P $(nproc) -I{} clang-tidy -p $(pwd)/build_qnx {}
