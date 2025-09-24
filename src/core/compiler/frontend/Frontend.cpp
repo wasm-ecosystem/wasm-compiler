@@ -1979,7 +1979,7 @@ void Frontend::parseCodeSection() {
           StackElement constElement{};
           constElement.type = MachineTypeUtil::toStackTypeFlag(globalDef.type) | StackType::CONSTANT;
           constElement.data.constUnion = globalDef.initialValue;
-          static_cast<void>(stack_.push(constElement));
+          static_cast<void>(common_.pushOperandsToStack(constElement));
         }
         break;
       }
@@ -2211,7 +2211,7 @@ void Frontend::parseCodeSection() {
         // Read LEB128-encoded 4-byte integer and push to stack
         uint32_t const value{bit_cast<uint32_t>(br_.readLEB128<int32_t>())};
         if (!currentFrameIsUnreachable()) {
-          static_cast<void>(stack_.push(StackElement::i32Const(value)));
+          static_cast<void>(compiler_.common_.pushOperandsToStack(StackElement::i32Const(value)));
         }
         break;
       }
@@ -2220,7 +2220,7 @@ void Frontend::parseCodeSection() {
         // Read LEB128-encoded 8-byte integer and push to stack
         uint64_t const value{bit_cast<uint64_t>(br_.readLEB128<int64_t>())};
         if (!currentFrameIsUnreachable()) {
-          static_cast<void>(stack_.push(StackElement::i64Const(value)));
+          static_cast<void>(common_.pushOperandsToStack(StackElement::i64Const(value)));
         }
         break;
       }
@@ -2229,7 +2229,7 @@ void Frontend::parseCodeSection() {
         // Read float (4-byte) value and push to stack
         float const value{bit_cast<float>(br_.readLEU32())};
         if (!currentFrameIsUnreachable()) {
-          static_cast<void>(stack_.push(StackElement::f32Const(value)));
+          static_cast<void>(common_.pushOperandsToStack(StackElement::f32Const(value)));
         }
         break;
       }
@@ -2238,7 +2238,7 @@ void Frontend::parseCodeSection() {
         // Read double (8-byte) value and push to stack
         double const value{bit_cast<double>(br_.readLEU64())};
         if (!currentFrameIsUnreachable()) {
-          static_cast<void>(stack_.push(StackElement::f64Const(value)));
+          static_cast<void>(common_.pushOperandsToStack(StackElement::f64Const(value)));
         }
         break;
       }
@@ -3199,6 +3199,13 @@ void Frontend::popBlockAndPushReturnValues(Stack::iterator const blockIt) VB_NOE
     assert(blockIt == stack_.last());
     // GCOVR_EXCL_STOP
     stack_.pop();
+
+    if (!stack_.empty()) {
+      returnValues.begin()->sibling = stack_.last();
+    } else {
+      returnValues.begin()->sibling = Stack::iterator();
+    }
+
     stack_.contactAtEnd(returnValues);
   } else {
     stack_.pop();

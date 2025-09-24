@@ -595,7 +595,7 @@ void Common::dropValentBlock() const VB_NOEXCEPT {
 }
 
 void Common::pushAndUpdateReference(StackElement const &element) const {
-  Stack::iterator const returnElemPtr{compiler_.stack_.push(element)};
+  Stack::iterator const returnElemPtr{pushOperandsToStack(element)};
   addReference(returnElemPtr);
 }
 
@@ -1278,14 +1278,6 @@ Stack::iterator Common::getFirstOperand(Stack::iterator const instruction) VB_NO
   return paramIt;
 }
 
-Stack::iterator Common::calculateLeftSibling(Stack::iterator const node) VB_NOEXCEPT {
-  Stack::iterator currentIt{node};
-  if (currentIt->type == StackType::DEFERREDACTION) {
-    currentIt = findBaseOfValentBlock(currentIt);
-  }
-  return currentIt.prev();
-}
-
 Stack::iterator Common::pushDeferredAction(StackElement const &deferredAction) {
   hasPendingSideEffectInstructions_ = (hasPendingSideEffectInstructions_ || (deferredAction.data.deferredAction.sideEffect != 0U));
   uint32_t const instructionArity{getArithArity(deferredAction.data.deferredAction.opcode)};
@@ -1293,15 +1285,16 @@ Stack::iterator Common::pushDeferredAction(StackElement const &deferredAction) {
 
   Stack::iterator const instructionIt{compiler_.stack_.push(deferredAction)};
 
-  paramStart->parent = instructionIt;
   Stack::iterator currentIt{paramStart};
-  for (uint32_t i{instructionArity}; i > 1U; i--) {
-    Stack::iterator const sibling{calculateLeftSibling(currentIt)};
-    sibling->parent = instructionIt;
-    currentIt->sibling = sibling;
-    currentIt = sibling;
+  // coverity[autosar_cpp14_a6_5_1_violation] fake positive
+  for (uint32_t i{0U}; i < (instructionArity - 1U); i++) {
+    currentIt->parent = instructionIt;
+    currentIt = currentIt->sibling;
   }
-
+  Stack::iterator const paramEnd{currentIt};
+  paramEnd->parent = instructionIt;
+  instructionIt->sibling = paramEnd->sibling;
+  paramEnd->sibling = Stack::iterator();
   instructionIt->parent = compiler_.stack_.end();
   return instructionIt;
 }
@@ -1317,6 +1310,13 @@ bool Common::stackElementInRegOrConst(Stack::iterator const it) const VB_NOEXCEP
            "Invalid storage type for stack element in reg or const check");
     return storage.type == StorageType::REGISTER;
   }
+}
+
+Stack::iterator Common::pushOperandsToStack(StackElement const &arg) const {
+  Stack::iterator const previous{compiler_.stack_.last()};
+  Stack::iterator const argIt{compiler_.stack_.push(arg)};
+  argIt->sibling = previous;
+  return argIt;
 }
 
 } // namespace vb

@@ -291,7 +291,7 @@ private:
   inline void pushDummyResultOnUnreachable(uint32_t const sigIndex) {
     // coverity[autosar_cpp14_a5_1_9_violation]
     moduleInfo_.iterateResultsForSignature(sigIndex, FunctionRef<void(MachineType)>([this](MachineType const machineType) {
-                                             static_cast<void>(stack_.push(StackElement::dummyConst(machineType)));
+                                             static_cast<void>(common_.pushOperandsToStack(StackElement::dummyConst(machineType)));
                                            }));
   }
   ///

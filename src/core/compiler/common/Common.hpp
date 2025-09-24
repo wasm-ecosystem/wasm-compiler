@@ -589,6 +589,11 @@ public:
   /// @return Stack::iterator Iterator to the pushed deferred action
   Stack::iterator pushDeferredAction(StackElement const &deferredAction);
 
+  /// @brief Push operands of a deferred action onto the stack and modify the sibling links
+  /// @param arg Operand stack element
+  /// @return Stack::iterator Iterator to the pushed operand
+  Stack::iterator pushOperandsToStack(StackElement const &arg) const;
+
 private:
   Compiler &compiler_; ///< Reference to the compiler instance
 
@@ -636,11 +641,6 @@ private:
   /// @param instruction Iterator to a deferred action
   /// @return Iterator to the left child of the deferred action
   static Stack::iterator getFirstOperand(Stack::iterator const instruction) VB_NOEXCEPT;
-
-  /// @brief calculate left sibling of a node in valent block tree
-  /// @param node Iterator to a node in the valent block tree
-  /// @return Iterator to the left sibling of the node
-  static Stack::iterator calculateLeftSibling(Stack::iterator const node) VB_NOEXCEPT;
 
   /// @brief replace a Stack element on condense tree to keep the original parent and sibling
   /// @param originElement The original StackElement to replace
