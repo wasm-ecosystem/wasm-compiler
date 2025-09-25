@@ -494,58 +494,44 @@ Common::ConditionResult Common::condenseValentBlockCoreBelow(bool const comparis
   static_cast<void>(frameBase);
   BC branchCond{BC::UNCONDITIONAL};
 
-  Stack::iterator currentIt{belowIt.prev()};
+  Stack::iterator const vbBase{belowIt.prev()};
   // coverity[autosar_cpp14_a5_3_2_violation]
-  condenseScratchRegBelow(currentIt, enforcedTarget);
-  Stack::iterator const vbBase{currentIt};
+  condenseScratchRegBelow(vbBase, enforcedTarget);
+
+  Stack::iterator currentIt{findBaseOfValentBlock(vbBase)};
   Stack::iterator condenseResult{currentIt};
+
   while (true) {
     if (currentIt->type == StackType::DEFERREDACTION) {
-      // GCOVR_EXCL_START
-      assert(currentIt != frameBase && "No valent block found");
-      // GCOVR_EXCL_STOP
-      // Entering a new valent block
       Stack::iterator const instructionPtr{currentIt};
       uint32_t const instructionArity{getArithArity(currentIt->data.deferredAction.opcode)};
       std::array<Stack::iterator, 3U> args{{Stack::iterator(), Stack::iterator(), Stack::iterator()}};
-      // Reset already recorded stuff
-      Stack::iterator argsCursor{currentIt};
-      bool deferredActionInArgs{false};
+      Stack::iterator param{instructionPtr.prev()};
       for (uint32_t i{0U}; i < instructionArity; i++) {
         uint32_t const index{instructionArity - i - 1U};
-        // GCOVR_EXCL_START
-        assert(index < args.size());
-        // GCOVR_EXCL_STOP
-        --argsCursor;
-        args[index] = argsCursor;
-        if (args[index]->type == StackType::DEFERREDACTION) {
-          deferredActionInArgs = true;
-          currentIt = args[index];
-          break;
-        }
+        args[index] = param;
+        param = param->sibling;
       }
-      if (!deferredActionInArgs) {
+
+      bool const isConditionStart{comparison && (instructionPtr == vbBase)};
+
+      if ((isConditionStart && (instructionPtr->data.deferredAction.opcode >= OPCode::I32_EQZ)) &&
+          (instructionPtr->data.deferredAction.opcode <= OPCode::F64_GE)) {
+        branchCond = evaluateCondition(instructionPtr, args[0], args[1]);
+        condenseResult = instructionPtr->parent;
+        static_cast<void>(compiler_.stack_.erase(instructionPtr));
+        break;
+      } else {
         bool const propagateTargetHint{compiler_.backend_.checkIfEnforcedTargetIsOnlyInArgs(
             Span<Stack::iterator>{args.data(), static_cast<size_t>(instructionArity)}, enforcedTarget)};
         StackElement const *const targetHint{propagateTargetHint ? enforcedTarget : nullptr};
-        bool const isConditionStart{comparison && (instructionPtr.next() == belowIt)};
-
-        if ((isConditionStart && (instructionPtr->data.deferredAction.opcode >= OPCode::I32_EQZ)) &&
-            (instructionPtr->data.deferredAction.opcode <= OPCode::F64_GE)) {
-          branchCond = evaluateCondition(instructionPtr, args[0], args[1]);
-          currentIt = instructionPtr->parent;
-          condenseResult = currentIt;
-          static_cast<void>(compiler_.stack_.erase(instructionPtr));
-        } else {
-          StackElement const result{evaluateInstruction(instructionPtr, args[0], args[1], args[2], targetHint)};
-          replaceAndUpdateReference(instructionPtr, result);
-          condenseResult = instructionPtr;
-          if (currentIt == vbBase) {
-            break;
-          }
-          currentIt = instructionPtr->parent;
-        }
+        StackElement const result{evaluateInstruction(instructionPtr, args[0], args[1], args[2], targetHint)};
+        replaceAndUpdateReference(instructionPtr, result);
+        condenseResult = instructionPtr;
       }
+    }
+    if (currentIt != vbBase) {
+      currentIt = currentIt.next();
     } else {
       break;
     }

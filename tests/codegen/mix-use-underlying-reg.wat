@@ -70,8 +70,8 @@
     (local i32)
     
         i64.const 10
-        ;; AARCH64: lsr  [[REG2:x[0-9]+]], [[REG2:x[0-9]+]], #1
         ;; AARCH64: rbit  [[REG1:x[0-9]+]], [[REG1:x[0-9]+]]
+        ;; AARCH64: lsr  [[REG2:x[0-9]+]], [[REG2:x[0-9]+]], #1
         i64.ctz
 
         i64.const 0
