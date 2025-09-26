@@ -313,67 +313,57 @@ Stack::iterator Common::condenseMultipleValentBlocksBelow(Stack::iterator belowI
   return belowIt;
 }
 
-Stack::iterator Common::condenseMultipleValentBlocksWithTargetHintBelow(Stack::iterator belowIt, uint32_t const sigIndex, bool const isLoop) const {
-  constexpr uint32_t targetHintTableSize{NBackend::WasmABI::gpRegsForReturnValues + NBackend::WasmABI::fpRegsForReturnValues};
-  std::array<uint32_t, targetHintTableSize> recordIndexes{};
-  std::array<TReg, targetHintTableSize> recordTargetHints{};
-  std::fill(recordTargetHints.begin(), recordTargetHints.end(), TReg::NONE);
-  uint32_t targetHintIndex{1U};
-  uint32_t recordIndex{0U};
+Stack::iterator Common::condenseMultipleValentBlocksWithTargetHintBelow(Stack::iterator const belowIt, uint32_t const sigIndex,
+                                                                        bool const isLoop) const {
   NBackend::RegStackTracker tracker{};
-  // coverity[autosar_cpp14_a8_5_2_violation]
-  auto const findTargetHintVisitor = [this, &recordIndexes, &recordTargetHints, &recordIndex, &targetHintIndex,
-                                      &tracker](MachineType const machineType) VB_NOEXCEPT {
-    TReg const reg{compiler_.backend_.getREGForReturnValue(machineType, tracker)};
-    if (reg != TReg::NONE) {
-      recordIndexes[recordIndex] = targetHintIndex;
-      recordTargetHints[recordIndex] = reg;
-      recordIndex++;
-    }
-    targetHintIndex++;
-  };
 
   uint32_t numValentBlocks{};
   if (isLoop) {
     numValentBlocks = compiler_.moduleInfo_.getNumParamsForSignature(sigIndex);
-    // coverity[autosar_cpp14_a5_1_4_violation]
-    compiler_.moduleInfo_.iterateParamsForSignature(sigIndex, FunctionRef<void(MachineType)>(findTargetHintVisitor));
   } else {
     numValentBlocks = compiler_.moduleInfo_.getNumReturnValuesForSignature(sigIndex);
-    // coverity[autosar_cpp14_a5_1_4_violation]
-    compiler_.moduleInfo_.iterateResultsForSignature(sigIndex, FunctionRef<void(MachineType)>(findTargetHintVisitor));
   }
 
-  uint32_t iterateIndex{numValentBlocks};
+  // GCOVR_EXCL_START
+  assert(numValentBlocks > 0U);
+  // GCOVR_EXCL_STOP
+
+  uint32_t skipCount{numValentBlocks - 1U};
+  Stack::iterator resultBase{};
   // coverity[autosar_cpp14_a8_5_2_violation]
-  auto const condenseVisitor = [this, recordIndexes, recordTargetHints, &belowIt, &iterateIndex](MachineType const machineType) {
-    uint32_t index{0U};
-    bool hasTargetHint{false};
-    for (; index < (NBackend::WasmABI::gpRegsForReturnValues + NBackend::WasmABI::fpRegsForReturnValues); index++) {
-      if (iterateIndex == recordIndexes[index]) {
-        hasTargetHint = true;
-        break;
-      }
+  auto const condenseVisitor = [this, &skipCount, belowIt, &resultBase, &tracker](MachineType const machineType) {
+    TReg const targetHintReg{compiler_.backend_.getREGForReturnValue(machineType, tracker)};
+
+    Stack::iterator baseIt{belowIt};
+    // coverity[autosar_cpp14_a6_5_1_violation] fake positive
+    for (uint32_t i{0U}; i < skipCount; i++) {
+      baseIt = findBaseOfValentBlockBelow(baseIt);
     }
-    TReg const targetHintReg{hasTargetHint ? recordTargetHints[index] : TReg::NONE};
+
+    Stack::iterator condenseResult{};
     if (targetHintReg == TReg::NONE) {
-      belowIt = condenseValentBlockBelow(belowIt);
+      condenseResult = condenseValentBlockBelow(baseIt);
     } else {
       StackElement const targetHint{StackElement::scratchReg(targetHintReg, MachineTypeUtil::toStackTypeFlag(machineType))};
-      belowIt = condenseValentBlockBelow(belowIt, &targetHint);
+      condenseResult = condenseValentBlockBelow(baseIt, &targetHint);
     }
-    iterateIndex--;
+
+    if (resultBase.isEmpty()) {
+      resultBase = condenseResult;
+    }
+
+    skipCount--;
   };
 
   if (isLoop) {
     // coverity[autosar_cpp14_a5_1_4_violation]
-    compiler_.moduleInfo_.iterateParamsForSignature(sigIndex, FunctionRef<void(MachineType)>(condenseVisitor), true);
+    compiler_.moduleInfo_.iterateParamsForSignature(sigIndex, FunctionRef<void(MachineType)>(condenseVisitor));
   } else {
     // coverity[autosar_cpp14_a5_1_4_violation]
-    compiler_.moduleInfo_.iterateResultsForSignature(sigIndex, FunctionRef<void(MachineType)>(condenseVisitor), true);
+    compiler_.moduleInfo_.iterateResultsForSignature(sigIndex, FunctionRef<void(MachineType)>(condenseVisitor));
   }
 
-  return belowIt;
+  return resultBase;
 }
 
 bool Common::checkIfEnforcedTargetIsOnlyInArgs(Span<Stack::iterator> const &args, StackElement const *const enforcedTarget) const VB_NOEXCEPT {

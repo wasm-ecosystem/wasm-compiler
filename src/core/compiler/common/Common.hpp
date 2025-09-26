@@ -221,7 +221,8 @@ public:
   /// @param sigIndex Index of the signature
   /// @param isLoop Whether this is a LOOP
   /// @return Base of the last (lowest) valent block
-  Stack::iterator condenseMultipleValentBlocksWithTargetHintBelow(Stack::iterator belowIt, uint32_t const sigIndex, bool const isLoop = false) const;
+  Stack::iterator condenseMultipleValentBlocksWithTargetHintBelow(Stack::iterator const belowIt, uint32_t const sigIndex,
+                                                                  bool const isLoop = false) const;
 
   ///
   /// @brief Result of condensation of a comparison

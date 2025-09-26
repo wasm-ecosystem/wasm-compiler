@@ -58,9 +58,11 @@ constexpr uint32_t resScratchRegsFPR{5U};
 constexpr uint32_t regsForParams{8U};
 
 /// @brief At most, gpRegsForReturnValues (N) return values will be allocated in general purpose registers, the other return values will be passed on
+// coverity[autosar_cpp14_m3_4_1_violation]
 constexpr uint32_t gpRegsForReturnValues{2U};
 
 /// @brief At most, fpRegsForReturnValues (N) return values will be allocated in floating point registers, the other return values will be passed on
+// coverity[autosar_cpp14_m3_4_1_violation]
 constexpr uint32_t fpRegsForReturnValues{2U};
 
 namespace REGS {
