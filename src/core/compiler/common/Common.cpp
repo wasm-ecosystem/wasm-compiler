@@ -305,12 +305,27 @@ Stack::iterator Common::findBaseOfValentBlockBelow(Stack::iterator const belowIt
   return findBaseOfValentBlock(belowIt.prev());
 }
 
-Stack::iterator Common::condenseMultipleValentBlocksBelow(Stack::iterator belowIt, uint32_t const valentBlockCount) const {
+Stack::iterator Common::condenseMultipleValentBlocksBelow(Stack::iterator const belowIt, uint32_t const valentBlockCount) const {
   assert((valentBlockCount > 0) && "Number of valent blocks to condense is zero");
+  uint32_t skipCount{valentBlockCount - 1U};
+  Stack::iterator resultBase{};
+
   for (uint32_t i{0U}; i < valentBlockCount; i++) {
-    belowIt = condenseValentBlockBelow(belowIt);
+    Stack::iterator baseIt{belowIt};
+    // coverity[autosar_cpp14_a6_5_1_violation] fake positive
+    for (uint32_t j{0U}; j < skipCount; j++) {
+      baseIt = findBaseOfValentBlockBelow(baseIt);
+    }
+
+    Stack::iterator const condenseResult{condenseValentBlockBelow(baseIt)};
+
+    if (resultBase.isEmpty()) {
+      resultBase = condenseResult;
+    }
+    skipCount--;
   }
-  return belowIt;
+
+  return resultBase;
 }
 
 Stack::iterator Common::condenseMultipleValentBlocksWithTargetHintBelow(Stack::iterator const belowIt, uint32_t const sigIndex,

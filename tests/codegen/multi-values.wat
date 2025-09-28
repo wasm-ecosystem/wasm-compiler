@@ -62,4 +62,25 @@
       end
     end
   )
+  ;; CHECK-LABEL: Function[2] Body
+  (func (param i32 i32) (result i32)
+      (local i32)
+      local.get 0
+      local.get 1
+      
+      ;; X86_64: add [[REG:(r[0-9]+d?|[re](ax|cx|dx|bx|bp|si|di))]], [[REG:(r[0-9]+d?|[re](ax|cx|dx|bx|bp|si|di))]]
+      ;; AARCH64: add [[REG:w[0-9]+]], [[REG:w[0-9]+]], [[REG:w[0-9]+]]
+      ;; TRICORE: add [[REG:d[0-9]+]], [[REG:d[0-9]+]], [[REG:d[0-9]+]]
+      i32.add
+
+      local.get 0
+      local.get 1
+      ;; X86_64: sub [[REG:(r[0-9]+d?|[re](ax|cx|dx|bx|bp|si|di))]], [[REG:(r[0-9]+d?|[re](ax|cx|dx|bx|bp|si|di))]]
+      ;; AARCH64: sub [[REG:w[0-9]+]], [[REG:w[0-9]+]], [[REG:w[0-9]+]]
+      ;; TRICORE: sub [[REG:d[0-9]+]], [[REG:d[0-9]+]], [[REG:d[0-9]+]]
+      i32.sub
+      (block (param i32 i32) (result i32)
+        i32.mul
+      )
+  )
 )

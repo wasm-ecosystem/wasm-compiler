@@ -212,7 +212,7 @@ public:
   /// @param belowIt Iterator that represents the next element of the first valent block.
   /// @param valentBlockCount Number of valent blocks to condense, must be greater than zero
   /// @return Base of the last (lowest) valent block
-  Stack::iterator condenseMultipleValentBlocksBelow(Stack::iterator belowIt, uint32_t const valentBlockCount) const;
+  Stack::iterator condenseMultipleValentBlocksBelow(Stack::iterator const belowIt, uint32_t const valentBlockCount) const;
 
   ///
   /// @brief Condense multiple valent blocks with targetHint and return the base of the last (lowest) one

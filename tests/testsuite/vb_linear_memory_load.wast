@@ -295,6 +295,35 @@
       i32.div_u
       i32.add
     )
+
+    (func (export "div-load-block-param") (param i32 i32) (result i32)
+      (local i32)
+      local.get 0
+      local.get 1
+      i32.div_u
+
+      i32.const 0xFFFFFFF
+      i32.load
+      (block (param i32 i32) (result i32)
+        i32.add
+      )
+    )
+
+    (func $return-two-zeros (param i32 i32) (result i32)
+      local.get 0
+      local.get 1
+      i32.add
+    )
+
+    (func (export "div-load-call-param") (param i32 i32) (result i32)
+      local.get 0
+      local.get 1
+      i32.div_u
+
+      i32.const 0xFFFFFFF
+      i32.load
+      call $return-two-zeros
+    )
 )
 
 (assert_return (invoke "load-before-call") (i32.const 7))
@@ -315,6 +344,8 @@
 (assert_trap (invoke "load-before-memory_fill") "out of bounds memory access")
 (assert_trap (invoke "load-before-memory_copy") "out of bounds memory access")
 (assert_trap (invoke "load-before-div") "out of bounds memory access")
+(assert_trap (invoke "div-load-block-param" (i32.const 0) (i32.const 0)) "integer divide by zero")
+(assert_trap (invoke "div-load-call-param" (i32.const 0) (i32.const 0)) "integer divide by zero")
 
 ;; carried over from fuzz
 (module
