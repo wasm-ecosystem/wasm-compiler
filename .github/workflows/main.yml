@@ -10,7 +10,7 @@ concurrency:
 
 jobs:
   small_checks:
-    runs-on: ${{ github.repository_owner == 'CDCFW' && 'cawe-linux-x64-compute-small' || 'ubuntu-latest' }}
+    runs-on: "ubuntu-latest"
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/check
@@ -23,44 +23,24 @@ jobs:
           cspell-config: "./cspell.json"
 
   codegen_test:
-    runs-on: ${{ github.repository_owner == 'CDCFW' && 'cawe-linux-x64-compute-large' || 'ubuntu-latest' }}
+    runs-on: "ubuntu-latest"
     container:
       image: ubuntu:24.04
       options: --user root
     steps:
-      - name: Install dependencies
+      - name: Install Git
         run: |
-          apt-get update
-          apt-get install -y --no-install-recommends \
-          bash build-essential ca-certificates clang llvm llvm-18-tools libclang-rt-18-dev cppcheck git lld \
-          ninja-build unzip valgrind wget python3 python3-pip python3-venv cmake jq binaryen nodejs npm gcc-11 g++-11
-      - name: Install wabt
-        run: |
-          wget https://github.com/WebAssembly/wabt/releases/download/1.0.36/wabt-1.0.36-ubuntu-20.04.tar.gz
-          tar -xzf wabt-1.0.36-ubuntu-20.04.tar.gz
-          echo "$PWD/wabt-1.0.36/bin" >> $GITHUB_PATH
-      - name: Install capstone
-        run: |
-          git clone https://github.com/capstone-engine/capstone.git \
-          && cd capstone \
-          && git checkout 6.0.0-Alpha4 \
-          && mkdir build \
-          && cd build \
-          && cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_POSITION_INDEPENDENT_CODE=ON .. \
-          && cmake --build . --parallel \
-          && cmake --install . --prefix=/usr \
-          && cd / && rm -rf capstone
-      - name: Update nodejs
-        run: |
-          npm install n -g && n stable
-      - name: Install bazel
-        run: |
-          wget https://github.com/bazelbuild/bazel/releases/download/7.0.0/bazel-7.0.0-linux-x86_64
-          mv bazel-7.0.0-linux-x86_64 /usr/local/bin/bazel
-          chmod 777 /usr/local/bin/bazel
+          apt-get update -y -qq
+          apt-get install -y --no-install-recommends git ca-certificates
       - uses: actions/checkout@v4
         with:
           submodules: true
+      - uses: ./.github/actions/install-deps-x86_64
+
+      - name: Install capstone
+        run: |
+          wget https://github.com/capstone-engine/capstone/releases/download/6.0.0-Alpha5/libcapstone-dev_6.0.0-Alpha5_amd64.deb
+          dpkg -i libcapstone-dev_6.0.0-Alpha5_amd64.deb
       - run: cp $(which FileCheck-18) /usr/bin/FileCheck
       - name: setup wasm-tools
         run: |
@@ -86,6 +66,10 @@ jobs:
         run: python3 scripts/test.py --no-color
 
   x86-64_linux_cmake_build_test:
+    runs-on: ${{ github.repository_owner == 'wasm-ecosystem' && 'ubuntu-latest' || 'cawe-linux-x64-compute-large' }}
+    container:
+      image: ubuntu:24.04
+      options: --user root
     strategy:
       fail-fast: false
       matrix:
@@ -98,20 +82,29 @@ jobs:
             buildArgs: "-DENABLE_WERROR=1  -DCMAKE_BUILD_TYPE:STRING=Debug -DCMAKE_C_COMPILER=clang -DENABLE_COVERAGE=1 -DENABLE_CLANG_TIDY=1"
           - buildType: "clangRelease"
             buildArgs: "-DENABLE_WERROR=1 -DCMAKE_C_COMPILER=clang -DENABLE_COVERAGE=1 -DCMAKE_BUILD_TYPE:STRING=Release"
-    uses: ./.github/workflows/execute.yml
-    secrets: inherit
-    with:
-      arch: "x86_64"
-      os: "linux"
-      run: |
-        set -ex
-        mkdir -p build
-        cd build && cmake .. ${{ matrix.buildArgs }}
-        make -j $(nproc)
-        make coverage
-        ./bin/vb_demo ../wasm_examples/log.wasm
+    steps:
+      - name: Install Git
+        run: |
+          apt-get update -y -qq
+          apt-get install -y --no-install-recommends git ca-certificates
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - uses: ./.github/actions/install-deps-x86_64
+      - name: Build and test
+        run: |
+          set -ex
+          mkdir -p build
+          cd build && cmake .. ${{ matrix.buildArgs }}
+          make -j $(nproc)
+          make coverage
+          ./bin/vb_demo ../wasm_examples/log.wasm
 
   x86-64_linux_bazel_build:
+    runs-on: ${{ github.repository_owner == 'wasm-ecosystem' && 'ubuntu-latest' || 'cawe-linux-x64-compute-large' }}
+    container:
+      image: ubuntu:24.04
+      options: --user root
     strategy:
       fail-fast: false
       matrix:
@@ -120,16 +113,25 @@ jobs:
             buildArgs: "//demo:vb_demo --platforms=//bazel/platforms:x86_64_linux"
           - buildType: "bazelaarch64"
             buildArgs: "//demo:vb_demo --platforms=//bazel/platforms:aarch64_linux"
-    uses: ./.github/workflows/execute.yml
-    secrets: inherit
-    with:
-      arch: "x86_64"
-      os: "linux"
-      run: |
-        bazel --batch clean --expunge
-        bazel --batch build ${{ matrix.buildArgs }}
+    steps:
+      - name: Install Git
+        run: |
+          apt-get update -y -qq
+          apt-get install -y --no-install-recommends git ca-certificates
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - uses: ./.github/actions/install-deps-x86_64
+      - name: Build with Bazel
+        run: |
+          bazel --batch clean --expunge
+          bazel --batch build ${{ matrix.buildArgs }}
 
   aarch64_linux_cmake_build_test:
+    runs-on: ${{ github.repository_owner == 'wasm-ecosystem' && 'ubuntu-24.04-arm' || 'cawe-linux-arm64-compute-large' }}
+    container:
+      image: ubuntu:24.04
+      options: --user root
     strategy:
       fail-fast: false
       matrix:
@@ -138,20 +140,29 @@ jobs:
             buildArgs: "-DENABLE_WERROR=1 -DENABLE_FUZZ=1 -DENABLE_COVERAGE=1 -DCMAKE_BUILD_TYPE:STRING=Debug -DENABLE_CLANG_TIDY=1"
           - buildType: "Release"
             buildArgs: "-DENABLE_WERROR=1 -DENABLE_FUZZ=1 -DENABLE_COVERAGE=1 -DCMAKE_BUILD_TYPE:STRING=Release"
-    uses: ./.github/workflows/execute.yml
-    secrets: inherit
-    with:
-      arch: "aarch64"
-      os: "linux"
-      run: |
-        set -ex
-        mkdir -p build
-        cd build && cmake .. ${{ matrix.buildArgs }}
-        make -j $(nproc)
-        make coverage
-        ./bin/vb_demo ../wasm_examples/log.wasm
+    steps:
+      - name: Install Git
+        run: |
+          apt-get update -y -qq
+          apt-get install -y --no-install-recommends git ca-certificates
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - uses: ./.github/actions/install-deps-arm64
+      - name: Build and test
+        run: |
+          set -ex
+          mkdir -p build
+          cd build && cmake .. ${{ matrix.buildArgs }}
+          make -j $(nproc)
+          make coverage
+          ./bin/vb_demo ../wasm_examples/log.wasm
 
   aarch64_extra:
+    runs-on: ${{ github.repository_owner == 'wasm-ecosystem' && 'ubuntu-24.04-arm' || 'cawe-linux-arm64-compute-large' }}
+    container:
+      image: ubuntu:24.04
+      options: --user root
     strategy:
       fail-fast: false
       matrix:
@@ -162,18 +173,27 @@ jobs:
           - buildType: "Bench"
             buildArgs: "-DVB_ENABLE_DEV_FEATURE=OFF -DENABLE_WERROR=1 -DENABLE_BENCH=1 -DCMAKE_BUILD_TYPE=RELEASE -DENABLE_CLANG_TIDY=1"
             cppFlags: "-DINTERRUPTION_REQUEST=0 -DEAGER_ALLOCATION=1"
-    uses: ./.github/workflows/execute.yml
-    secrets: inherit
-    with:
-      arch: "aarch64"
-      os: "linux"
-      run: |
-        set -ex
-        mkdir -p build
-        cd build && cmake .. ${{ matrix.buildArgs }} -DCMAKE_CXX_FLAGS="${{ matrix.cppFlags }}"
-        make -j $(nproc)
+    steps:
+      - name: Install Git
+        run: |
+          apt-get update -y -qq
+          apt-get install -y --no-install-recommends git ca-certificates
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - uses: ./.github/actions/install-deps-arm64
+      - name: Build
+        run: |
+          set -ex
+          mkdir -p build
+          cd build && cmake .. ${{ matrix.buildArgs }} -DCMAKE_CXX_FLAGS="${{ matrix.cppFlags }}"
+          make -j $(nproc)
 
   x86-64_extra:
+    runs-on: ${{ github.repository_owner == 'wasm-ecosystem' && 'ubuntu-latest' || 'cawe-linux-x64-compute-large' }}
+    container:
+      image: ubuntu:24.04
+      options: --user root
     strategy:
       fail-fast: false
       matrix:
@@ -184,44 +204,67 @@ jobs:
           - buildType: "Bench"
             buildArgs: "-DVB_ENABLE_DEV_FEATURE=OFF -DENABLE_WERROR=1 -DENABLE_BENCH=1 -DCMAKE_BUILD_TYPE=RELEASE -DENABLE_CLANG_TIDY=1"
             cppFlags: "-DINTERRUPTION_REQUEST=0 -DEAGER_ALLOCATION=1"
-    uses: ./.github/workflows/execute.yml
-    secrets: inherit
-    with:
-      arch: "x86_64"
-      os: "linux"
-      run: |
-        set -ex
-        mkdir -p build
-        cd build && cmake .. ${{ matrix.buildArgs }} -DCMAKE_CXX_FLAGS="${{ matrix.cppFlags }}"
-        make -j $(nproc)
+    steps:
+      - name: Install Git
+        run: |
+          apt-get update -y -qq
+          apt-get install -y --no-install-recommends git ca-certificates
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - uses: ./.github/actions/install-deps-x86_64
+      - name: Build
+        run: |
+          set -ex
+          mkdir -p build
+          cd build && cmake .. ${{ matrix.buildArgs }} -DCMAKE_CXX_FLAGS="${{ matrix.cppFlags }}"
+          make -j $(nproc)
 
   tricore_linux_cmake_build_test:
-    uses: ./.github/workflows/execute.yml
-    secrets: inherit
-    with:
-      arch: "tricore"
-      os: "linux"
-      run: |
-        set -ex
-        python3 ./tests/spectest.py -f
+    runs-on: ${{ github.repository_owner == 'wasm-ecosystem' && 'ubuntu-latest' || 'cawe-linux-x64-compute-large' }}
+    container:
+      image: ubuntu:24.04
+      options: --user root
+    steps:
+      - name: Install Git
+        run: |
+          apt-get update -y -qq
+          apt-get install -y --no-install-recommends git ca-certificates
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - uses: ./.github/actions/install-deps-tricore
+      - name: Build and test
+        run: |
+          set -ex
+          python3 ./tests/spectest.py -f
 
-        cmake . -B build_tricore -DCMAKE_BUILD_TYPE=Debug -DENABLE_WERROR=1 -DCMAKE_C_COMPILER=/usr/bin/tricore-elf-gcc -DVB_ENABLE_DEV_FEATURE=OFF -DCMAKE_CXX_COMPILER=/usr/bin/tricore-elf-g++ -DENABLE_SPECTEST=1 -DENABLE_DEMO=1 -DTEST_VARIANTS=1 -DDISABLE_SPECTEST_WAST=1 -DDISABLE_SPECTEST_JSON=1 -DENABLE_STANDALONE_TEST=1
-        cmake --build build_tricore --parallel
-        python3 scripts/tricore_qemu_execute.py qemu-system-tricore -semihosting -display none -M tricore_tsim162 -kernel build_tricore/bin/vb_spectest_binary_standalone_0
-        python3 scripts/tricore_qemu_execute.py qemu-system-tricore -semihosting -display none -M tricore_tsim162 -kernel build_tricore/bin/vb_spectest_binary_standalone_1
-        qemu-system-tricore -semihosting -display none -M tricore_tsim162 -kernel build_tricore/bin/vb_demo
+          cmake . -B build_tricore -DCMAKE_BUILD_TYPE=Debug -DENABLE_WERROR=1 -DCMAKE_C_COMPILER=/usr/bin/tricore-elf-gcc -DVB_ENABLE_DEV_FEATURE=OFF -DCMAKE_CXX_COMPILER=/usr/bin/tricore-elf-g++ -DENABLE_SPECTEST=1 -DENABLE_DEMO=1 -DTEST_VARIANTS=1 -DDISABLE_SPECTEST_WAST=1 -DDISABLE_SPECTEST_JSON=1 -DENABLE_STANDALONE_TEST=1
+          cmake --build build_tricore --parallel
+          python3 scripts/tricore_qemu_execute.py qemu-system-tricore -semihosting -display none -M tricore_tsim162 -kernel build_tricore/bin/vb_spectest_binary_standalone_0
+          python3 scripts/tricore_qemu_execute.py qemu-system-tricore -semihosting -display none -M tricore_tsim162 -kernel build_tricore/bin/vb_spectest_binary_standalone_1
+          qemu-system-tricore -semihosting -display none -M tricore_tsim162 -kernel build_tricore/bin/vb_demo
 
   tricore_linux_cmake_build_unittest:
-    uses: ./.github/workflows/execute.yml
-    secrets: inherit
-    with:
-      arch: "tricore"
-      os: "linux"
-      run: |
-        set -ex
-        cmake . -B build_tricore_unittest -DCMAKE_BUILD_TYPE=Debug -DBACKEND=tricore -DENABLE_UNITTEST=1 -DVB_ENABLE_DEV_FEATURE=OFF 
-        cmake --build build_tricore_unittest --parallel
-        ./build_tricore_unittest/tests/unittests/Unittests
+    runs-on: ${{ github.repository_owner == 'wasm-ecosystem' && 'ubuntu-latest' || 'cawe-linux-x64-compute-large' }}
+    container:
+      image: ubuntu:24.04
+      options: --user root
+    steps:
+      - name: Install Git
+        run: |
+          apt-get update -y -qq
+          apt-get install -y --no-install-recommends git ca-certificates
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - uses: ./.github/actions/install-deps-tricore
+      - name: Build and test
+        run: |
+          set -ex
+          cmake . -B build_tricore_unittest -DCMAKE_BUILD_TYPE=Debug -DBACKEND=tricore -DENABLE_UNITTEST=1 -DVB_ENABLE_DEV_FEATURE=OFF 
+          cmake --build build_tricore_unittest --parallel
+          ./build_tricore_unittest/tests/unittests/Unittests
 
   x86-64_windows_cmake_build_test:
     runs-on: windows-latest
@@ -421,19 +464,22 @@ jobs:
           - ubuntu-latest
           - ${{ contains(github.repositoryUrl, 'bmw') && 'cawe-linux-arm64-compute-small' || 'ubuntu-24.04-arm' }}
 
-        include:
-          - runner: ubuntu-latest
-            image: ${{ vars.CONTAINER_PATH }}/wasm-common-ci-cdc-generic-x86_64
-          - runner: cawe-linux-arm64-compute-small
-            image: ${{ vars.CONTAINER_PATH }}/wasm-common-ci-cdc-generic-aarch64
     runs-on: ${{ matrix.runner }}
     container:
-      image: ${{ matrix.image }}:main
-      credentials:
-        username: ${{ secrets.TECH_USER_QNUMBER }}
-        password: ${{ secrets.TECH_USER_ATC_GITHUB_TOKEN }}
+      image: ubuntu:24.04
+      options: --user root
     steps:
+      - name: Install Git
+        run: |
+          apt-get update -y -qq
+          apt-get install -y --no-install-recommends git ca-certificates
       - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - uses: ./.github/actions/install-deps-x86_64
+        if: matrix.runner == 'ubuntu-latest'
+      - uses: ./.github/actions/install-deps-arm64
+        if: matrix.runner != 'ubuntu-latest'
       - uses: ./.github/actions/fuzz-assets
         with:
           cmake_flags: -DCMAKE_BUILD_TYPE=Debug
@@ -447,14 +493,17 @@ jobs:
   qemu-fuzz:
     runs-on: ubuntu-latest
     container:
-      image: ${{ vars.CONTAINER_PATH }}/wasm-common-ci-cdc-tricore-qemu:main
-      credentials:
-        username: ${{ secrets.TECH_USER_QNUMBER }}
-        password: ${{ secrets.TECH_USER_ATC_GITHUB_TOKEN }}
+      image: ubuntu:24.04
+      options: --user root
     steps:
+      - name: Install Git
+        run: |
+          apt-get update -y -qq
+          apt-get install -y --no-install-recommends git ca-certificates
       - uses: actions/checkout@v4
         with:
           submodules: true
+      - uses: ./.github/actions/install-deps-tricore
       - uses: ./.github/actions/fuzz-qemu
         with:
           timeout: 900

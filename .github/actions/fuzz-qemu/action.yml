@@ -1,5 +1,5 @@
-name: "fuzz-unix"
-description: "run fuzz for x86 and aarch64"
+name: "fuzz-qemu"
+description: "run fuzz for tricore"
 inputs:
   timeout:
     description: "fuzz timeout in second"
@@ -26,7 +26,7 @@ runs:
         node-version: 18.x
     - shell: bash
       run: |
-        cmake -B build_fuzz -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=$TRICORE_GCC_PATH/tricore-elf-gcc -DCMAKE_CXX_COMPILER=$TRICORE_GCC_PATH/tricore-elf-g++ -DVB_ENABLE_DEV_FEATURE=OFF -DENABLE_FUZZ=1 -DFUZZ_ONLY_WITH_DEBUGGER=1 ${{ inputs.cmake_flags }} -DCMAKE_CXX_FLAGS="${{ inputs.cpp_flags }}"
+        cmake -B build_fuzz -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=/usr/bin/tricore-elf-gcc -DCMAKE_CXX_COMPILER=/usr/bin/tricore-elf-g++ -DVB_ENABLE_DEV_FEATURE=OFF -DENABLE_FUZZ=1 -DFUZZ_ONLY_WITH_DEBUGGER=1 ${{ inputs.cmake_flags }} -DCMAKE_CXX_FLAGS="${{ inputs.cpp_flags }}"
         cmake --build build_fuzz --target vb_debugger_fuzz --parallel
     - shell: bash
       run: |
