@@ -40,23 +40,24 @@ jobs:
             "-DACTIVE_STACK_OVERFLOW_CHECK=1 -DLINEAR_MEMORY_BOUNDS_CHECKS=1 -DACTIVE_DIV_CHECK=1",
           ]
         runner: [ubuntu-latest, cawe-linux-arm64-compute-small]
-        include:
-          - runner: ubuntu-latest
-            image: wasm-common-ci-cdc-generic-x86_64
-          - runner: cawe-linux-arm64-compute-small
-            image: wasm-common-ci-cdc-generic-aarch64
     runs-on: ${{ matrix.runner }}
     container:
-      image: ${{ vars.CONTAINER_PATH }}/${{ matrix.image }}:main
-      credentials:
-        username: ${{ secrets.TECH_USER_QNUMBER }}
-        password: ${{ secrets.TECH_USER_ATC_GITHUB_TOKEN }}
+      image: ubuntu:24.04
+      options: --user root
     steps:
+      - name: Install Git
+        run: |
+          apt-get update -y -qq
+          apt-get install -y --no-install-recommends git ca-certificates  ca-certificates
       - uses: actions/checkout@v4
         with:
           submodules: true
           ref: ${{ matrix.branch }}
 
+      - uses: ./.github/actions/install-deps-x86_64
+        if: matrix.runner == 'ubuntu-latest'
+      - uses: ./.github/actions/install-deps-arm64
+        if: matrix.runner == 'cawe-linux-arm64-compute-small'
       - uses: ./.github/actions/fuzz-unix
         id: fuzz
         with:
@@ -80,16 +81,19 @@ jobs:
         reg_mode: ["", "-DVB_FORCE_HIGH_REGISTER_PRESSURE"]
     runs-on: ubuntu-latest
     container:
-      image: ${{ vars.CONTAINER_PATH }}/wasm-common-ci-cdc-tricore-qemu:main
-      credentials:
-        username: ${{ secrets.TECH_USER_QNUMBER }}
-        password: ${{ secrets.TECH_USER_ATC_GITHUB_TOKEN }}
+      image: ubuntu:24.04
+      options: --user root
     steps:
+      - name: Install Git
+        run: |
+          apt-get update -y -qq
+          apt-get install -y --no-install-recommends git ca-certificates  ca-certificates
       - uses: actions/checkout@v4
         with:
           submodules: true
           ref: ${{ matrix.branch }}
 
+      - uses: ./.github/actions/install-deps-tricore
       - uses: ./.github/actions/fuzz-qemu
         id: fuzz
         with:
