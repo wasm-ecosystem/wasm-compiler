@@ -83,7 +83,12 @@ public:
       return false;
     }
 
-    if (type == StorageType::REGISTER) {
+    if (type == StorageType::CONSTANT) {
+      static_assert(sizeof(location.constUnion) == 8U, "Wrong size for union");
+      size_t const actualConstantWidth{MachineTypeUtil::getSize(machineType)};
+      // coverity[autosar_cpp14_a12_0_2_violation]
+      return std::memcmp(&location.constUnion, &other.location.constUnion, actualConstantWidth) == 0;
+    } else if (type == StorageType::REGISTER) {
       return location.reg == other.location.reg;
     } else if (type == StorageType::STACKMEMORY) {
       return location.stackFramePosition == other.location.stackFramePosition;

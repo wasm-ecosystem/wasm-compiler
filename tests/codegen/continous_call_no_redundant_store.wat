@@ -2,7 +2,7 @@
   (func $dummy)
 
   ;; CHECK-LABEL: Function[1] Body
-  (func $helper (export "helper_func") (param i32) (result i32)
+  (func $helper (param i32) (result i32)
     ;; AARCH64:  str  w19,
     ;; X86_64: mov dword ptr [rsp{{.*}}, ebp
     ;; TRICORE: st.w  [sp]{{.*}}, d8
@@ -13,7 +13,7 @@
     local.get 0)
 
   ;; CHECK-LABEL: Function[2] Body
-  (func $simple (export "simple") (param i32) (result i32)
+  (func $simple (param i32) (result i32)
     i32.const 10
     local.set 0
 
@@ -32,7 +32,7 @@
     call $helper)
 
   ;; CHECK-LABEL: Function[3] Body
-  (func (export "test_if") (param i32) (result i32)
+  (func $test_if (param i32) (result i32)
     i32.const 10
     ;; AARCH64:  str  w19,
     ;; X86_64: mov dword ptr [rsp{{.*}}, ebp
@@ -57,7 +57,7 @@
         (i32.const 1))))
 
   ;; CHECK-LABEL: Function[4] Body
-  (func (export "test_br_if") (param i32) (result i32)
+  (func $test_br_if (param i32) (result i32)
     (block (result i32)
       ;; AARCH64:  str  w19,
       ;; X86_64: mov dword ptr [rsp{{.*}}, ebp
@@ -83,7 +83,7 @@
         (local.get 0))))
 
   ;; CHECK-LABEL: Function[5] Body
-  (func (export "test_loop") (param i32) (result i32)
+  (func $test_loop (param i32) (result i32)
     ;; AARCH64:  str  w19,
     ;; X86_64: mov dword ptr [rsp{{.*}}, ebp
     ;; TRICORE: st.w  [sp]{{.*}}, d8

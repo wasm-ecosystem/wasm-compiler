@@ -5,8 +5,8 @@
     (local.set 1 (i32.const 0x11))
     ;; AARCH64:         mov  [[L0:w[0-9]+]], #0x10
     ;; AARCH64:         mov  [[L1:w[0-9]+]], #0x11
-    ;; TRICORE:         mov  [[L0:d[0-9]+]], #0x10
-    ;; TRICORE:         mov  [[L1:d[0-9]+]], #0x11
+    ;; TRICORE:         mov.u  [[L0:d[0-9]+]], #0x10
+    ;; TRICORE:         mov.u  [[L1:d[0-9]+]], #0x11
 
     (i32.div_s (local.get 0) (local.get 1))
     ;; AARCH64:         cmp  [[L1]], #0
@@ -29,8 +29,8 @@
     (local.set 1 (i32.const 0x11))
     ;; AARCH64:         mov  [[L0:w[0-9]+]], #0x10
     ;; AARCH64:         mov  [[L1:w[0-9]+]], #0x11
-    ;; TRICORE:         mov  [[L0:d[0-9]+]], #0x10
-    ;; TRICORE:         mov  [[L1:d[0-9]+]], #0x11
+    ;; TRICORE:         mov.u  [[L0:d[0-9]+]], #0x10
+    ;; TRICORE:         mov.u  [[L1:d[0-9]+]], #0x11
     (i32.div_s (local.get 0) (i32.const 10))
     ;; AARCH64-NOT:     cmp  w8, #0
     ;; AARCH64-NOT:     mov  [[TMP:w[0-9]+]], #-0x80000000
@@ -49,7 +49,7 @@
     ;; AARCH64-NOT:     mov  [[TMP:w[0-9]+]], #-0x80000000
     ;; AARCH64-NOT:     mov  [[TMP:w[0-9]+]], #-1
 
-    ;; TRICORE:         movh  [[L1:d[0-9]+]], #0
+    ;; TRICORE:         mov  [[L1:d[0-9]+]], #0
     ;; TRICORE:         jeq  [[L1]], #0,
     ;; TRICORE-NOT:     movh  [[TMP:d[0-9]+]], #0x8000
     ;; TRICORE-NOT:     jne  [[REG:d[0-9]+]], #-1,
@@ -60,8 +60,8 @@
     (local.set 1 (i32.const 0x11))
     ;; AARCH64:         mov  [[L0:w[0-9]+]], #0x10
     ;; AARCH64:         mov  [[L1:w[0-9]+]], #0x11
-    ;; TRICORE:         mov  [[L0:d[0-9]+]], #0x10
-    ;; TRICORE:         mov  [[L1:d[0-9]+]], #0x11
+    ;; TRICORE:         mov.u  [[L0:d[0-9]+]], #0x10
+    ;; TRICORE:         mov.u  [[L1:d[0-9]+]], #0x11
 
     (i32.div_s (i32.const 0) (local.get 1))
     ;; AARCH64:         cmp [[L1]], #0
@@ -79,8 +79,8 @@
     (local.set 1 (i32.const 0x11))
     ;; AARCH64:         mov  [[L0:w[0-9]+]], #0x10
     ;; AARCH64:         mov  [[L1:w[0-9]+]], #0x11
-    ;; TRICORE:         mov  [[L0:d[0-9]+]], #0x10
-    ;; TRICORE:         mov  [[L1:d[0-9]+]], #0x11
+    ;; TRICORE:         mov.u  [[L0:d[0-9]+]], #0x10
+    ;; TRICORE:         mov.u  [[L1:d[0-9]+]], #0x11
 
     (i32.div_s (i32.const 0x80000000) (local.get 1))
     ;; AARCH64:         mov  [[DIVIDEND:w[0-9]+]], #-0x80000000
@@ -105,8 +105,8 @@
     (local.set 1 (i32.const 0x11))
     ;; AARCH64:         mov  [[L0:w[0-9]+]], #0x10
     ;; AARCH64:         mov  [[L1:w[0-9]+]], #0x11
-    ;; TRICORE:         mov  [[L0:d[0-9]+]], #0x10
-    ;; TRICORE:         mov  [[L1:d[0-9]+]], #0x11
+    ;; TRICORE:         mov.u  [[L0:d[0-9]+]], #0x10
+    ;; TRICORE:         mov.u  [[L1:d[0-9]+]], #0x11
 
     (i32.rem_s (local.get 0) (local.get 1))
     ;; AARCH64:         cmp  [[L1]], #0
@@ -129,8 +129,8 @@
     (local.set 1 (i32.const 0x11))
     ;; AARCH64:         mov  [[L0:w[0-9]+]], #0x10
     ;; AARCH64:         mov  [[L1:w[0-9]+]], #0x11
-    ;; TRICORE:         mov  [[L0:d[0-9]+]], #0x10
-    ;; TRICORE:         mov  [[L1:d[0-9]+]], #0x11
+    ;; TRICORE:         mov.u  [[L0:d[0-9]+]], #0x10
+    ;; TRICORE:         mov.u  [[L1:d[0-9]+]], #0x11
     (i32.rem_s (local.get 0) (i32.const 10))
     ;; AARCH64-NOT:     cmp  w8, #0
     ;; AARCH64-NOT:     mov  [[TMP:w[0-9]+]], #-0x80000000
@@ -158,8 +158,8 @@
     (local.set 1 (i32.const 0x11))
     ;; AARCH64:         mov  [[L0:w[0-9]+]], #0x10
     ;; AARCH64:         mov  [[L1:w[0-9]+]], #0x11
-    ;; TRICORE:         mov  [[L0:d[0-9]+]], #0x10
-    ;; TRICORE:         mov  [[L1:d[0-9]+]], #0x11
+    ;; TRICORE:         mov.u  [[L0:d[0-9]+]], #0x10
+    ;; TRICORE:         mov.u  [[L1:d[0-9]+]], #0x11
 
     (i32.rem_s (i32.const 0) (local.get 1))
     ;; AARCH64:         cmp [[L1]], #0
@@ -177,8 +177,8 @@
     (local.set 1 (i32.const 0x11))
     ;; AARCH64:         mov  [[L0:w[0-9]+]], #0x10
     ;; AARCH64:         mov  [[L1:w[0-9]+]], #0x11
-    ;; TRICORE:         mov  [[L0:d[0-9]+]], #0x10
-    ;; TRICORE:         mov  [[L1:d[0-9]+]], #0x11
+    ;; TRICORE:         mov.u  [[L0:d[0-9]+]], #0x10
+    ;; TRICORE:         mov.u  [[L1:d[0-9]+]], #0x11
 
     (i32.rem_s (i32.const 0x80000000) (local.get 1))
     ;; AARCH64:         mov  [[DIVIDEND:w[0-9]+]], #-0x80000000

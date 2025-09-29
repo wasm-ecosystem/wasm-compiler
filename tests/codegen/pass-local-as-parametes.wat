@@ -28,7 +28,7 @@
     ;; then do not need to load $arg1 from stack because it is already in 2nd parameter reg.
 
     ;; TRICORE:        st.w  [sp]#0x10, d8
-    ;; TRICORE:        mov  d8, #0x1234
+    ;; TRICORE:        mov.u  d8, #0x1234
     ;; TRICORE:        fcall
 
     call $callee-Ii/0

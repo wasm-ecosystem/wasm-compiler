@@ -338,14 +338,6 @@ Instruction &Instruction::setDisp24sx2(int32_t const disp) VB_NOEXCEPT {
   return *this;
 }
 
-Instruction &Instruction::setConst4zx_16b(uint32_t const constant) VB_NOEXCEPT {
-  assert(in_range<4>(constant) && "Constant out of range");
-
-  opcode_ |= constant << 12U;
-
-  return *this;
-}
-
 Instruction &Instruction::setAbsDisp24sx2(uint32_t const addr) VB_NOEXCEPT {
   assert(Instruction::fitsAbsDisp24sx2(addr) && "Absolute address cannot be represented");
 

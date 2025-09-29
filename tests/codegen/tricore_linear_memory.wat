@@ -134,7 +134,7 @@
     ;; TRICORE-NEXT: add.a  a[[#]], a2
     ;; TRICORE-NEXT: mov.d  d[[#]], a[[#]]
     ;; TRICORE-NEXT: mov.d  d[[#]], a[[#]]
-    ;; TRICORE-NEXT: jlt.u  d[[#]], d[[#]], #0x464
+    ;; TRICORE-NEXT: jlt.u  d[[#]], d[[#]], #0x456
 
     ;; NO MORE 8-byte-copy operations including alignment check
     ;; TRICORE-NOT: xor  d[[#]], d[[#]]
@@ -142,10 +142,10 @@
     ;; TRICORE-NOT: jz.t  d[[#]], #0, 0x156
 
     ;; 1-byte-copy load store
-    ;; TRICORE-NEXT: jlt.u d[[#]], #1, #0x47c
+    ;; TRICORE-NEXT: jlt.u d[[#]], #1, #0x46e
     ;; TRICORE-NEXT: ld.bu  d[[#]], [a[[#]]+]
     ;; TRICORE-NEXT: st.b  [a[[#]]+], d[[#]]
-    ;; TRICORE-NEXT: jned  d[[#]], #1, #0x458
+    ;; TRICORE-NEXT: jned  d[[#]], #1, #0x44a
     memory.copy
   )
   ;; CHECK-LABEL: Function[13] Body

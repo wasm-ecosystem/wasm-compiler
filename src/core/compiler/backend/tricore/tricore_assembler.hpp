@@ -18,6 +18,7 @@
 #define TRICORE_ASSEMBLER_HPP
 
 #include "src/config.hpp"
+#include "src/core/compiler/common/StackElement.hpp"
 #ifdef JIT_TARGET_TRICORE
 
 #include <cstddef>
@@ -268,6 +269,38 @@ public:
                                          bool const forceDstArg0Diff = false, bool const forceDstArg1Diff = false) const;
 
   ///
+  /// @brief Selects an instruction for input StackElements from an array of abstract instructions and writes machine
+  /// code to the output binary
+  ///
+  /// @param instructions Reference to an array of instructions.
+  /// @param arg0 first argument
+  /// @param arg1 second argument, could be nullptr if unop
+  /// @param targetHint Optional target hint that can be used as a scratch register if it is appropiate (Must be nullptr
+  /// for readonly instructions like CMP; can optionally be nullptr in all other cases)
+  /// @param protRegs Protected register mask (i.e. which registers not to use)
+  /// @return result StackElement
+  /// @throws vb::RuntimeError If not enough memory is available
+  StackElement selectInstr(Span<AbstrInstr const> const &instructions, StackElement const *const arg0, StackElement const *const arg1,
+                           StackElement const *const targetHint, RegMask const protRegs) VB_THROW;
+
+  ///
+  /// @brief Wrapper for selectInstr
+  ///
+  /// @tparam N Size of Array
+  /// @param instructions see @b selectInstr
+  /// @param arg0 see @b selectInstr
+  /// @param arg1 see @b selectInstr
+  /// @param targetHint see @b selectInstr
+  /// @param protRegs see @b selectInstr
+  /// @return see @b selectInstr
+  /// @throws see @b selectInstr
+  template <size_t N>
+  inline StackElement selectInstr(std::array<AbstrInstr const, N> const &instructions, StackElement const *const arg0, StackElement const *const arg1,
+                                  StackElement const *const targetHint, RegMask const protRegs) VB_THROW {
+    return selectInstr(Span<AbstrInstr const>{instructions.data(), instructions.size()}, arg0, arg1, targetHint, protRegs);
+  }
+
+  ///
   /// @brief Patch or modify the instruction in binary starting at a given offset
   ///
   /// @param binary Binary where this instruction is located in
@@ -281,6 +314,13 @@ public:
   /// @param opcode OPCode template of the instruction
   /// @return Instruction instance that can be emitted
   Instruction INSTR(OPCodeTemplate const opcode) const VB_NOEXCEPT;
+
+  ///
+  /// @brief Generates an instruction instance from an AbstrInstr targeting the binary of the assembler
+  ///
+  /// @param abstrInstr Abstract instruction representation of the instruction
+  /// @return Instruction instance that can be emitted
+  Instruction INSTR(AbstrInstr const &abstrInstr) const VB_NOEXCEPT;
 
   ///
   /// @brief Efficiently move an immediate value to a general purpose register
@@ -458,7 +498,27 @@ public:
   /// @param offset16 Offset of the store address relative to start
   void emitStoreDerefOff16sx(REG const addrBaseReg, REG const srcDataReg, SafeInt<16> const offset16) const;
 
+  ///
+  /// @brief Converts an ArgType to its MachineType
+  ///
+  /// @param argType Input ArgType
+  /// @return MachineType
+  static MachineType getMachineTypeFromArgType(ArgType const argType) VB_NOEXCEPT;
+
+  ///
+  /// @brief operand movement
+  ///
+  struct OperandMovement final {
+    uint32_t cost;      ///< Total cost in bytes
+    uint32_t liftCount; ///< Count of operand lift operation
+    bool movArg0;       ///< Whether mov arg0
+    bool movArg1;       ///< Whether mov arg1
+    bool reversed;      ///< Whether the arguments were swapped (only possible if the input sources are set commutative)
+  };
+
 private:
+  /// @brief Invalid mov cost
+  static constexpr uint32_t invalidMovCost{UINT32_MAX};
   /// @brief map to cache last trap JIT code position for each trap code
   class LastTrapPositionMap {
     std::array<uint32_t, static_cast<uint32_t>(TrapCode::MAX_TRAP_CODE) + 1U> data_; ///< array like map to storage last trap position.
@@ -490,7 +550,72 @@ private:
   MemWriter &binary_;                            ///< Reference to the output binary
   ModuleInfo &moduleInfo_;                       ///< Reference to the module info struct
   mutable LastTrapPositionMap lastTrapPosition_; ///< Trap code position. It can be reused to reduce code size
+
+  ///
+  /// @brief Emits machine code (assembles the instruction) in the corresponding encoding for the given instruction and
+  /// source and destination StackElements
+  ///
+  /// Caller must ensure that the instruction and its destination and sources match
+  ///
+  /// @param abstrInstr Abstract representation of an AArch64 instruction
+  /// @param dest Representation of a register or memory location the instruction should use as destination
+  /// @param src0 Representation of the first source of the instruction
+  /// @param src1 Representation of the second source of the instruction, can be nullptr if the instruction allows
+  void emitAbstrInstr(AbstrInstr const &abstrInstr, VariableStorage const &dest, VariableStorage const &src0, VariableStorage const &src1) VB_THROW;
+
+  ///
+  /// @brief Get operand movement cost (instructions size in bytes)
+  ///
+  /// @param argType Destination ArgType
+  /// @param storage Source VariableStorage
+  /// @return uint32_t Byte length of the instructions required to move the operand
+  uint32_t getOperandMovCost(ArgType const argType, VariableStorage const &storage) const VB_THROW;
+
+  ///
+  /// @brief Determines whether an element matches a given ArgType
+  ///
+  /// e.g. A VariableStorage representing a 5-bit constant can match a const8zx ArgType and no const4zx ArgType
+  ///
+  /// @param argType ArgType to match
+  /// @param storage VariableStorage to compare
+  /// @return bool Whether the element and ArgType match
+  inline bool elementFitsArgType(ArgType const argType, VariableStorage const &storage) const VB_THROW {
+    return (getOperandMovCost(argType, storage) == 0U);
+  }
+
+  ///
+  /// @brief Check whether the storage needs to be moved to argType with an additional move instruction
+  ///
+  /// @param argType ArgType
+  /// @param storage VariableStorage
+  /// @return bool Whether need an addition move instruction
+  inline bool needMoveOperand(ArgType const argType, VariableStorage const &storage) const VB_THROW {
+    uint32_t const cost{getOperandMovCost(argType, storage)};
+    return (cost != 0U) && (cost != invalidMovCost);
+  }
+
+  ///
+  /// @brief Get instruction cost (instructions size in bytes)
+  ///
+  /// @param instruction Abstract instruction
+  /// @param arg0 Variable storage of first argument
+  /// @param arg1 Variable storage of second argument
+  /// @param startedAsWritableScratchReg whether reg in input storage is writable scratch register.
+  /// @param verifiedTargetHint Variable storage of verified targetHint
+  /// @param isD15Available Whether D15 is available
+  /// @return OperandMovement Byte length of the instructions require to move the operand
+  OperandMovement getInstructionCost(AbstrInstr const &instruction, VariableStorage const &arg0, VariableStorage const &arg1,
+                                     std::array<bool const, 3> const startedAsWritableScratchReg, VariableStorage const &verifiedTargetHint,
+                                     bool const isD15Available) const VB_THROW;
+
+  ///
+  /// @brief Check if given argType is a 32-bit data register, the suffix _a, _b, _c is used to specify the operand location
+  /// @return bool
+  bool isDataReg32(ArgType const argType) const VB_NOEXCEPT {
+    return ((argType == ArgType::dataReg32_a) || (argType == ArgType::dataReg32_b)) || (argType == ArgType::dataReg32_c);
+  }
 };
+
 } // namespace tc
 } // namespace vb
 

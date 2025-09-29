@@ -1,13 +1,13 @@
 (module
     ;; CHECK-LABEL: Function[0] Body
-    (func (export "I32ToI64Res") (result i64)
+    (func $I32ToI64Res (result i64)
         i32.const 1
         i32.const 2
         ;; X86_64:  add eax, 2
         ;; X86_64-NOT:  add [[REG:(r[0-9]+d?|[re](ax|cx|dx|bx|bp|si|di))]], [[REG:(r[0-9]+d?|[re](ax|cx|dx|bx|bp|si|di))]]
         ;; AARCH64:  add  w0, w0, #2
         ;; AARCH64-NOT: ubfx `[[REG:w[0-9]+]]` `[[REG:w[0-9]+]]`
-        ;; TRICORE:         addi  d2, d2, #2
+        ;; TRICORE:         add  d2, #2
         ;; TRICORE-NOT:     mov  d2, [[REG:d[0-9]+]]
         ;; TRICORE-NEXT:    mov  d3, #0
         i32.add
@@ -16,7 +16,7 @@
     )
 
     ;; CHECK-LABEL: Function[1] Body
-    (func (export "I32ToLocal") 
+    (func $I32ToLocal
         (local i64)
 
         i32.const 1
@@ -32,7 +32,7 @@
     )
 
     ;; CHECK-LABEL: Function[2] Body
-    (func (export "signedExtend") (param i32) (result i64)
+    (func $signedExtend (param i32) (result i64)
         local.get 0
         ;; X86_64:  popcnt  eax, ebp
         ;; AARCH64:  cnt  v8.8b, v8.8b
@@ -42,7 +42,7 @@
         i64.extend_i32_s
     )
     ;; CHECK-LABEL: Function[3] Body
-    (func (export "compareResult")  (result i64)
+    (func $compareResult  (result i64)
     i32.const 1
     i32.const 1
     ;; X86_64:  sete  al
@@ -54,7 +54,7 @@
     )
 
     ;; CHECK-LABEL: Function[4] Body
-    (func (export "localInRam") (param i32) (param i64) (local i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64)
+    (func $localInRam (param i32) (param i64) (local i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64)
         local.get 29
         i64.const 0
         i64.eq
@@ -141,7 +141,7 @@
     (func $mix_f32_and_i32 (param i32)
         i32.const 0x123
         local.set 0
-        ;; TRICORE:         mov  [[PARAM:d[0-9]+]], #0x123
+        ;; TRICORE:         mov.u  [[PARAM:d[0-9]+]], #0x123
         local.get 0
         f32.reinterpret_i32
         i32.reinterpret_f32

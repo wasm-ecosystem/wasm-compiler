@@ -17,7 +17,7 @@
 
     i32.const 0x2222 call $callee/0 ;; use 0x2222 as mark
     ;; call other function to decrease stack size
-    ;; TRICORE:     mov  d[[#]], #0x2222
+    ;; TRICORE:     mov.u  d[[#]], #0x2222
 
     local.get 0
     if
@@ -66,7 +66,7 @@
 
     i32.const 0x2222 call $callee/0 ;; use 0x2222 as mark
     ;; call other function to decrease stack size
-    ;; TRICORE:     mov  d[[#]], #0x2222
+    ;; TRICORE:     mov.u  d[[#]], #0x2222
 
     ;; in then block, 1x stack size is checked.
     ;; in else block, 2x stack size is checked.
@@ -103,7 +103,7 @@
 
     i32.const 0x2222 call $callee/0 ;; use 0x2222 as mark
     ;; call other function to decrease stack size
-    ;; TRICORE:     mov  d[[#]], #0x2222
+    ;; TRICORE:     mov.u  d[[#]], #0x2222
 
     memory.size memory.size memory.size memory.size memory.size memory.size memory.size memory.size memory.size memory.size memory.size memory.size memory.size memory.size memory.size memory.size
     memory.size memory.size memory.size memory.size memory.size memory.size memory.size memory.size
@@ -127,7 +127,7 @@
 
     i32.const 0x2222 call $callee/0 ;; use 0x2222 as mark
     ;; call other function to decrease stack size
-    ;; TRICORE:     mov  d[[#]], #0x2222
+    ;; TRICORE:     mov.u  d[[#]], #0x2222
 
     memory.size memory.size memory.size memory.size memory.size memory.size memory.size memory.size memory.size memory.size memory.size memory.size memory.size memory.size memory.size memory.size
     memory.size memory.size memory.size memory.size memory.size memory.size memory.size memory.size
@@ -152,7 +152,7 @@
 
     i32.const 0x2222 call $callee/0 ;; use 0x2222 as mark
     ;; call other function to decrease stack size
-    ;; TRICORE:     mov  d[[#]], #0x2222
+    ;; TRICORE:     mov.u  d[[#]], #0x2222
 
     memory.size memory.size memory.size memory.size memory.size memory.size memory.size memory.size memory.size memory.size memory.size memory.size memory.size memory.size memory.size memory.size
     memory.size memory.size memory.size memory.size memory.size memory.size memory.size memory.size
@@ -176,7 +176,7 @@
 
     i32.const 0x2222 call $callee/0 ;; use 0x2222 as mark
     ;; call other function to decrease stack size
-    ;; TRICORE:     mov  d[[#]], #0x2222
+    ;; TRICORE:     mov.u  d[[#]], #0x2222
 
     memory.size memory.size memory.size memory.size memory.size memory.size memory.size memory.size memory.size memory.size memory.size memory.size memory.size memory.size memory.size memory.size
     memory.size memory.size memory.size memory.size memory.size memory.size memory.size memory.size
@@ -206,7 +206,7 @@
 
     i32.const 0x2222 call $callee/0 ;; use 0x2222 as mark
     ;; call other function to decrease stack size
-    ;; TRICORE:     mov  d[[#]], #0x2222
+    ;; TRICORE:     mov.u  d[[#]], #0x2222
 
     memory.size memory.size memory.size memory.size memory.size memory.size memory.size memory.size memory.size memory.size memory.size memory.size memory.size memory.size memory.size memory.size
     memory.size memory.size memory.size memory.size memory.size memory.size memory.size memory.size
@@ -237,7 +237,7 @@
 
     i32.const 0x2222 call $callee/0 ;; use 0x2222 as mark
     ;; call other function to decrease stack size
-    ;; TRICORE:     mov  d[[#]], #0x2222
+    ;; TRICORE:     mov.u  d[[#]], #0x2222
 
     memory.size memory.size memory.size memory.size memory.size memory.size memory.size memory.size memory.size memory.size memory.size memory.size memory.size memory.size memory.size memory.size
     memory.size memory.size memory.size memory.size memory.size memory.size memory.size memory.size

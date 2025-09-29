@@ -385,15 +385,6 @@ public:
   }
 
   ///
-  /// @brief Set a constant to the const4zx field of a 16-bit instruction
-  ///
-  /// @param constant Constant to encode
-  /// @return Instruction&
-  inline Instruction &setConst4zx_16b(SafeUInt<4U> const constant) VB_NOEXCEPT {
-    return setConst4zx_16b(constant.value());
-  }
-
-  ///
   /// @brief Check if a given absolute address can be encoded with setAbsDisp25sx2, i.e. it is 2-byte aligned and
   /// conforms to the mask 0xF01FFFFE
   ///
@@ -681,13 +672,6 @@ private:
   /// @param disp Actual displacement to encode, must be 2-byte aligned
   /// @return Instruction&
   Instruction &setDisp24sx2(int32_t const disp) VB_NOEXCEPT;
-
-  ///
-  /// @brief Set a constant to the const4zx field of a 16-bit instruction
-  ///
-  /// @param constant Constant to encode
-  /// @return Instruction&
-  Instruction &setConst4zx_16b(uint32_t const constant) VB_NOEXCEPT;
 
   ///
   /// @brief The (not, partly or fully encoded) 4-byte OPCode of the instruction

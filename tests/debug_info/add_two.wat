@@ -311,7 +311,7 @@
 ;; DWO_TRICORE_ACTIVE-EMPTY:
 ;; DWO_TRICORE_ACTIVE-NEXT: 0x0000000d:   DW_TAG_subprogram
 ;; DWO_TRICORE_ACTIVE-NEXT:                 DW_AT_low_pc	(0x0000000000000068)
-;; DWO_TRICORE_ACTIVE-NEXT:                 DW_AT_high_pc	(0x00000000000000a2)
+;; DWO_TRICORE_ACTIVE-NEXT:                 DW_AT_high_pc	(0x00000000000000a0)
 ;; DWO_TRICORE_ACTIVE-EMPTY:
 ;; DWO_TRICORE_ACTIVE-NEXT: 0x0000001e:   NULL
 ;; DWO_TRICORE_ACTIVE-EMPTY:
@@ -349,14 +349,14 @@
 ;; DWO_TRICORE_ACTIVE-NEXT: 0x000000000000007a     26      0      1   0             0       0  is_stmt
 ;; DWO_TRICORE_ACTIVE-NEXT: 0x000000000000007e     26      0      1   0             0       0  is_stmt
 ;; DWO_TRICORE_ACTIVE-NEXT: 0x0000000000000082     26      0      1   0             0       0  is_stmt
-;; DWO_TRICORE_ACTIVE-NEXT: 0x0000000000000086     26      0      1   0             0       0  is_stmt
-;; DWO_TRICORE_ACTIVE-NEXT: 0x000000000000008a     26      0      1   0             0       0  is_stmt
-;; DWO_TRICORE_ACTIVE-NEXT: 0x000000000000008e     26      0      1   0             0       0  is_stmt
+;; DWO_TRICORE_ACTIVE-NEXT: 0x0000000000000084     26      0      1   0             0       0  is_stmt
+;; DWO_TRICORE_ACTIVE-NEXT: 0x0000000000000088     26      0      1   0             0       0  is_stmt
+;; DWO_TRICORE_ACTIVE-NEXT: 0x000000000000008c     26      0      1   0             0       0  is_stmt
+;; DWO_TRICORE_ACTIVE-NEXT: 0x0000000000000090     26      0      1   0             0       0  is_stmt
 ;; DWO_TRICORE_ACTIVE-NEXT: 0x0000000000000092     26      0      1   0             0       0  is_stmt
-;; DWO_TRICORE_ACTIVE-NEXT: 0x0000000000000094     26      0      1   0             0       0  is_stmt
-;; DWO_TRICORE_ACTIVE-NEXT: 0x0000000000000098     31      0      1   0             0       0  is_stmt
-;; DWO_TRICORE_ACTIVE-NEXT: 0x000000000000009c     32      0      1   0             0       0  is_stmt
-;; DWO_TRICORE_ACTIVE-NEXT: 0x00000000000000a0     32      0      1   0             0       0  is_stmt
-;; DWO_TRICORE_ACTIVE-NEXT: 0x00000000000000a0     32      0      1   0             0       0  is_stmt end_sequence
+;; DWO_TRICORE_ACTIVE-NEXT: 0x0000000000000096     31      0      1   0             0       0  is_stmt
+;; DWO_TRICORE_ACTIVE-NEXT: 0x000000000000009a     32      0      1   0             0       0  is_stmt
+;; DWO_TRICORE_ACTIVE-NEXT: 0x000000000000009e     32      0      1   0             0       0  is_stmt
+;; DWO_TRICORE_ACTIVE-NEXT: 0x000000000000009e     32      0      1   0             0       0  is_stmt end_sequence
 ;; DWO_TRICORE_ACTIVE-EMPTY:
 ;; DWO_TRICORE_ACTIVE-EMPTY:

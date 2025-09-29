@@ -3101,6 +3101,10 @@ RegMask Backend::mask(StackElement const *const elementPtr) const VB_NOEXCEPT {
   }
 
   VariableStorage const storage{moduleInfo_.getStorage(*elementPtr)};
+  return mask(storage);
+}
+
+RegMask Backend::mask(VariableStorage const &storage) const VB_NOEXCEPT {
   if (storage.type == StorageType::REGISTER) {
     REG const reg{storage.location.reg};
     return mask(reg, MachineTypeUtil::is64(storage.machineType));
@@ -3127,9 +3131,9 @@ StackElement Backend::emitDeferredAction(OPCode const opcode, StackElement *cons
   } else {
     switch (opcode) {
     case OPCode::I32_CLZ: {
-      Assembler::PreparedArgs const prep{as_.loadArgsToRegsAndPrepDest(MachineType::I32, arg0Ptr, nullptr, targetHint)};
-      as_.INSTR(CLZ_Dc_Da).setDc(prep.dest.reg).setDa(prep.arg0.reg)();
-      return prep.dest.elem;
+      // coverity[autosar_cpp14_a8_5_2_violation]
+      constexpr auto ops = make_array(I__CLZ_Dc_Da);
+      return as_.selectInstr(ops, arg0Ptr, arg1Ptr, targetHint, RegMask::none());
     }
     case OPCode::I32_CTZ: {
       Assembler::PreparedArgs const prep{as_.loadArgsToRegsAndPrepDest(MachineType::I32, arg0Ptr, nullptr, targetHint, RegMask::none(), true, false)};
@@ -3138,44 +3142,52 @@ StackElement Backend::emitDeferredAction(OPCode const opcode, StackElement *cons
       return prep.dest.elem;
     }
     case OPCode::I32_POPCNT: {
-      Assembler::PreparedArgs const prep{as_.loadArgsToRegsAndPrepDest(MachineType::I32, arg0Ptr, nullptr, targetHint)};
-      as_.INSTR(POPCNTW_Dc_Da).setDc(prep.dest.reg).setDa(prep.arg0.reg)();
-      return prep.dest.elem;
+      // coverity[autosar_cpp14_a8_5_2_violation]
+      constexpr auto ops = make_array(I__POPCNTW_Dc_Da);
+      return as_.selectInstr(ops, arg0Ptr, arg1Ptr, targetHint, RegMask::none());
     }
 
-    case OPCode::I32_ADD:
-    case OPCode::I32_SUB: {
-      bool const arg0IsConst{arg0Ptr->type == StackType::CONSTANT_I32};
-      bool const arg1IsConst{arg1Ptr->type == StackType::CONSTANT_I32};
-
-      if (((opcode == OPCode::I32_ADD) && (arg0IsConst || arg1IsConst)) || ((opcode == OPCode::I32_SUB) && arg1IsConst)) {
+    case OPCode::I32_ADD: {
+      bool const arg0IsBigConst{((arg0Ptr->type == StackType::CONSTANT_I32) &&
+                                 !(SignedInRangeCheck<16U>::check(bit_cast<int32_t>(arg0Ptr->data.constUnion.u32)).inRange())) &&
+                                (arg1Ptr->getBaseType() != StackType::CONSTANT)};
+      bool const arg1IsBigConst{((arg1Ptr->type == StackType::CONSTANT_I32) &&
+                                 !(SignedInRangeCheck<16U>::check(bit_cast<int32_t>(arg1Ptr->data.constUnion.u32)).inRange())) &&
+                                (arg0Ptr->getBaseType() != StackType::CONSTANT)};
+      if (arg0IsBigConst || arg1IsBigConst) {
         // coverity[autosar_cpp14_a8_5_2_violation]
         auto const args = make_array(arg0Ptr, arg1Ptr);
-        uint32_t const constIdx{arg1IsConst ? 1_U32 : 0_U32};
+        uint32_t const constIdx{(arg0Ptr->type == StackType::CONSTANT_I32) ? 0_U32 : 1_U32};
 
         Assembler::PreparedArgs const prep{as_.loadArgsToRegsAndPrepDest(MachineType::I32, args[constIdx ^ 1U], nullptr, targetHint)};
-
+        uint32_t const constToAdd{args[constIdx]->data.constUnion.u32};
         REG srcReg{prep.arg0.reg};
-        uint32_t constToAdd{args[constIdx]->data.constUnion.u32};
-        if (opcode == OPCode::I32_SUB) {
-          constToAdd = 0U - constToAdd;
-        }
 
-        StackElement const *destElem{&prep.arg0.elem};
         if ((constToAdd & 0xFFFFU) != 0U) {
           as_.INSTR(ADDI_Dc_Da_const16sx).setDc(prep.dest.reg).setDa(srcReg).setConst16sx(Instruction::lower16sx(constToAdd))();
           srcReg = prep.dest.reg;
-          destElem = &prep.dest.elem;
         }
         SafeUInt<16U> const reducedHighPortionToAdd{SafeUInt<32U>::fromAny(constToAdd + 0x8000U).rightShift<16U>()};
         if (reducedHighPortionToAdd.value() != 0U) {
           as_.INSTR(ADDIH_Dc_Da_const16).setDc(prep.dest.reg).setDa(srcReg).setConst16(reducedHighPortionToAdd)();
-          destElem = &prep.dest.elem;
         }
-
-        return *destElem;
-      } else if (((opcode == OPCode::I32_SUB) && arg0IsConst) &&
-                 SignedInRangeCheck<9>::check(bit_cast<int32_t>(arg0Ptr->data.constUnion.u32)).inRange()) {
+        return prep.dest.elem;
+      } else {
+        // coverity[autosar_cpp14_a8_5_2_violation]
+        constexpr auto ops = make_array(I__ADD_Da_const4sx, I__ADD_Da_Db, I__ADD_Da_D15_const4sx, I__ADD_D15_Da_const4sx, I__ADD_Da_D15_Db,
+                                        I__ADD_D15_Da_Db, I__ADDI_Dc_Da_const16sx, I__ADD_Dc_Da_Db);
+        return as_.selectInstr(ops, arg0Ptr, arg1Ptr, targetHint, RegMask::none());
+      }
+    }
+    case OPCode::I32_SUB: {
+      bool const arg0IsConst{arg0Ptr->type == StackType::CONSTANT_I32};
+      bool const arg1IsConst{arg1Ptr->type == StackType::CONSTANT_I32};
+      if (arg1IsConst) {
+        Assembler::PreparedArgs const prep{as_.loadArgsToRegsAndPrepDest(MachineType::I32, arg0Ptr, nullptr, targetHint)};
+        uint32_t const constToAdd{0U - arg1Ptr->data.constUnion.u32};
+        as_.addImmToReg(prep.arg0.reg, constToAdd, prep.dest.reg);
+        return prep.dest.elem;
+      } else if (arg0IsConst && SignedInRangeCheck<9>::check(bit_cast<int32_t>(arg0Ptr->data.constUnion.u32)).inRange()) {
         SignedInRangeCheck<9> const rangeCheck{SignedInRangeCheck<9>::check(bit_cast<int32_t>(arg0Ptr->data.constUnion.u32))};
 
         Assembler::PreparedArgs const prep{as_.loadArgsToRegsAndPrepDest(MachineType::I32, arg1Ptr, nullptr, targetHint)};
@@ -3183,33 +3195,15 @@ StackElement Backend::emitDeferredAction(OPCode const opcode, StackElement *cons
         as_.INSTR(RSUB_Dc_Da_const9sx).setDc(prep.dest.reg).setDa(prep.arg0.reg).setConst9sx(rangeCheck.safeInt())();
         return prep.dest.elem;
       } else {
-        Assembler::PreparedArgs const prep{as_.loadArgsToRegsAndPrepDest(MachineType::I32, arg0Ptr, arg1Ptr, targetHint)};
-
         // coverity[autosar_cpp14_a8_5_2_violation]
-        constexpr auto ops = make_array(ADD_Dc_Da_Db, SUB_Dc_Da_Db);
-        as_.INSTR(ops[static_cast<uint32_t>(opcode) - static_cast<uint32_t>(OPCode::I32_ADD)])
-            .setDc(prep.dest.reg)
-            .setDa(prep.arg0.reg)
-            .setDb(prep.arg1.reg)();
-        return prep.dest.elem;
+        constexpr auto ops = make_array(I__SUB_Da_Db, I__SUB_Dc_D15_Db, I__SUB_D15_Da_Db, I__SUB_Dc_Da_Db);
+        return as_.selectInstr(ops, arg0Ptr, arg1Ptr, targetHint, RegMask::none());
       }
     }
-
     case OPCode::I32_MUL: {
-      SignedInRangeCheck<9U> const arg0IsDirectConst{checkStackElemSignedConstInRange<9U>(*arg0Ptr)};
-      SignedInRangeCheck<9U> const arg1IsDirectConst{checkStackElemSignedConstInRange<9U>(*arg1Ptr)};
-
-      if (arg0IsDirectConst.inRange() || arg1IsDirectConst.inRange()) {
-        StackElement *const regElement{arg0IsDirectConst.inRange() ? arg1Ptr : arg0Ptr};
-        SafeInt<9> const immValue{arg0IsDirectConst.inRange() ? arg0IsDirectConst.safeInt() : arg1IsDirectConst.safeInt()};
-        Assembler::PreparedArgs const prep{as_.loadArgsToRegsAndPrepDest(MachineType::I32, regElement, nullptr, targetHint)};
-        as_.INSTR(MUL_Dc_Da_const9sx).setDc(prep.dest.reg).setDa(prep.arg0.reg).setConst9sx(immValue)();
-        return prep.dest.elem;
-      } else {
-        Assembler::PreparedArgs const prep{as_.loadArgsToRegsAndPrepDest(MachineType::I32, arg0Ptr, arg1Ptr, targetHint)};
-        as_.INSTR(MUL_Dc_Da_Db).setDc(prep.dest.reg).setDa(prep.arg0.reg).setDb(prep.arg1.reg)();
-        return prep.dest.elem;
-      }
+      // coverity[autosar_cpp14_a8_5_2_violation]
+      constexpr auto ops = make_array(I__MUL_Da_Db, I__MUL_Dc_Da_const9sx, I__MUL_Dc_Da_Db);
+      return as_.selectInstr(ops, arg0Ptr, arg1Ptr, targetHint, RegMask::none());
     }
 
     case OPCode::I32_DIV_S:
@@ -3278,74 +3272,47 @@ StackElement Backend::emitDeferredAction(OPCode const opcode, StackElement *cons
       return StackElement::scratchReg(targetReg, StackType::SCRATCHREGISTER_I32);
     }
     case OPCode::I32_AND:
-    case OPCode::I32_OR:
+    case OPCode::I32_OR: {
+      // coverity[autosar_cpp14_a8_5_2_violation]
+      constexpr auto ops = make_array(make_array(I__AND_D15_const8zx, I__AND_Da_Db, I__AND_Dc_Da_Db, I__AND_Dc_Da_const9zx),
+                                      make_array(I__OR_D15_const8zx, I__OR_Da_Db, I__OR_Dc_Da_Db, I__OR_Dc_Da_const9zx));
+      return as_.selectInstr(ops[static_cast<uint32_t>(opcode) - static_cast<uint32_t>(OPCode::I32_AND)], arg0Ptr, arg1Ptr, targetHint,
+                             RegMask::none());
+    }
     case OPCode::I32_XOR: {
-      UnsignedInRangeCheck<9U> const arg0IsDirectConst{checkStackElemUnsignedConstInRange<9U>(*arg0Ptr)};
-      UnsignedInRangeCheck<9U> const arg1IsDirectConst{checkStackElemUnsignedConstInRange<9U>(*arg1Ptr)};
-      ;
-
-      if (arg0IsDirectConst.inRange() || arg1IsDirectConst.inRange()) {
-        StackElement const *const regElement{arg0IsDirectConst.inRange() ? arg1Ptr : arg0Ptr};
-        SafeUInt<9U> const immValue{arg0IsDirectConst.inRange() ? arg0IsDirectConst.safeInt() : arg1IsDirectConst.safeInt()};
-
-        Assembler::PreparedArgs const prep{as_.loadArgsToRegsAndPrepDest(MachineType::I32, regElement, nullptr, targetHint)};
-        if (opcode == OPCode::I32_AND) {
-          as_.andWordDcDaConst9zx(prep.dest.reg, prep.arg0.reg, immValue);
-        } else if (opcode == OPCode::I32_OR) {
-          as_.orWordDcDaConst9zx(prep.dest.reg, prep.arg0.reg, immValue);
-        } else {
-          as_.INSTR(XOR_Dc_Da_const9zx).setDc(prep.dest.reg).setDa(prep.arg0.reg).setConst9zx(immValue)();
-        }
-        return prep.dest.elem;
-      } else {
-        Assembler::PreparedArgs const prep{as_.loadArgsToRegsAndPrepDest(MachineType::I32, arg0Ptr, arg1Ptr, targetHint)};
-
-        // coverity[autosar_cpp14_a8_5_2_violation]
-        constexpr auto ops = make_array(AND_Dc_Da_Db, OR_Dc_Da_Db, XOR_Dc_Da_Db);
-        as_.INSTR(ops[static_cast<uint32_t>(opcode) - static_cast<uint32_t>(OPCode::I32_AND)])
-            .setDc(prep.dest.reg)
-            .setDa(prep.arg0.reg)
-            .setDb(prep.arg1.reg)();
-        return prep.dest.elem;
-      }
+      // coverity[autosar_cpp14_a8_5_2_violation]
+      constexpr auto ops = make_array(I__XOR_Da_Db, I__XOR_Dc_Da_const9zx, I__XOR_Dc_Da_Db);
+      return as_.selectInstr(ops, arg0Ptr, arg1Ptr, targetHint, RegMask::none());
     }
     case OPCode::I32_SHL:
     case OPCode::I32_SHR_S:
     case OPCode::I32_SHR_U: {
       bool const arg1IsConst{(arg1Ptr->type == StackType::CONSTANT_I32)};
+      bool const leftShift{(opcode == OPCode::I32_SHL)};
 
       if (arg1IsConst) {
-        Assembler::PreparedArgs const prep{as_.loadArgsToRegsAndPrepDest(MachineType::I32, arg0Ptr, nullptr, targetHint)};
-
-        bool const leftShift{(opcode == OPCode::I32_SHL)};
-
         uint32_t const shiftCount{arg1Ptr->data.constUnion.u32 & 0x1FU};
         int32_t const adjustedShiftCount{leftShift ? static_cast<int32_t>(shiftCount) : -static_cast<int32_t>(shiftCount)};
+        StackElement const adjustedShiftCountElem{StackElement::i32Const(static_cast<uint32_t>(adjustedShiftCount))};
         // coverity[autosar_cpp14_a8_5_2_violation]
-        constexpr auto ops = make_array(SH_Dc_Da_const9sx, SHA_Dc_Da_const9sx, SH_Dc_Da_const9sx);
-        as_.INSTR(ops[static_cast<uint32_t>(opcode) - static_cast<uint32_t>(OPCode::I32_SHL)])
-            .setDc(prep.dest.reg)
-            .setDa(prep.arg0.reg)
-            .setConst9sx(static_cast<SafeInt<9>>(SafeUInt<6>::max() & bit_cast<uint32_t>(adjustedShiftCount)))();
-        return prep.dest.elem;
+        constexpr auto ops = make_array(make_array(I__SH_Da_const4sx, I__SH_Dc_Da_const9sx), make_array(I__SHA_Da_const4sx, I__SHA_Dc_Da_const9sx),
+                                        make_array(I__SH_Da_const4sx, I__SH_Dc_Da_const9sx));
+        return as_.selectInstr(ops[static_cast<uint32_t>(opcode) - static_cast<uint32_t>(OPCode::I32_SHL)], arg0Ptr, &adjustedShiftCountElem,
+                               targetHint, RegMask::none());
       } else {
         RegAllocTracker regAllocTracker{};
         regAllocTracker.writeProtRegs = mask(arg0Ptr);
         REG const arg1Reg{common_.liftToRegInPlaceProt(*arg1Ptr, true, targetHint, regAllocTracker).reg};
 
-        Assembler::PreparedArgs const prep{as_.loadArgsToRegsAndPrepDest(MachineType::I32, arg0Ptr, nullptr, targetHint, mask(arg1Reg, false))};
-
         as_.andWordDcDaConst9zx(arg1Reg, arg1Reg, SafeUInt<9U>::fromConst<0x1FU>());
-        if ((opcode == OPCode::I32_SHR_S) || (opcode == OPCode::I32_SHR_U)) {
-          as_.INSTR(RSUB_Dc_Da_const9sx).setDc(arg1Reg).setDa(arg1Reg).setConst9sx(SafeInt<9>::fromConst<64>())();
+        if (!leftShift) {
+          as_.INSTR(RSUB_Da).setDa(arg1Reg)();
         }
+        StackElement const adjustedShiftCountElem{StackElement::scratchReg(arg1Reg, MachineTypeUtil::toStackTypeFlag(MachineType::I32))};
         // coverity[autosar_cpp14_a8_5_2_violation]
-        constexpr auto ops = make_array(SH_Dc_Da_Db, SHA_Dc_Da_Db, SH_Dc_Da_Db);
-        as_.INSTR(ops[static_cast<uint32_t>(opcode) - static_cast<uint32_t>(OPCode::I32_SHL)])
-            .setDc(prep.dest.reg)
-            .setDa(prep.arg0.reg)
-            .setDb(arg1Reg)();
-        return prep.dest.elem;
+        constexpr auto ops = make_array(make_array(I__SH_Dc_Da_Db), make_array(I__SHA_Dc_Da_Db), make_array(I__SH_Dc_Da_Db));
+        return as_.selectInstr(ops[static_cast<uint32_t>(opcode) - static_cast<uint32_t>(OPCode::I32_SHL)], arg0Ptr, &adjustedShiftCountElem,
+                               targetHint, RegMask::none());
       }
     }
 

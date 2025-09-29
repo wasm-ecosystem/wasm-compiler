@@ -124,9 +124,165 @@ inline CMPFFLAGS operator|(const CMPFFLAGS lhs, const CMPFFLAGS rhs) VB_NOEXCEPT
 }
 
 ///
+/// @brief Abstract definition for the input argument of an abstract instruction
+///
+/// NOTE: Only the operand types supported by the current selectInstr are listed here
+///
+// coverity[autosar_cpp14_a7_2_4_violation] autosar required style is more bug prone
+enum class ArgType : uint8_t { // clang-format off
+  NONE = 0b00000000,
+  I32 = 0b01000000, addrReg32, d15, dataReg32_a, dataReg32_b, dataReg32_c,
+  const4sx_32, const8zx_32, const9sx_32, const9zx_32, const16sx_32,
+  I64 = 0b10000000, addrReg64, dataReg64,
+  TYPEMASK = 0b11000000
+}; // clang-format on
+
+///
 /// @brief Basic template for TriCore OPCodes
 ///
 using OPCodeTemplate = uint32_t;
+
+///
+/// @brief Complete description of an TriCore instruction
+///
+/// This includes an opcode template, the destination and source types and whether the sources are commutative
+/// NOTE: For readonly instructions like CMP, dstType is ArgType::NONE, for instructions only taking a single input,
+/// src1Type is ArgType::NONE. Commutation of source inputs is designed in such a way that an instruction is considered
+/// source-commutative if the data in the destination after execution is the same if the source inputs are swapped
+///
+struct AbstrInstr final {
+  OPCodeTemplate opcode;    ///< Basic opcode template
+  ArgType destType;         ///< Destination type
+  ArgType src0Type;         ///< First source type
+  ArgType src1Type;         ///< Second source type
+  bool src_0_1_commutative; ///< Whether first and second source are commutative
+  bool src0_dst_same;       ///< Whether require first source and destination to be same
+  bool useD15;              ///< Whether require use d15 as implicit register
+};
+
+/// @brief CLZ  D[c], D[a]: Count Leading Zeros
+// coverity[autosar_cpp14_m3_4_1_violation]
+constexpr AbstrInstr I__CLZ_Dc_Da{0x01B0000FU, ArgType::dataReg32_c, ArgType::dataReg32_a, ArgType::NONE, false, false, false};
+/// @brief POPCNT.W  D[c], D[a]: Count population (ones) in register
+// coverity[autosar_cpp14_m3_4_1_violation]
+constexpr AbstrInstr I__POPCNTW_Dc_Da{0x0220004BU, ArgType::dataReg32_c, ArgType::dataReg32_a, ArgType::NONE, false, false, false};
+
+/// @brief ADDI  D[c], D[a], const16: Add Immediate
+// coverity[autosar_cpp14_m3_4_1_violation]
+constexpr AbstrInstr I__ADDI_Dc_Da_const16sx{0x0000001BU, ArgType::dataReg32_c, ArgType::dataReg32_a, ArgType::const16sx_32, true, false, false};
+/// @brief ADDIH  D[c], D[a], const16: Add Immediate High
+// coverity[autosar_cpp14_m3_4_1_violation]
+constexpr AbstrInstr I__ADDIH_Dc_Da_const16sx{0x0000009BU, ArgType::dataReg32_c, ArgType::dataReg32_a, ArgType::const16sx_32, true, false, false};
+/// @brief ADD  D[c], D[a], const9: Add
+// coverity[autosar_cpp14_m3_4_1_violation]
+constexpr AbstrInstr I__ADD_Dc_Da_const9sx{0x0000008BU, ArgType::dataReg32_c, ArgType::dataReg32_a, ArgType::const9sx_32, true, false, false};
+/// @brief ADD  D[c], D[a], D[b]: Add
+// coverity[autosar_cpp14_m3_4_1_violation]
+constexpr AbstrInstr I__ADD_Dc_Da_Db{0x0000000BU, ArgType::dataReg32_c, ArgType::dataReg32_a, ArgType::dataReg32_b, true, false, false};
+/// @brief ADD  D[a], D[15], const4: Add (16b instruction)
+// coverity[autosar_cpp14_m3_4_1_violation]
+constexpr AbstrInstr I__ADD_Da_D15_const4sx{0x0092U, ArgType::dataReg32_a, ArgType::d15, ArgType::const4sx_32, true, false, true};
+/// @brief ADD  D[15], D[a], const4: Add (16b instruction)
+// coverity[autosar_cpp14_m3_4_1_violation]
+constexpr AbstrInstr I__ADD_D15_Da_const4sx{0x009AU, ArgType::d15, ArgType::dataReg32_a, ArgType::const4sx_32, true, false, true};
+/// @brief ADD  D[a], const4: Add (16b instruction)
+// coverity[autosar_cpp14_m3_4_1_violation]
+constexpr AbstrInstr I__ADD_Da_const4sx{0x00C2U, ArgType::dataReg32_a, ArgType::dataReg32_a, ArgType::const4sx_32, true, true, false};
+/// @brief ADD  D[a], D[15], D[b]: Add (16b instruction)
+// coverity[autosar_cpp14_m3_4_1_violation]
+constexpr AbstrInstr I__ADD_Da_D15_Db{0x0012U, ArgType::dataReg32_a, ArgType::d15, ArgType::dataReg32_b, true, false, true};
+/// @brief ADD  D[15], D[a], D[b]: Add (16b instruction)
+// coverity[autosar_cpp14_m3_4_1_violation]
+constexpr AbstrInstr I__ADD_D15_Da_Db{0x001AU, ArgType::d15, ArgType::dataReg32_a, ArgType::dataReg32_b, true, false, true};
+/// @brief ADD  D[a], D[b]: Add (16b instruction)
+// coverity[autosar_cpp14_m3_4_1_violation]
+constexpr AbstrInstr I__ADD_Da_Db{0x0042U, ArgType::dataReg32_a, ArgType::dataReg32_a, ArgType::dataReg32_b, true, true, false};
+
+/// @brief AND  D[c], D[a], const9: Bitwise AND
+// coverity[autosar_cpp14_m3_4_1_violation]
+constexpr AbstrInstr I__AND_Dc_Da_const9zx{0x0100008FU, ArgType::dataReg32_c, ArgType::dataReg32_a, ArgType::const9zx_32, true, false, false};
+/// @brief AND  D[c], D[a], D[b]: Bitwise AND
+// coverity[autosar_cpp14_m3_4_1_violation]
+constexpr AbstrInstr I__AND_Dc_Da_Db{0x0080000FU, ArgType::dataReg32_c, ArgType::dataReg32_a, ArgType::dataReg32_b, true, false, false};
+/// @brief AND  D[15], const8: Bitwise AND (16b instruction)
+// coverity[autosar_cpp14_m3_4_1_violation]
+constexpr AbstrInstr I__AND_D15_const8zx{0x0016U, ArgType::d15, ArgType::d15, ArgType::const8zx_32, true, true, true};
+/// @brief AND  D[a], D[b]: Bitwise AND (16b instruction)
+// coverity[autosar_cpp14_m3_4_1_violation]
+constexpr AbstrInstr I__AND_Da_Db{0x0026U, ArgType::dataReg32_a, ArgType::dataReg32_a, ArgType::dataReg32_b, true, true, false};
+
+/// @brief OR  D[c], D[a], const9: Bitwise OR
+// coverity[autosar_cpp14_m3_4_1_violation]
+constexpr AbstrInstr I__OR_Dc_Da_const9zx{0x0140008FU, ArgType::dataReg32_c, ArgType::dataReg32_a, ArgType::const9zx_32, true, false, false};
+/// @brief OR  D[c], D[a], D[b]: Bitwise OR
+// coverity[autosar_cpp14_m3_4_1_violation]
+constexpr AbstrInstr I__OR_Dc_Da_Db{0x00A0000FU, ArgType::dataReg32_c, ArgType::dataReg32_a, ArgType::dataReg32_b, true, false, false};
+/// @brief OR  D[15], const8: Bitwise OR (16b instruction)
+// coverity[autosar_cpp14_m3_4_1_violation]
+constexpr AbstrInstr I__OR_D15_const8zx{0x0096U, ArgType::d15, ArgType::d15, ArgType::const8zx_32, true, true, true};
+/// @brief OR  D[a], D[b]: Bitwise OR (16b instruction)
+// coverity[autosar_cpp14_m3_4_1_violation]
+constexpr AbstrInstr I__OR_Da_Db{0x00A6U, ArgType::dataReg32_a, ArgType::dataReg32_a, ArgType::dataReg32_b, true, true, false};
+
+/// @brief SUB  D[c], D[a], D[b]: Subtract
+// coverity[autosar_cpp14_m3_4_1_violation]
+constexpr AbstrInstr I__SUB_Dc_Da_Db{0x0080000BU, ArgType::dataReg32_c, ArgType::dataReg32_a, ArgType::dataReg32_b, false, false, false};
+/// @brief SUB  D[c], D[15], D[b]: Subtract (16b instruction)
+// coverity[autosar_cpp14_m3_4_1_violation]
+constexpr AbstrInstr I__SUB_Dc_D15_Db{0x0052U, ArgType::dataReg32_c, ArgType::d15, ArgType::dataReg32_b, false, false, true};
+/// @brief SUB  D[15], D[a], D[b]: Subtract (16b instruction)
+// coverity[autosar_cpp14_m3_4_1_violation]
+constexpr AbstrInstr I__SUB_D15_Da_Db{0x005AU, ArgType::d15, ArgType::dataReg32_a, ArgType::dataReg32_b, false, false, true};
+/// @brief SUB  D[a], D[b]: Subtract (16b instruction)
+// coverity[autosar_cpp14_m3_4_1_violation]
+constexpr AbstrInstr I__SUB_Da_Db{0x00A2U, ArgType::dataReg32_a, ArgType::dataReg32_a, ArgType::dataReg32_b, false, true, false};
+
+/// @brief MUL  D[c], D[a], const9: Multiply
+// coverity[autosar_cpp14_m3_4_1_violation]
+constexpr AbstrInstr I__MUL_Dc_Da_const9sx{0x00200053U, ArgType::dataReg32_c, ArgType::dataReg32_a, ArgType::const9sx_32, true, false, false};
+/// @brief MUL  D[c], D[a], D[b]: Multiply
+// coverity[autosar_cpp14_m3_4_1_violation]
+constexpr AbstrInstr I__MUL_Dc_Da_Db{0x000A0073U, ArgType::dataReg32_c, ArgType::dataReg32_a, ArgType::dataReg32_b, true, false, false};
+/// @brief MUL  D[a], D[b]: Multiply (16b instruction)
+// coverity[autosar_cpp14_m3_4_1_violation]
+constexpr AbstrInstr I__MUL_Da_Db{0x00E2U, ArgType::dataReg32_a, ArgType::dataReg32_a, ArgType::dataReg32_b, true, true, false};
+
+/// @brief RSUB  D[c], D[a], const9: Reverse Subtract
+// coverity[autosar_cpp14_m3_4_1_violation]
+constexpr AbstrInstr I__RSUB_Dc_Da_const9sx{0x0100008BU, ArgType::dataReg32_c, ArgType::dataReg32_a, ArgType::const9sx_32, false, false, false};
+/// @brief RSUB  D[a]: Reverse Subtract(16b instruction)
+// coverity[autosar_cpp14_m3_4_1_violation]
+constexpr AbstrInstr I__RSUB_Da{0x5032U, ArgType::dataReg32_a, ArgType::dataReg32_a, ArgType::NONE, false, true, false};
+
+/// @brief SH  D[c], D[a], const9: Shift
+// coverity[autosar_cpp14_m3_4_1_violation]
+constexpr AbstrInstr I__SH_Dc_Da_const9sx{0x0000008FU, ArgType::dataReg32_c, ArgType::dataReg32_a, ArgType::const9sx_32, false, false, false};
+/// @brief SH  D[c], D[a], D[b]: Shift
+// coverity[autosar_cpp14_m3_4_1_violation]
+constexpr AbstrInstr I__SH_Dc_Da_Db{0x0000000FU, ArgType::dataReg32_c, ArgType::dataReg32_a, ArgType::dataReg32_b, false, false, false};
+/// @brief SH  D[a], const4: Shift (16b instruction)
+// coverity[autosar_cpp14_m3_4_1_violation]
+constexpr AbstrInstr I__SH_Da_const4sx{0x0006U, ArgType::dataReg32_a, ArgType::dataReg32_a, ArgType::const4sx_32, false, true, false};
+
+/// @brief SHA  D[c], D[a], const9: Arithmetic Shift
+// coverity[autosar_cpp14_m3_4_1_violation]
+constexpr AbstrInstr I__SHA_Dc_Da_const9sx{0x0020008FU, ArgType::dataReg32_c, ArgType::dataReg32_a, ArgType::const9sx_32, false, false, false};
+/// @brief SHA  D[c], D[a], D[b]: Arithmetic Shift
+// coverity[autosar_cpp14_m3_4_1_violation]
+constexpr AbstrInstr I__SHA_Dc_Da_Db{0x0010000FU, ArgType::dataReg32_c, ArgType::dataReg32_a, ArgType::dataReg32_b, false, false, false};
+/// @brief SHA  D[c], D[a], D[b]: Arithmetic Shift (16b instruction)
+// coverity[autosar_cpp14_m3_4_1_violation]
+constexpr AbstrInstr I__SHA_Da_const4sx{0x0086U, ArgType::dataReg32_a, ArgType::dataReg32_a, ArgType::const4sx_32, false, true, false};
+
+/// @brief XOR  D[c], D[a], const9: Bitwise XOR
+// coverity[autosar_cpp14_m3_4_1_violation]
+constexpr AbstrInstr I__XOR_Dc_Da_const9zx{0x0180008FU, ArgType::dataReg32_c, ArgType::dataReg32_a, ArgType::const9zx_32, true, false, false};
+/// @brief XOR  D[c], D[a], D[b]: Bitwise XOR
+// coverity[autosar_cpp14_m3_4_1_violation]
+constexpr AbstrInstr I__XOR_Dc_Da_Db{0x00C0000FU, ArgType::dataReg32_c, ArgType::dataReg32_a, ArgType::dataReg32_b, true, false, false};
+/// @brief XOR  D[a], D[b]: Bitwise XOR (16b instruction)
+// coverity[autosar_cpp14_m3_4_1_violation]
+constexpr AbstrInstr I__XOR_Da_Db{0x00C6U, ArgType::dataReg32_a, ArgType::dataReg32_a, ArgType::dataReg32_b, true, true, false};
 
 ///
 /// @brief Check whether the given instruction is a 16-bit instruction (32-bit encoding otherwise)
@@ -419,7 +575,7 @@ constexpr OPCodeTemplate STDA_deref_Ab_off10sx_Pa_postinc{(0x07_U32 << 22_U32) |
 constexpr OPCodeTemplate SH_Dc_Da_const9sx{0x0000008FU};
 /// Shift by signed constant instruction, 16 bit
 // coverity[autosar_cpp14_m3_4_1_violation]
-constexpr OPCodeTemplate SH_Da_const4sx{0x00000006U};
+constexpr OPCodeTemplate SH_Da_const4sx{0x0006U};
 /// Shift by signed register instruction
 // coverity[autosar_cpp14_m3_4_1_violation]
 constexpr OPCodeTemplate SH_Dc_Da_Db{0x0000000FU};
@@ -441,6 +597,9 @@ constexpr OPCodeTemplate SUBA_A10_const8zx{0x0020U};
 constexpr OPCodeTemplate MOV_Dc_const16sx{0x0000003BU};
 /// Move constant to register instruction (16b instruction)
 constexpr OPCodeTemplate MOV_Da_const4sx{0x0082U};
+/// Move constant to register instruction (16b instruction)
+// coverity[autosar_cpp14_m3_4_1_violation]
+constexpr OPCodeTemplate MOV_D15_const8zx{0x00DAU};
 /// Move constant to extended register instruction
 constexpr OPCodeTemplate MOV_Ec_const16sx{0x000000FBU};
 /// Move register to register instruction
@@ -490,6 +649,12 @@ constexpr OPCodeTemplate ADD_Da_Db{0x0042U};
 /// Add 4-bit constant to register instruction (16b instruction)
 // coverity[autosar_cpp14_m3_4_1_violation]
 constexpr OPCodeTemplate ADD_Da_const4sx{0x00C2U};
+/// Add 4-bit constant to register instruction (16b instruction)
+// coverity[autosar_cpp14_m3_4_1_violation]
+constexpr OPCodeTemplate ADD_Da_D15_const4sx{0x0092U};
+/// Add 4-bit constant to register instruction (16b instruction)
+// coverity[autosar_cpp14_m3_4_1_violation]
+constexpr OPCodeTemplate ADD_D15_Da_const4sx{0x009AU};
 /// Subtract register from register instruction
 // coverity[autosar_cpp14_m3_4_1_violation]
 constexpr OPCodeTemplate SUB_Dc_Da_Db{(0x08_U32 << 20_U32) | 0x0B_U32};
@@ -536,6 +701,7 @@ constexpr OPCodeTemplate ADDIHA_Ac_Aa_const16{0x00000011U};
 /// (Reverse) Subtract register from constant
 constexpr OPCodeTemplate RSUB_Dc_Da_const9sx{(0x08_U32 << 21_U32) | 0x8B_U32};
 /// (Reverse) Subtract register from constant (16b instruction)
+// coverity[autosar_cpp14_m3_4_1_violation]
 constexpr OPCodeTemplate RSUB_Da{0x5032U};
 
 /// Multiply register with signed constant instruction
@@ -715,6 +881,7 @@ constexpr OPCodeTemplate OR_Da_Db{0x00A6U};
 constexpr OPCodeTemplate OR_D15_const8zx{0x0096U};
 
 /// Bitwise XOR of register with unsigned constant
+// coverity[autosar_cpp14_m3_4_1_violation]
 constexpr OPCodeTemplate XOR_Dc_Da_const9zx{(0x0C_U32 << 21_U32) | 0x8F_U32};
 /// Bitwise XOR of register with register
 constexpr OPCodeTemplate XOR_Dc_Da_Db{(0x0C_U32 << 20_U32) | 0x0F_U32};

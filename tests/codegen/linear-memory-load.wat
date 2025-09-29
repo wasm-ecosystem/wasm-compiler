@@ -35,7 +35,7 @@
 
       ;; X86_64_NO_LINEAR_MEMORY_BOUNDS_CHECKS: add ebp, 1
       ;; AARCH64: add w19, w19, #1
-      ;; TRICORE: addi d8, d8, #1
+      ;; TRICORE: add d8, #1
       i32.add
 
       local.tee 0
@@ -54,7 +54,7 @@
       i32.load
       ;; X86_64_NO_LINEAR_MEMORY_BOUNDS_CHECKS: add eax, 1
       ;; AARCH64: add w0, w0, #1
-      ;; TRICORE: addi d2, d2, #1
+      ;; TRICORE: add d2, #1
       i32.add
       return
     )

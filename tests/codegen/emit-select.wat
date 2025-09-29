@@ -3,13 +3,13 @@
   (func $select-from-local (param i32 i32 i32) (result i32)
     i32.const 0x1000
     local.set 0
-    ;; TRICORE: mov  [[L0:d[0-9]+]], #0x1000
+    ;; TRICORE: mov.u  [[L0:d[0-9]+]], #0x1000
     i32.const 0x1001
     local.set 1
-    ;; TRICORE: mov  [[L1:d[0-9]+]], #0x1001
+    ;; TRICORE: mov.u  [[L1:d[0-9]+]], #0x1001
     i32.const 0x1002
     local.set 2
-    ;; TRICORE: mov  [[L2:d[0-9]+]], #0x1002
+    ;; TRICORE: mov.u  [[L2:d[0-9]+]], #0x1002
     local.get 0
     local.get 1
     local.get 2
@@ -41,13 +41,13 @@
   (func $truthy-is-target-hint (param i32 i32 i32) (result i32)
     i32.const 0x1000
     local.set 0
-    ;; TRICORE: mov  [[L0:d[0-9]+]], #0x1000
+    ;; TRICORE: mov.u  [[L0:d[0-9]+]], #0x1000
     i32.const 0x1001
     local.set 1
-    ;; TRICORE: mov  [[L1:d[0-9]+]], #0x1001
+    ;; TRICORE: mov.u  [[L1:d[0-9]+]], #0x1001
     i32.const 0x1002
     local.set 2
-    ;; TRICORE: mov  [[L2:d[0-9]+]], #0x1002
+    ;; TRICORE: mov.u  [[L2:d[0-9]+]], #0x1002
       local.get 0
       i32.const 1
     i32.add
@@ -60,13 +60,13 @@
   (func $falsy-is-target-hint (param i32 i32 i32) (result i32)
     i32.const 0x1000
     local.set 0
-    ;; TRICORE: mov  [[L0:d[0-9]+]], #0x1000
+    ;; TRICORE: mov.u  [[L0:d[0-9]+]], #0x1000
     i32.const 0x1001
     local.set 1
-    ;; TRICORE: mov  [[L1:d[0-9]+]], #0x1001
+    ;; TRICORE: mov.u  [[L1:d[0-9]+]], #0x1001
     i32.const 0x1002
     local.set 2
-    ;; TRICORE: mov  [[L2:d[0-9]+]], #0x1002
+    ;; TRICORE: mov.u  [[L2:d[0-9]+]], #0x1002
     local.get 0
       local.get 1
       i32.const 1
@@ -79,13 +79,13 @@
   (func $cond-is-target-hint (param i32 i32 i32) (result i32)
     i32.const 0x1000
     local.set 0
-    ;; TRICORE: mov  [[L0:d[0-9]+]], #0x1000
+    ;; TRICORE: mov.u  [[L0:d[0-9]+]], #0x1000
     i32.const 0x1001
     local.set 1
-    ;; TRICORE: mov  [[L1:d[0-9]+]], #0x1001
+    ;; TRICORE: mov.u  [[L1:d[0-9]+]], #0x1001
     i32.const 0x1002
     local.set 2
-    ;; TRICORE: mov  [[L2:d[0-9]+]], #0x1002
+    ;; TRICORE: mov.u  [[L2:d[0-9]+]], #0x1002
     local.get 0
     local.get 1
       local.get 2

@@ -20,6 +20,7 @@
 #ifdef JIT_TARGET_TRICORE
 #include <array>
 #include <cassert>
+#include <cstddef>
 #include <cstdint>
 
 #include "tricore_assembler.hpp"
@@ -27,6 +28,7 @@
 #include "tricore_cc.hpp"
 
 #include "src/core/common/FunctionRef.hpp"
+#include "src/core/common/Span.hpp"
 #include "src/core/common/TrapCode.hpp"
 #include "src/core/common/VbExceptions.hpp"
 #include "src/core/common/basedataoffsets.hpp"
@@ -46,6 +48,7 @@
 #include "src/core/compiler/common/StackElement.hpp"
 #include "src/core/compiler/common/StackType.hpp"
 #include "src/core/compiler/common/VariableStorage.hpp"
+#include "src/core/compiler/common/util.hpp"
 
 namespace vb {
 namespace tc {
@@ -68,6 +71,15 @@ Instruction Assembler::INSTR(OPCodeTemplate const opcode) const VB_NOEXCEPT {
   return Instruction(opcode, binary_);
 }
 
+Instruction Assembler::INSTR(AbstrInstr const &abstrInstr) const VB_NOEXCEPT {
+#if ENABLE_EXTENSIONS
+  if (backend_.compiler_.getDwarfGenerator() != nullptr) {
+    backend_.compiler_.getDwarfGenerator()->record(binary_.size());
+  }
+#endif
+  return Instruction(abstrInstr.opcode, binary_);
+}
+
 Assembler::PreparedArgs Assembler::loadArgsToRegsAndPrepDest(MachineType const dstType, StackElement const *const arg0,
                                                              StackElement const *const arg1, StackElement const *const targetHint,
                                                              RegMask const protRegs, bool const forceDstArg0Diff, bool const forceDstArg1Diff) const {
@@ -79,14 +91,8 @@ Assembler::PreparedArgs Assembler::loadArgsToRegsAndPrepDest(MachineType const d
   // coverity[autosar_cpp14_a8_5_2_violation]
   const auto srcTypes = make_array(moduleInfo_.getMachineType(arg0), moduleInfo_.getMachineType(arg1));
 
-  StackElement const *verifiedTargetHint{targetHint};
-  REG verifiedTargetHintReg{REG::NONE};
-  if (!noDest) {
-    verifiedTargetHintReg = backend_.getUnderlyingRegIfSuitable(targetHint, dstType, protRegs);
-    if (verifiedTargetHintReg == REG::NONE) {
-      verifiedTargetHint = nullptr;
-    }
-  }
+  REG const verifiedTargetHintReg{backend_.getUnderlyingRegIfSuitable(targetHint, dstType, protRegs)};
+  StackElement const *const verifiedTargetHint{(verifiedTargetHintReg != REG::NONE) ? targetHint : nullptr};
 
   std::array<bool const, 2> const startedAsWritableScratchReg{{backend_.isWritableScratchReg(arg0), backend_.isWritableScratchReg(arg1)}};
   std::array<bool, 2> argCanBeDst{};
@@ -235,6 +241,152 @@ Assembler::PreparedArgs Assembler::loadArgsToRegsAndPrepDest(MachineType const d
   return preparedArgs;
 }
 
+StackElement Assembler::selectInstr(Span<AbstrInstr const> const &instructions, StackElement const *const arg0, StackElement const *const arg1,
+                                    StackElement const *const targetHint, RegMask const protRegs) VB_THROW {
+  assert(instructions.size() > 0 && "Zero instructions to select from");
+  assert((arg0 != nullptr) && "First source cannot be undefined");
+
+  bool const unop{arg1 == nullptr};
+  bool const src_0_1_commutative{instructions[0].src_0_1_commutative};
+  static_cast<void>(src_0_1_commutative);
+  assert((!unop || !src_0_1_commutative) && "Unary operation cannot be commutative");
+
+  MachineType const dstType{getMachineTypeFromArgType(instructions[0].destType)};
+  REG const verifiedTargetHintReg{backend_.getUnderlyingRegIfSuitable(targetHint, dstType, protRegs)};
+  StackElement const *const verifiedTargetHint{(verifiedTargetHintReg != REG::NONE) ? targetHint : nullptr};
+
+  constexpr StackElement invalidElem{StackElement::invalid()};
+  std::array<StackElement, 2U> inputArgs{{(arg0 != nullptr) ? *arg0 : invalidElem, (arg1 != nullptr) ? *arg1 : invalidElem}};
+
+  // Check whether both are equal to another and not INVALID
+  // bool const argsAreEqual{StackElement::equalsVariable(&inputArgs[0], &inputArgs[1])};
+  bool const argsAreEqual{moduleInfo_.getStorage(inputArgs[0]).inSameLocation(moduleInfo_.getStorage(inputArgs[1]))};
+  std::array<bool, 2> argHasBeenLifted{{false, false}};
+  bool const isD15Available{backend_.isD15Available()};
+
+  // coverity[autosar_cpp14_a8_5_2_violation]
+  auto liftArgLambda = [this, &inputArgs, verifiedTargetHint, argsAreEqual, protRegs, isD15Available,
+                        &argHasBeenLifted](uint32_t const idx, bool const coLift, bool const liftToD15) mutable {
+    assert(!argHasBeenLifted[idx] && "Cannot lift arg twice");
+    assert((!protRegs.allMarked()) && "Cannot lift");
+    assert(idx <= 1U && "Lift index out of range"); // As we only have two args, idx must be 0 or 1
+
+    // otherIdx is 1 if idx is 0, else otherIdx is 0
+    uint32_t const otherIdx{idx ^ 1U};
+    if ((argsAreEqual && argHasBeenLifted[otherIdx]) && coLift) {
+      inputArgs[idx] = inputArgs[otherIdx];
+    } else {
+      RegAllocTracker tempRegAllocTracker{};
+      tempRegAllocTracker.writeProtRegs = protRegs | backend_.mask(&inputArgs[otherIdx]);
+      StackElement const d15{StackElement::scratchReg(REG::D15, MachineTypeUtil::toStackTypeFlag(MachineType::I32))};
+      StackElement const *target{nullptr};
+      if (liftToD15) {
+        target = &d15;
+      } else if ((verifiedTargetHint == nullptr) && isD15Available) {
+        target = &d15;
+      } else {
+        target = verifiedTargetHint;
+      }
+      StackElement const scratchReg{
+          backend_.common_.reqScratchRegProt(moduleInfo_.getMachineType(&inputArgs[idx]), target, tempRegAllocTracker, false).elem};
+      VariableStorage const srcStorage{moduleInfo_.getStorage(inputArgs[idx])};
+      VariableStorage dstStorage{moduleInfo_.getStorage(scratchReg)};
+      if (srcStorage.machineType != dstStorage.machineType) {
+        dstStorage.machineType = srcStorage.machineType;
+      }
+      backend_.emitMoveImpl(dstStorage, srcStorage, false);
+      inputArgs[idx] = scratchReg;
+    }
+
+    // If both args are equal, set the other arg to the newly lifted one and
+    // also set argCanBeDst accordingly
+    if ((argsAreEqual && !argHasBeenLifted[otherIdx]) && coLift) {
+      inputArgs[otherIdx] = inputArgs[idx];
+      argHasBeenLifted[otherIdx] = true;
+    }
+  };
+
+  // prelift args (in memory) to reg
+  if (moduleInfo_.getStorage(inputArgs[0]).inMemory()) {
+    liftArgLambda(0U, true, false);
+  }
+  if ((!unop) && (!argHasBeenLifted[1])) {
+    if (moduleInfo_.getStorage(inputArgs[1]).inMemory()) {
+      liftArgLambda(1U, true, false);
+    }
+  }
+
+  // Whether arg0, arg1, dest is located in writable scratch register
+  std::array<bool const, 3> const startedAsWritableScratchReg{{backend_.isWritableScratchReg(&inputArgs[0]),
+                                                               backend_.isWritableScratchReg(&inputArgs[1]),
+                                                               backend_.isWritableScratchReg(verifiedTargetHint)}};
+  OperandMovement minCostMovement{invalidMovCost, 0U, false, false, false};
+  uint32_t selectedInstrIdx{UINT32_MAX};
+  VariableStorage const destStorage{(verifiedTargetHint != nullptr) ? moduleInfo_.getStorage(*verifiedTargetHint) : VariableStorage{}};
+  for (uint32_t instrIdx{0U}; instrIdx < instructions.size(); instrIdx++) {
+    AbstrInstr const abstrInstr{instructions[instrIdx]};
+    OperandMovement const cost{getInstructionCost(abstrInstr, moduleInfo_.getStorage(inputArgs[0]), moduleInfo_.getStorage(inputArgs[1]),
+                                                  startedAsWritableScratchReg, destStorage, isD15Available)};
+    if ((cost.cost < minCostMovement.cost) || ((cost.cost == minCostMovement.cost) && (cost.liftCount < minCostMovement.liftCount))) {
+      selectedInstrIdx = instrIdx;
+      minCostMovement = cost;
+    }
+  }
+
+  assert((selectedInstrIdx != UINT32_MAX) && "Instruction selection error will be first to catch");
+
+  // coverity[autosar_cpp14_a5_2_5_violation]
+  AbstrInstr const selectedInstruction{instructions[selectedInstrIdx]};
+  if (minCostMovement.movArg0) {
+    ArgType const arg0Type{minCostMovement.reversed ? selectedInstruction.src1Type : selectedInstruction.src0Type};
+    liftArgLambda(0U, minCostMovement.movArg1, (arg0Type == ArgType::d15));
+  }
+  if (minCostMovement.movArg1 && !argHasBeenLifted[1]) {
+    ArgType const arg1Type{minCostMovement.reversed ? selectedInstruction.src0Type : selectedInstruction.src1Type};
+    liftArgLambda(1U, false, (arg1Type == ArgType::d15));
+  }
+
+  std::array<VariableStorage, 2U> inputStorages{{
+      (arg0 != nullptr) ? moduleInfo_.getStorage(inputArgs[0]) : VariableStorage{},
+      (arg1 != nullptr) ? moduleInfo_.getStorage(inputArgs[1]) : VariableStorage{},
+  }};
+  bool const noDest{instructions[0].destType == ArgType::NONE};
+  VariableStorage dest{};
+  if (!noDest) {
+    if (verifiedTargetHint != nullptr) {
+      dest = VariableStorage::reg(verifiedTargetHintReg, dstType);
+    } else if (backend_.isWritableScratchReg(&inputArgs[0])) {
+      dest = inputStorages[0];
+    } else if (backend_.isWritableScratchReg(&inputArgs[1])) {
+      dest = inputStorages[1];
+    } else {
+      RegAllocTracker fullRegAllocTracker{};
+      fullRegAllocTracker.readProtRegs = protRegs | backend_.mask(inputStorages[0]) | backend_.mask(inputStorages[1]);
+      StackElement const d15{StackElement::scratchReg(REG::D15, MachineTypeUtil::toStackTypeFlag(MachineType::I32))};
+      StackElement const *const target{(selectedInstruction.destType == ArgType::d15) ? &d15 : nullptr};
+      RegElement const regElement{backend_.common_.reqScratchRegProt(dstType, target, fullRegAllocTracker, false)};
+      dest = VariableStorage::reg(regElement.reg, dstType);
+    }
+  }
+
+  if (minCostMovement.reversed) {
+    emitAbstrInstr(selectedInstruction, dest, inputStorages[1], inputStorages[0]);
+  } else {
+    emitAbstrInstr(selectedInstruction, dest, inputStorages[0], inputStorages[1]);
+  }
+
+  StackElement result{StackElement::invalid()};
+  if ((targetHint != nullptr) && dest.inSameLocation(moduleInfo_.getStorage(*targetHint))) {
+    result = backend_.common_.getResultStackElement(targetHint, dstType);
+  } else {
+    if (!noDest) {
+      assert(dest.type == StorageType::REGISTER && "Invalid storage type");
+      result = StackElement::scratchReg(dest.location.reg, MachineTypeUtil::toStackTypeFlag(dstType));
+    }
+  }
+  return result;
+}
+
 void Assembler::setStackFrameSize(uint32_t const frameSize, bool const temporary, bool const mayRemoveLocals, uint32_t const functionEntryAdjust) {
   assert((frameSize == moduleInfo_.getStackFrameSizeBeforeReturn()) || frameSize == alignStackFrameSize(frameSize));
   assert(frameSize >= moduleInfo_.getStackFrameSizeBeforeReturn() && "Cannot remove return address and parameters");
@@ -289,6 +441,21 @@ void Assembler::addImmToReg(REG const reg, uint32_t const imm, REG targetReg) co
 
   REG sourceReg{reg};
   if (RegUtil::isDATA(reg)) {
+    SignedInRangeCheck<4U> const const4sxChecker{SignedInRangeCheck<4U>::check(bit_cast<int32_t>(imm))};
+    if (const4sxChecker.inRange()) {
+      if (targetReg == reg) {
+        INSTR(ADD_Da_const4sx).setDa(reg).setConst4sx(const4sxChecker.safeInt())();
+        return;
+      } else if (reg == REG::D15) {
+        INSTR(ADD_Da_D15_const4sx).setDa(targetReg).setConst4sx(const4sxChecker.safeInt())();
+        return;
+      } else if (targetReg == REG::D15) {
+        INSTR(ADD_D15_Da_const4sx).setDa(reg).setConst4sx(const4sxChecker.safeInt())();
+        return;
+      } else {
+        static_cast<void>(0);
+      }
+    }
     if ((imm & 0xFFFFU) != 0U) {
       INSTR(ADDI_Dc_Da_const16sx).setDc(targetReg).setDa(sourceReg).setConst16sx(Instruction::lower16sx(imm))();
       sourceReg = targetReg;
@@ -329,9 +496,17 @@ void Assembler::subSp(uint32_t const imm) const {
 
 void Assembler::MOVimm(REG const reg, uint32_t const imm) const {
   if (RegUtil::isDATA(reg)) {
-    if ((imm & 0xFFFFU) == 0U) {
+    SignedInRangeCheck<4U> const const4sxChecker{SignedInRangeCheck<4U>::check(bit_cast<int32_t>(imm))};
+    if (const4sxChecker.inRange()) {
+      INSTR(MOV_Da_const4sx).setDa(reg).setConst4sx(const4sxChecker.safeInt())();
+    } else if ((reg == REG::D15) && UnsignedInRangeCheck<8U>::check(imm).inRange()) {
+      INSTR(MOV_D15_const8zx).setConst8zx(SafeUInt<8U>::fromUnsafe(imm))();
+    } else if (UnsignedInRangeCheck<16U>::check(imm).inRange()) {
+      INSTR(MOVU_Dc_const16zx).setDc(reg).setConst16zx(SafeUInt<16U>::fromUnsafe(imm))();
+    } else if ((imm & 0xFFFFU) == 0U) {
       INSTR(MOVH_Dc_const16).setDc(reg).setConst16(SafeUInt<32U>::fromAny(imm).rightShift<16U>())();
     } else {
+      // TODO(Xinquan): can be optimized for lower16sx
       INSTR(MOV_Dc_const16sx).setDc(reg).setConst16sx(Instruction::lower16sx(imm))();
 
       SafeUInt<16U> const reducedHighPortionToAdd{SafeUInt<32U>::fromAny(imm + 0x8000U).rightShift<16U>()};
@@ -342,7 +517,7 @@ void Assembler::MOVimm(REG const reg, uint32_t const imm) const {
   } else {
     UnsignedInRangeCheck<4U> const rangeCheck{UnsignedInRangeCheck<4U>::check(imm)};
     if (rangeCheck.inRange()) {
-      INSTR(MOVA_Aa_const4zx).setAa(reg).setConst4zx_16b(rangeCheck.safeInt())();
+      INSTR(MOVA_Aa_const4zx).setAa(reg).setConst4zx(rangeCheck.safeInt())();
     } else {
       SafeUInt<16U> const reducedHighPortion{SafeUInt<32U>::fromAny(imm + 0x8000U).rightShift<16U>()};
       INSTR(MOVHA_Ac_const16).setAc(reg).setConst16(reducedHighPortion)();
@@ -605,6 +780,213 @@ void Assembler::emitStoreDerefOff16sx(REG const addrBaseReg, REG const srcDataRe
   } else {
     INSTR(STA_deref_Ab_off16sx_Aa).setAb(addrBaseReg).setOff16sx(offset16).setAa(srcDataReg)();
   }
+}
+
+MachineType Assembler::getMachineTypeFromArgType(ArgType const argType) VB_NOEXCEPT {
+  // coverity[autosar_cpp14_a7_2_1_violation]
+  ArgType const type{static_cast<ArgType>(static_cast<uint8_t>(argType) & static_cast<uint8_t>(ArgType::TYPEMASK))};
+  if (type == ArgType::I32) {
+    return MachineType::I32;
+  }
+  if (type == ArgType::I64) {
+    return MachineType::I64;
+  }
+  return MachineType::INVALID;
+}
+
+uint32_t Assembler::getOperandMovCost(ArgType const argType, VariableStorage const &storage) const VB_THROW {
+  if (argType == ArgType::NONE) {
+    return 0U;
+  }
+
+  assert(MachineTypeUtil::getSize(storage.machineType) == 4U && "Only support I32 instruction.");
+  if (storage.type == StorageType::INVALID) {
+    return invalidMovCost;
+  } else if ((storage.type == StorageType::CONSTANT)) {
+    uint32_t const value{storage.location.constUnion.u32};
+    constexpr size_t operandMatrixLength{(static_cast<size_t>(ArgType::const16sx_32) - static_cast<size_t>(ArgType::d15)) + 1U};
+    // [d15, dataReg32_a, dataReg32_b, dataReg32_c, const4sx_32, const8zx_32, const9sx_32, const9zx_32, const16sx_32]
+    // Each item in the costs array specifies the length(in bytes) of the instruction required to move storage to argType.
+    // For example, the first entry '8U' means mov storage(constant which value larger than 16sx) to d15 need 8 bytes instruction:
+    // mov  d15, lower16sx(storage); addih  d15, d15, higher16sx(storage)
+    std::array<uint32_t, operandMatrixLength> costs{{8U, 8U, 8U, 8U, invalidMovCost, invalidMovCost, invalidMovCost, invalidMovCost, invalidMovCost}};
+    if (SignedInRangeCheck<4U>::check(bit_cast<int32_t>(value)).inRange()) {
+      // -8 ~ 7
+      if (bit_cast<int32_t>(value) < 0) {
+        costs = {2U, 2U, 2U, 2U, 0U, invalidMovCost, 0U, invalidMovCost, 0U};
+      } else {
+        costs = {2U, 2U, 2U, 2U, 0U, 0U, 0U, 0U, 0U};
+      }
+    } else if (UnsignedInRangeCheck<8U>::check(value).inRange()) {
+      // 0 ~ 255 => [8, 255]
+      costs = {2U, 4U, 4U, 4U, invalidMovCost, 0U, 0U, 0U, 0U};
+    } else if (SignedInRangeCheck<9U>::check(bit_cast<int32_t>(value)).inRange()) {
+      // -256 ~ 255 => [-256, -9]
+      costs = {4U, 4U, 4U, 4U, invalidMovCost, invalidMovCost, 0U, invalidMovCost, 0U};
+    } else if (UnsignedInRangeCheck<9U>::check(value).inRange()) {
+      // 0 ~ 511 => [256, 511]
+      costs = {4U, 4U, 4U, 4U, invalidMovCost, invalidMovCost, invalidMovCost, 0U, 0U};
+    } else if (SignedInRangeCheck<16U>::check(bit_cast<int32_t>(value)).inRange()) {
+      // -32768 ~ 32767 => [-32768, -257] & [512, 32767]
+      costs = {4U, 4U, 4U, 4U, invalidMovCost, invalidMovCost, invalidMovCost, invalidMovCost, 0U};
+    } else if (UnsignedInRangeCheck<16U>::check(value).inRange()) {
+      // 0 ~ 65535 => [32768, 65535]
+      costs = {4U, 4U, 4U, 4U, invalidMovCost, invalidMovCost, invalidMovCost, invalidMovCost, invalidMovCost};
+    } else {
+      static_cast<void>(0);
+    }
+    return costs[static_cast<uint32_t>(argType) - static_cast<uint32_t>(ArgType::d15)];
+  } else if (storage.type == StorageType::REGISTER) {
+    REG const reg{storage.location.reg};
+    if ((reg == REG::D15) && ((argType == ArgType::d15) || isDataReg32(argType))) {
+      return 0U;
+    }
+    if (RegUtil::isDATA(reg) && isDataReg32(argType)) {
+      return 0U;
+    }
+  } else {
+    static_cast<void>(0);
+  }
+
+  return invalidMovCost;
+}
+
+Assembler::OperandMovement Assembler::getInstructionCost(AbstrInstr const &instruction, VariableStorage const &arg0, VariableStorage const &arg1,
+                                                         std::array<bool const, 3> const startedAsWritableScratchReg,
+                                                         VariableStorage const &verifiedTargetHint, bool const isD15Available) const VB_THROW {
+  constexpr OperandMovement const invalid{invalidMovCost, 0U, false, false, false};
+  if (instruction.useD15 && !isD15Available) {
+    return invalid;
+  }
+
+  if (verifiedTargetHint.machineType != MachineType::INVALID) {
+    assert((verifiedTargetHint.type == StorageType::REGISTER) && "Invalid target hint");
+    if ((instruction.destType == ArgType::d15) && (verifiedTargetHint.location.reg != REG::D15)) {
+      return invalid;
+    }
+  }
+
+  bool const isArgsSame{arg0.inSameLocation(arg1)};
+  bool const isSrcTypeSame{(instruction.src0Type == instruction.src1Type) ||
+                           (isDataReg32(instruction.src0Type) && isDataReg32(instruction.src1Type))};
+  uint32_t const instructionSize{is16BitInstr(instruction.opcode) ? 2_U32 : 4_U32};
+
+  // coverity[autosar_cpp14_a8_5_2_violation]
+  auto const getOperandMovement = [this, isArgsSame, isSrcTypeSame, arg0, arg1, instructionSize](ArgType const src0Type,
+                                                                                                 ArgType const src1Type) -> OperandMovement {
+    uint32_t const arg0MoveCost{getOperandMovCost(src0Type, arg0)};
+    uint32_t const arg1MoveCost{(isArgsSame && isSrcTypeSame) ? 0U : getOperandMovCost(src1Type, arg1)};
+    uint32_t const operandMoveCost{
+        ((arg0MoveCost == invalidMovCost) || (arg1MoveCost == invalidMovCost)) ? invalidMovCost : (arg0MoveCost + arg1MoveCost + instructionSize)};
+    bool const needMoveArg0{needMoveOperand(src0Type, arg0)};
+    bool const needMoveArg1{needMoveOperand(src1Type, arg1)};
+    uint32_t liftCount{needMoveArg0 ? 1_U32 : 0_U32};
+    liftCount += ((arg1MoveCost != 0U) && (arg1MoveCost != invalidMovCost)) ? 1_U32 : 0_U32;
+    return {operandMoveCost, liftCount, needMoveArg0, needMoveArg1, false};
+  };
+
+  // coverity[autosar_cpp14_a4_5_1_violation]
+  OperandMovement const result{getOperandMovement(instruction.src0Type, instruction.src1Type)};
+  bool canSrc0DstBeSame{false};
+
+  if (verifiedTargetHint.machineType != MachineType::INVALID) {
+    // given targetHint, try to use dest as arg0:
+    // 1. if already equals => true
+    // 2. arg0 is constant(need to lift to reg) and dest is a writableScratchReg. Then arg0 should lift to targetHint in future
+    canSrc0DstBeSame = (verifiedTargetHint.equals(arg0) || (result.movArg0 && startedAsWritableScratchReg[2]));
+  } else {
+    // no targetHint, try to use arg0 as dest:
+    // 1. arg0 is already writable => true, use arg0 reg as dest
+    // 1. arg0 is constant, (need to lift to reg) => arg0 will be lifted to scratchReg, use arg0 as dest
+    canSrc0DstBeSame = (startedAsWritableScratchReg[0] || result.movArg0);
+  }
+
+  if (instruction.src_0_1_commutative) {
+    // coverity[autosar_cpp14_a4_5_1_violation]
+    OperandMovement swappedResult{getOperandMovement(instruction.src1Type, instruction.src0Type)};
+    swappedResult.reversed = true;
+
+    bool canSwappedSrc0DstBeSame{false};
+    if (verifiedTargetHint.machineType != MachineType::INVALID) {
+      canSwappedSrc0DstBeSame = (verifiedTargetHint.equals(arg1) || (swappedResult.movArg1 && startedAsWritableScratchReg[2]));
+    } else {
+      canSwappedSrc0DstBeSame = (startedAsWritableScratchReg[1] || swappedResult.movArg1);
+    }
+
+    if (instruction.src0_dst_same) {
+      if (!canSrc0DstBeSame && !canSwappedSrc0DstBeSame) {
+        return invalid;
+      } else if (!canSrc0DstBeSame) {
+        return swappedResult;
+      } else if (!canSwappedSrc0DstBeSame) {
+        return result;
+      } else {
+        static_cast<void>(0);
+      }
+    }
+    return (swappedResult.cost < result.cost) ? swappedResult : result;
+  }
+
+  if (instruction.src0_dst_same && !canSrc0DstBeSame) {
+    return invalid;
+  } else {
+    return result;
+  }
+}
+
+void Assembler::emitAbstrInstr(AbstrInstr const &abstrInstr, VariableStorage const &dest, VariableStorage const &src0, VariableStorage const &src1) {
+  assert(elementFitsArgType(abstrInstr.destType, dest) && "Argument doesn't fit instruction");
+  assert(elementFitsArgType(abstrInstr.src0Type, src0) && "Argument doesn't fit instruction");
+  assert(elementFitsArgType(abstrInstr.src1Type, src1) && "Argument doesn't fit instruction");
+  Instruction instruction{INSTR(abstrInstr)};
+
+  // coverity[autosar_cpp14_a8_5_2_violation]
+  auto const setOperand = [&instruction](VariableStorage const &storage, ArgType const argType) VB_NOEXCEPT -> void {
+    switch (argType) {
+    case ArgType::NONE:
+      return;
+    case ArgType::d15:
+      // Since D15 is an implicit register here, do not need encoding.
+      break;
+    case ArgType::const4sx_32:
+      static_cast<void>(instruction.setConst4sx(SafeInt<4U>::fromUnsafe(bit_cast<int32_t>(storage.location.constUnion.u32))));
+      break;
+    case ArgType::const8zx_32:
+      static_cast<void>(instruction.setConst8zx(SafeUInt<8U>::fromUnsafe(storage.location.constUnion.u32)));
+      break;
+    case ArgType::const9zx_32:
+      static_cast<void>(instruction.setConst9zx(SafeUInt<9U>::fromUnsafe(storage.location.constUnion.u32)));
+      break;
+    case ArgType::const9sx_32:
+      static_cast<void>(instruction.setConst9sx(SafeInt<9U>::fromUnsafe(bit_cast<int32_t>(storage.location.constUnion.u32))));
+      break;
+    case ArgType::const16sx_32:
+      static_cast<void>(instruction.setConst16sx(SafeInt<16U>::fromUnsafe(bit_cast<int32_t>(storage.location.constUnion.u32))));
+      break;
+    case ArgType::dataReg32_a:
+      static_cast<void>(instruction.setDa(storage.location.reg));
+      break;
+    case ArgType::dataReg32_b:
+      static_cast<void>(instruction.setDb(storage.location.reg));
+      break;
+    case ArgType::dataReg32_c:
+      static_cast<void>(instruction.setDc(storage.location.reg));
+      break;
+    default:
+      assert(false && "Others ArgType not implement yet");
+      break;
+    }
+  };
+  // coverity[autosar_cpp14_a4_5_1_violation]
+  setOperand(dest, abstrInstr.destType);
+  if (!abstrInstr.src0_dst_same) {
+    // coverity[autosar_cpp14_a4_5_1_violation]
+    setOperand(src0, abstrInstr.src0Type);
+  }
+  // coverity[autosar_cpp14_a4_5_1_violation]
+  setOperand(src1, abstrInstr.src1Type);
+
+  instruction();
 }
 
 } // namespace tc

@@ -32,8 +32,8 @@
     ;; AARCH64_LINEAR_MEMORY_BOUNDS_CHECKS-NEXT: sub  x27, x27, #8
     ;; AARCH64-NEXT:  str  s2, [sp, #0x[[#%x,STACK_SIZE + 8]]]
 
-    ;; TRICORE:       mov  d2, #0x28bc
-    ;; TRICORE-NEXT:  mov  d3, #0x7680
+    ;; TRICORE:       mov.u  d2, #0x28bc
+    ;; TRICORE-NEXT:  mov.u  d3, #0x7680
     ;; TRICORE-NEXT:  movh.a  a12, #0
     ;; TRICORE-NEXT:  lea  a12, [a12]#0x6d
     ;; TRICORE-NEXT:  st.a [sp]#0x[[#%x,STACK_SIZE + 4]], a12

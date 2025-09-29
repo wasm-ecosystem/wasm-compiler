@@ -7,7 +7,7 @@
 (module
   (memory 1)
   ;; CHECK-LABEL: Function[0] Body
-  (func (export "eq-tricore-16-bit-instruction") (param i32) (result i32) (local i32 i32 i32 i32 i32 i32 i32 i32 i32)
+  (func $eq-tricore-16-bit-instruction (param i32) (result i32) (local i32 i32 i32 i32 i32 i32 i32 i32 i32)
     local.get 9
     i32.const 0
     ;; TRICORE: eq  d15, [[LOCAL_REG:d[0-9]+]], #0
@@ -21,7 +21,7 @@
     local.get 9
   )
   ;; CHECK-LABEL: Function[1] Body
-  (func (export "lt-tricore-16-bit-instruction") (param i32) (result i32) (local i32 i32 i32 i32 i32 i32 i32 i32 i32)
+  (func $lt-tricore-16-bit-instruction (param i32) (result i32) (local i32 i32 i32 i32 i32 i32 i32 i32 i32)
     local.get 9
     i32.const 0
     ;; TRICORE: lt  d15, [[LOCAL_REG:d[0-9]+]], #{{[0-9]+}}
@@ -35,30 +35,30 @@
     local.get 9
   )
   ;; CHECK-LABEL: Function[2] Body
-  (func (export "or-tricore-16-bit-instruction") (result i32) (local i32 i32 i32 i32 i32 i32 i32 i32 i32 i32)
+  (func $or-tricore-16-bit-instruction (result i32) (local i32 i32 i32 i32 i32 i32 i32 i32 i32 i32)
     i32.const 0xFF
     local.set 9
     local.get 9
     i32.const 0
-    ;; TRICORE: or  d15, #{{[0-9]+}}
+    ;; TRICORE: or  d15, d15, #{{[0-9]+}}
     i32.or
     local.set 9
     local.get 9
   )
   ;; CHECK-LABEL: Function[3] Body
-  (func (export "and-tricore-16-bit-instruction") (result i32) (local i32 i32 i32 i32 i32 i32 i32 i32 i32 i32)
+  (func $and-tricore-16-bit-instruction (result i32) (local i32 i32 i32 i32 i32 i32 i32 i32 i32 i32)
     i32.const 0xFF
     local.set 9
     local.get 9
     i32.const 0
-    ;; TRICORE: and  d15, #{{[0-9]+}}
+    ;; TRICORE: and  d15, d15, #{{[0-9]+}}
     i32.and
     local.set 9
     local.get 9
   )
 
   ;; CHECK-LABEL: Function[4] Body
-  (func (export "check-load-byte-unsigned-16-bit-instruction") (result i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32)
+  (func $check-load-byte-unsigned-16-bit-instruction (result i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32)
     ;; TRICORE: 14 28  ld.bu  d8, [a2]
     i32.const 0
     i32.load8_u 
@@ -88,7 +88,7 @@
   )
 
   ;; CHECK-LABEL: Function[5] Body
-  (func (export "check-load-halfword-16-bit-instruction") (result i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32)
+  (func $check-load-halfword-16-bit-instruction (result i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32)
     ;; TRICORE: 94 28  ld.h  d8, [a2]
     i32.const 0
     i32.load16_s 
@@ -118,7 +118,7 @@
   )
 
   ;; CHECK-LABEL: Function[6] Body
-  (func (export "check-load-word-16-bit-instruction") (result i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32)
+  (func $check-load-word-16-bit-instruction (result i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32)
     ;; TRICORE: 54 28  ld.w  d8, [a2]
     i32.const 0
     i32.load 
@@ -148,7 +148,7 @@
   )
 
   ;; CHECK-LABEL: Function[7] Body
-  (func (export "check-store-word-16-bit-instruction")  (result i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32)
+  (func $check-store-word-16-bit-instruction  (result i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32)
     i32.const 0
     i32.load 
     i32.const 0
@@ -184,7 +184,7 @@
   )
 
   ;; CHECK-LABEL: Function[8] Body
-  (func (export "check-store-byte-16-bit-instruction")  (result i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32)
+  (func $check-store-byte-16-bit-instruction  (result i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32)
     i32.const 0
     i32.load 
     i32.const 0
@@ -220,7 +220,7 @@
   )
 
   ;; CHECK-LABEL: Function[9] Body
-  (func (export "check-store-halfword-16-bit-instruction")  (result i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32)
+  (func $check-store-halfword-16-bit-instruction  (result i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32)
     i32.const 0
     i32.load 
     i32.const 0

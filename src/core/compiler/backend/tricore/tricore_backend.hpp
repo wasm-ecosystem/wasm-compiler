@@ -18,6 +18,7 @@
 #define Tricore_BACKEND_HPP
 
 #include "src/config.hpp"
+#include "src/core/compiler/common/MachineType.hpp"
 #ifdef JIT_TARGET_TRICORE
 
 #include "tricore_assembler.hpp"
@@ -454,6 +455,13 @@ public:
   RegMask mask(StackElement const *const elementPtr) const VB_NOEXCEPT;
 
   ///
+  /// @brief Creates a RegMask from an input VariableStorage
+  ///
+  /// @param storage Reference to the input VariableStorage
+  /// @return RegMask Protected register mask where the input element's representation is protected
+  RegMask mask(VariableStorage const &storage) const VB_NOEXCEPT;
+
+  ///
   /// @brief Creates a RegMask from an input register
   ///
   /// @param reg Input register
@@ -492,6 +500,16 @@ public:
   /// @param regMask Forbidden register mask
   /// @return Underlying register of element or TReg::NONE if not suitable
   REG getUnderlyingRegIfSuitable(StackElement const *const element, MachineType const dstMachineType, RegMask const regMask) const VB_NOEXCEPT;
+
+  ///
+  /// @brief Check if D15 is available
+  /// @return bool
+  bool isD15Available() const VB_NOEXCEPT {
+    bool const isD15ForLocal{moduleInfo_.fnc.numLocalsInGPR == moduleInfo_.getMaxNumsLocalsInGPRs()};
+    StackElement const d15{StackElement::scratchReg(REG::D15, MachineTypeUtil::toStackTypeFlag(MachineType::I32))};
+    bool const isD15Writable{isWritableScratchReg(&d15)};
+    return (!isD15ForLocal && isD15Writable);
+  }
 
 private:
   /// @brief Widths of certain entries on the stack

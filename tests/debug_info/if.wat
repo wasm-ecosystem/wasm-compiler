@@ -26,8 +26,8 @@
 ;; TRICORE_ACTIVE-NEXT:     [[@LINE-18]]: 60 6e  mov.a  a14, d6
 ;; TRICORE_ACTIVE-NEXT:     [[@LINE-19]]: 59 a8 08 20  st.w  [sp]#0x88, d8
 ;; TRICORE_ACTIVE-NEXT:     [[@LINE-20]]: 59 a9 00 20  st.w  [sp]#0x80, d9
-;; TRICORE_ACTIVE-NEXT:     [[@LINE-21]]: bd 0e 04 00  jz.a  a14, #0xae
-;; TRICORE_ACTIVE-NEXT:     [[@LINE-22]]: 1d 00 05 00  j  #0xb4
+;; TRICORE_ACTIVE-NEXT:     [[@LINE-21]]: bd 0e 04 00  jz.a  a14, #0xac
+;; TRICORE_ACTIVE-NEXT:     [[@LINE-22]]: 1d 00 05 00  j  #0xb2
 
         local.get 1
 
@@ -41,7 +41,7 @@
 ;; X86_64_ACTIVE-NEXT:      [[@LINE-7]]: 8b c7  mov  eax, edi
 ;; X86_64_ACTIVE-NEXT:      [[@LINE-8]]: e9 05 00 00 00  jmp  0xa1
 ;; TRICORE_ACTIVE-NEXT:     [[@LINE-9]]: 02 92  mov  d2, d9
-;; TRICORE_ACTIVE-NEXT:     [[@LINE-10]]: 1d 00 04 00  j  #0xb8
+;; TRICORE_ACTIVE-NEXT:     [[@LINE-10]]: 1d 00 03 00  j  #0xb4
 
         i32.const 0
 
@@ -58,7 +58,7 @@
 ;; X86_64_ACTIVE-NEXT:      [[@LINE-10]]: b8 00 00 00 00  mov  eax, 0
 ;; X86_64_ACTIVE-NEXT:      [[@LINE-11]]: 48 8d a4 24 98 00 00 00  lea  rsp, [rsp + 0x98]
 ;; X86_64_ACTIVE-NEXT:      [[@LINE-12]]: c3  ret
-;; TRICORE_ACTIVE-NEXT:     [[@LINE-13]]: 7b 00 00 20  movh  d2, #0
+;; TRICORE_ACTIVE-NEXT:     [[@LINE-13]]: 82 02  mov  d2, #0
 ;; TRICORE_ACTIVE-NEXT:     [[@LINE-14]]: d9 aa 14 20  lea  sp, [sp]#0x94
 ;; TRICORE_ACTIVE-NEXT:     [[@LINE-15]]: 00 70  fret
 
@@ -367,7 +367,7 @@
 ;; DWO_TRICORE_ACTIVE-EMPTY:
 ;; DWO_TRICORE_ACTIVE-NEXT: 0x0000000d:   DW_TAG_subprogram
 ;; DWO_TRICORE_ACTIVE-NEXT:                 DW_AT_low_pc	(0x0000000000000068)
-;; DWO_TRICORE_ACTIVE-NEXT:                 DW_AT_high_pc	(0x00000000000000be)
+;; DWO_TRICORE_ACTIVE-NEXT:                 DW_AT_high_pc	(0x00000000000000ba)
 ;; DWO_TRICORE_ACTIVE-EMPTY:
 ;; DWO_TRICORE_ACTIVE-NEXT: 0x0000001e:   NULL
 ;; DWO_TRICORE_ACTIVE-EMPTY:
@@ -405,22 +405,22 @@
 ;; DWO_TRICORE_ACTIVE-NEXT: 0x000000000000007a     26      0      1   0             0       0  is_stmt
 ;; DWO_TRICORE_ACTIVE-NEXT: 0x000000000000007e     26      0      1   0             0       0  is_stmt
 ;; DWO_TRICORE_ACTIVE-NEXT: 0x0000000000000082     26      0      1   0             0       0  is_stmt
-;; DWO_TRICORE_ACTIVE-NEXT: 0x0000000000000086     26      0      1   0             0       0  is_stmt
-;; DWO_TRICORE_ACTIVE-NEXT: 0x000000000000008a     26      0      1   0             0       0  is_stmt
-;; DWO_TRICORE_ACTIVE-NEXT: 0x000000000000008e     26      0      1   0             0       0  is_stmt
+;; DWO_TRICORE_ACTIVE-NEXT: 0x0000000000000084     26      0      1   0             0       0  is_stmt
+;; DWO_TRICORE_ACTIVE-NEXT: 0x0000000000000088     26      0      1   0             0       0  is_stmt
+;; DWO_TRICORE_ACTIVE-NEXT: 0x000000000000008c     26      0      1   0             0       0  is_stmt
+;; DWO_TRICORE_ACTIVE-NEXT: 0x0000000000000090     26      0      1   0             0       0  is_stmt
 ;; DWO_TRICORE_ACTIVE-NEXT: 0x0000000000000092     26      0      1   0             0       0  is_stmt
-;; DWO_TRICORE_ACTIVE-NEXT: 0x0000000000000094     26      0      1   0             0       0  is_stmt
-;; DWO_TRICORE_ACTIVE-NEXT: 0x0000000000000098     29      0      1   0             0       0  is_stmt
+;; DWO_TRICORE_ACTIVE-NEXT: 0x0000000000000096     29      0      1   0             0       0  is_stmt
+;; DWO_TRICORE_ACTIVE-NEXT: 0x000000000000009a     29      0      1   0             0       0  is_stmt
 ;; DWO_TRICORE_ACTIVE-NEXT: 0x000000000000009c     29      0      1   0             0       0  is_stmt
-;; DWO_TRICORE_ACTIVE-NEXT: 0x000000000000009e     29      0      1   0             0       0  is_stmt
-;; DWO_TRICORE_ACTIVE-NEXT: 0x00000000000000a2     29      0      1   0             0       0  is_stmt
-;; DWO_TRICORE_ACTIVE-NEXT: 0x00000000000000a6     29      0      1   0             0       0  is_stmt
-;; DWO_TRICORE_ACTIVE-NEXT: 0x00000000000000aa     29      0      1   0             0       0  is_stmt
+;; DWO_TRICORE_ACTIVE-NEXT: 0x00000000000000a0     29      0      1   0             0       0  is_stmt
+;; DWO_TRICORE_ACTIVE-NEXT: 0x00000000000000a4     29      0      1   0             0       0  is_stmt
+;; DWO_TRICORE_ACTIVE-NEXT: 0x00000000000000a8     29      0      1   0             0       0  is_stmt
+;; DWO_TRICORE_ACTIVE-NEXT: 0x00000000000000ac     33      0      1   0             0       0  is_stmt
 ;; DWO_TRICORE_ACTIVE-NEXT: 0x00000000000000ae     33      0      1   0             0       0  is_stmt
-;; DWO_TRICORE_ACTIVE-NEXT: 0x00000000000000b0     33      0      1   0             0       0  is_stmt
-;; DWO_TRICORE_ACTIVE-NEXT: 0x00000000000000b4     36      0      1   0             0       0  is_stmt
+;; DWO_TRICORE_ACTIVE-NEXT: 0x00000000000000b2     36      0      1   0             0       0  is_stmt
+;; DWO_TRICORE_ACTIVE-NEXT: 0x00000000000000b4     37      0      1   0             0       0  is_stmt
 ;; DWO_TRICORE_ACTIVE-NEXT: 0x00000000000000b8     37      0      1   0             0       0  is_stmt
-;; DWO_TRICORE_ACTIVE-NEXT: 0x00000000000000bc     37      0      1   0             0       0  is_stmt
-;; DWO_TRICORE_ACTIVE-NEXT: 0x00000000000000bc     37      0      1   0             0       0  is_stmt end_sequence
+;; DWO_TRICORE_ACTIVE-NEXT: 0x00000000000000b8     37      0      1   0             0       0  is_stmt end_sequence
 ;; DWO_TRICORE_ACTIVE-EMPTY:
 ;; DWO_TRICORE_ACTIVE-EMPTY:

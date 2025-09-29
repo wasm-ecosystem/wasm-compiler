@@ -115,6 +115,13 @@ TEST(Tricore, StackTrapDontOverwriteGPR0) {
   EXPECT_NE(StackTrace::counterReg, WasmABI::dr[0]);
   EXPECT_NE(StackTrace::scratchReg, WasmABI::dr[0]);
 }
+
+TEST(Tricore, D15IsLastAllowedRegForLocal) {
+  using namespace vb::tc;
+  using namespace testing;
+  uint32_t const position{WasmABI::numGPR - WasmABI::resScratchRegsGPR - 1};
+  EXPECT_EQ(WasmABI::dr[position], REG::D15);
+}
 #endif
 
 #ifdef JIT_TARGET_AARCH64
