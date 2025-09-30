@@ -9,7 +9,7 @@ concurrency:
 
 jobs:
   run-bench:
-    runs-on: [atc-ubuntu-latest]
+    runs-on: [ubuntu-latest]
     steps:
       - uses: actions/checkout@v4
       - name: install deps
