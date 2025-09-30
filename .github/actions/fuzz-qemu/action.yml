@@ -37,7 +37,7 @@ runs:
         TIMEOUT: ${{ inputs.timeout }}
         VB_FUZZ_TARGET_DIR: /dev/shm/wasm-fuzz
 
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v3
       if: failure()
       with:
         name: fuzz_failed_modules-${{ github.run_id }}
