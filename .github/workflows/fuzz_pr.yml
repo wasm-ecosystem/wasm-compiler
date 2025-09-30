@@ -1,0 +1,82 @@
+name: Fuzz PR
+
+on:
+  pull_request:
+  merge_group:
+  workflow_dispatch:
+
+concurrency:
+  group: "${{ github.workflow }} @ ${{ github.event.pull_request.head.label || github.head_ref || github.ref }}"
+  cancel-in-progress: true
+
+jobs:
+  unix-fuzz:
+    strategy:
+      fail-fast: false
+      matrix:
+        flags:
+          [
+            "",
+            "-DACTIVE_STACK_OVERFLOW_CHECK=1 -DLINEAR_MEMORY_BOUNDS_CHECKS=1 -DACTIVE_DIV_CHECK=1",
+          ]
+        runner:
+          - ubuntu-latest
+          - ${{ contains(github.repositoryUrl, 'bmw') && 'cawe-linux-arm64-compute-small' || 'ubuntu-24.04-arm' }}
+
+    runs-on: ${{ matrix.runner }}
+    container:
+      image: ubuntu:24.04
+      options: --user root
+    steps:
+      - name: Install Git
+        run: |
+          apt-get update -y -qq
+          apt-get install -y --no-install-recommends git ca-certificates
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - uses: ./.github/actions/install-deps-x86_64
+        if: matrix.runner == 'ubuntu-latest'
+      - uses: ./.github/actions/install-deps-arm64
+        if: matrix.runner != 'ubuntu-latest'
+      - uses: ./.github/actions/fuzz-assets
+        with:
+          cmake_flags: -DCMAKE_BUILD_TYPE=Debug
+          cpp_flags: ${{ matrix.flags }}
+      - uses: ./.github/actions/fuzz-unix
+        with:
+          timeout: 900
+          cmake_flags: -DCMAKE_BUILD_TYPE=Debug
+          cpp_flags: ${{ matrix.flags }}
+
+  qemu-fuzz:
+    runs-on: ubuntu-latest
+    container:
+      image: ubuntu:24.04
+      options: --user root
+    steps:
+      - name: Install Git
+        run: |
+          apt-get update -y -qq
+          apt-get install -y --no-install-recommends git ca-certificates
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - uses: ./.github/actions/install-deps-tricore
+      - uses: ./.github/actions/fuzz-qemu
+        with:
+          timeout: 900
+
+  all-green-fuzz:
+    runs-on: ubuntu-latest
+    if: always()
+
+    needs:
+      - unix-fuzz
+      - qemu-fuzz
+
+    steps:
+      - name: Decide whether the needed jobs succeeded or failed
+        uses: re-actors/alls-green@release/v1
+        with:
+          jobs: ${{ toJSON(needs) }}
