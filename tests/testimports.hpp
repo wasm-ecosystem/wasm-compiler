@@ -611,7 +611,7 @@ public:
   };
 
   static inline uint32_t getU32FromLinearMemory(uint32_t const offset, void *const ctx) {
-    vb::WasmModule *const wasmModule{vb::pCast<vb::WasmModule *>(ctx)};
+    vb::WasmModule const *const wasmModule{vb::pCast<vb::WasmModule *>(ctx)};
     const uint32_t res{vb::readFromPtr<uint32_t>(wasmModule->getLinearMemoryRegion(offset, 4U))};
     return res;
   }
@@ -627,7 +627,7 @@ public:
     static_cast<void>(p6);
     static_cast<void>(p7);
     static_cast<void>(p8);
-    vb::WasmModule *const wasmModule{vb::pCast<vb::WasmModule *>(ctx)};
+    vb::WasmModule const *const wasmModule{vb::pCast<vb::WasmModule *>(ctx)};
     const uint32_t res{vb::readFromPtr<uint32_t>(wasmModule->getLinearMemoryRegion(offset, 4U))};
     return res;
   }

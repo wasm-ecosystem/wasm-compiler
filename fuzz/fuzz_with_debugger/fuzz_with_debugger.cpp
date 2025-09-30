@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 #include <chrono>
 #include <cstddef>
 #include <cstdio>
@@ -284,7 +283,7 @@ static void handleLine(char const *const lineStart, uint32_t const lineLength, u
           std::vector<uint8_t> results(expectedReturnValues.size() * 8);
           wasmModule.callRawExportedFunctionByName(functionName, stackTop, nullptr, results.data());
 
-          uint8_t *resultPtr = results.data();
+          uint8_t const *resultPtr = results.data();
           for (ExpectedData const &expected : expectedReturnValues) {
             std::string const expectedType = expected.type;
             std::string const expectedValue = expected.value;

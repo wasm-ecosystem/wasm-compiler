@@ -347,7 +347,7 @@ void fuzz() {
 
               std::vector<uint8_t> results(expectedReturnValues.size() * 8);
               wasmModule.callRawExportedFunctionByName(funcNameSpan, stackTop, nullptr, results.data());
-              uint8_t *resultPtr = results.data();
+              uint8_t const *resultPtr = results.data();
 
               for (ExpectedData const &expected : expectedReturnValues) {
                 std::string const expectedType = expected.type;
