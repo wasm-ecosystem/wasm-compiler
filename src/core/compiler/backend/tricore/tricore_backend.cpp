@@ -2935,10 +2935,9 @@ RegAllocCandidate Backend::getRegAllocCandidate(MachineType const type, RegMask 
       bool otherIsEmptyOrLocalOr32b{true};
 
       if ((!canBeExtendedReg) && (!isStaticallyAllocatedReg(otherReg))) {
-        Stack::iterator otherRefToLastOccurrence{};
         // Here we have to check whether a 64b value is loaded already, otherwise it's irrelevant because it's
         // guaranteed to at most have a 32b value loaded
-        otherRefToLastOccurrence = moduleInfo_.getReferenceToLastOccurrenceOnStack(otherReg);
+        Stack::iterator const otherRefToLastOccurrence{moduleInfo_.getReferenceToLastOccurrenceOnStack(otherReg)};
 
         if ((!otherRefToLastOccurrence.isEmpty()) && ((otherRefToLastOccurrence->type == StackType::SCRATCHREGISTER_I64) ||
                                                       (otherRefToLastOccurrence->type == StackType::SCRATCHREGISTER_F64))) {
@@ -4984,6 +4983,58 @@ REG Backend::getUnderlyingRegIfSuitable(StackElement const *const element, Machi
   // tricore ISA put all data in DR, no need to distinguish data types.
   bool const isContainable{MachineTypeUtil::getSize(dstMachineType) <= MachineTypeUtil::getSize(targetHintStorage.machineType)};
   return isContainable ? targetHintStorage.location.reg : REG::NONE;
+}
+
+bool Backend::hasEnoughScratchRegForScheduleInstruction(OPCode const opcode) const VB_NOEXCEPT {
+  bool const isDiv32{opcodeIsDivInt32(opcode)};
+  bool const isLoad32{opcodeIsLoad32(opcode)};
+
+  uint32_t const numStaticallyAllocatedRegs{getNumStaticallyAllocatedDr()};
+  constexpr uint32_t numTotalRegs{static_cast<uint32_t>(WasmABI::dr.size())};
+  uint32_t availableRegsCount{0U};
+  if (isDiv32 || isLoad32) {
+    for (uint32_t regPos{numStaticallyAllocatedRegs}; regPos < numTotalRegs; regPos++) {
+      REG const currentReg{WasmABI::dr[regPos]};
+
+      bool const canBeExtendedReg{RegUtil::canBeExtReg(currentReg)};
+      Stack::iterator const refToLastOccurrence{moduleInfo_.getReferenceToLastOccurrenceOnStack(currentReg)};
+      REG const otherReg{RegUtil::getOtherExtReg(currentReg)};
+      bool const empty{refToLastOccurrence.isEmpty()};
+      bool otherIsEmptyOrLocalOr32b{true};
+
+      if ((!canBeExtendedReg) && (!isStaticallyAllocatedReg(otherReg))) {
+        Stack::iterator const otherRefToLastOccurrence{moduleInfo_.getReferenceToLastOccurrenceOnStack(otherReg)};
+
+        if ((!otherRefToLastOccurrence.isEmpty()) && ((otherRefToLastOccurrence->type == StackType::SCRATCHREGISTER_I64) ||
+                                                      (otherRefToLastOccurrence->type == StackType::SCRATCHREGISTER_F64))) {
+          otherIsEmptyOrLocalOr32b = false;
+        }
+      }
+
+      if (empty && otherIsEmptyOrLocalOr32b) {
+        availableRegsCount++;
+      }
+    }
+  } else {
+    for (uint32_t regPos{numStaticallyAllocatedRegs}; regPos < numTotalRegs; regPos++) {
+      REG const currentReg{WasmABI::dr[regPos]};
+
+      bool const canBeExtendedReg{RegUtil::canBeExtReg(currentReg)};
+      if (!canBeExtendedReg) {
+        continue;
+      }
+
+      REG const currentSecReg{RegUtil::getOtherExtReg(currentReg)};
+      assert((currentSecReg == WasmABI::dr[regPos + 1U]) && "Primary and secondary reg not in order");
+
+      Stack::iterator const refToLastOccurrence{moduleInfo_.getReferenceToLastOccurrenceOnStack(currentReg)};
+      Stack::iterator const secRefToLastOccurrence{moduleInfo_.getReferenceToLastOccurrenceOnStack(currentSecReg)};
+      if (refToLastOccurrence.isEmpty() && secRefToLastOccurrence.isEmpty()) {
+        availableRegsCount++;
+      }
+    }
+  }
+  return availableRegsCount > minimalNumRegsReservedForCondense;
 }
 
 } // namespace tc

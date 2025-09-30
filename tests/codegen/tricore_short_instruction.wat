@@ -58,93 +58,46 @@
   )
 
   ;; CHECK-LABEL: Function[4] Body
-  (func $check-load-byte-unsigned-16-bit-instruction (result i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32)
+  (func $check-load-byte-unsigned-16-bit-instruction
+    (local i32 i32 i32 i32 i32 i32 i32 i32 i32 i32)
     ;; TRICORE: 14 28  ld.bu  d8, [a2]
     i32.const 0
-    i32.load8_u 
-    i32.const 1
-    i32.load8_u 
-    i32.const 3
-    i32.load8_u 
-    i32.const 4
-    i32.load8_u 
-    i32.const 5
     i32.load8_u
-    i32.const 6
-    i32.load8_u
-    i32.const 7
-    i32.load8_u
-    i32.const 8
-    i32.load8_u
-    i32.const 9
-    i32.load8_u
+    local.set 0
+    
     i32.const 10
     ;; TRICORE: 0c 2a  ld.bu  d15, [a2]#0xa
     i32.load8_u
-    i32.const 11
-    i32.load8_u
-    i32.const 12
-    i32.load8_u
+    local.set 9
   )
 
   ;; CHECK-LABEL: Function[5] Body
-  (func $check-load-halfword-16-bit-instruction (result i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32)
+  (func $check-load-halfword-16-bit-instruction
+    (local i32 i32 i32 i32 i32 i32 i32 i32 i32 i32)
     ;; TRICORE: 94 28  ld.h  d8, [a2]
     i32.const 0
-    i32.load16_s 
-    i32.const 0
-    i32.load16_s 
-    i32.const 0
-    i32.load16_s 
-    i32.const 0
-    i32.load16_s 
-    i32.const 0
     i32.load16_s
-    i32.const 0
-    i32.load16_s
-    i32.const 0
-    i32.load16_s
-    i32.const 0
-    i32.load16_s
-    i32.const 0
-    i32.load16_s
+    local.set 0
+    
     i32.const 8
     ;; TRICORE: 8c 24  ld.h  d15, [a2]#8
     i32.load16_s
-    i32.const 0
-    i32.load16_s
-    i32.const 0
-    i32.load16_s
+    local.set 9
+    
   )
 
   ;; CHECK-LABEL: Function[6] Body
-  (func $check-load-word-16-bit-instruction (result i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32)
+  (func $check-load-word-16-bit-instruction
     ;; TRICORE: 54 28  ld.w  d8, [a2]
+    (local i32 i32 i32 i32 i32 i32 i32 i32 i32 i32)
     i32.const 0
     i32.load 
-    i32.const 0
-    i32.load 
-    i32.const 0
-    i32.load 
-    i32.const 0
-    i32.load 
-    i32.const 0
-    i32.load
-    i32.const 0
-    i32.load
-    i32.const 0
-    i32.load
-    i32.const 0
-    i32.load
-    i32.const 0
-    i32.load
+    local.set 0
     i32.const 8
     ;; TRICORE: 4c 22  ld.w  d15, [a2]#8
     i32.load
-    i32.const 0
-    i32.load
-    i32.const 0
-    i32.load
+    local.set 9
+    
   )
 
   ;; CHECK-LABEL: Function[7] Body

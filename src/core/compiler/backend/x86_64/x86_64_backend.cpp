@@ -3844,6 +3844,31 @@ REG Backend::getUnderlyingRegIfSuitable(StackElement const *const element, Machi
   return REG::NONE;
 }
 
+bool Backend::hasEnoughScratchRegForScheduleInstruction(OPCode const opcode) const VB_NOEXCEPT {
+  bool const isDivInt{opcodeIsDivInt(opcode)};
+  bool const isLoadFloat{opcodeIsLoadFloat(opcode)};
+
+  Span<REG const> allocableRegs{};
+
+  if (isDivInt || !isLoadFloat) {
+    allocableRegs =
+        vb::Span<REG const>(WasmABI::gpr.data(), WasmABI::gpr.size()).subspan(static_cast<size_t>(moduleInfo_.getNumStaticallyAllocatedGPRs()));
+  } else {
+    allocableRegs =
+        vb::Span<REG const>(WasmABI::fpr.data(), WasmABI::fpr.size()).subspan(static_cast<size_t>(moduleInfo_.getNumStaticallyAllocatedFPRs()));
+  }
+
+  uint32_t availableRegsCount{0U};
+  for (REG const currentReg : allocableRegs) {
+    Stack::iterator const referenceToLastOccurrence{moduleInfo_.getReferenceToLastOccurrenceOnStack(currentReg)};
+
+    if (referenceToLastOccurrence.isEmpty()) {
+      availableRegsCount++;
+    }
+  }
+  return availableRegsCount > minimalNumRegsReservedForCondense;
+}
+
 } // namespace x86_64
 } // namespace vb
 #endif

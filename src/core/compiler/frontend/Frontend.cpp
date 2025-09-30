@@ -2001,6 +2001,7 @@ void Frontend::parseCodeSection() {
         }
 
         if (!currentFrameIsUnreachable()) {
+          // here can't use condenseSideEffectInstructionBlewValentBlock because it make change the value in global as target hint.
           common_.condenseSideEffectInstructionToFrameBase();
           StackElement const targetElem{StackElement::global(globalIdx)};
           // Condense the topmost valent block (possibly consisting of multiple StackElements) and tell the backend to
@@ -2060,9 +2061,11 @@ void Frontend::parseCodeSection() {
         uint32_t const offset{br_.readLEB128<uint32_t>()};
 
         if (!currentFrameIsUnreachable()) {
-          common_.condenseSideEffectInstructionBlewValentBlock(1U);
           Stack::iterator const iterator{common_.pushDeferredAction(StackElement::action(instruction, 1U, offset))};
           static_cast<void>(iterator);
+          if (compiler_.getDebugMode()) {
+            static_cast<void>(common_.condenseValentBlockBelow(stack_.end()));
+          }
 #if ENABLE_EXTENSIONS
           if (compiler_.dwarfGenerator_ != nullptr) {
             compiler_.dwarfGenerator_->registerPendingDeferAction(iterator.unwrap(), static_cast<uint32_t>(bytecodePosition));
@@ -2379,10 +2382,6 @@ void Frontend::parseCodeSection() {
         bool const canTrap{Common::opcodeCanTrap(instruction)};
         uint16_t const sideEffect{canTrap ? static_cast<uint16_t>(1U) : static_cast<uint16_t>(0U)};
         StackElement const action{StackElement::action(instruction, sideEffect, 0U)};
-        if (canTrap) {
-          uint32_t const arithArity{Common::getArithArity(instruction)};
-          common_.condenseSideEffectInstructionBlewValentBlock(arithArity);
-        }
         Stack::iterator const iterator{common_.pushDeferredAction(action)};
         static_cast<void>(iterator);
 #if ENABLE_EXTENSIONS

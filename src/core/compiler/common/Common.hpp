@@ -633,10 +633,22 @@ private:
   ConditionResult condenseValentBlockCoreBelow(bool const comparison, Stack::iterator const belowIt, StackElement const *const enforcedTarget) const;
 
   ///
-  /// @brief Condense (resolve) a scratch register in the valent block tree
+  /// @brief Condense a scratch register in the valent block tree
   /// @param rootNode iterator that represents the first valent block.
   /// @param enforcedTarget Optional StackElement representing a storage location where the result should be put
   void condenseScratchRegBelow(Stack::iterator const rootNode, StackElement const *const enforcedTarget) const;
+
+  ///
+  /// @brief Condense side effect instructions in the valent block tree.
+  /// @details For better usage of CPU pipelines, the side effect instructions aka. div and memory load need to be scheduled earlier.
+  /// @param rootNode iterator that represents the first valent block.
+  /// @param enforcedTarget Optional StackElement representing a storage location where the result should be put
+  void condenseSideEffectInstructionBelow(Stack::iterator const rootNode, StackElement const *const enforcedTarget) const;
+
+  /// @brief Condense a valent block in the valent block tree unconditionally
+  /// @param rootNode iterator that represents the first valent block.
+  /// @param enforcedTarget Optional StackElement representing a storage location where the result should be put
+  void condenseValentBlockBasic(Stack::iterator const rootNode, StackElement const *const enforcedTarget) const;
 
   /// @brief Get the first operand of a deferred action, which is the left child in valent block tree
   /// @param instruction Iterator to a deferred action

@@ -501,6 +501,11 @@ public:
   /// @return Underlying register of element or TReg::NONE if not suitable
   REG getUnderlyingRegIfSuitable(StackElement const *const element, MachineType const dstMachineType, RegMask const regMask) const VB_NOEXCEPT;
 
+  /// @brief Check if there is enough scratch register for shift instruction.
+  /// @param opcode instruction opcode
+  /// @return Shift instruction will consume one scratch register for storing result.
+  /// And minimally 2 scratch registers are needed for follow up condense. For example (select i32_reg, i32 const, i32 const)
+  bool hasEnoughScratchRegForScheduleInstruction(OPCode const opcode) const VB_NOEXCEPT;
   ///
   /// @brief Check if D15 is available
   /// @return bool
@@ -975,6 +980,10 @@ private:
   /// @param reg1 First register
   /// @param reg2 Second register
   void swapReg(REG const reg1, REG const reg2);
+
+  /// @brief Minimal number of registers that should be reserved for condense a vb.
+  /// @details Need to keep 2 regs to avoid spill when add mem, mem or select reg, mem, mem.
+  static constexpr uint32_t minimalNumRegsReservedForCondense{2U};
 
   Stack &stack_;           ///< Reference to the compiler stack
   ModuleInfo &moduleInfo_; ///< Reference to the ModuleInfo struct containing information about the WebAssembly module

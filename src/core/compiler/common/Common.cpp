@@ -432,6 +432,62 @@ bool Common::scratchRegOnlyOnceOnStack(Stack::iterator const element) VB_NOEXCEP
   }
 }
 
+void Common::condenseSideEffectInstructionBelow(Stack::iterator const rootNode, StackElement const *const enforcedTarget) const {
+  if (rootNode->type != StackType::DEFERREDACTION) {
+    return;
+  }
+  Stack::iterator const valentBlockTop{findBaseOfValentBlock(rootNode)};
+
+  Stack::iterator currentIt{valentBlockTop};
+
+  while (currentIt != rootNode) {
+    if ((currentIt->type == StackType::DEFERREDACTION) && (currentIt->data.deferredAction.sideEffect != 0U)) {
+      Stack::iterator const instructionPtr{currentIt};
+
+      if (compiler_.backend_.hasEnoughScratchRegForScheduleInstruction(instructionPtr->data.deferredAction.opcode)) {
+        condenseValentBlockBasic(instructionPtr, enforcedTarget);
+      } else {
+        break;
+      }
+    }
+
+    currentIt = currentIt.next();
+  }
+}
+
+void Common::condenseValentBlockBasic(Stack::iterator const rootNode, StackElement const *const enforcedTarget) const {
+  assert(rootNode->type == StackType::DEFERREDACTION);
+
+  Stack::iterator const valentBlockTop{findBaseOfValentBlock(rootNode)};
+
+  Stack::iterator currentIt{valentBlockTop};
+
+  while (true) {
+    if (currentIt->type == StackType::DEFERREDACTION) {
+      Stack::iterator const instructionPtr{currentIt};
+      uint32_t const instructionArity{getArithArity(currentIt->data.deferredAction.opcode)};
+      std::array<Stack::iterator, 3U> args{{Stack::iterator(), Stack::iterator(), Stack::iterator()}};
+      Stack::iterator param{instructionPtr.prev()};
+      for (uint32_t i{0U}; i < instructionArity; i++) {
+        uint32_t const index{instructionArity - i - 1U};
+        args[index] = param;
+        param = param->sibling;
+      }
+
+      bool const propagateTargetHint{compiler_.backend_.checkIfEnforcedTargetIsOnlyInArgs(
+          Span<Stack::iterator>{args.data(), static_cast<size_t>(instructionArity)}, enforcedTarget)};
+      StackElement const *const targetHint{propagateTargetHint ? enforcedTarget : nullptr};
+      StackElement const result{evaluateInstruction(instructionPtr, args[0], args[1], args[2], targetHint)};
+      replaceAndUpdateReference(instructionPtr, result);
+    }
+    if (currentIt != rootNode) {
+      currentIt = currentIt.next();
+    } else {
+      break;
+    }
+  }
+}
+
 void Common::condenseScratchRegBelow(Stack::iterator const rootNode, StackElement const *const enforcedTarget) const {
   if (rootNode->type != StackType::DEFERREDACTION) {
     return;
@@ -480,7 +536,10 @@ void Common::condenseScratchRegBelow(Stack::iterator const rootNode, StackElemen
     currentIt = currentIt.next();
   }
 }
-
+/// @details The condense is performed from stack bottom to top.
+/// For better using the CPU pipeline, long instructions int-div and load are condensed first.
+/// Then to reduce the register pressure of follow up code emit, instructions with side effects are condensed.
+/// Finally, the remaining instructions are condensed.
 Common::ConditionResult Common::condenseValentBlockCoreBelow(bool const comparison, Stack::iterator const belowIt,
                                                              StackElement const *const enforcedTarget) const {
   assert(!(comparison && enforcedTarget) && "No target allowed for comparison");
@@ -500,6 +559,8 @@ Common::ConditionResult Common::condenseValentBlockCoreBelow(bool const comparis
   BC branchCond{BC::UNCONDITIONAL};
 
   Stack::iterator const vbBase{belowIt.prev()};
+  // coverity[autosar_cpp14_a5_3_2_violation]
+  condenseSideEffectInstructionBelow(vbBase, enforcedTarget);
   // coverity[autosar_cpp14_a5_3_2_violation]
   condenseScratchRegBelow(vbBase, enforcedTarget);
 

@@ -300,6 +300,42 @@ inline BC BCforOPCode(OPCode const opcode) VB_NOEXCEPT {
   return branchCondForOpcode[static_cast<uint32_t>(opcode) - static_cast<uint32_t>(OPCode::I32_EQZ)];
 }
 
+/// @brief Check if the given OPCode is a division opcode for int32
+/// @param opcode Input OPCode
+/// @return
+inline bool opcodeIsDivInt32(OPCode const opcode) VB_NOEXCEPT {
+  uint32_t const opcodeVal{static_cast<uint32_t>(opcode)};
+  bool const isDivInt32{(opcodeVal >= static_cast<uint32_t>(OPCode::I32_DIV_S)) && (opcodeVal <= static_cast<uint32_t>(OPCode::I32_REM_U))};
+  return isDivInt32;
+}
+
+/// @brief Check if the given OPCode is a division opcode for int32 and int64
+/// @param opcode Input OPCode
+/// @return
+inline bool opcodeIsDivInt(OPCode const opcode) VB_NOEXCEPT {
+  uint32_t const opcodeVal{static_cast<uint32_t>(opcode)};
+  bool const isDivInt{opcodeIsDivInt32(opcode) ||
+                      ((opcodeVal >= static_cast<uint32_t>(OPCode::I64_DIV_S)) && (opcodeVal <= static_cast<uint32_t>(OPCode::I64_REM_U)))};
+  return isDivInt;
+}
+
+/// @brief Check if the given OPCode is float memory load
+/// @param opcode Input OPCode
+/// @return
+inline bool opcodeIsLoadFloat(OPCode const opcode) VB_NOEXCEPT {
+  return (opcode == OPCode::F32_LOAD) || (opcode == OPCode::F64_LOAD);
+}
+
+/// @brief Check if the given OPCode i32 bit memory load
+/// @param opcode Input OPCode
+/// @return
+inline bool opcodeIsLoad32(OPCode const opcode) VB_NOEXCEPT {
+  uint32_t const opcodeVal{static_cast<uint32_t>(opcode)};
+  bool const isLoad32{((opcode == OPCode::I32_LOAD) || (opcode == OPCode::F32_LOAD)) ||
+                      ((opcodeVal >= static_cast<uint32_t>(OPCode::I32_LOAD8_S)) && (opcodeVal <= static_cast<uint32_t>(OPCode::I32_LOAD16_U)))};
+  return isLoad32;
+}
+
 } // namespace vb
 
 #endif

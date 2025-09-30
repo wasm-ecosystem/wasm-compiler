@@ -27,21 +27,21 @@ class SourceDistPair final {
 public:
   enum class Type : uint8_t { Input, Move, Swap };
 
-  inline SourceDistPair(TReg dist, TReg source, Type type) VB_NOEXCEPT : dist_(dist), source_(source), type_(type) {
+  inline SourceDistPair(TReg const dist, TReg const source, Type const type) VB_NOEXCEPT : dist_(dist), source_(source), type_(type) {
   }
 
-  inline SourceDistPair(TReg dist, TReg source) VB_NOEXCEPT : dist_(dist), source_(source), type_(Type::Input) {
+  inline SourceDistPair(TReg const dist, TReg const source) VB_NOEXCEPT : dist_(dist), source_(source), type_(Type::Input) {
   }
 
   inline bool operator==(const SourceDistPair &other) const VB_NOEXCEPT {
     return (type_ == other.type_) && (dist_ == other.dist_) && (source_ == other.source_);
   }
 
-  inline static SourceDistPair createMove(TReg dist, TReg source) VB_NOEXCEPT {
+  inline static SourceDistPair createMove(TReg const dist, TReg const source) VB_NOEXCEPT {
     return SourceDistPair{dist, source, Type::Move};
   }
 
-  inline static SourceDistPair createSwap(TReg dist, TReg source) VB_NOEXCEPT {
+  inline static SourceDistPair createSwap(TReg const dist, TReg const source) VB_NOEXCEPT {
     return SourceDistPair{dist, source, Type::Swap};
   }
 
