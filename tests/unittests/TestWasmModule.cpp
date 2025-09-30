@@ -108,7 +108,7 @@ TEST(TestWasmModule, testInitFromBytecode) {
   vb::Span<uint8_t const> const debugSymbol{module.getRawDebugSymbol()};
   ASSERT_NE(debugSymbol.data(), nullptr);
 
-  uint8_t *const stackTop{getStackTop()};
+  uint8_t const *const stackTop{getStackTop()};
 
   module.start(stackTop);
 
@@ -171,7 +171,7 @@ TEST(TestWasmModule, testInitFromCompiledBinary) {
   module.initFromCompiledBinary(compileResult.getModule().span(), vb::Span<vb::NativeSymbol const>{}, compileResult.getDebugSymbol().span());
 
   ASSERT_NE(module.getRawDebugSymbol().data(), nullptr);
-  uint8_t *const stackTop{getStackTop()};
+  uint8_t const *const stackTop{getStackTop()};
 
   module.start(stackTop);
 
@@ -203,7 +203,7 @@ TEST(TestWasmModule, testRequestInterrupt) {
 
   module.initFromBytecode(vb::Span<const uint8_t>(bytecode.data(), bytecode.size()), vb::Span<vb::NativeSymbol const>{}, true);
 
-  uint8_t *const stackTop{getStackTop()};
+  uint8_t const *const stackTop{getStackTop()};
 
   std::atomic<bool> stopped{false};
 
@@ -260,7 +260,7 @@ TEST(TestWasmModule, testShrinkMemory) {
 
   module.initFromBytecode(vb::Span<const uint8_t>(bytecode.data(), bytecode.size()), vb::Span<vb::NativeSymbol const>{}, true);
 
-  uint8_t *const stackTop{getStackTop()};
+  uint8_t const *const stackTop{getStackTop()};
 
   module.start(stackTop);
 
@@ -296,7 +296,7 @@ TEST(TestWasmModule, testLinkMemory) {
 
   module.initFromBytecode(vb::Span<const uint8_t>(bytecode.data(), bytecode.size()), vb::Span<vb::NativeSymbol const>{}, true);
 
-  uint8_t *const stackTop{getStackTop()};
+  uint8_t const *const stackTop{getStackTop()};
 
   module.start(stackTop);
 
@@ -347,7 +347,7 @@ TEST(TestWasmModule, testCallWasmFunctionByName) {
 
   module.initFromBytecode(vb::Span<const uint8_t>(bytecode.data(), bytecode.size()), vb::Span<vb::NativeSymbol const>{}, true);
 
-  uint8_t *const stackTop{getStackTop()};
+  uint8_t const *const stackTop{getStackTop()};
 
   module.start(stackTop);
   module.callExportedFunctionWithName<0U>(stackTop, "_start");
@@ -394,7 +394,7 @@ TEST(TestWasmModule, testCallWasmFunctionByTableIndex) {
 
   module.initFromBytecode(vb::Span<const uint8_t>(bytecode.data(), bytecode.size()), vb::Span<vb::NativeSymbol const>{}, true);
 
-  uint8_t *const stackTop{getStackTop()};
+  uint8_t const *const stackTop{getStackTop()};
   module.start(stackTop);
   // NOLINTNEXTLINE(cppcoreguidelines-avoid-goto)
   ASSERT_THROW((module.callWasmFunctionByExportedTableIndex<2U, int32_t, int32_t>(stackTop, 100U, 2, 1)), vb::RuntimeError);
@@ -431,7 +431,7 @@ TEST(TestWasmModule, testOutOfMemory) {
 
   module.initFromBytecode(vb::Span<const uint8_t>(bytecode.data(), bytecode.size()), vb::Span<vb::NativeSymbol const>{}, true);
 
-  uint8_t *const stackTop{getStackTop()};
+  uint8_t const *const stackTop{getStackTop()};
   module.start(stackTop);
   // NOLINTNEXTLINE(cppcoreguidelines-avoid-goto)
   ASSERT_THROW(module.callExportedFunctionWithName<0>(stackTop, "_start"), vb::TrapException);

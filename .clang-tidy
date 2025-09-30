@@ -176,3 +176,5 @@ CheckOptions:
     value: true
   - key: misc-const-correctness.WarnPointersAsValues
     value: true
+  - key: misc-const-correctness.WarnPointersAsPointers
+    value: false

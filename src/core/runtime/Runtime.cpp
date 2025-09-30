@@ -531,7 +531,7 @@ void Runtime::setMemoryHelperPtr() const VB_NOEXCEPT {
 #if LINEAR_MEMORY_BOUNDS_CHECKS
   void *const newPtr{pCast<void *>(&MemoryHelper::extensionRequest)};
 #else
-  void *const newPtr{pCast<void *>(&MemoryHelper::notifyOfMemoryGrowth)};
+  void const *const newPtr{pCast<void *>(&MemoryHelper::notifyOfMemoryGrowth)};
 #endif
 
   writeToPtr<void *>(pSubI(getLinearMemoryBase(), Basedata::FromEnd::memoryHelperPtr), newPtr);

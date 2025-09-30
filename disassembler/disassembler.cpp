@@ -145,8 +145,8 @@ static_assert(false, "Backend not supported");
 
 class CSDissembler final {
 public:
-  CSDissembler(cs_arch arch, cs_mode mode, std::vector<uint32_t> const &instructionAddresses) noexcept : instructionAddresses_(instructionAddresses) {
-    err_ = cs_open(arch, mode, &handle_);
+  CSDissembler(cs_arch arch, cs_mode mode, std::vector<uint32_t> const &instructionAddresses) noexcept
+      : instructionAddresses_(instructionAddresses), handle_(0U), err_(cs_open(arch, mode, &handle_)) {
   }
 
   CSDissembler(CSDissembler &) = delete;
@@ -254,9 +254,9 @@ public:
   }
 
 private:
-  csh handle_ = 0U;
-  cs_err err_;
   std::vector<uint32_t> const &instructionAddresses_;
+  csh handle_;
+  cs_err err_;
 };
 
 static std::string trimtabs(const std::string &str) {
@@ -289,7 +289,6 @@ DisassemblerImpl::MultiStringOutput DisassemblerImpl::printMachineCode(uint8_t c
     std::string second;
   };
   std::vector<InternalMultiStringOutput> outputBuffer;
-
   uint16_t maxInstSize = 0;
   for (const cs_insn &index : insn) {
     InternalMultiStringOutput out;
