@@ -163,7 +163,7 @@ public:
     return readFromLinearMemory(static_cast<uint32_t>(offset.getValue()), size);
   }
   pybind11::bytes readFromLinearMemory(uint32_t const offset, uint32_t const size) const {
-    uint8_t *const ptr = runtime_.getLinearMemoryRegion(offset, size);
+    uint8_t const *const ptr = runtime_.getLinearMemoryRegion(offset, size);
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
     return pybind11::bytes{reinterpret_cast<char const *>(ptr), size};
   }
@@ -197,7 +197,7 @@ public:
 
     executeWasm([&func, &serArgs, &results, &ret, signature]() {
       vb::SignalFunctionWrapper::call(func, vb::pCast<uint8_t const *>(serArgs.data()), vb::pCast<uint8_t *>(results.data()));
-      uint8_t *resultPtr = results.data();
+      uint8_t const *resultPtr = results.data();
       std::string const resultsType = signature.substr(signature.find(")") + 1);
       for (char const type : resultsType) {
         switch (type) {

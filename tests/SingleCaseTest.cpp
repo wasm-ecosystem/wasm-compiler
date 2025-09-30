@@ -419,7 +419,7 @@ TestResult SingleCaseTest::testFromStream(TestLoader *loader, bool const enableD
           } else {
             try {
               wasmModule->callRawExportedFunctionByName(functionName, stackTop, serializationData.data(), results.data());
-              uint8_t *resultPtr = results.data();
+              uint8_t const *resultPtr = results.data();
               for (auto const &expected : assertCommand->getExpected()) {
                 std::string const resultType = expected.type;
                 std::string const resultValue = expected.value;

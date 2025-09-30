@@ -65,7 +65,7 @@ uint32_t ModuleInfo::getNumParamsForSignature(uint32_t const sigIndex) const VB_
   uint32_t const typeOffset{typeOffsets[sigIndex]};
   uint32_t const nextTypeOffset{typeOffsets[sigIndex + 1U]};
   uint32_t paramLength{0U};
-  uint8_t *stepPtr{pAddI(pCast<uint8_t *>(types()), typeOffset)};
+  uint8_t const *stepPtr{pAddI(pCast<uint8_t *>(types()), typeOffset)};
   SignatureType const paramStart{readFromPtr<SignatureType>(stepPtr)};
   static_cast<void>(paramStart);
   assert(paramStart == SignatureType::PARAMSTART && "Wrong signature start");
@@ -107,7 +107,7 @@ void ModuleInfo::iterateParamsForSignature(uint32_t const sigIndex, FunctionRef<
       while (stepOffset >= typeOffset) {
         stepOffset--;
         // must use offset, then calculate ptr, because lambda may trigger memoryExtension
-        uint8_t *const stepPtr{pAddI(pCast<uint8_t *>(types()), stepOffset)};
+        uint8_t const *const stepPtr{pAddI(pCast<uint8_t *>(types()), stepOffset)};
         SignatureType const signatureType{readFromPtr<SignatureType>(stepPtr)};
         if (signatureType == SignatureType::PARAMEND) {
           break;
@@ -118,7 +118,7 @@ void ModuleInfo::iterateParamsForSignature(uint32_t const sigIndex, FunctionRef<
       while (stepOffset >= typeOffset) {
         stepOffset--;
         // must use offset, then calculate ptr, because lambda may trigger memoryExtension
-        uint8_t *const stepPtr{pAddI(pCast<uint8_t *>(types()), stepOffset)};
+        uint8_t const *const stepPtr{pAddI(pCast<uint8_t *>(types()), stepOffset)};
         SignatureType const signatureType{readFromPtr<SignatureType>(stepPtr)};
         if (signatureType == SignatureType::PARAMSTART) {
           break;
@@ -128,7 +128,7 @@ void ModuleInfo::iterateParamsForSignature(uint32_t const sigIndex, FunctionRef<
       }
       assert(stepOffset >= typeOffset && "No starting brace for params encountered");
     } else {
-      uint8_t *const initialSignaturePtr{pAddI(pCast<uint8_t *>(types()), stepOffset)};
+      uint8_t const *const initialSignaturePtr{pAddI(pCast<uint8_t *>(types()), stepOffset)};
       SignatureType const initialSignatureType{readFromPtr<SignatureType>(initialSignaturePtr)};
       static_cast<void>(initialSignatureType);
       assert(initialSignatureType == SignatureType::PARAMSTART && "Wrong signature start");
@@ -136,7 +136,7 @@ void ModuleInfo::iterateParamsForSignature(uint32_t const sigIndex, FunctionRef<
       while (stepOffset < nextTypeOffset) {
         stepOffset++;
         // must use offset, then calculate ptr, because lambda may trigger memoryExtension
-        uint8_t *const stepPtr{pAddI(pCast<uint8_t *>(types()), stepOffset)};
+        uint8_t const *const stepPtr{pAddI(pCast<uint8_t *>(types()), stepOffset)};
         SignatureType const signatureType{readFromPtr<SignatureType>(stepPtr)};
         if (signatureType == SignatureType::PARAMEND) {
           break;
@@ -158,7 +158,7 @@ void ModuleInfo::iterateResultsForSignature(uint32_t const sigIndex, FunctionRef
       while (stepOffset >= typeOffset) {
         stepOffset--;
         // must use offset, then calculate ptr, because lambda may trigger memoryExtension
-        uint8_t *const stepPtr{pAddI(pCast<uint8_t *>(types()), stepOffset)};
+        uint8_t const *const stepPtr{pAddI(pCast<uint8_t *>(types()), stepOffset)};
         SignatureType const signatureType{readFromPtr<SignatureType>(stepPtr)};
         if (signatureType == SignatureType::PARAMEND) {
           break;
@@ -168,7 +168,7 @@ void ModuleInfo::iterateResultsForSignature(uint32_t const sigIndex, FunctionRef
       }
       assert(readFromPtr<SignatureType>(pAddI(pCast<uint8_t *>(types()), stepOffset)) == SignatureType::PARAMEND && "Param end not found");
     } else {
-      uint8_t *const paramStartPtr{pAddI(pCast<uint8_t *>(types()), stepOffset)};
+      uint8_t const *const paramStartPtr{pAddI(pCast<uint8_t *>(types()), stepOffset)};
       SignatureType const paramStart{readFromPtr<SignatureType>(paramStartPtr)};
       static_cast<void>(paramStart);
       assert(paramStart == SignatureType::PARAMSTART && "Wrong signature start");
@@ -176,7 +176,7 @@ void ModuleInfo::iterateResultsForSignature(uint32_t const sigIndex, FunctionRef
       while (stepOffset < nextTypeOffset) {
         stepOffset++;
         // must use offset, then calculate ptr, because lambda may trigger memoryExtension
-        uint8_t *const stepPtr{pAddI(pCast<uint8_t *>(types()), stepOffset)};
+        uint8_t const *const stepPtr{pAddI(pCast<uint8_t *>(types()), stepOffset)};
         SignatureType const signatureType{readFromPtr<SignatureType>(stepPtr)};
         if (signatureType == SignatureType::PARAMEND) {
           break;
@@ -187,7 +187,7 @@ void ModuleInfo::iterateResultsForSignature(uint32_t const sigIndex, FunctionRef
       stepOffset++;
       while (stepOffset < nextTypeOffset) {
         // must use offset, then calculate ptr, because lambda may trigger memoryExtension
-        uint8_t *const stepPtr{pAddI(pCast<uint8_t *>(types()), stepOffset)};
+        uint8_t const *const stepPtr{pAddI(pCast<uint8_t *>(types()), stepOffset)};
         SignatureType const signatureType{readFromPtr<SignatureType>(stepPtr)};
         stepOffset++;
         // coverity[autosar_cpp14_a4_5_1_violation]

@@ -49,9 +49,9 @@ static vb::Span<const uint8_t> loadWasmBytecode(std::string const &filePath) {
   return vb::Span<const uint8_t>(bytecode.data(), bytecode.size());
 }
 
-static uint8_t *getStackTop() {
+static uint8_t const *getStackTop() {
   vb::MemUtils::StackInfo const stackInfo{vb::MemUtils::getStackInfo()};
-  uint8_t *const stackTop{vb::pCast<uint8_t *>(stackInfo.stackTop)};
+  uint8_t const *const stackTop{vb::pCast<uint8_t *>(stackInfo.stackTop)};
   return stackTop;
 }
 
