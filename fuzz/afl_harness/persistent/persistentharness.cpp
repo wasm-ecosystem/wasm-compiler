@@ -160,7 +160,7 @@ int main(int argc, const char *argv[]) {
   } else {
     exit(0);
   }
-  uint8_t *const buf = fuzz_buf.data();
+  uint8_t const *const buf = fuzz_buf.data();
   ssize_t const len = static_cast<ssize_t>(fread(fuzz_buf.data(), 1, sizeof(fuzz_buf), snapshot));
 #endif
 
