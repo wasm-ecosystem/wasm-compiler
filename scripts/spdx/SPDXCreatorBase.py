@@ -14,49 +14,86 @@
 
 import os
 import codecs
-from spdx.writers.tagvalue import write_document, InvalidDocumentError
-from spdx.parsers.loggers import ErrorMessages
-from spdx.document import Document
-from spdx.license import License
-from spdx.version import Version
-from spdx.creationinfo import Person
-from spdx.review import Review
-from spdx.package import Package
-from spdx.file import File, FileType
-from spdx.checksum import Checksum, ChecksumAlgorithm
+from datetime import datetime
 from urllib.parse import urljoin
 import git
 import uuid
-
 import hashlib
 import glob
+import re
+
+from spdx_tools.spdx.writer.tagvalue.tagvalue_writer import write_document_to_stream
+from spdx_tools.spdx.model import (
+    Document,
+    CreationInfo,
+    Actor,
+    ActorType,
+    File,
+    FileType,
+    Package,
+    Checksum,
+    ChecksumAlgorithm,
+    Version,
+    Relationship,
+    RelationshipType,
+)
 
 
 class SPDXCreatorBase:
     def __init__(self, project_root: str, output_dir: str) -> None:
-        self.__spdx_doc = Document()
-
+        self.__spdx_doc = None
         self.__output_path = output_dir
         self.project_root = project_root
+        self._licensing = None  # Cache licensing object
+
+    def _read_codeowners(self) -> list:
+        """Read CODEOWNERS file and extract email addresses"""
+        creators = []
+        codeowners_path = os.path.join(self.project_root, ".github", "CODEOWNERS")
+
+        if os.path.exists(codeowners_path):
+            with open(codeowners_path, "r") as f:
+                content = f.read()
+                # Extract email addresses from CODEOWNERS
+                email_pattern = r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"
+                emails = re.findall(email_pattern, content)
+
+                # Create creators from emails
+                for email in emails:
+                    # Extract name from email (simple heuristic)
+                    name_part = email.split("@")[0]
+                    # Convert dots to spaces and capitalize
+                    name = name_part.replace(".", " ").title()
+                    creators.append(Actor(ActorType.PERSON, name, email))
+
+        # Fallback to default creators if no CODEOWNERS found
+        if not creators:
+            creators = [
+                Actor(ActorType.PERSON, "Fabian Scheidl", "fabian.scheidl@bmw.de"),
+                Actor(ActorType.PERSON, "Changqing Jing", "changqing.jing@bmw.com"),
+            ]
+
+        return creators
 
     def add_documentation_info(self, name: str) -> None:
-        self.__spdx_doc.name = name
-        self.__spdx_doc.spdx_id = f"{name}#SPDXRef-DOCUMENT"
-        self.__spdx_doc.version = Version(1, 2)
-        self.__spdx_doc.comment = ""
         namespace_uuid = str(uuid.uuid4())
-        self.__spdx_doc.namespace = (
-            r"/wasm-compiler/browse/scripts/spdx/SPDXCreatorBase.py" + namespace_uuid
+        document_namespace = (
+            f"https://github.com/wasm-ecosystem/wasm-compiler/{namespace_uuid}"
         )
-        self.__spdx_doc.data_license = License.from_identifier("CC0-1.0")
-        self.__spdx_doc.creation_info.add_creator(
-            Person("Fabian Scheidl", "fabian.scheidl@bmw.de")
+
+        creators = self._read_codeowners()
+
+        creation_info = CreationInfo(
+            spdx_version="SPDX-2.3",
+            spdx_id="SPDXRef-DOCUMENT",
+            name=name,
+            document_namespace=document_namespace,
+            creators=creators,
+            created=datetime.now(),
+            data_license="CC0-1.0",
         )
-        self.__spdx_doc.creation_info.set_created_now()
-        review = Review(Person("Changqing Jing", "changqing.jing@bmw.com"))
-        review.set_review_date_now()
-        review.comment = ""
-        self.__spdx_doc.add_review(review)
+
+        self.__spdx_doc = Document(creation_info=creation_info)
 
     def add_source_by_path(self, file_path: str, copy_right: str, license: str) -> None:
         with open(file_path, "rb") as f:
@@ -70,17 +107,22 @@ class SPDXCreatorBase:
 
             file_relative_path = os.path.relpath(file_path, self.project_root)
 
-            source_file = File(file_relative_path)
-            source_file.type = FileType.SOURCE
-            source_file.spdx_id = (
-                f"{self.__spdx_doc.name}/{file_relative_path}#SPDXRef-FILE"
+            from license_expression import get_spdx_licensing
+
+            licensing = get_spdx_licensing()
+            license_expr = licensing.parse(license)
+
+            source_file = File(
+                name=file_relative_path,
+                spdx_id=f"SPDXRef-FILE-{len(self.__spdx_doc.files)}",
+                checksums=[Checksum(ChecksumAlgorithm.SHA1, sha_str)],
+                file_types=[FileType.SOURCE],
+                license_concluded=license_expr,
+                license_info_in_file=[license_expr],
+                copyright_text=copy_right,
             )
-            source_file.comment = ""
-            source_file.set_checksum(Checksum(ChecksumAlgorithm.SHA1, sha_str))
-            source_file.conc_lics = License.from_identifier(license)
-            source_file.add_lics(source_file.conc_lics)
-            source_file.copyright = copy_right
-            self.__spdx_doc.add_file(source_file)
+
+            self.__spdx_doc.files.append(source_file)
 
     def add_file_recursive(self, root_dir: str, copy_right: str, license: str) -> None:
         files = glob.glob(root_dir + "/**/*.*", recursive=True)
@@ -88,7 +130,12 @@ class SPDXCreatorBase:
             self.add_source_by_path(file_path, copy_right, license)
 
     def set_package(self, package: Package) -> None:
-        self.__spdx_doc.package = package
+        self.__spdx_doc.packages.append(package)
+        # Add required relationship between document and package
+        relationship = Relationship(
+            "SPDXRef-DOCUMENT", RelationshipType.DESCRIBES, package.spdx_id
+        )
+        self.__spdx_doc.relationships.append(relationship)
 
     def get_git_hash_of_submodule(self, submodule_name: str) -> str:
         repo = git.Repo(self.project_root)
@@ -99,17 +146,12 @@ class SPDXCreatorBase:
 
     def genSPDX(self) -> bool:
         try:
-            with codecs.open(
-                os.path.join(self.__output_path, f"{self.__spdx_doc.name}.spdx"),
-                mode="w",
-                encoding="utf-8",
-            ) as out:
-                write_document(self.__spdx_doc, out)
+            output_file = os.path.join(
+                self.__output_path, f"{self.__spdx_doc.creation_info.name}.spdx"
+            )
+            with codecs.open(output_file, mode="w", encoding="utf-8") as out:
+                write_document_to_stream(self.__spdx_doc, out)
                 return True
-        except InvalidDocumentError as e:
-            print("Document is Invalid:\n\t", end="")
-            print("\n\t".join(e.args[0]))
-            messages = ErrorMessages()
-            self.__spdx_doc.validate(messages)
-            print("\n".join(messages.messages))
+        except Exception as e:
+            print(f"Error generating SPDX document: {e}")
             return False

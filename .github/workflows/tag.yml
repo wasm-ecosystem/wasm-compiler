@@ -1,23 +1,29 @@
-name: Tag for master
+name: create tag
 
 on:
   push:
-    branches: ["master", "release/*"]
+    branches:
+      - main
+      - master
+      - "release/*"
+  workflow_dispatch:
 
 jobs:
-  TagForMaster:
-    runs-on: [atc-ubuntu-latest]
+  create-tag:
+    runs-on: [ubuntu-latest]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: -1
-          token: ${{ secrets.TECH_USER_ATC_GITHUB_TOKEN }}
-      - name: tag
+      - name: Configure git for release tagging
+        run: |
+          git config --global user.email "action@github.com"
+          git config --global user.name "GitHub Release Bot"
+
+      - name: Create release tag
         run: |
           version_info=$(sed -n '/^##/{s/^##//;s/ //g;p;q;}' RELEASENOTES.md)
           new_tag_name=$version_info
           echo "new_tag_name will be: $new_tag_name"
-          git config user.name '${{ vars.INTERNAL_TECH_USER_NAME }}'
-          git config user.email '${{ vars.INTERNAL_TECH_USER_EMAIL }}'
           git tag -a $new_tag_name -m '[GITHUB CI] push new tag'
           git push origin HEAD:${{ github.ref_name }} $new_tag_name
