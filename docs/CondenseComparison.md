@@ -49,8 +49,8 @@ There are two different operation which have the same name but different semanti
 We can condense **value producing comparison** as other operator. It is same as other operator such as add, mul which receive two arguments and return one results.
 
 ```wat
-local.get 0 [w0]        condense to           skip
-local.get 1 [w1]       =============>         skip
+local.get 0 [w0]        condense to           
+local.get 1 [w1]       =============>         
 i32.eq                                        REG [w2]
 ```
 
@@ -83,9 +83,9 @@ There are no real result in register, instead, condition flags are set.
 Because jump instructions don't rely on the value in register, instead, they rely on the condition flags to decide control flow.
 
 ```wat
-local.get 0 [w0]        condense to           skip
-local.get 1 [w1]       =============>         skip
-i32.eq                                        skip
+local.get 0 [w0]        condense to           
+local.get 1 [w1]       =============>         
+i32.eq                                        (empty)
 ```
 
 ```asm
