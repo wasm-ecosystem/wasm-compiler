@@ -900,10 +900,12 @@ private:
 /// @brief union of all possible WASMTYPE
 // coverity[autosar_cpp14_a11_0_1_violation]
 union WasmValue {
-  int32_t i32; ///< i32
-  int64_t i64; ///< i64
-  float f32;   ///< f32
-  double f64;  ///< f64
+  int32_t i32;  ///< i32
+  uint32_t u32; ///< u32
+  int64_t i64;  ///< i64
+  uint64_t u64; ///< u64
+  float f32;    ///< f32
+  double f64;   ///< f64
 
   // coverity[autosar_cpp14_a12_1_5_violation]
   WasmValue() VB_NOEXCEPT : i32(0) {
@@ -918,7 +920,7 @@ union WasmValue {
   /// @brief construct a WasmValue
   /// @param v uint32_t value
   ///
-  explicit WasmValue(uint32_t const v) VB_NOEXCEPT : i32(static_cast<int32_t>(v)) {
+  explicit WasmValue(uint32_t const v) VB_NOEXCEPT : u32(v) {
   }
   ///
   /// @brief construct a WasmValue
@@ -930,7 +932,7 @@ union WasmValue {
   /// @brief construct a WasmValue
   /// @param v uint64_t value
   ///
-  explicit WasmValue(uint64_t const v) VB_NOEXCEPT : i64(static_cast<int64_t>(v)) {
+  explicit WasmValue(uint64_t const v) VB_NOEXCEPT : u64(v) {
   }
   ///
   /// @brief construct a WasmValue

@@ -8,8 +8,17 @@ on:
 jobs:
   oss-scan:
     runs-on: cawe-linux-x64-compute-small
+    container:
+      image: ubuntu:24.04
+      options: --user root
 
     steps:
+      - name: install deps
+        run: |
+          set -ex
+          apt-get update
+          apt-get dist-upgrade -y
+          apt-get install -y git ca-certificates jq curl
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
@@ -32,7 +41,7 @@ jobs:
 
       - name: Install uv in virtual environment
         run: |
-          source venv/bin/activate
+          . venv/bin/activate
           pip install uv
 
       - name: Configure Artifactory access
@@ -41,7 +50,7 @@ jobs:
 
       - name: Install internal content scan dependencies
         run: |
-          source venv/bin/activate
+          . venv/bin/activate
           cd ci-config/scripts/bmw-content-scan
           uv pip install -e .
 
@@ -78,7 +87,7 @@ jobs:
 
       - name: Run BMW content scan
         run: |
-          source venv/bin/activate
+          . venv/bin/activate
           mkdir -p scan_results
 
           # Run the BMW content scanner
@@ -104,10 +113,11 @@ jobs:
 
       - name: Check scan results and report violations
         run: |
-          source venv/bin/activate
+          . venv/bin/activate
           test $(jq length scan_results/findings.json) -eq 0 || (echo "BMW content violations found!" && jq . scan_results/findings.json && exit 1)
 
       - name: Check Apache license headers
+        shell: bash
         run: |
           echo "Checking for Apache license headers in C/C++ files..."
 
@@ -130,9 +140,8 @@ jobs:
 
       - name: License compatibility check with Licensee
         run: |
-          sudo apt-get update
-          sudo apt-get install -y ruby ruby-dev build-essential cmake pkg-config libssl-dev
-          sudo gem install licensee
+          apt-get install -y ruby ruby-dev build-essential cmake pkg-config libssl-dev
+          gem install licensee
 
           echo "Detecting licenses in Git submodules..."
 
@@ -171,7 +180,7 @@ jobs:
           curl -sSfL https://github.com/trufflesecurity/trufflehog/releases/download/v3.90.6/trufflehog_3.90.6_linux_amd64.tar.gz -o trufflehog.tar.gz
           tar -xzf trufflehog.tar.gz
           chmod +x trufflehog
-          sudo mv trufflehog /usr/bin/
+          mv trufflehog /usr/bin/
 
           # Scan the repository for secrets
           echo "Scanning repository for secrets..."
