@@ -4,14 +4,17 @@ on:
   push:
     tags:
       - "*"
+  workflow_dispatch:
 
 env:
   package_name: wasm-compiler-${{ github.ref_name }}.tar.gz
 jobs:
   release:
-    runs-on: [atc-ubuntu-latest]
+    runs-on: [ubuntu-latest]
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: get release body
         id: releaseBodyStep
@@ -19,28 +22,35 @@ jobs:
           release_body=$(sed -n '/^## /{ :a; n; /^## /q; p; ba; }' RELEASENOTES.md)
           echo -e "Release_body<<EOF\n$release_body\nEOF" >> $GITHUB_OUTPUT
 
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+
+      - name: Initialize submodules
+        run: |
+          git submodule update --init --recursive --depth=1
+
+      - name: Create venv and install requirements
+        run: |
+          python -m venv .venv
+          . .venv/bin/activate
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Generate SPDX
+        run: |
+          . .venv/bin/activate
+          python scripts/spdx/wasm_compiler_spdx.py
+
       - name: compress
         run: scripts/archive.sh
         env:
           package_name: ${{ env.package_name }}
 
-      - name: upload to ddad artifactory
-        run: |
-          curl -u ${{ secrets.TECH_USER_CODECRAFT_ACCOUNT }}:${{ secrets.TECH_USER_DDAD_ARTIFACTORY_TOKEN }} --upload-file "./${{ env.package_name }}" "https://${{ vars.INTERNAL_ARTIFACTORY_WARP_PATH }}/${{ env.package_name }}"
-
-      - name: create release
-        id: createRelease
-        uses: actions/create-release@v1.1.4
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create GitHub Release and upload artifacts
+        uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ github.ref }}
-          release_name: ${{ github.ref }}
+          name: ${{ github.ref_name }}
           body: ${{ steps.releaseBodyStep.outputs.Release_body }}
-
-      - name: Upload Release Assets
-        uses: alexellis/upload-assets@0.4.0
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-        with:
-          asset_paths: '["./${{ env.package_name }}"]'
+          files: ${{ env.package_name }}

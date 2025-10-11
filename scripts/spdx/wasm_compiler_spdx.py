@@ -13,14 +13,22 @@
 # limitations under the License.
 
 from BerkeleySoftFloatSPDX import BerkeleySoftFloatSPDX
+from WasmCompilerSPDX import WasmCompilerSPDX
 import os
 import argparse
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Process spdx generate args.")
+    parser = argparse.ArgumentParser(
+        description="Generate SPDX files for wasm-compiler and its dependencies."
+    )
     parser.add_argument(
         "-o", "--output_dir", type=str, help="output spdx file dir", default=os.getcwd()
     )
+
     args = parser.parse_args()
-    berkeley_soft_float_spdx_creator = BerkeleySoftFloatSPDX(args.output_dir)
-    berkeley_soft_float_spdx_creator.create_spdx_file()
+
+    print("Generating consolidated SPDX for wasm-compiler and dependencies...")
+    wasm_compiler_spdx_creator = WasmCompilerSPDX(args.output_dir)
+    wasm_compiler_spdx_creator.create_spdx_file()
+
+    print("SPDX generation completed!")

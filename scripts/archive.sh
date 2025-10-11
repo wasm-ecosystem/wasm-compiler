@@ -16,5 +16,16 @@
 
 echo "start archive" &&
     git submodule deinit --all &&
-    git submodule update --init --depth=1 thirdparty/json thirdparty/berkeley-softfloat-3 &&
-    git ls-files --recurse-submodules | tar caf $([[ -z $package_name ]] && echo wasm-compiler-$(git describe --tags --exact-match HEAD || git rev-parse HEAD).tar.gz || echo $package_name) -T-
+    git submodule update --init --depth=1 thirdparty/berkeley-softfloat-3 &&
+    # Build a temporary file list for tar so we can exclude wasm_examples and add the SPDX file
+    tmpfile=$(mktemp)
+    # Write tracked files excluding wasm_examples into the temp file
+    git ls-files --recurse-submodules | grep -v '^wasm_examples/' > "$tmpfile"
+    # Ensure SPDX file is included if it exists (it may be generated earlier in the workflow)
+    if [ -f wasm-compiler.spdx ]; then
+        echo "wasm-compiler.spdx" >> "$tmpfile"
+    fi
+    # Create package name if not provided
+    outname=$([[ -z $package_name ]] && echo wasm-compiler-$(git describe --tags --exact-match HEAD || git rev-parse HEAD).tar.gz || echo $package_name)
+    tar caf "$outname" -T "$tmpfile"
+    rm -f "$tmpfile"

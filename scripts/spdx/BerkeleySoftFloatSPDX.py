@@ -15,10 +15,8 @@
 from SPDXCreatorBase import SPDXCreatorBase
 from pathlib import Path
 import os
-from spdx.package import Package
-from spdx.license import License
-from spdx.checksum import Checksum, ChecksumAlgorithm
-from spdx.utils import SPDXNone
+from spdx_tools.spdx.model import Package, Checksum, ChecksumAlgorithm, SpdxNone
+from license_expression import get_spdx_licensing
 
 
 class BerkeleySoftFloatSPDX(SPDXCreatorBase):
@@ -41,27 +39,35 @@ class BerkeleySoftFloatSPDX(SPDXCreatorBase):
                 University of California.  All rights reserved."""
         license = "BSD-3-Clause"
 
-        package = Package()
-        package.name = package_name
-        package.version = f"{major_version}.{minor_version}"
-        package.file_name = SPDXNone()
-        package.spdx_id = f"{package_name}#SPDXRef-PACKAGE"
+        licensing = get_spdx_licensing()
+        license_expr = licensing.parse(license)
+
         git_url = "https://github.com/ucb-bar/berkeley-softfloat-3.git"
-        package.download_location = git_url
         package_sha = self.get_git_hash_of_submodule(submodule_relative_path)
 
-        package.set_checksum(Checksum(ChecksumAlgorithm.SHA1, package_sha))
-        package.homepage = "http://www.jhauser.us/arithmetic/SoftFloat.html"
-
-        package.conc_lics = License.from_identifier(license)
-        package.license_declared = License.from_identifier(license)
-        package.add_lics_from_file(License.from_identifier(license))
-        package.source_info = f"<text>use master branch of {git_url}</text>"
-
         with open(os.path.join(berkeley_softfloat_dir, "COPYING.txt"), "r") as f:
-            package.cr_text = f.read().replace("\n", "")
-        package.summary = "Berkeley SoftFloat Release 3"
-        package.description = "Berkeley SoftFloat is a software implementation of binary floating-point that conforms to the IEEE Standard for Floating-Point Arithmetic"
+            copyright_text = f.read().replace("\n", "")
+
+        package = Package(
+            name=package_name,
+            spdx_id="SPDXRef-PACKAGE",
+            download_location=git_url,
+            files_analyzed=True,
+            version=f"{major_version}.{minor_version}",
+            file_name=None,
+            supplier=None,
+            originator=None,
+            checksums=[Checksum(ChecksumAlgorithm.SHA1, package_sha)],
+            homepage=SpdxNone(),
+            source_info=f"use master branch of {git_url}",
+            license_concluded=license_expr,
+            license_declared=license_expr,
+            license_info_from_files=[license_expr],
+            license_comment=None,
+            copyright_text=copyright_text,
+            summary="Berkeley SoftFloat Release 3",
+            description="Berkeley SoftFloat is a software implementation of binary floating-point that conforms to the IEEE Standard for Floating-Point Arithmetic",
+        )
 
         self.set_package(package)
 
