@@ -1,0 +1,34 @@
+name: sync tags to github
+
+on:
+  push:
+    tags:
+      - "*"
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: "Tag name to sync"
+        required: false
+        type: string
+
+jobs:
+  sync-tag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: |
+          set -e
+          git remote add github https://${{ secrets.OSS_GITHUB_NAME }}:${{ secrets.OSS_GITHUB_TOKEN }}@github.com/wasm-ecosystem/wasm-compiler.git
+
+          # Determine tag name: from manual input or from push event
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            TAG_NAME="${{ github.event.inputs.tag_name }}"
+          else
+            # It's a tag push event
+            TAG_NAME="${GITHUB_REF#refs/tags/}"
+          fi
+
+          echo "Syncing tag: $TAG_NAME"
+          git push github "$TAG_NAME"

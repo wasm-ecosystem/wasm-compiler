@@ -5,7 +5,6 @@ on:
     branches:
       - main
       - master
-      - develop
       - "release/*"
   workflow_dispatch:
 
@@ -15,8 +14,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: -1
-      - name: tag
+          token: ${{ secrets.TECH_USER_ATC_GITHUB_TOKEN }}
+          fetch-depth: 0
+      - name: Configure git for release tagging
+        run: |
+          git config --global user.email "action@github.com"
+          git config --global user.name "GitHub Release Bot"
+
+      - name: Create release tag
         run: |
           version_info=$(sed -n '/^##/{s/^##//;s/ //g;p;q;}' RELEASENOTES.md)
           new_tag_name=$version_info

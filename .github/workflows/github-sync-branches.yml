@@ -1,0 +1,23 @@
+name: sync branches to github
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - develop
+      - "release/*"
+  workflow_dispatch:
+
+jobs:
+  sync-branches:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          set -e
+          git remote add github https://${{ secrets.OSS_GITHUB_NAME }}:${{ secrets.OSS_GITHUB_TOKEN }}@github.com/wasm-ecosystem/wasm-compiler.git
+
+          # Push the current branch
+          BRANCH_NAME=${GITHUB_REF#refs/heads/}
+          git push github "$BRANCH_NAME" -f
