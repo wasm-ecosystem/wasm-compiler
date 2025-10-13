@@ -14,7 +14,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: -1
+          token: ${{ secrets.TECH_USER_ATC_GITHUB_TOKEN }}
+          fetch-depth: 0
       - name: Configure git for release tagging
         run: |
           git config --global user.email "action@github.com"

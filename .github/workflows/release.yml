@@ -8,6 +8,10 @@ on:
 
 env:
   package_name: wasm-compiler-${{ github.ref_name }}.tar.gz
+
+permissions:
+  contents: write
+
 jobs:
   release:
     runs-on: [ubuntu-latest]
