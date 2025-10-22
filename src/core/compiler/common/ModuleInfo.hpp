@@ -160,6 +160,10 @@ public:
     /// @brief Whether this function is linked
     ///
     bool linked = false;
+    ///
+    /// @brief Whether this import function is v2 or v1
+    ///
+    NativeSymbol::ImportFnVersion importFnVerison = NativeSymbol::ImportFnVersion::V1;
   };
 
   ///
@@ -235,6 +239,13 @@ public:
     if (functionIsImported(fncIndex)) {
       ModuleInfo::ImpFuncDef const impFuncDef{getImpFuncDef(fncIndex)};
       return impFuncDef.builtinFunction != BuiltinFunction::UNDEFINED;
+    }
+    return false;
+  }
+
+  inline bool functionIsV2Import(uint32_t const fncIndex) const VB_NOEXCEPT {
+    if (functionIsImported(fncIndex)) {
+      return getImpFuncDef(fncIndex).importFnVerison == NativeSymbol::ImportFnVersion::V2;
     }
     return false;
   }

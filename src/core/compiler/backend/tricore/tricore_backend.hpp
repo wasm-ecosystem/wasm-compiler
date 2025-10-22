@@ -417,6 +417,14 @@ public:
   /// @return bool Whether this enforced target is only among the (up to 2) input operands
   bool checkIfEnforcedTargetIsOnlyInArgs(Span<Stack::iterator> const &args, StackElement const *const enforcedTarget) const VB_NOEXCEPT;
 
+  ///
+  /// @brief Iterate over all GPR and FPR scratch register and globals
+  /// NOTE: Lambda will be called irrespective of whether they are currently in use
+  ///
+  /// @param lambda Function that will be called on a StackElement representing the respective scratch register or
+  /// global
+  void iterateScratchRegsAndGlobals(FunctionRef<void(StackElement const &)> const &lambda) const;
+
 #if BUILTIN_FUNCTIONS
   ///
   /// @brief Consumes the input valent blocks (or StackElements) from the compiler's stack and emits machine code that
@@ -554,20 +562,6 @@ private:
   void emitLinMemBoundsCheck(REG const tempDReg, RelPatchObj const *const toExtensionRequest = nullptr) const;
 
   ///
-  /// @brief Iterate over all GPR and FPR scratch register
-  /// NOTE: Lambda will be called irrespective of whether they are currently in use
-  ///
-  /// @param lambda Function that will be called on a StackElement representing the respective scratch register
-  void iterateScratchRegs(FunctionRef<void(StackElement const &)> const &lambda) const;
-
-  ///
-  /// @brief Iterate over all globals
-  /// NOTE: Lambda will be called irrespective of whether they are currently in use
-  ///
-  /// @param lambda Function that will be called on a StackElement representing the respective global
-  void iterateGlobals(FunctionRef<void(StackElement const &)> const &lambda) const;
-
-  ///
   /// @brief Push a stacktrace entry to the stacktrace record stack
   ///
   /// Should be called when a new function is called
@@ -658,6 +652,15 @@ private:
   /// @param emitFunctionCallLambda A lambda which emits the raw function call
   void execFncCallAndTrunc(uint32_t const sigIndex, uint32_t const fncIndex, bool const isIndirectCall, bool const imported,
                            FunctionRef<void()> const &emitFunctionCallLambda);
+
+  ///
+  /// @brief Consume and load the parameters for a import function call and return the result element onto the stack
+  ///
+  /// @param sigIndex Signature type index for the function type
+  /// @param fncIndex Function index to call
+  /// @param emitFunctionCallLambda A lambda which emits the raw function call
+  void execV2ImportFncCallAndTrunc(uint32_t const sigIndex, uint32_t const fncIndex, FunctionRef<void()> const &emitFunctionCallLambda);
+
   ///
   /// @brief Emits a memcpy without a bounds check from an arbitrary absolute address to another absolute address
   ///

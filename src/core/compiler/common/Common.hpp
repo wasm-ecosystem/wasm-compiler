@@ -595,6 +595,12 @@ public:
   /// @return Stack::iterator Iterator to the pushed operand
   Stack::iterator pushOperandsToStack(StackElement const &arg) const;
 
+  /// @brief Condense params with sigIndex, spill scratchRegs and globals
+  /// @param sigIndex Signature type index for the function type
+  /// @param isIndirectCall Whether this is an indirect call
+  /// @return Iterator to params base
+  Stack::iterator prepareCallParamsAndSpillContext(uint32_t const sigIndex, bool const isIndirectCall);
+
 private:
   Compiler &compiler_; ///< Reference to the compiler instance
 

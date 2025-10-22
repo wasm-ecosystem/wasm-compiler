@@ -1,5 +1,10 @@
 # Wasm Compiler Release Notes
 
+## 3.1.0
+
+### Feature
+- Support multi return values import function(not call_indirect)
+
 ## 3.0.3
 Add u32 and u64 type to WasmValue
 

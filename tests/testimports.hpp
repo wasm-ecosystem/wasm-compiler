@@ -27,6 +27,7 @@
 #include "src/core/common/TrapCode.hpp"
 #include "src/core/common/function_traits.hpp"
 #include "src/core/common/util.hpp"
+#include "src/core/runtime/ImportFunctionV2.hpp"
 
 namespace spectest {
 class ImportsMaker {
@@ -647,8 +648,29 @@ public:
     wasmModule->setTraceBuffer(vb::Span<uint32_t>{ptr, size});
   }
 
+  class MultiReturn final
+      : public ImportFunctionV2<std::tuple<uint32_t, uint64_t, uint32_t, double, float>, std::tuple<uint32_t, uint64_t, uint32_t, double, float>> {
+  public:
+    using ImportFunctionV2::ImportFunctionV2;
+    static void call(void *params, void *results, void *ctx) {
+      uint32_t const p0 = getParam<0>(params);
+      uint64_t const p1 = getParam<1>(params);
+      uint32_t const p2 = getParam<2>(params);
+      double const p3 = getParam<3>(params);
+      float const p4 = getParam<4>(params);
+      static_cast<void>(ctx);
+      setRet<0>(results, p0 + 1);
+      setRet<1>(results, p1 + 2);
+      setRet<2>(results, p2 + 3);
+      setRet<3>(results, p3 + 4.4);
+      setRet<4>(results, p4 + 5.5F);
+    }
+  };
+
   static auto makeImports() {
     return vb::make_array(
+        MultiReturn::generateNativeSymbol("spectest", "multiReturn", vb::NativeSymbol::Linkage::DYNAMIC, MultiReturn::call),
+        //
         DYNAMIC_LINK("spectest", "setTraceBuffer", setTraceBuffer),
         //
         DYNAMIC_LINK("spectest", "nop", nop), DYNAMIC_LINK("spectest", "func-i64-i64", func_i64_i64),

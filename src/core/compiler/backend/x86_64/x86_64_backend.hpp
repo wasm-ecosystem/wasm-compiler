@@ -501,6 +501,14 @@ public:
   /// And minimally 2 scratch registers are needed for follow up condense. For example (select i32_reg, i32 const, i32 const)
   bool hasEnoughScratchRegForScheduleInstruction(OPCode const opcode) const VB_NOEXCEPT;
 
+  ///
+  /// @brief Iterate over all GPR and FPR scratch register and globals
+  /// NOTE: Lambda will be called irrespective of whether they are currently in use
+  ///
+  /// @param lambda Function that will be called on a StackElement representing the respective scratch register or
+  /// global
+  void iterateScratchRegsAndGlobals(FunctionRef<void(StackElement const &)> const &lambda) const;
+
 private:
   /// @brief Widths of certain entries on the stack
   struct Widths final {
@@ -565,12 +573,12 @@ private:
                            FunctionRef<void()> const &emitFunctionCallLambda);
 
   ///
-  /// @brief Iterate over all GPR and FPR scratch register and globals
-  /// NOTE: Lambda will be called irrespective of whether they are currently in use
+  /// @brief Consume and load the parameters for a import function call and return the result element onto the stack
   ///
-  /// @param lambda Function that will be called on a StackElement representing the respective scratch register or
-  /// global
-  void iterateScratchRegsAndGlobals(FunctionRef<void(StackElement const &)> const &lambda) const;
+  /// @param sigIndex Signature type index for the function type
+  /// @param fncIndex Function index to call
+  /// @param emitFunctionCallLambda A lambda which emits the raw function call
+  void execV2ImportFncCallAndTrunc(uint32_t const sigIndex, uint32_t const fncIndex, FunctionRef<void()> const &emitFunctionCallLambda);
 
   ///
   /// @brief Emits a memcpy without a bounds check from an arbitrary absolute address to another absolute address
@@ -814,6 +822,10 @@ private:
   /// @param preserveFlags Whether to preserve CPU flags
   void emitMoveIntWithCastTo32(VariableStorage &targetStorage, VariableStorage const &sourceStorage, bool const unconditional,
                                bool const preserveFlags) const;
+
+  /// @brief Update new stackFrame size. Check overflow if needed
+  /// @param newStackFrameSize aligned new stackFrame size
+  void updateStackFrameSizeHelper(uint32_t const newAlignedStackFrameSize);
 };
 
 } // namespace x86_64

@@ -1039,23 +1039,115 @@ void Backend::iterateScratchRegsAndGlobals(FunctionRef<void(StackElement const &
   }
 }
 
+void Backend::execV2ImportFncCallAndTrunc(uint32_t const sigIndex, uint32_t const fncIndex, FunctionRef<void()> const &emitFunctionCallLambda) {
+  assert(fncIndex != UnknownIndex && "Need to provide fncIndex for imports");
+
+  Stack::iterator const paramsBase{common_.prepareCallParamsAndSpillContext(sigIndex, false)};
+  common_.moveGlobalsToLinkData();
+
+  uint32_t const stackParamWidth{moduleInfo_.getNumParamsForSignature(sigIndex) * 8U};
+  uint32_t const stacktraceWidth{(compiler_.isStacktraceEnabled() || compiler_.getDebugMode()) ? Widths::stacktraceRecord : 0U};
+  uint32_t const debugInfoWidth{compiler_.getDebugMode() ? Widths::debugInfo : 0U};
+
+  // RSP <------------ Stack growth direction (downwards)                                <---- lastMaximumOffset
+  // |  Stack Params  | Stack Return Values | LR | Stacktrace Record + Debug Info | JobMemoryPtrPtr | Padding |
+  uint32_t const of_returnValues{stackParamWidth};
+  // reserve stack space for return values
+  uint32_t const numReturnValues{moduleInfo_.getNumReturnValuesForSignature(sigIndex)};
+  uint32_t const of_lr{of_returnValues + (numReturnValues * 8U)};
+  uint32_t const of_stacktraceRecordAndDebugInfo{of_lr + 8U};
+  uint32_t const of_jobMemoryPtrPtr{of_stacktraceRecordAndDebugInfo + stacktraceWidth + debugInfoWidth};
+  uint32_t const of_post{of_jobMemoryPtrPtr + Widths::jobMemoryPtrPtr};
+
+  // Reduce stack usage to minimum required and align stack before call
+  uint32_t const lastMaximumOffset{common_.getCurrentMaximumUsedStackFramePosition()};
+  uint32_t const newAlignedStackFrameSize{as_.alignStackFrameSize(lastMaximumOffset + of_post)};
+  updateStackFrameSizeHelper(newAlignedStackFrameSize);
+
+  // Store LR
+  static_assert((ImplementationLimits::numParams * 8U) <= (0xFFFU * 8U), "Too many arguments");
+  as_.INSTR(STR_xT_deref_xN_imm12zxls3_t).setT(REG::LR).setN(REG::SP).setImm12zxls3(SafeUInt<15U>::fromUnsafe(of_lr))();
+
+  Stack::iterator currentParam{paramsBase};
+
+  // spill all locals in regs
+  RegMask const availableLocalsRegMask{common_.saveLocalsAndParamsForFuncCall(true)};
+
+  uint32_t offsetInArgs{0U};
+  moduleInfo_.iterateParamsForSignature(
+      sigIndex, FunctionRef<void(MachineType)>([this, &offsetInArgs, &currentParam, &availableLocalsRegMask](MachineType const paramType) {
+        VariableStorage targetStorage{};
+        VariableStorage const sourceStorage{common_.getOptimizedSourceStorage(*currentParam, availableLocalsRegMask)};
+        uint32_t const offsetFromSP{offsetInArgs};
+        offsetInArgs += 8U; // Align to 8
+        targetStorage = VariableStorage::stackMemory(paramType, moduleInfo_.fnc.stackFrameSize - offsetFromSP);
+        // (reg|stack)->stack
+        emitMoveImpl(targetStorage, sourceStorage, false);
+
+        common_.removeReference(currentParam);
+        currentParam = stack_.erase(currentParam);
+      }));
+
+  RegStackTracker tracker{};
+  REG const regForParamsPtr{getREGForArg(MachineType::I64, true, tracker)};
+  assert(regForParamsPtr != REG::NONE && "Should have three regs for params, rets and ctx");
+  as_.INSTR(ADD_xD_xN_imm12zxols12).setD(regForParamsPtr).setN(REG::SP).setImm12zx(SafeUInt<12U>::fromConst<0U>())();
+
+  REG const regForRetsPtr{getREGForArg(MachineType::I64, true, tracker)};
+  assert(regForParamsPtr != REG::NONE && "Should have three regs for params, rets and ctx");
+  as_.INSTR(ADD_xD_xN_imm12zxols12).setD(regForRetsPtr).setN(REG::SP).setImm12zx(SafeUInt<12U>::fromUnsafe(of_returnValues))();
+
+  REG const regForCtx{getREGForArg(MachineType::I64, true, tracker)};
+  assert(regForCtx != REG::NONE && "Should have three regs for params, rets and ctx");
+  VariableStorage const ctxStorage{
+      VariableStorage::linkData(MachineType::I64, moduleInfo_.getBasedataLength() - static_cast<uint32_t>(BD::FromEnd::customCtxOffset))};
+  emitMoveImpl(VariableStorage::reg(MachineType::I64, regForCtx), ctxStorage, false);
+
+  tryPushStacktraceAndDebugEntry(fncIndex, SafeUInt<12U>::fromUnsafe(of_stacktraceRecordAndDebugInfo), 8U,
+                                 moduleInfo_.bytecodePosOfLastParsedInstruction, callScrRegs[0], callScrRegs[1], callScrRegs[2]);
+#if LINEAR_MEMORY_BOUNDS_CHECKS
+  cacheJobMemoryPtrPtr(of_jobMemoryPtrPtr, callScrRegs[0]);
+#endif
+  emitFunctionCallLambda();
+
+#if LINEAR_MEMORY_BOUNDS_CHECKS
+  restoreFromJobMemoryPtrPtr(of_jobMemoryPtrPtr);
+#endif
+#if INTERRUPTION_REQUEST
+  checkForInterruptionRequest(callScrRegs[0]);
+#endif
+
+  tryPopStacktraceAndDebugEntry(of_stacktraceRecordAndDebugInfo, callScrRegs[0]);
+
+  // Restore LR
+  as_.INSTR(LDR_xT_deref_xN_imm12zxls3_t).setT(REG::LR).setN(REG::SP).setImm12zxls3(SafeUInt<15U>::fromUnsafe(of_lr))();
+
+#if LINEAR_MEMORY_BOUNDS_CHECKS
+  setupMemSizeReg();
+#endif
+
+  common_.recoverGlobalsToRegs();
+
+  if (numReturnValues > 0U) {
+    uint32_t offsetInRets{of_returnValues};
+    moduleInfo_.iterateResultsForSignature(
+        sigIndex, FunctionRef<void(MachineType)>([this, &offsetInRets](MachineType const machineType) {
+          uint32_t const offsetFromSP{offsetInRets};
+          offsetInRets += 8U; // Align to 8
+          StackElement const returnValueElement{
+              StackElement::tempResult(machineType, VariableStorage::stackMemory(machineType, moduleInfo_.fnc.stackFrameSize - offsetFromSP),
+                                       moduleInfo_.getStackMemoryReferencePosition())};
+          common_.pushAndUpdateReference(returnValueElement);
+        }));
+  }
+}
+
 void Backend::execFncCallAndTrunc(uint32_t const sigIndex, uint32_t const fncIndex, bool const isIndirectCall, bool const imported,
                                   FunctionRef<void()> const &emitFunctionCallLambda) {
   assert(!(isIndirectCall && imported) && "Cannot be known whether indirect call is imported");
   assert((!imported || fncIndex != UnknownIndex) && "Need to provide fncIndex for imports");
-  static_cast<void>(fncIndex);
 
-  uint32_t const numParams{moduleInfo_.getNumParamsForSignature(sigIndex)};
-  uint32_t const numVBsToResolve{numParams + (isIndirectCall ? 1_U32 : 0_U32)};
-
-  Stack::iterator paramsBase{};
-  if (numVBsToResolve > 0U) {
-    paramsBase = common_.condenseMultipleValentBlocksBelow(stack_.end(), numVBsToResolve);
-  }
-
-  iterateScratchRegsAndGlobals(FunctionRef<void(StackElement const &)>([this, paramsBase](StackElement const &element) {
-    spillFromStack(element, RegMask::none(), true, false, paramsBase, Stack::iterator{});
-  }));
+  Stack::iterator const paramsBase{common_.prepareCallParamsAndSpillContext(sigIndex, isIndirectCall)};
 
   if (imported) {
     common_.moveGlobalsToLinkData();
@@ -1078,14 +1170,8 @@ void Backend::execFncCallAndTrunc(uint32_t const sigIndex, uint32_t const fncInd
 
   // Reduce stack usage to minimum required and align stack before call
   uint32_t const lastMaximumOffset{common_.getCurrentMaximumUsedStackFramePosition()};
-  uint32_t const newStackFrameSize{as_.alignStackFrameSize(lastMaximumOffset + of_post)};
-  as_.setStackFrameSize(newStackFrameSize);
-#if ACTIVE_STACK_OVERFLOW_CHECK
-  if (moduleInfo_.currentState.checkedStackFrameSize < newStackFrameSize) {
-    moduleInfo_.currentState.checkedStackFrameSize = newStackFrameSize;
-    as_.checkStackFence(callScrRegs[0]); // SP change
-  }
-#endif
+  uint32_t const newAlignedStackFrameSize{as_.alignStackFrameSize(lastMaximumOffset + of_post)};
+  updateStackFrameSizeHelper(newAlignedStackFrameSize);
 
   // Store LR
   static_assert((ImplementationLimits::numParams * 8U) <= (0xFFFU * 8U), "Too many arguments");
@@ -1135,14 +1221,14 @@ void Backend::execFncCallAndTrunc(uint32_t const sigIndex, uint32_t const fncInd
 
   if (imported) {
     REG const targetReg{getREGForArg(MachineType::I64, imported, tracker)};
-    VariableStorage const cxtStorage{
+    VariableStorage const ctxStorage{
         VariableStorage::linkData(MachineType::I64, moduleInfo_.getBasedataLength() - static_cast<uint32_t>(BD::FromEnd::customCtxOffset))};
     if (targetReg != REG::NONE) {
-      gprCopyResolver.push(VariableStorage::reg(MachineType::I64, targetReg), cxtStorage);
+      gprCopyResolver.push(VariableStorage::reg(MachineType::I64, targetReg), ctxStorage);
     } else {
       uint32_t const offsetFromSP{offsetInStackArgs(imported, stackParamWidth, tracker, MachineType::I64)};
       VariableStorage const targetStorage{VariableStorage::stackMemory(MachineType::I64, moduleInfo_.fnc.stackFrameSize - offsetFromSP)};
-      emitMoveIntImpl(targetStorage, cxtStorage, false, false);
+      emitMoveIntImpl(targetStorage, ctxStorage, false, false);
     }
   }
 
@@ -1637,10 +1723,18 @@ void Backend::executeWasmFunctionCall(uint32_t const fncIndex) {
 
   assert((!imported || (!moduleInfo_.functionIsBuiltin(fncIndex))) && "Builtin functions can only be executed by execBuiltinFncCall");
 
-  // Load the parameters etc., set up everything then emit the actual call
-  execFncCallAndTrunc(sigIndex, fncIndex, false, imported, FunctionRef<void()>([this, fncIndex]() {
-                        emitRawFunctionCall(fncIndex);
-                      }));
+  if (moduleInfo_.functionIsV2Import(fncIndex)) {
+    // coverity[autosar_cpp14_a5_1_9_violation]
+    execV2ImportFncCallAndTrunc(sigIndex, fncIndex, FunctionRef<void()>([this, fncIndex]() {
+                                  emitRawFunctionCall(fncIndex);
+                                }));
+  } else {
+    // Load the parameters etc., set up everything then emit the actual call
+    // coverity[autosar_cpp14_a5_1_9_violation]
+    execFncCallAndTrunc(sigIndex, fncIndex, false, imported, FunctionRef<void()>([this, fncIndex]() {
+                          emitRawFunctionCall(fncIndex);
+                        }));
+  }
 }
 
 void Backend::executeIndirectWasmFunctionCall(uint32_t const sigIndex, uint32_t const tableIndex) {
@@ -3972,6 +4066,16 @@ bool Backend::hasEnoughScratchRegForScheduleInstruction(OPCode const opcode) con
     }
   }
   return availableRegsCount > minimalNumRegsReservedForCondense;
+}
+
+void Backend::updateStackFrameSizeHelper(uint32_t const newAlignedStackFrameSize) {
+  as_.setStackFrameSize(newAlignedStackFrameSize);
+#if ACTIVE_STACK_OVERFLOW_CHECK
+  if (moduleInfo_.currentState.checkedStackFrameSize < newAlignedStackFrameSize) {
+    moduleInfo_.currentState.checkedStackFrameSize = newAlignedStackFrameSize;
+    as_.checkStackFence(callScrRegs[0]); // SP change
+  }
+#endif
 }
 
 } // namespace aarch64
