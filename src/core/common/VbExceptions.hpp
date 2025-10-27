@@ -41,6 +41,7 @@ public:
     Small_branches_can_only_target_unsigned_offsets_in_the_range___32B,
     Branches_can_only_target_offsets_in_the_range___128MB,
     Conditional_branches_or_lea_can_only_target_offsets_in_the_range___32kB,
+    Conditional_branches_can_only_target_offsets_in_the_range_32B,
     Branches_can_only_target_offsets_in_the_range___16MB,
     Maximum_offset_reached,
     BrHANDLE_ERRORanches_can_only_maximally_target_32_bit_signed_offsets,

@@ -62,8 +62,8 @@ void RelPatchObj::linkToBinaryPos(uint32_t const binaryPosition) const {
       assert(isBranch_ && "Must be branch");
       // Only disp4zx2 can be encoded
       UnsignedInRangeCheck<5U> const rangeCheck{UnsignedInRangeCheck<5U>::check(static_cast<uint32_t>(delta))};
-      if ((delta < 0) || (!in_range<5>(delta))) {
-        throw ImplementationLimitationException(ErrorCode::Conditional_branches_or_lea_can_only_target_offsets_in_the_range___32kB);
+      if (!rangeCheck.inRange()) {
+        throw ImplementationLimitationException(ErrorCode::Conditional_branches_can_only_target_offsets_in_the_range_32B);
       }
       static_cast<void>(instruction.setDisp4zx2(rangeCheck.safeInt()));
       return;

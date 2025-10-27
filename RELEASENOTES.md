@@ -1,11 +1,17 @@
 # Wasm Compiler Release Notes
 
+## 3.0.4
+
+- Fixed the problem that load opcode will trigger Implement Limitation on TRICORE.
+
 ## 3.0.3
-Add u32 and u64 type to WasmValue
+
+- Add u32 and u64 type to WasmValue
 
 ## 3.0.2
 
 ### Feature
+
 - Add version number to checking to binary module
 
 ### Bug Fixes

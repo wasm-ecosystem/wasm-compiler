@@ -48,6 +48,9 @@ RuntimeError::operator const char *() const VB_NOEXCEPT {
   case (Code::Conditional_branches_or_lea_can_only_target_offsets_in_the_range___32kB): {
     return "Conditional branches or LEA can only target offsets in the range +-32kB";
   }
+  case Code::Conditional_branches_can_only_target_offsets_in_the_range_32B: {
+    return "Conditional branches can only target offsets in the range +32B";
+  }
   case (Code::Branches_can_only_target_offsets_in_the_range___16MB): {
     return "Branches can only target offsets in the range +-16MB";
   }
