@@ -19,3 +19,4 @@ klocwork_x86_release_build/
 klocwork_aarch64_release_build/
 klocwork_tricore_release_build/
 __pycache__
+wasm-tools
