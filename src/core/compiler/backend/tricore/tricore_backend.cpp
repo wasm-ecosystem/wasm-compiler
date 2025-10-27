@@ -2051,15 +2051,13 @@ StackElement Backend::executeLinearMemoryLoad(OPCode const opcode, uint32_t cons
                                                                                                                                   : nullptr};
   RegElement const targetRegElem{common_.reqScratchRegProt(resultType, verifiedTargetHint, regAllocTracker, false)};
 
+  regAllocTracker.writeProtRegs.mask(mask(addressDReg, false));
+  REG const checkHelperReg{common_.reqScratchRegProt(MachineType::I32, regAllocTracker, false).reg};
+
   // We use the targetRegElem directly as scratch register
   RelPatchObj const directErr{prepareLinMemAddr(targetRegElem.reg, addressDReg, offset, memObjSize)};
-
-  regAllocTracker.writeProtRegs.mask(mask(addressDReg, false));
-
-  REG const checkHelperReg{common_.reqScratchRegProt(MachineType::I32, regAllocTracker, false).reg};
   // WasmABI::REGS::memLdStReg now points to end of data that should be accessed (as offset, after last byte)
   // WasmABI::REGS::memSize is actual full size of linear memory
-
   emitLinMemBoundsCheck(checkHelperReg, &directErr);
 
   ///< Compile-time constant optimization for LdSt address:
@@ -2322,7 +2320,6 @@ void Backend::executeLinearMemoryStore(OPCode const opcode, uint32_t const offse
   RelPatchObj const directErr{prepareLinMemAddr(scrReg, addressDReg, offset, memObjSize)};
   // WasmABI::REGS::memLdStReg now points to end of data that should be accessed (as offset, after last byte)
   // WasmABI::REGS::memSize is actual full size of linear memory
-
   emitLinMemBoundsCheck(scrReg, &directErr);
 
   ///< Compile-time constant optimization for LdSt address:
