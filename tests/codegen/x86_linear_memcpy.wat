@@ -17,7 +17,7 @@
         ;; X86_64-NEXT: jmp  0x[[#]]
         ;; X86_64-NEXT: add  [[REG1:(r[0-9]+d?|[re](ax|cx|dx|bx|bp|si|di))]], rbp
         ;; X86_64-NEXT: add  [[REG2:(r[0-9]+d?|[re](ax|cx|dx|bx|bp|si|di))]], rbp
-        ;; X86_64-NEXT: neg  rbp
+        ;; X86_64-NEXT: movabs  rbp, 0xfffffffffffffffd
         ;; X86_64-NEXT: mov  [[REG3:(r[0-9]+(b|d))]], byte ptr [[[REG1]] + rbp]
         ;; X86_64-NEXT: mov  byte ptr [[[REG2]] + rbp], [[REG3]]
         ;; X86_64-NEXT: mov  [[REG3]], byte ptr [[[REG1]] + rbp + 1]

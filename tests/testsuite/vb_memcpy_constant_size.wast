@@ -432,3 +432,101 @@
 (assert_return (invoke "load8_u" (i32.const 34)) (i32.const 3))
 (assert_return (invoke "load8_u" (i32.const 35)) (i32.const 0))
 (assert_return (invoke "load8_u" (i32.const 36)) (i32.const 0))
+
+;; =============================================================
+;; src >= dst
+;; Tested size:
+;; 1,2,3,8,9,10,16,17,18,32,33,34
+;; =============================================================
+
+;; 1,2,3 (non-overlap and equal case)
+(module
+  (memory (export "memory0") 1 1)
+  ;; Source region at higher/equal addresses
+  (data (i32.const 20) "\11\22\33\44\55\66")
+  (data (i32.const 2) "\AA\BB\CC\DD\EE\FF")
+  (func (export "copy1byte_eq")
+    (memory.copy (i32.const 2) (i32.const 2) (i32.const 1))) ;; src == dst
+  (func (export "copy2byte_gt")
+    (memory.copy (i32.const 4) (i32.const 20) (i32.const 2))) ;; src > dst non-overlap
+  (func (export "copy3byte_gt")
+    (memory.copy (i32.const 3) (i32.const 21) (i32.const 3))) ;; src > dst overlap (dest earlier)
+  (func (export "load8_u") (param i32) (result i32)
+    (i32.load8_u (local.get 0))))
+
+(invoke "copy1byte_eq")
+(assert_return (invoke "load8_u" (i32.const 2)) (i32.const 0xAA))
+(invoke "copy2byte_gt")
+;; bytes copied from 20,21 to 4,5 -> 0x11,0x22
+(assert_return (invoke "load8_u" (i32.const 4)) (i32.const 0x11))
+(assert_return (invoke "load8_u" (i32.const 5)) (i32.const 0x22))
+(invoke "copy3byte_gt")
+;; bytes copied from 21,22,23 to 3,4,5 -> 0x22,0x33,0x44
+(assert_return (invoke "load8_u" (i32.const 3)) (i32.const 0x22))
+(assert_return (invoke "load8_u" (i32.const 4)) (i32.const 0x33))
+(assert_return (invoke "load8_u" (i32.const 5)) (i32.const 0x44))
+
+;; 8,9,10
+(module
+  (memory (export "memory0") 1 1)
+  ;; Pattern block at lower addresses to show destination pre-state
+  (data (i32.const 0) "\01\02\03\04\05\06\07\08\09\0A\0B\0C\0D\0E\0F")
+  ;; Source placed after destination start to exercise src > dst
+  (data (i32.const 40) "\10\11\12\13\14\15\16\17\18\19\1A\1B\1C\1D\1E\1F")
+  (func (export "copy8byte_gt") (memory.copy (i32.const 8) (i32.const 40) (i32.const 8)))
+  (func (export "copy9byte_gt") (memory.copy (i32.const 1) (i32.const 41) (i32.const 9))) ;; overlap (dest earlier)
+  (func (export "copy10byte_gt") (memory.copy (i32.const 5) (i32.const 42) (i32.const 10))) ;; overlap
+  (func (export "load8_u") (param i32) (result i32) (i32.load8_u (local.get 0))))
+
+(invoke "copy8byte_gt")
+;; 8..15 replaced with 40..47
+(assert_return (invoke "load8_u" (i32.const 8)) (i32.const 0x10))
+(assert_return (invoke "load8_u" (i32.const 15)) (i32.const 0x17))
+(invoke "copy9byte_gt")
+;; 1..9 replaced with 41..49
+(assert_return (invoke "load8_u" (i32.const 1)) (i32.const 0x11))
+(assert_return (invoke "load8_u" (i32.const 9)) (i32.const 0x19))
+(invoke "copy10byte_gt")
+;; 5..14 replaced with 42..51
+(assert_return (invoke "load8_u" (i32.const 5)) (i32.const 0x12))
+(assert_return (invoke "load8_u" (i32.const 14)) (i32.const 0x1B))
+
+;; 16,17,18
+(module
+  (memory (export "memory0") 1 1)
+  (data (i32.const 0) "\AA\BB\CC\DD\EE\FF\01\02\03\04\05\06\07\08\09\0A\0B\0C\0D\0E\0F")
+  (data (i32.const 64) "\21\22\23\24\25\26\27\28\29\2A\2B\2C\2D\2E\2F\30\31\32\33\34\35\36\37")
+  (func (export "copy16byte_gt") (memory.copy (i32.const 4) (i32.const 64) (i32.const 16)))
+  (func (export "copy17byte_gt") (memory.copy (i32.const 2) (i32.const 65) (i32.const 17))) ;; overlap
+  (func (export "copy18byte_gt") (memory.copy (i32.const 1) (i32.const 66) (i32.const 18))) ;; overlap
+  (func (export "load8_u") (param i32) (result i32) (i32.load8_u (local.get 0))))
+
+(invoke "copy16byte_gt")
+(assert_return (invoke "load8_u" (i32.const 4)) (i32.const 0x21))
+(assert_return (invoke "load8_u" (i32.const 19)) (i32.const 0x30))
+(invoke "copy17byte_gt")
+(assert_return (invoke "load8_u" (i32.const 2)) (i32.const 0x22))
+(assert_return (invoke "load8_u" (i32.const 18)) (i32.const 0x32))
+(invoke "copy18byte_gt")
+(assert_return (invoke "load8_u" (i32.const 1)) (i32.const 0x23))
+(assert_return (invoke "load8_u" (i32.const 18)) (i32.const 0x34))
+
+;; 32,33,34
+(module
+  (memory (export "memory0") 1 1)
+  (data (i32.const 0) "\01\02\03\04\05\06\07\08\09\0A\0B\0C\0D\0E\0F\10\11\12\13\14\15\16\17\18\19\1A\1B\1C\1D\1E\1F\20\21\22\23\24\25\26\27")
+  (data (i32.const 96) "\41\42\43\44\45\46\47\48\49\4A\4B\4C\4D\4E\4F\50\51\52\53\54\55\56\57\58\59\5A\5B\5C\5D\5E\5F\60\61\62\63\64\65\66\67\68")
+  (func (export "copy32byte_gt") (memory.copy (i32.const 2) (i32.const 96) (i32.const 32)))
+  (func (export "copy33byte_gt") (memory.copy (i32.const 1) (i32.const 97) (i32.const 33))) ;; overlap
+  (func (export "copy34byte_gt") (memory.copy (i32.const 0) (i32.const 96) (i32.const 34))) ;; src > dst
+  (func (export "load8_u") (param i32) (result i32) (i32.load8_u (local.get 0))))
+
+(invoke "copy32byte_gt")
+(assert_return (invoke "load8_u" (i32.const 2)) (i32.const 0x41))
+(assert_return (invoke "load8_u" (i32.const 33)) (i32.const 0x60))
+(invoke "copy33byte_gt")
+(assert_return (invoke "load8_u" (i32.const 1)) (i32.const 0x42))
+(assert_return (invoke "load8_u" (i32.const 33)) (i32.const 0x62))
+(invoke "copy34byte_gt")
+(assert_return (invoke "load8_u" (i32.const 0)) (i32.const 0x41))
+(assert_return (invoke "load8_u" (i32.const 33)) (i32.const 0x62))

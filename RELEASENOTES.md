@@ -1,5 +1,9 @@
 # Wasm Compiler Release Notes
 
+## 3.0.5
+
+- Fixed the misbehavior of wasm memcpy on x86 backend
+
 ## 3.0.4
 
 - Fixed the problem that load opcode will trigger Implement Limitation on TRICORE.
