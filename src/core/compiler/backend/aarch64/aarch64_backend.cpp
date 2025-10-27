@@ -2234,6 +2234,8 @@ void Backend::emitMemcpyWithConstSizeNoBoundsCheck(REG const dstReg, REG const s
   uint32_t const copy8Count{(sizeToCopy % 16U) / 8U};
   uint32_t const copy1ByteCount{sizeToCopy % 8U};
   constexpr uint32_t unrollingThreshold{2U};
+  // If not unrolling 1 byte copy, should prepare sizeReg
+  bool const unrollingCopy1Byte{copy1ByteCount <= unrollingThreshold};
 
   if (copy16Count <= unrollingThreshold) {
     for (uint32_t i{0U}; i < copy16Count; ++i) {
@@ -2248,7 +2250,7 @@ void Backend::emitMemcpyWithConstSizeNoBoundsCheck(REG const dstReg, REG const s
           .setN(dstReg)
           .setSImm7ls3(SafeInt<10>::fromConst<16>())();
     }
-    if (copy1ByteCount > unrollingThreshold) {
+    if (!unrollingCopy1Byte) {
       // prepare size reg
       uint32_t const maxRange{sizeToCopy - copy1ByteCount};
       if (maxRange != 0U) {
@@ -2281,7 +2283,7 @@ void Backend::emitMemcpyWithConstSizeNoBoundsCheck(REG const dstReg, REG const s
         .setSImm7ls3(SafeInt<10>::fromConst<16>())();
     as_.prepareJMP(CC::PL).linkToBinaryPos(copy16Forward); // Jump back if positive or zero, 16 are remaining anyway (optimization)
     lessThan16Forward.linkToHere();
-    if (copy1ByteCount > unrollingThreshold) {
+    if (!unrollingCopy1Byte) {
       // Add again (optimization)
       // prepare size reg
       uint32_t const added{16U - (copy8Count * 8U)};
@@ -2295,7 +2297,7 @@ void Backend::emitMemcpyWithConstSizeNoBoundsCheck(REG const dstReg, REG const s
   }
 
   RelPatchObj finishedForward{};
-  if (copy1ByteCount <= unrollingThreshold) {
+  if (unrollingCopy1Byte) {
     for (uint32_t i{0U}; i < copy1ByteCount; ++i) {
       as_.INSTR(LDRB_wT_deref_xN_unscSImm9_postidx).setT(gpScratchReg).setN(srcReg).setUnscSImm9(SafeInt<9U>::fromConst<1>())();
       as_.INSTR(STRB_wT_deref_xN_unscSImm9_postidx).setT(gpScratchReg).setN(dstReg).setUnscSImm9(SafeInt<9U>::fromConst<1>())();
@@ -2332,7 +2334,7 @@ void Backend::emitMemcpyWithConstSizeNoBoundsCheck(REG const dstReg, REG const s
             .setN(dstReg)
             .setSImm7ls3(SafeInt<10U>::fromConst<-16>())();
       }
-      if (copy1ByteCount > unrollingThreshold) {
+      if (!unrollingCopy1Byte) {
         // prepare size reg
         uint32_t const maxRange{sizeToCopy - copy1ByteCount};
         if (maxRange != 0U) {
@@ -2363,7 +2365,7 @@ void Backend::emitMemcpyWithConstSizeNoBoundsCheck(REG const dstReg, REG const s
           .setSImm7ls3(SafeInt<10U>::fromConst<-16>())();
       as_.prepareJMP(CC::PL).linkToBinaryPos(copy16InReverse); // Jump back if positive or zero, 16 are remaining anyway (optimization)
       lessThan16InReverse.linkToHere();
-      if (copy1ByteCount > unrollingThreshold) {
+      if (!unrollingCopy1Byte) {
         // Add again (optimization)
         // prepare size reg
         uint32_t const added{16U - (copy8Count * 8U)};
@@ -2376,7 +2378,7 @@ void Backend::emitMemcpyWithConstSizeNoBoundsCheck(REG const dstReg, REG const s
       as_.INSTR(STR_xT_deref_xN_unscSImm9_preidx).setT(gpScratchReg).setN(dstReg).setUnscSImm9(SafeInt<9U>::fromConst<-8>())();
     }
 
-    if (copy1ByteCount <= unrollingThreshold) {
+    if (unrollingCopy1Byte) {
       for (uint32_t i{0U}; i < copy1ByteCount; ++i) {
         as_.INSTR(LDRB_wT_deref_xN_unscSImm9_preidx).setT(gpScratchReg).setN(srcReg).setUnscSImm9(SafeInt<9U>::fromConst<-1>())();
         as_.INSTR(STRB_wT_deref_xN_unscSImm9_preidx).setT(gpScratchReg).setN(dstReg).setUnscSImm9(SafeInt<9U>::fromConst<-1>())();

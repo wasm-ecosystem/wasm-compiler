@@ -1805,6 +1805,8 @@ void Backend::emitMemcpyWithConstSizeNoBoundsCheck(REG const dstReg, REG const s
     reverse = as_.prepareJMP(true, CC::A);
   }
 
+  // src <= dst
+
   // Choose 3 as the threshold for unrolling temporarily that can be adjusted later.
   // Conservatively estimated, at least within 3, the code size of the loop unrolling is reduced
   constexpr uint32_t unrollingThreshold{3U};
@@ -1866,26 +1868,30 @@ void Backend::emitMemcpyWithConstSizeNoBoundsCheck(REG const dstReg, REG const s
     RelPatchObj const finishedForward{as_.prepareJMP(true)};
     reverse.linkToHere();
     // src > dst
-    as_.INSTR(ADD_r64_rm64).setR(srcReg).setR4RM(sizeReg)();
-    as_.INSTR(ADD_r64_rm64).setR(dstReg).setR4RM(sizeReg)();
 
-    int32_t const sizeReversed{-static_cast<int32_t>(sizeToCopy)};
     if (unrollingCopy8ByteLoop) {
+      int32_t const sizeReversed{-static_cast<int32_t>(sizeToCopy)};
       int32_t offset{sizeReversed};
       for (uint32_t i{0U}; i < copy8ByteCount; ++i) {
         as_.INSTR(MOV_r64_rm64).setR(gpScratchReg).setM4RM(srcReg, offset, sizeReg)();
         as_.INSTR(MOV_rm64_r64).setM4RM(dstReg, offset, sizeReg).setR(gpScratchReg)();
         offset += 8;
       }
-      if (copy8ByteCount > 0U) {
-        if (copy1ByteCount != 0U) {
-          as_.INSTR(MOV_r32_imm32).setR(sizeReg).setImm32(bit_cast<uint32_t>(sizeReversed) + (copy8ByteCount * 8U))();
-        }
-      } else {
-        as_.INSTR(NEG_rm64).setR4RM(sizeReg)();
+
+      if (copy1ByteCount > 0U) {
+        as_.INSTR(ADD_r64_rm64).setR(srcReg).setR4RM(sizeReg)();
+        as_.INSTR(ADD_r64_rm64).setR(dstReg).setR4RM(sizeReg)();
+        int64_t const copy8ByteOffset{static_cast<int64_t>(copy8ByteCount) * 8LL};
+        int64_t const totalOffset{static_cast<int64_t>(sizeReversed) + copy8ByteOffset};
+        as_.INSTR(MOV_r64_imm64_t).setR(sizeReg).setImm64(bit_cast<uint64_t>(totalOffset))();
+        // Then, sizeReg is negative size if has remain bytes to copy
       }
     } else {
+      as_.INSTR(ADD_r64_rm64).setR(srcReg).setR4RM(sizeReg)();
+      as_.INSTR(ADD_r64_rm64).setR(dstReg).setR4RM(sizeReg)();
       as_.INSTR(NEG_rm64).setR4RM(sizeReg)();
+      // Then, sizeReg is negative size
+
       // Check if (remaining) size is at least 8
       uint32_t const check8Forward{output_.size()};
       as_.INSTR(CMP_rm32_imm8sx).setR4RM(sizeReg).setImm8(static_cast<uint8_t>(-8))();
@@ -1899,6 +1905,7 @@ void Backend::emitMemcpyWithConstSizeNoBoundsCheck(REG const dstReg, REG const s
       lessThan8Forward.linkToHere();
     }
 
+    // sizeReg is negative number
     if (unrollingCopy1ByteLoop) {
       int32_t offset{0};
       for (uint32_t i{0U}; i < copy1ByteCount; ++i) {
@@ -1930,7 +1937,7 @@ void Backend::emitMemcpyNoBoundsCheck(REG const dstReg, REG const srcReg, REG co
     as_.INSTR(CMP_r64_rm64).setR(srcReg).setR4RM(dstReg)();
     reverse = as_.prepareJMP(true, CC::A);
   }
-  // src <= dst
+  // src <= dst, copy from end to begin
   // Check if (remaining) size is at least 8
   uint32_t const check8InReverse{output_.size()};
   as_.INSTR(CMP_rm32_imm8sx).setR4RM(sizeReg).setImm8(8U)();
@@ -1955,7 +1962,7 @@ void Backend::emitMemcpyNoBoundsCheck(REG const dstReg, REG const srcReg, REG co
   if (canOverlap) {
     RelPatchObj const finishedForward{as_.prepareJMP(true)};
     reverse.linkToHere();
-    // src > dst
+    // src > dst, copy from begin to end
 
     // src += size;
     // dst += size;
