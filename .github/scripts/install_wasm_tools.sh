@@ -14,17 +14,29 @@
 
 set -e
 
-VERSION="1.235.0" 
+VERSION="1.235.0"
 
-if [ -f "wasm-tools-$VERSION-x86_64-linux.tar.gz" ]; then
-  rm ./wasm-tools-$VERSION-x86_64-linux.tar.gz
+if [ "$(uname -s)" = "Darwin" ] && [ "$(uname -m)" = "arm64" ]; then
+  PLATFORM="aarch64-macos"
+elif [ "$(uname -s)" = "Linux" ] && [ "$(uname -m)" = "x86_64" ]; then
+  PLATFORM="x86_64-linux"
+else
+  echo "Unsupported platform: $(uname -s) $(uname -m)"
+  exit 1
 fi
-wget https://github.com/bytecodealliance/wasm-tools/releases/download/v$VERSION/wasm-tools-$VERSION-x86_64-linux.tar.gz
 
-if [ -f "wasm-tools-$VERSION-x86_64-linux/wasm-tools" ]; then
-  rm ./wasm-tools-$VERSION-x86_64-linux/wasm-tools
+ARCHIVE="wasm-tools-$VERSION-$PLATFORM.tar.gz"
+EXTRACT_DIR="wasm-tools-$VERSION-$PLATFORM"
+
+if [ -f "$ARCHIVE" ]; then
+  rm ./$ARCHIVE
 fi
-tar -zxvf wasm-tools-$VERSION-x86_64-linux.tar.gz wasm-tools-$VERSION-x86_64-linux/wasm-tools -C wasm-tools11
-mv ./wasm-tools-$VERSION-x86_64-linux ./wasm-tools
+wget https://github.com/bytecodealliance/wasm-tools/releases/download/v$VERSION/$ARCHIVE
 
-rm ./wasm-tools-$VERSION-x86_64-linux.tar.gz
+if [ -f "$EXTRACT_DIR/wasm-tools" ]; then
+  rm ./$EXTRACT_DIR/wasm-tools
+fi
+tar -zxvf $ARCHIVE $EXTRACT_DIR/wasm-tools
+mv ./$EXTRACT_DIR ./wasm-tools
+
+rm ./$ARCHIVE
