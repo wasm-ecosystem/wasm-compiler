@@ -16,6 +16,7 @@
 
 #include <chrono>
 #include <cstddef>
+#include <cstdint>
 #include <cstdio>
 #include <cstring>
 #include <filesystem>
@@ -240,6 +241,42 @@ void logF64(double const value, void *const ctx) noexcept {
   static_cast<void>(ctx);
   logHelper(value, "called host fuzzing-support.log-f64(f64:%.*s) =>");
 }
+
+void callExport(uint32_t param1, void *const ctx) {
+  static_cast<void>(ctx);
+  if (deferredLines.size() == 0) {
+    executionFailed("No log expected, but called host fuzzing-support.call-export(i32:" + std::to_string(param1) + ") =>");
+  } else {
+    serializeNumToOutput(param1);
+    deferredLines.erase_begin();
+  }
+}
+
+uint32_t sleep(uint32_t param1, uint32_t param2, void *const ctx) {
+  static_cast<void>(ctx);
+  if (deferredLines.size() == 0) {
+    executionFailed("No log expected, but called host fuzzing-support.sleep(i32:" + std::to_string(param1) + ", i32:" + std::to_string(param2) +
+                    ") => i32:0");
+  } else {
+    serializeNumToOutput(param1);
+    serializeNumToOutput(param2);
+    serializeNumToOutput(static_cast<uint32_t>(0U));
+    deferredLines.erase_begin();
+  }
+  return 0;
+}
+
+uint32_t callExportCatch(uint32_t param1, void *const ctx) {
+  static_cast<void>(ctx);
+  if (deferredLines.size() == 0) {
+    executionFailed("No log expected, but called host fuzzing-support.call-export-catch(i32:" + std::to_string(param1) + ") => i32:0");
+  } else {
+    serializeNumToOutput(param1);
+    serializeNumToOutput(static_cast<uint32_t>(0U));
+    deferredLines.erase_begin();
+  }
+  return 0;
+}
 } // namespace FuzzingSupport
 
 static void handleLine(char const *const lineStart, uint32_t const lineLength, uint8_t const *const stackTop, vb::WasmModule &wasmModule) {
@@ -254,6 +291,7 @@ static void handleLine(char const *const lineStart, uint32_t const lineLength, u
     if (arrowPos != nullptr) {
       size_t const arrowOffset = static_cast<size_t>(arrowPos - lineStart);
       if (lineLength >= arrowOffset + 5) {
+        // Has return values or error
         char const *const returnTypeStart = arrowPos + 3;
         if (strncmp(returnTypeStart, "err", 3U) == 0) {
           try {
@@ -311,6 +349,7 @@ static void handleLine(char const *const lineStart, uint32_t const lineLength, u
         }
 
       } else {
+        // No return values expected
         wasmModule.callRawExportedFunctionByName(functionName, stackTop, nullptr, nullptr);
       }
       functionsExecuted++;
@@ -343,7 +382,9 @@ static void fuzz(uint8_t const *const stackTop) noexcept {
 
   const auto linkedSymbols = vb::make_array(
       DYNAMIC_LINK("fuzzing-support", "log-i32", FuzzingSupport::logI32), DYNAMIC_LINK("fuzzing-support", "log-i64", FuzzingSupport::logI64),
-      DYNAMIC_LINK("fuzzing-support", "log-f32", FuzzingSupport::logF32), DYNAMIC_LINK("fuzzing-support", "log-f64", FuzzingSupport::logF64));
+      DYNAMIC_LINK("fuzzing-support", "log-f32", FuzzingSupport::logF32), DYNAMIC_LINK("fuzzing-support", "log-f64", FuzzingSupport::logF64),
+      DYNAMIC_LINK("fuzzing-support", "call-export", FuzzingSupport::callExport), DYNAMIC_LINK("fuzzing-support", "sleep", FuzzingSupport::sleep),
+      DYNAMIC_LINK("fuzzing-support", "call-export-catch", FuzzingSupport::callExportCatch));
 
   vb::STDCompilerLogger logger{};
   vb::WasmModule wasmModule{logger};

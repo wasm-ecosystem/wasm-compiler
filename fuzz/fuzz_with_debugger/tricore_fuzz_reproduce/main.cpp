@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 #include <chrono>
 #include <cstddef>
 #include <cstdio>
@@ -106,6 +105,22 @@ void logF64(double const value, void *const ctx) noexcept {
   static_cast<void>(ctx);
   std::cout << "called host fuzzing-support.log-f64(f64) =>" << value << std::endl;
 }
+void callExport(uint32_t param1, uint32_t param2, void *const ctx) {
+  static_cast<void>(ctx);
+  std::cout << "called host fuzzing-support.call-export(i32:" + std::to_string(param1) + ", i32:" + std::to_string(param2) + ") =>" << std::endl;
+}
+
+uint32_t sleep(uint32_t param1, uint32_t param2, void *const ctx) {
+  static_cast<void>(ctx);
+  std::cout << "called host fuzzing-support.sleep(i32:" + std::to_string(param1) + ", i32:" + std::to_string(param2) + ") => i32:0" << std::endl;
+  return 0;
+}
+
+uint32_t callExportCatch(uint32_t param1, void *const ctx) {
+  static_cast<void>(ctx);
+  std::cout << "called host fuzzing-support.call-export-catch(i32:" + std::to_string(param1) + ") => i32:0" << std::endl;
+  return 0;
+}
 
 } // namespace FuzzingSupport
 
@@ -114,7 +129,9 @@ static void fuzz() noexcept {
 
   const auto linkedSymbols = vb::make_array(
       DYNAMIC_LINK("fuzzing-support", "log-i32", FuzzingSupport::logI32), DYNAMIC_LINK("fuzzing-support", "log-i64", FuzzingSupport::logI64),
-      DYNAMIC_LINK("fuzzing-support", "log-f32", FuzzingSupport::logF32), DYNAMIC_LINK("fuzzing-support", "log-f64", FuzzingSupport::logF64));
+      DYNAMIC_LINK("fuzzing-support", "log-f32", FuzzingSupport::logF32), DYNAMIC_LINK("fuzzing-support", "log-f64", FuzzingSupport::logF64),
+      DYNAMIC_LINK("fuzzing-support", "call-export", FuzzingSupport::callExport), DYNAMIC_LINK("fuzzing-support", "sleep", FuzzingSupport::sleep),
+      DYNAMIC_LINK("fuzzing-support", "call-export-catch", FuzzingSupport::callExportCatch));
 
   try {
     vb::Span<vb::NativeSymbol const> const dynamicLinkedSymbols{linkedSymbols.data(), linkedSymbols.size()};

@@ -65,6 +65,7 @@ class FuzzModuleManager:
                     self.__seed_file_name,
                     "-ttf",
                     "--enable-multivalue",
+                    "--enable-bulk-memory-opt",
                     "--denan",
                     "-O2",
                     "-o",

@@ -83,7 +83,8 @@ struct ExpectedData {
 
 void generateBinary(fs::path const seedFilePath, fs::path const fuzzWasmFilePath) {
   std::ostringstream shellCommandGenerate;
-  shellCommandGenerate << "wasm-opt " << seedFilePath.string() << " -ttf --enable-multivalue -O2 --denan -o " << fuzzWasmFilePath.string();
+  shellCommandGenerate << "wasm-opt " << seedFilePath.string() << " -ttf --enable-multivalue  --enable-bulk-memory-opt  -O2 --denan -o "
+                       << fuzzWasmFilePath.string();
   int const res = system(shellCommandGenerate.str().c_str());
 
   if (res == -1) {
@@ -188,74 +189,68 @@ void executionFailed() {
 }
 
 namespace FuzzingSupport {
+
+void validateAndLogCall(std::string const &actualLine, std::string const &functionName) {
+  if (deferredLines.size() == 0) {
+    std::cout << "No log expected, " << functionName << " called: " << actualLine << "\n";
+    executionFailed();
+  } else if (deferredLines.front() != actualLine) {
+    std::cout << "Error: " << functionName << " log mismatch\n";
+    std::cout << "\"" << actualLine << "\" expected: \"" << deferredLines.front() << "\"\n";
+    executionFailed();
+  } else {
+    deferredLines.erase(deferredLines.begin());
+  }
+  if (isLogDetails) {
+    std::cout << actualLine << "\n";
+  }
+}
+
+template <typename T> void logValueImpl(T value, std::string const &typeName) {
+  std::string const actualLine = "called host fuzzing-support.log-" + typeName + "(" + typeName + ":" + std::to_string(value) + ") =>";
+  validateAndLogCall(actualLine, "log-" + typeName);
+}
+
 void logI32(uint32_t value, void *const ctx) {
   static_cast<void>(ctx);
-  std::string const actualLine = "called host fuzzing-support.log-i32(i32:" + std::to_string(value) + ") =>";
-  if (deferredLines.size() == 0) {
-    std::cout << "No log expected, log-i32 called: " << actualLine << "\n";
-    executionFailed();
-  } else if (deferredLines.front() != actualLine) {
-    std::cout << "Error: i32 log mismatch\n";
-    std::cout << "\"" << actualLine << "\" expected: \"" << deferredLines.front() << "\"\n";
-    executionFailed();
-  } else {
-    deferredLines.erase(deferredLines.begin());
-  }
-  if (isLogDetails) {
-    std::cout << actualLine << "\n";
-  }
+  logValueImpl(value, "i32");
 }
+
 void logI64(uint64_t value, void *const ctx) {
   static_cast<void>(ctx);
-  std::string const actualLine = "called host fuzzing-support.log-i64(i64:" + std::to_string(value) + ") =>";
-  if (deferredLines.size() == 0) {
-    std::cout << "No log expected, log-i64 called: " << actualLine << "\n";
-    executionFailed();
-  } else if (deferredLines.front() != actualLine) {
-    std::cout << "Error: i64 log mismatch\n";
-    std::cout << "\"" << actualLine << "\" expected: \"" << deferredLines.front() << "\"\n";
-    executionFailed();
-  } else {
-    deferredLines.erase(deferredLines.begin());
-  }
-  if (isLogDetails) {
-    std::cout << actualLine << "\n";
-  }
+  logValueImpl(value, "i64");
 }
+
 void logF32(float value, void *const ctx) {
   static_cast<void>(ctx);
-  std::string const actualLine = "called host fuzzing-support.log-f32(f32:" + std::to_string(value) + ") =>";
-  if (deferredLines.size() == 0) {
-    std::cout << "No log expected, log-f32 called: " << actualLine << "\n";
-    executionFailed();
-  } else if (deferredLines.front() != actualLine) {
-    std::cout << "Error: f32 log mismatch\n";
-    std::cout << "\"" << actualLine << "\" expected: \"" << deferredLines.front() << "\"\n";
-    executionFailed();
-  } else {
-    deferredLines.erase(deferredLines.begin());
-  }
-  if (isLogDetails) {
-    std::cout << actualLine << "\n";
-  }
+  logValueImpl(value, "f32");
 }
+
 void logF64(double value, void *const ctx) {
   static_cast<void>(ctx);
-  std::string const actualLine = "called host fuzzing-support.log-f64(f64:" + std::to_string(value) + ") =>";
-  if (deferredLines.size() == 0) {
-    std::cout << "No log expected, log-f64 called: " << actualLine << "\n";
-    executionFailed();
-  } else if (deferredLines.front() != actualLine) {
-    std::cout << "Error: f64 log mismatch\n";
-    std::cout << "\"" << actualLine << "\" expected: \"" << deferredLines.front() << "\"\n";
-    executionFailed();
-  } else {
-    deferredLines.erase(deferredLines.begin());
-  }
-  if (isLogDetails) {
-    std::cout << actualLine << "\n";
-  }
+  logValueImpl(value, "f64");
 }
+
+void callExport(uint32_t param1, void *const ctx) {
+  static_cast<void>(ctx);
+  std::string const actualLine = "called host fuzzing-support.call-export(i32:" + std::to_string(param1) + ") =>";
+  validateAndLogCall(actualLine, "call-export");
+}
+
+uint32_t sleep(uint32_t param1, uint32_t param2, void *const ctx) {
+  static_cast<void>(ctx);
+  std::string const actualLine = "called host fuzzing-support.sleep(i32:" + std::to_string(param1) + ", i32:" + std::to_string(param2) + ") => i32:0";
+  validateAndLogCall(actualLine, "sleep");
+  return 0;
+}
+
+uint32_t callExportCatch(uint32_t param1, void *const ctx) {
+  static_cast<void>(ctx);
+  std::string const actualLine = "called host fuzzing-support.call-export-catch(i32:" + std::to_string(param1) + ") => i32:0";
+  validateAndLogCall(actualLine, "call-export-catch");
+  return 0;
+}
+
 } // namespace FuzzingSupport
 
 void fuzz() {
@@ -263,7 +258,9 @@ void fuzz() {
 
   const auto staticallyLinkedSymbols = vb::make_array(
       DYNAMIC_LINK("fuzzing-support", "log-i32", FuzzingSupport::logI32), DYNAMIC_LINK("fuzzing-support", "log-i64", FuzzingSupport::logI64),
-      DYNAMIC_LINK("fuzzing-support", "log-f32", FuzzingSupport::logF32), DYNAMIC_LINK("fuzzing-support", "log-f64", FuzzingSupport::logF64));
+      DYNAMIC_LINK("fuzzing-support", "log-f32", FuzzingSupport::logF32), DYNAMIC_LINK("fuzzing-support", "log-f64", FuzzingSupport::logF64),
+      DYNAMIC_LINK("fuzzing-support", "call-export", FuzzingSupport::callExport), DYNAMIC_LINK("fuzzing-support", "sleep", FuzzingSupport::sleep),
+      DYNAMIC_LINK("fuzzing-support", "call-export-catch", FuzzingSupport::callExportCatch));
   vb::STDCompilerLogger stdCompilerLogger{};
   vb::WasmModule wasmModule{stdCompilerLogger};
   bool highRegisterPressure;
