@@ -2,7 +2,7 @@
 
 ```shell
 sudo npm install -g cspell
-cspell "{src,tests}/**/*.{hpp,cpp}"
+cspell "{src,tests,docs}/**/*.{h,c,hpp,cpp,cc,ipp,md}"
 ```
 
 ### Add new words to code spell check

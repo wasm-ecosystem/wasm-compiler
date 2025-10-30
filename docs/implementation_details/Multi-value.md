@@ -77,7 +77,7 @@ In summary, without multi value, we have to find some temporary storage area to 
 
 The block type is given as a type use, analogous to the type of functions. However, the special case of a type use that is syntactically empty or consists of only a single result is not regarded as an abbreviation for an inline function type, but is parsed directly into an optional value type.
 
-blocks can have the same set of types that functions can have. Functions already de-duplicate their types in the "Type" section of a Wasm binary and reference them via index. The typeidx or optional value type is encoded directly in the instruction:
+blocks can have the same set of types that functions can have. Functions already de-duplicate their types in the "Type" section of a Wasm binary and reference them via index. The typeIdx or optional value type is encoded directly in the instruction:
 
 ```
 blocktype ::=   0x40            => [] -> []
@@ -85,7 +85,7 @@ blocktype ::=   0x40            => [] -> []
             |   0x7E            => [] -> [i64]
             |   0x7D            => [] -> [f32]
             |   0x7C            => [] -> [f64]
-            |   typeidx         => ft                // introduced by multi-values
+            |   typeIdx         => ft                // introduced by multi-values
 ```
 
 ### multiple return values for function
@@ -140,7 +140,7 @@ To fulfill above requirement that all different conditional control flows to lea
 
 #### load params for Block
 
-There is **no need to merge control flow** while entering a Block. All we need to do is simply **move** the paramters into the `block` on the compiler stack.
+There is **no need to merge control flow** while entering a Block. All we need to do is simply **move** the parameters into the `block` on the compiler stack.
 
 But now due to the implement limitations, we have to **copy** the parameter into the `block`,and leave an index (named `blockParamsBaseIndex`) point to the first parameter, then we should truncate the compiler stack below to this index while terminate this block.
 
@@ -188,13 +188,13 @@ So what we do is very similar to block results.
 
 #### loop results
 
-There is **no need to merge control flow** while terminating a loop, all we need to do is move the results outside the `loop` on the compiler stack. It is similiar to load params for block.
+There is **no need to merge control flow** while terminating a loop, all we need to do is move the results outside the `loop` on the compiler stack. It is similar to load params for block.
 
 The compiler stack changes as follows:
 
 ```
 1. before the `end` of loop, the compiler stack is: [loop, result1, result2]
-1. after terminated the loop, the compiler stack shoule be: [result1, result2]
+1. after terminated the loop, the compiler stack should be: [result1, result2]
 ```
 
 #### multi-values for if-else
@@ -203,7 +203,7 @@ To simplify the handling of `if-else`, if and else is transformed to two blocks 
 
 The following Wasm instruction sequence:
 
-```wasn
+```wasm
 local.get 0
 if (result i32)
      i32.const 2
@@ -242,7 +242,7 @@ end
 
 ### multi-values for branch instructions
 
-For branch instruction, we should consume the stack values depending on the branch target, and then emit the code to load the stack values to the stack slots (which reserved before, accroding to the Wasm ABI).
+For branch instruction, we should consume the stack values depending on the branch target, and then emit the code to load the stack values to the stack slots (which reserved before, according to the Wasm ABI).
 
 1. branch to block with `blocktype: [t1*] -> [t2*]`, we should consume [t2*], because branch to the block means branch to the block end.
 1. branch to loop with `blocktype: [t1*] -> [t2*]`, we should consume [t1*], because branch to the loop means branch to the loop start.
@@ -267,14 +267,14 @@ xxxx
 xxxx
 
 // branch 1
-load the results           // load the results to the stack slots for the target 1 (which reserved before, accroding to Wasm ABI)
+load the results           // load the results to the stack slots for the target 1 (which reserved before, according to Wasm ABI)
 jmp to target 1
 
 // branch 2
-load the results           // load the results to the stack slots for the target 2 (which reserved before, accroding to Wasm ABI)
+load the results           // load the results to the stack slots for the target 2 (which reserved before, according to Wasm ABI)
 jmp to target 2
 
 // branch 3
-load the results           // load the results to the stack slots for the target 3 (which reserved before, accroding to Wasm ABI)
+load the results           // load the results to the stack slots for the target 3 (which reserved before, according to Wasm ABI)
 jmp to target 3
 ```

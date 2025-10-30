@@ -163,7 +163,7 @@ public:
     ///
     /// @brief Whether this import function is v2 or v1
     ///
-    NativeSymbol::ImportFnVersion importFnVerison = NativeSymbol::ImportFnVersion::V1;
+    NativeSymbol::ImportFnVersion importFnVersion = NativeSymbol::ImportFnVersion::V1;
   };
 
   ///
@@ -245,7 +245,7 @@ public:
 
   inline bool functionIsV2Import(uint32_t const fncIndex) const VB_NOEXCEPT {
     if (functionIsImported(fncIndex)) {
-      return getImpFuncDef(fncIndex).importFnVerison == NativeSymbol::ImportFnVersion::V2;
+      return getImpFuncDef(fncIndex).importFnVersion == NativeSymbol::ImportFnVersion::V2;
     }
     return false;
   }

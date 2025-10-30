@@ -30,6 +30,7 @@ ANDPS
 artc
 AUTOCONFIG
 autosar
+autosarcpp
 autotick
 Basedata
 basedataoffsets
@@ -65,16 +66,20 @@ Codecraft
 codegen
 CONDITIONSTART
 Congcong
-Xinquan
+constexpr
 copydoc
 COPYFROMLINKEDMEMORY
 COREUTIL
 COULDNOTEXTEND
+cout
 coverity
 CPTC
 CSEL
 cset
 CSINC
+cstdint
+cstdlib
+cstring
 ctest
 ctzll
 CUSTOMEXCEPTIONS
@@ -123,6 +128,7 @@ dvstep
 DVSTEPU
 DYNAMICALLYIMPORTEDFUNCTIONS
 embedder
+endl
 eventloop
 EXPORTEDFUNCTIONS
 EXPORTEDGLOBALS
@@ -168,6 +174,7 @@ GETF
 GETI
 GETLENGTHOFLINKEDMEMORY
 GETU
+googletest
 gregs
 halfword
 Halfwords
@@ -179,6 +186,7 @@ IDIV
 IDWARF
 ifblock
 IFCONSTEXPR
+ifff
 ILOGGER
 Immediates
 Immr
@@ -247,6 +255,7 @@ LZCNT
 MADD
 Makefiles
 MAKEFLAGS
+malloc
 MAXDF
 MAXF
 MAXSD
@@ -297,6 +306,7 @@ NEGDF
 NEGF
 NEQZ
 NETTCP
+noexcept
 NOLINT
 NOLINTBEGIN
 NOLINTEND
@@ -309,6 +319,7 @@ nopep
 NOTLINKED
 Nove
 nullary
+nullptr
 NUMREGS
 NVALGRIND
 NZCV
@@ -368,6 +379,7 @@ quadword
 quadwords
 qword
 RADD
+RAII
 rbit
 rdtsc
 readgsqword
@@ -390,6 +402,7 @@ RSLCV
 RSLCX
 RSUB
 SAHF
+sandboxing
 SANULL
 SBFM
 Schedulable
@@ -398,6 +411,7 @@ SCRATCHREGISTER
 SCVTF
 SELECTCONDITIONEND
 SELN
+semihosting
 setb
 setbe
 SETCC
@@ -411,6 +425,7 @@ setne
 Shoff
 shstrtab
 SIGNATURETYPE
+SIGSEGV
 simm
 slro
 softfloat
@@ -424,6 +439,7 @@ STACKELEMENT
 STACKFENCEBREACHED
 STACKMEMORY
 Stackoverflow
+STACKSIZE
 STACKTOP
 STARTF
 STARTFUNCTION
@@ -466,6 +482,7 @@ tparam
 trapcode
 trapcodes
 Tricore
+Trunc
 tsim
 TVOID
 TZCNT
@@ -512,6 +529,7 @@ wlic
 WRONGNAME
 WRONGSIG
 Wthread
+Xinquan
 xmod
 xops
 XORPD

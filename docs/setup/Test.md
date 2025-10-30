@@ -1,22 +1,15 @@
+## Reference
+
+## See `wasm-compiler/.github/workflows/main.yml` to get the latest approach of setup
+~~The following introduction may be outdated~~
+
 ## Test the Project
 
 ### Install Dependencies
 
 - python3
-- wabt >=1.0.25: https://github.com/WebAssembly/wabt.git, add build_target_dir to System Variables PATH
-- binaryen@latest: https://github.com/WebAssembly/binaryen.git, add build_target_dir to System Variables PATH
-
-On Ubuntu
-
-```shell
-sudo apt install wabt binaryen
-```
-
-On Mac
-
-```shell
-brew install wabt binaryen
-```
+- wabt@1.0.36: https://github.com/WebAssembly/wabt.git, add build_target_dir to PATH
+- binaryen@122: https://github.com/WebAssembly/binaryen/releases/download/version_122, add build_target_dir to PATH
 
 ### Build Spectest
 

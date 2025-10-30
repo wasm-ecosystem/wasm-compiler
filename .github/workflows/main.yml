@@ -20,7 +20,7 @@ jobs:
           clang-format: true
           clang-format-dirs: "src;fuzz;demo;tests;disassembler;binding"
           cspell: true
-          cspell-dirs: "src;tests"
+          cspell-dirs: "src;tests;docs"
           cspell-config: "./cspell.json"
 
   codegen_test:

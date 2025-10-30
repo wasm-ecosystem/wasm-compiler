@@ -61,7 +61,7 @@ runs:
         if [[ "$dirs" == *","* ]]; then
           dirs="{$dirs}"
         fi
-        cspell --config ${{ inputs.cspell-config }} "$dirs/**/*.{h,c,hpp,cpp,cc,ipp}"
+        cspell --config ${{ inputs.cspell-config }} "$dirs/**/*.{h,c,hpp,cpp,cc,ipp,md}"
 
     - name: clang-format
       if: inputs.clang-format == true

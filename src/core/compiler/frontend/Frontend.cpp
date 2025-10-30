@@ -558,7 +558,7 @@ void Frontend::parseImportSection() {
             impFuncDef.sigIndex = importSignatureIndex;
             impFuncDef.builtinFunction = BuiltinFunction::UNDEFINED;
             impFuncDef.linked = true;
-            impFuncDef.importFnVerison = symbol.importVersion;
+            impFuncDef.importFnVersion = symbol.importVersion;
             memory_.write<ModuleInfo::ImpFuncDef>(impFuncDef);
             moduleInfo_.numImportedFunctions++;
 
@@ -1020,7 +1020,7 @@ void Frontend::parseElementSection() {
       // the function and align the next section to 4 bytes again
       if (moduleInfo_.functionIsImported(elementFunctionIndex)) {
         ModuleInfo::ImpFuncDef const impFuncDef{moduleInfo_.getImpFuncDef(elementFunctionIndex)};
-        if (impFuncDef.importFnVerison == NativeSymbol::ImportFnVersion::V2) {
+        if (impFuncDef.importFnVersion == NativeSymbol::ImportFnVersion::V2) {
           // V2 import functions are not supported to indirect call yet
           throw FeatureNotSupportedException(ErrorCode::Not_implemented);
         }
