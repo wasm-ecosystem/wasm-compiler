@@ -16,6 +16,8 @@ from BerkeleySoftFloatSPDX import BerkeleySoftFloatSPDX
 from WasmCompilerSPDX import WasmCompilerSPDX
 import os
 import argparse
+from spdx_tools.spdx.validation.document_validator import validate_full_spdx_document
+from spdx_tools.spdx.parser.parse_anything import parse_file
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -32,3 +34,28 @@ if __name__ == "__main__":
     wasm_compiler_spdx_creator.create_spdx_file()
 
     print("SPDX generation completed!")
+
+    # Validate the generated file
+    print("\n" + "=" * 60)
+    print("Validating generated SPDX file...")
+    print("=" * 60)
+    spdx_file = os.path.join(args.output_dir, "wasm-compiler.spdx")
+
+    try:
+        document = parse_file(spdx_file)
+        validation_messages = validate_full_spdx_document(document)
+
+        if validation_messages:
+            print(f"Validation failed with {len(validation_messages)} errors:")
+            for msg in validation_messages:
+                print(f"  - {msg.validation_message}")
+            exit(1)
+        else:
+            print("SPDX file is valid!")
+            print(f"   Location: {spdx_file}")
+    except Exception as e:
+        print(f"Validation error: {e}")
+        import traceback
+
+        traceback.print_exc()
+        exit(1)

@@ -1,5 +1,8 @@
 # Wasm Compiler Release Notes
 
+## 3.0.6
+- Fix SPDX format
+
 ## 3.0.5
 
 - Fixed the misbehavior of wasm memcpy on x86 backend

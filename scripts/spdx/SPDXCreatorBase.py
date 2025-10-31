@@ -31,6 +31,7 @@ from spdx_tools.spdx.model import (
     File,
     FileType,
     Package,
+    PackageVerificationCode,
     Checksum,
     ChecksumAlgorithm,
     Version,
@@ -95,7 +96,7 @@ class SPDXCreatorBase:
 
         self.__spdx_doc = Document(creation_info=creation_info)
 
-    def add_source_by_path(self, file_path: str, copy_right: str, license: str) -> None:
+    def add_source_by_path(self, file_path: str, copy_right: str, license: str) -> str:
         with open(file_path, "rb") as f:
             h = hashlib.sha1()
             while True:
@@ -112,9 +113,10 @@ class SPDXCreatorBase:
             licensing = get_spdx_licensing()
             license_expr = licensing.parse(license)
 
+            spdx_id = f"SPDXRef-FILE-{len(self.__spdx_doc.files)}"
             source_file = File(
                 name=file_relative_path,
-                spdx_id=f"SPDXRef-FILE-{len(self.__spdx_doc.files)}",
+                spdx_id=spdx_id,
                 checksums=[Checksum(ChecksumAlgorithm.SHA1, sha_str)],
                 file_types=[FileType.SOURCE],
                 license_concluded=license_expr,
@@ -123,11 +125,15 @@ class SPDXCreatorBase:
             )
 
             self.__spdx_doc.files.append(source_file)
+            return spdx_id
 
-    def add_file_recursive(self, root_dir: str, copy_right: str, license: str) -> None:
+    def add_file_recursive(self, root_dir: str, copy_right: str, license: str) -> list:
         files = glob.glob(root_dir + "/**/*.*", recursive=True)
+        file_ids = []
         for file_path in files:
-            self.add_source_by_path(file_path, copy_right, license)
+            file_id = self.add_source_by_path(file_path, copy_right, license)
+            file_ids.append(file_id)
+        return file_ids
 
     def set_package(self, package: Package) -> None:
         self.__spdx_doc.packages.append(package)
@@ -143,6 +149,28 @@ class SPDXCreatorBase:
             if submodule.name == submodule_name:
                 return submodule.hexsha
         return ""
+
+    def calculate_package_verification_code(
+        self, files: list
+    ) -> PackageVerificationCode:
+        """Calculate verification code from file checksums"""
+        checksums = []
+        for file in files:
+            if file.checksums:
+                checksums.append(file.checksums[0].value)
+
+        checksums.sort()
+        verification_string = "".join(checksums)
+        verification_hash = hashlib.sha1(verification_string.encode()).hexdigest()
+        return PackageVerificationCode(value=verification_hash, excluded_files=[])
+
+    def link_files_to_package(self, package_spdx_id: str, file_spdx_ids: list):
+        """Link files to a package"""
+        for file_spdx_id in file_spdx_ids:
+            relationship = Relationship(
+                package_spdx_id, RelationshipType.CONTAINS, file_spdx_id
+            )
+            self.__spdx_doc.relationships.append(relationship)
 
     def genSPDX(self) -> bool:
         try:

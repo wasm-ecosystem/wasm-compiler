@@ -21,9 +21,9 @@ echo "start archive" &&
     tmpfile=$(mktemp)
     # Write tracked files excluding wasm_examples into the temp file
     git ls-files --recurse-submodules | grep -v '^wasm_examples/' > "$tmpfile"
-    # Ensure SPDX file is included if it exists (it may be generated earlier in the workflow)
-    if [ -f wasm-compiler.spdx ]; then
-        echo "wasm-compiler.spdx" >> "$tmpfile"
+    # Ensure SPDX files are included if they exist (they may be generated earlier in the workflow)
+    if [ -f wasm-compiler.spdx3.jsonld.json ]; then
+        echo "wasm-compiler.spdx3.jsonld.json" >> "$tmpfile"
     fi
     # Create package name if not provided
     outname=$([[ -z $package_name ]] && echo wasm-compiler-$(git describe --tags --exact-match HEAD || git rev-parse HEAD).tar.gz || echo $package_name)
