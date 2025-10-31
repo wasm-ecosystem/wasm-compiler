@@ -20,7 +20,6 @@ from spdx_tools.spdx.model import (
     Checksum,
     ChecksumAlgorithm,
     SpdxNone,
-    SpdxNoAssertion,
     Relationship,
     RelationshipType,
 )
@@ -32,6 +31,8 @@ class WasmCompilerSPDX(SPDXCreatorBase):
     def __init__(self, output_dir: str) -> None:
         project_root = Path(__file__).parent.parent.parent.absolute()
         super(WasmCompilerSPDX, self).__init__(project_root, output_dir)
+        self.main_package_file_ids = []
+        self.berkeley_package_file_ids = []
 
     def create_spdx_file(self):
         package_name = "wasm-compiler"
@@ -95,23 +96,31 @@ class WasmCompilerSPDX(SPDXCreatorBase):
             src_path = os.path.join(self.project_root, src_dir)
             if os.path.exists(src_path):
                 print(f"Adding files from {src_dir}...")
-                self.add_file_recursive(src_path, copyright_text, license_id)
+                file_ids = self.add_file_recursive(src_path, copyright_text, license_id)
+                self.main_package_file_ids.extend(file_ids)
 
         # Add header files if they exist
         include_dir = os.path.join(self.project_root, "include")
         if os.path.exists(include_dir):
             print("Adding header files...")
-            self.add_file_recursive(include_dir, copyright_text, license_id)
+            file_ids = self.add_file_recursive(include_dir, copyright_text, license_id)
+            self.main_package_file_ids.extend(file_ids)
 
         # Add CMake files
         cmake_files = ["CMakeLists.txt"]
         for cmake_file in cmake_files:
             cmake_path = os.path.join(self.project_root, cmake_file)
             if os.path.exists(cmake_path):
-                self.add_source_by_path(cmake_path, copyright_text, license_id)
+                file_id = self.add_source_by_path(
+                    cmake_path, copyright_text, license_id
+                )
+                self.main_package_file_ids.append(file_id)
 
         # Add Berkeley SoftFloat dependency
         self._add_berkeley_softfloat_dependency()
+
+        # Update package with verification code and link files
+        self._finalize_packages()
 
         success = self.genSPDX()
 
@@ -197,8 +206,50 @@ class WasmCompilerSPDX(SPDXCreatorBase):
         source_dir = os.path.join(berkeley_softfloat_dir, "source")
         if os.path.exists(source_dir):
             print("Adding Berkeley SoftFloat source files...")
-            self.add_file_recursive(source_dir, copyright_text, license_id)
+            file_ids = self.add_file_recursive(source_dir, copyright_text, license_id)
+            self.berkeley_package_file_ids.extend(file_ids)
         else:
             print(
                 f"Warning: Berkeley SoftFloat source directory not found at {source_dir}"
             )
+
+    def _finalize_packages(self):
+        """Finalize packages by adding verification codes and linking files"""
+        print("Finalizing packages with verification codes and file relationships...")
+
+        # Get all files from document
+        all_files = self._SPDXCreatorBase__spdx_doc.files
+
+        # Update main package (wasm-compiler)
+        for package in self._SPDXCreatorBase__spdx_doc.packages:
+            if package.spdx_id == "SPDXRef-PACKAGE":
+                # Get files for main package
+                main_files = [
+                    f for f in all_files if f.spdx_id in self.main_package_file_ids
+                ]
+                if main_files:
+                    package.verification_code = (
+                        self.calculate_package_verification_code(main_files)
+                    )
+                    self.link_files_to_package(
+                        package.spdx_id, self.main_package_file_ids
+                    )
+                    print(
+                        f"  Main package: {len(main_files)} files, verification code: {package.verification_code.value}"
+                    )
+
+            elif package.spdx_id == "SPDXRef-PACKAGE-BerkeleySoftFloat":
+                # Get files for Berkeley SoftFloat package
+                berkeley_files = [
+                    f for f in all_files if f.spdx_id in self.berkeley_package_file_ids
+                ]
+                if berkeley_files:
+                    package.verification_code = (
+                        self.calculate_package_verification_code(berkeley_files)
+                    )
+                    self.link_files_to_package(
+                        package.spdx_id, self.berkeley_package_file_ids
+                    )
+                    print(
+                        f"  Berkeley SoftFloat: {len(berkeley_files)} files, verification code: {package.verification_code.value}"
+                    )

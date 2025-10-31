@@ -4,6 +4,7 @@
 
 - Fixed the problem that load opcode will trigger Implement Limitation on TRICORE.
 - Fixed the misbehavior of wasm memcpy on x86 backend
+- Fix SPDX format
 
 ## 3.1.0
 

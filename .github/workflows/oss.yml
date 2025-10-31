@@ -18,20 +18,32 @@ jobs:
           set -ex
           apt-get update
           apt-get dist-upgrade -y
-          apt-get install -y git ca-certificates jq curl
+          apt-get install -y git ca-certificates jq curl wget unzip
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Clone BMW CI Config
-        run: |
-          git clone https://${{ secrets.TECH_USER_CC_GITHUB_TOKEN }}@${{ vars.INTERNAL_CCG_URL }}/oss/ci-config.git ci-config
-
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: "3.11"
+
+      - name: Create venv and install requirements
+        run: |
+          set -ex
+          python -m venv .venv
+          . .venv/bin/activate
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          echo "$PWD/.venv/bin" >> $GITHUB_PATH
+
+      - name: Generate and validate SPDX
+        uses: ./.github/actions/spdx-gen
+
+      - name: Clone BMW CI Config
+        run: |
+          git clone https://${{ secrets.TECH_USER_CC_GITHUB_TOKEN }}@${{ vars.INTERNAL_CCG_URL }}/oss/ci-config.git ci-config
 
       - name: Create Python virtual environment
         run: |
@@ -40,9 +52,7 @@ jobs:
           echo "$PWD/venv/bin" >> $GITHUB_PATH
 
       - name: Install uv in virtual environment
-        run: |
-          . venv/bin/activate
-          pip install uv
+        run: pip install uv
 
       - name: Configure Artifactory access
         run: |
@@ -50,7 +60,6 @@ jobs:
 
       - name: Install internal content scan dependencies
         run: |
-          . venv/bin/activate
           cd ci-config/scripts/bmw-content-scan
           uv pip install -e .
 
@@ -87,7 +96,6 @@ jobs:
 
       - name: Run BMW content scan
         run: |
-          . venv/bin/activate
           mkdir -p scan_results
 
           # Run the BMW content scanner
@@ -112,9 +120,7 @@ jobs:
             --ignore-file-ending .gz
 
       - name: Check scan results and report violations
-        run: |
-          . venv/bin/activate
-          test $(jq length scan_results/findings.json) -eq 0 || (echo "BMW content violations found!" && jq . scan_results/findings.json && exit 1)
+        run: test $(jq length scan_results/findings.json) -eq 0 || (echo "BMW content violations found!" && jq . scan_results/findings.json && exit 1)
 
       - name: Check Apache license headers
         shell: bash

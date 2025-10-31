@@ -1,0 +1,30 @@
+name: "SPDX Generation"
+description: "Generate SPDX v2.3 (root), convert to SPDX v3 JSON-LD, and validate."
+author: "wasm-ecosystem"
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Java 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: "17"
+        distribution: "temurin"
+
+    - name: Generate SPDX v2.3 (tag-value)
+      shell: bash
+      run: python scripts/spdx/generate_spdx.py -o .
+
+    - name: Download and extract SPDX Java tools
+      shell: bash
+      run: |
+        set -ex
+        wget -q https://github.com/spdx/tools-java/releases/download/v2.0.2/tools-java-2.0.2.zip
+        unzip -q tools-java-2.0.2.zip -d ~/spdx-tools
+
+    - name: Convert to SPDX v3 JSON-LD
+      shell: bash
+      run: java -jar ~/spdx-tools/tools-java-2.0.2-jar-with-dependencies.jar Convert ./wasm-compiler.spdx ./wasm-compiler.spdx3.jsonld.json TAG JSONLD
+
+    - name: Verify SPDX v3 JSON-LD
+      shell: bash
+      run: java -jar ~/spdx-tools/tools-java-2.0.2-jar-with-dependencies.jar Verify ./wasm-compiler.spdx3.jsonld.json

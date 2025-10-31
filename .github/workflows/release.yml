@@ -26,26 +26,32 @@ jobs:
           release_body=$(sed -n '/^## /{ :a; n; /^## /q; p; ba; }' RELEASENOTES.md)
           echo -e "Release_body<<EOF\n$release_body\nEOF" >> $GITHUB_OUTPUT
 
+      - name: Initialize submodules
+        run: |
+          git submodule update --init --recursive --depth=1
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: "3.12"
 
-      - name: Initialize submodules
-        run: |
-          git submodule update --init --recursive --depth=1
-
       - name: Create venv and install requirements
         run: |
+          set -ex
           python -m venv .venv
           . .venv/bin/activate
           pip install --upgrade pip
           pip install -r requirements.txt
+          echo "$PWD/.venv/bin" >> $GITHUB_PATH
 
-      - name: Generate SPDX
+      - name: Install wget and unzip
         run: |
-          . .venv/bin/activate
-          python scripts/spdx/wasm_compiler_spdx.py
+          set -ex
+          sudo apt-get update
+          sudo apt-get install -y wget unzip
+
+      - name: Generate and validate SPDX
+        uses: ./.github/actions/spdx-gen
 
       - name: compress
         run: scripts/archive.sh
