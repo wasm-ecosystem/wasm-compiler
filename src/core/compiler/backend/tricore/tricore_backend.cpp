@@ -1499,9 +1499,6 @@ void Backend::execFncCallAndTrunc(uint32_t const sigIndex, uint32_t const fncInd
   // coverity[autosar_cpp14_a5_1_4_violation]
   iterateGlobals(FunctionRef<void(StackElement const &)>(spillFromStackCallback));
 
-  std::array<uint8_t, std::max(WasmABI::regsForParams, static_cast<uint32_t>(NativeABI::paramRegs.size()))> conflictMark{};
-  std::fill(conflictMark.begin(), conflictMark.end(), 0U);
-
   uint32_t const stackParamWidth{getStackParamWidth(sigIndex, imported)};
 
   // We are setting up the following stack structure from here on
