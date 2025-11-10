@@ -45,7 +45,7 @@ public:
   ///
   /// @brief Name of the module as a pointer to a null-terminated string
   ///
-  char const *module = nullptr;
+  char const *moduleName = nullptr;
 
   ///
   /// @brief Name of the symbol as a pointer to a null-terminated string

@@ -243,6 +243,9 @@ public:
     return false;
   }
 
+  /// @brief Check if a function is a V2 import
+  /// @param fncIndex The function index to check
+  /// @return True if the function is an imported function using V2 API
   inline bool functionIsV2Import(uint32_t const fncIndex) const VB_NOEXCEPT {
     if (functionIsImported(fncIndex)) {
       return getImpFuncDef(fncIndex).importFnVersion == NativeSymbol::ImportFnVersion::V2;

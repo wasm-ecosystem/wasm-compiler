@@ -166,8 +166,8 @@ uint32_t Runtime::initializeModule(Span<NativeSymbol const> const &dynamicallyLi
     for (size_t symbolIndex{0U}; symbolIndex < dynamicallyLinkedSymbols.size(); symbolIndex++) {
       NativeSymbol const symbol{dynamicallyLinkedSymbols[symbolIndex]};
       bool const moduleNameMatches{
-          (static_cast<uint32_t>(strlen_s(symbol.module, static_cast<size_t>(ImplementationLimits::maxStringLength))) == moduleNameLength) &&
-          (std::strncmp(moduleName, symbol.module, static_cast<size_t>(moduleNameLength)) == 0)};
+          (static_cast<uint32_t>(strlen_s(symbol.moduleName, static_cast<size_t>(ImplementationLimits::maxStringLength))) == moduleNameLength) &&
+          (std::strncmp(moduleName, symbol.moduleName, static_cast<size_t>(moduleNameLength)) == 0)};
       if (moduleNameMatches) {
         bool const symbolNameMatches{
             (static_cast<uint32_t>(strlen_s(symbol.symbol, static_cast<size_t>(ImplementationLimits::maxStringLength))) == importNameLength) &&

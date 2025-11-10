@@ -539,7 +539,7 @@ void Frontend::parseImportSection() {
         // Retrieve the symbol and length
         NativeSymbol const symbol{symbolList_[symbolIndex]};
         size_t const symbolNameLength{strlen_s(symbol.symbol, static_cast<size_t>(ImplementationLimits::maxStringLength))};
-        size_t const symbolModuleNameLength{strlen_s(symbol.module, static_cast<size_t>(ImplementationLimits::maxStringLength))};
+        size_t const symbolModuleNameLength{strlen_s(symbol.moduleName, static_cast<size_t>(ImplementationLimits::maxStringLength))};
 
         // ... must match
         if ((symbolModuleNameLength != moduleNameLength) || (symbolNameLength != fieldNameLength)) {
@@ -547,7 +547,7 @@ void Frontend::parseImportSection() {
         }
 
         // If the module name and symbol name match
-        if ((std::strncmp(moduleName, symbol.module, static_cast<size_t>(moduleNameLength)) == 0) &&
+        if ((std::strncmp(moduleName, symbol.moduleName, static_cast<size_t>(moduleNameLength)) == 0) &&
             (std::strncmp(fieldName, symbol.symbol, static_cast<size_t>(fieldNameLength)) == 0)) {
           // And also if the signature length matches and the signature string matches, we have found a match
           if ((signatureLength == strlen_s(symbol.signature, static_cast<size_t>(ImplementationLimits::maxStringLength))) &&
@@ -2663,10 +2663,10 @@ void Frontend::serializeDynamicFunctionImportBinarySection() {
       compiler_.output_.write<uint32_t>(importNameLength);                   // OPBVIF6
 
       uint32_t const moduleNameLength{
-          static_cast<uint32_t>(strlen_s(nativeSymbol.module, static_cast<size_t>(ImplementationLimits::maxStringLength)))};
+          static_cast<uint32_t>(strlen_s(nativeSymbol.moduleName, static_cast<size_t>(ImplementationLimits::maxStringLength)))};
       uint32_t const moduleStepWidth{roundUpToPow2(moduleNameLength, 2U)};
       compiler_.output_.step(moduleStepWidth); // OPBVIF7 (Padding)
-      static_cast<void>(std::memcpy(pSubI(compiler_.output_.ptr(), moduleStepWidth), nativeSymbol.module,
+      static_cast<void>(std::memcpy(pSubI(compiler_.output_.ptr(), moduleStepWidth), nativeSymbol.moduleName,
                                     static_cast<size_t>(moduleNameLength))); // OPBVIF8
       compiler_.output_.write<uint32_t>(moduleNameLength);                   // OPBVIF9
     }

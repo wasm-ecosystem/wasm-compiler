@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 #ifndef TEST_HELPER
 #define TEST_HELPER
 

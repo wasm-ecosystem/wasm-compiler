@@ -999,7 +999,7 @@ private:
 #endif
 
   /// @brief Update new stackFrame size. Check overflow if needed
-  /// @param newStackFrameSize aligned new stackFrame size
+  /// @param newAlignedStackFrameSize aligned new stackFrame size
   void updateStackFrameSizeHelper(uint32_t const newAlignedStackFrameSize);
 };
 

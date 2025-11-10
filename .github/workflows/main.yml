@@ -12,6 +12,9 @@ concurrency:
 jobs:
   small_checks:
     runs-on: "ubuntu-latest"
+    container:
+      image: ubuntu:24.04
+      options: --user root
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/check
@@ -22,7 +25,7 @@ jobs:
           cspell: true
           cspell-dirs: "src;tests;docs"
           cspell-config: "./cspell.json"
-
+  
   codegen_test:
     runs-on: "ubuntu-latest"
     container:

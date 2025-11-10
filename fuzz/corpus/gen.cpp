@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 #include <filesystem>
 namespace fs = std::filesystem;
 

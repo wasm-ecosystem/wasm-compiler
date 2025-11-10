@@ -40,17 +40,19 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - uses: actions/setup-node@v3
+      with:
+        node-version: 20.x
     - name: Set up environment
       shell: bash
       run: |
         set -ex
-        sudo apt-get update
-        sudo apt-get install -y --no-install-recommends nodejs npm clang-format doxygen
-        sudo npm install -g cspell
+        apt-get update
+        apt-get install -y --no-install-recommends doxygen graphviz clang-format
+        npm install -g cspell
 
     - name: cspell
-      if: inputs.cspell == true
-      working-directory: source-repo
+      if: ${{ inputs.cspell == 'true' }}
       shell: bash
       run: |
         set -ex
@@ -64,18 +66,17 @@ runs:
         cspell --config ${{ inputs.cspell-config }} "$dirs/**/*.{h,c,hpp,cpp,cc,ipp,md}"
 
     - name: clang-format
-      if: inputs.clang-format == true
-      working-directory: source-repo
+      if: ${{ inputs.clang-format == 'true' }}
       shell: bash
       run: |
         set -ex
+        clang-format --version
         dirs="${{ inputs.clang-format-dirs }}"
         dirs=$(echo "$dirs" | tr ";" " ")
-        find $dirs -regex ".*\\.\\(cpp\\|hpp\\|c\\|h\\|ipp\\)" | xargs clang-format -style=file --Werror --dry-run -i
+        find $dirs -regex ".*\\.\\(cpp\\|hpp\\|c\\|h\\|ipp\\)" | xargs clang-format -style=file --Werror --dry-run
 
     - name: doxygen
-      if: inputs.doxygen == true
-      working-directory: source-repo
+      if: ${{ inputs.doxygen == 'true' }}
       shell: bash
       run: |
         set -ex
@@ -84,13 +85,13 @@ runs:
     # bazel format
     - name: Install wget
       shell: bash
-      run: sudo apt-get update && sudo apt-get install -y wget
+      run: apt-get update && apt-get install -y wget
     - name: Download and install buildifier
       shell: bash
       run: |
         wget https://github.com/bazelbuild/buildtools/releases/download/v7.3.1/buildifier-linux-amd64 -O buildifier
         chmod +x buildifier
-        sudo mv buildifier /usr/local/bin/
+        mv buildifier /usr/local/bin/
     - if: always()
       shell: bash
       run: |
@@ -113,9 +114,11 @@ runs:
     - uses: actions/setup-python@v5
       with:
         python-version: "3.12"
-        cache: "pip"
     - shell: bash
-      run: pip install black==24.4.2
+      run: |
+        apt-get update && apt-get install python-is-python3 -y --no-install-recommends
+        python -m pip install --upgrade pip
+        pip3 install black==24.4.2
     - if: always()
       shell: bash
       run: |

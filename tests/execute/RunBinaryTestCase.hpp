@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 #ifndef RUN_BINARY_TEST_CASE_HPP
 #define RUN_BINARY_TEST_CASE_HPP
 #include <cstdint>
