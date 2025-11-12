@@ -94,7 +94,7 @@ int main(int argc, char *argv[]) {
 
     auto staticallyLinkedSymbols = make_array(STATIC_LINK("env", "log", logInt));
     vb::STDCompilerLogger stdCompilerLogger{};
-    vb::WasmModule module(10000U, stdCompilerLogger, false, nullptr, 0U);
+    vb::WasmModule module(1000000U, stdCompilerLogger, false, nullptr, 0U);
 
     module.initFromBytecode(bytecodeSpan, vb::Span<vb::NativeSymbol const>(staticallyLinkedSymbols.data(), staticallyLinkedSymbols.size()), true);
     std::cout << "Compilation finished." << std::endl;

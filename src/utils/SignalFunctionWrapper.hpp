@@ -167,6 +167,13 @@ private:
 
 #if !LINEAR_MEMORY_BOUNDS_CHECKS || !ACTIVE_STACK_OVERFLOW_CHECK
   thread_local static Runtime const *pRuntime_; ///< Thread local pointer of Runtime
+                                                ///
+  /// @brief Check if pc is in Wasm code range
+  ///
+  /// @param pc The address of pc
+  /// @return True if pc is in Wasm code range
+  ///
+  static bool pcInWasmCodeRange(void *const pc) VB_NOEXCEPT;
 #endif
 
 #if !LINEAR_MEMORY_BOUNDS_CHECKS

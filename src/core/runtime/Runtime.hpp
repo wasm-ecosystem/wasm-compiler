@@ -607,6 +607,11 @@ public:
     return binaryModule_.getEndAddress() != nullptr;
   }
 
+  ///@brief get the reference of binary module
+  inline BinaryModule const &getBinaryModule() const VB_NOEXCEPT {
+    return binaryModule_;
+  }
+
 private:
   ///
   /// @brief Whether this runtime is disabled (i.e. inactive)

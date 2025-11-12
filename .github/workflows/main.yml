@@ -25,7 +25,7 @@ jobs:
           cspell: true
           cspell-dirs: "src;tests;docs"
           cspell-config: "./cspell.json"
-  
+
   codegen_test:
     runs-on: "ubuntu-latest"
     container:
@@ -448,11 +448,11 @@ jobs:
           cd build
           cmake .. -DVB_ENABLE_DEV_FEATURE=OFF -DENABLE_CLANG_TIDY=1 -DENABLE_WERROR=1 -DENABLE_SPECTEST=1 -DTEST_VARIANTS=1 -DCMAKE_BUILD_TYPE:STRING=Debug -DCMAKE_CXX_COMPILER=/usr/bin/clang++ -DCMAKE_C_COMPILER=/usr/bin/clang -DENABLE_UNITTEST=1 -DENABLE_DIS=1
           make -j $(sysctl -n hw.physicalcpu)
-          make test
+          ctest --output-on-failure
           rm -rf *
           cmake .. -DVB_ENABLE_DEV_FEATURE=OFF -DENABLE_WERROR=1 -DENABLE_SPECTEST=1 -DTEST_VARIANTS=1 -DCMAKE_BUILD_TYPE:STRING=Release -DCMAKE_CXX_COMPILER=/usr/bin/clang++ -DCMAKE_C_COMPILER=/usr/bin/clang -DENABLE_UNITTEST=1
           make -j $(sysctl -n hw.physicalcpu)
-          make test
+          ctest --output-on-failure
 
   all-green:
     runs-on: ubuntu-latest

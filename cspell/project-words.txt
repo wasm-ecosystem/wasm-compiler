@@ -530,6 +530,7 @@ wintt
 wlic
 WRONGNAME
 WRONGSIG
+Wswitch
 Wthread
 Xinquan
 xmod

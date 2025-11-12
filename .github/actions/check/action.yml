@@ -119,7 +119,7 @@ runs:
         apt-get update && apt-get install python-is-python3 -y --no-install-recommends
         python -m pip install --upgrade pip
         pip3 install black==24.4.2
-    - if: always()
+    - name: python format check
       shell: bash
       run: |
         echo python-format: >> format-report.txt

@@ -21,6 +21,7 @@
 #include "LinearMemoryAllocator.hpp"
 #include "SignalFunctionWrapper.hpp"
 
+#include "src/core/common/BinaryModule.hpp"
 #include "src/core/common/ExtendableMemory.hpp"
 #include "src/core/common/TrapCode.hpp"
 #include "src/core/common/WasmConstants.hpp"
@@ -31,6 +32,19 @@ namespace vb {
 
 #if !LINEAR_MEMORY_BOUNDS_CHECKS || !ACTIVE_STACK_OVERFLOW_CHECK
 thread_local Runtime const *SignalFunctionWrapper::pRuntime_{nullptr};
+
+bool SignalFunctionWrapper::pcInWasmCodeRange(void *const pc) VB_NOEXCEPT {
+  uintptr_t const faultAddr{pToNum(pc)};
+  Runtime const *const pRuntime{SignalFunctionWrapper::getRuntime()};
+  if (pRuntime == nullptr) {
+    return false;
+  }
+  BinaryModule const &binaryModule{pRuntime->getBinaryModule()};
+  uintptr_t const codeStartAddr{pToNum(binaryModule.getStartAddress())};
+  uintptr_t const codeEndAddr{pToNum(binaryModule.getEndAddress())};
+  return (faultAddr >= codeStartAddr) && (faultAddr < codeEndAddr);
+}
+
 #endif
 
 #if !LINEAR_MEMORY_BOUNDS_CHECKS

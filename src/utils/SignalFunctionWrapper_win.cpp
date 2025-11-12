@@ -117,7 +117,7 @@ long SignalFunctionWrapperWin::divSignalHandler(PEXCEPTION_POINTERS pExceptionIn
   DWORD const exceptionCode = pExceptionInfo->ExceptionRecord->ExceptionCode;
   uint32_t trapCode = 0U;
 
-  if (SignalFunctionWrapper::getRuntime() == nullptr) {
+  if (!SignalFunctionWrapper::pcInWasmCodeRange(getContextPC(pExceptionInfo))) {
     return EXCEPTION_CONTINUE_SEARCH;
   }
 
@@ -141,8 +141,9 @@ long SignalFunctionWrapperWin::divSignalHandler(PEXCEPTION_POINTERS pExceptionIn
 // NOLINTNEXTLINE(google-runtime-int)
 long SignalFunctionWrapperWin::memorySignalHandler(PEXCEPTION_POINTERS pExceptionInfo) VB_NOEXCEPT {
   DWORD const exceptionCode = pExceptionInfo->ExceptionRecord->ExceptionCode;
+  void *const pc{getContextPC(pExceptionInfo)};
   uint32_t trapCode = 0U;
-  if (SignalFunctionWrapper::getRuntime() == nullptr) {
+  if (!SignalFunctionWrapper::pcInWasmCodeRange(pc)) {
     return EXCEPTION_CONTINUE_SEARCH;
   }
 
@@ -169,8 +170,7 @@ long SignalFunctionWrapperWin::memorySignalHandler(PEXCEPTION_POINTERS pExceptio
       } else {
         // Fault lies in non-commited memory portion, so we try to commit it via a landing pad
         SignalFunctionWrapper::landingPadData_ = static_cast<uint32_t>(offsetInLinMemAllocation);
-        auto landingPad =
-            SignalFunctionWrapper::pRuntime_->prepareLandingPad(SignalFunctionWrapper::probeLinearMemoryOffset, getContextPC(pExceptionInfo));
+        auto landingPad = SignalFunctionWrapper::pRuntime_->prepareLandingPad(SignalFunctionWrapper::probeLinearMemoryOffset, pc);
         setReturnFromSignalHandler(pExceptionInfo, pCast<void *>(landingPad));
         return EXCEPTION_CONTINUE_EXECUTION;
       }

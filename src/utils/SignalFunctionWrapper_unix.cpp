@@ -263,9 +263,10 @@ void SignalFunctionWrapperUnix::handleTrap(ucontext_t *const uc, uint32_t const 
 void SignalFunctionWrapperUnix::memorySignalHandler(int32_t const signalId, siginfo_t *const si, void *const ptr) VB_NOEXCEPT {
   ucontext_t *const uc{pCast<ucontext_t *>(ptr)};
   uint32_t trapCode{0U};
-  if (SignalFunctionWrapper::getRuntime() == nullptr) {
+  void *const pc{getContextPC(uc)};
+  if (!SignalFunctionWrapper::pcInWasmCodeRange(pc)) {
     // coverity[autosar_cpp14_a18_1_1_violation] NOLINTNEXTLINE(modernize-avoid-c-arrays)
-    constexpr char msg[]{"Current thread is not a Wasm working thread. Rule out any issues in your "
+    constexpr char msg[]{"Current memory fault is not triggered by Wasm code. Rule out any issues in your "
                          "linked host functions and report this issue to the runtime team.\n"};
     ssize_t const sz{write(2, &msg[0], sizeof(msg))};
     static_cast<void>(sz);
@@ -294,8 +295,7 @@ void SignalFunctionWrapperUnix::memorySignalHandler(int32_t const signalId, sigi
         // Fault lies in non-commited memory portion, so we try to commit it via a landing pad
         SignalFunctionWrapper::setLandingPad(static_cast<uint32_t>(offsetInLinMemAllocation));
         using LandingPadFnc = void (*)(void);
-        LandingPadFnc const landingPad{
-            SignalFunctionWrapper::pRuntime_->prepareLandingPad(&SignalFunctionWrapper::probeLinearMemoryOffset, getContextPC(uc))};
+        LandingPadFnc const landingPad{SignalFunctionWrapper::pRuntime_->prepareLandingPad(&SignalFunctionWrapper::probeLinearMemoryOffset, pc)};
         setReturnFromSignalHandler(uc, pCast<void const *>(landingPad));
         return;
       }
@@ -311,8 +311,7 @@ void SignalFunctionWrapperUnix::memorySignalHandler(int32_t const signalId, sigi
 
     // GCOVR_EXCL_START
     // coverity[autosar_cpp14_a18_1_1_violation] NOLINTNEXTLINE(modernize-avoid-c-arrays)
-    constexpr char msg[]{"Segfault during execution of a Wasm function or a host function. Rule out any issues in your "
-                         "linked host functions and report this issue to the runtime team.\n"};
+    constexpr char msg[]{"Unexpected segfault during execution of a Wasm function.\n"};
     ssize_t const sz{write(2, &msg[0], sizeof(msg))};
     static_cast<void>(sz);
     // GCOVR_EXCL_STOP
@@ -326,9 +325,9 @@ void SignalFunctionWrapperUnix::divSignalHandler(int32_t const signalId, siginfo
   assert(signalId == SIGFPE);
   static_cast<void>(signalId);
   ucontext_t *const uc{pCast<ucontext_t *>(ptr)};
-  if (SignalFunctionWrapper::getRuntime() == nullptr) {
+  if (!SignalFunctionWrapper::pcInWasmCodeRange(getContextPC(uc))) {
     // coverity[autosar_cpp14_a18_1_1_violation] NOLINTNEXTLINE(modernize-avoid-c-arrays)
-    constexpr char msg[]{"Current thread is not a Wasm working thread. Rule out any issues in your "
+    constexpr char msg[]{"Current arithmetic fault is not triggered by Wasm code. Rule out any issues in your "
                          "linked host functions and report this issue to the runtime team.\n"};
     ssize_t const sz{write(2, &msg[0], sizeof(msg))};
     static_cast<void>(sz);
