@@ -42,8 +42,8 @@ struct ResolverRecord final {
   };
   VariableStorage target; ///< Target register to copy to
 
-  VariableStorage source; ///< Source register or memory to copy from
-  TargetType targetType;  ///< Type of the target register
+  VariableStorage source;                    ///< Source register or memory to copy from
+  TargetType targetType{TargetType::Normal}; ///< Type of the target register
 };
 using MoveEmitter =
     FunctionRef<void(VariableStorage const &, VariableStorage const &)>; ///< Function type to emit a move operation from source to target

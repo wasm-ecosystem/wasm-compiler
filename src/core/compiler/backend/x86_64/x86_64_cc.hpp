@@ -78,7 +78,8 @@ constexpr REG memSize{REG::SI};
 constexpr REG linMem{REG::B};  ///< Pointer to base of linear memory
 constexpr REG trapReg{REG::A}; ///< Register for internal usage where the trap indicator will be passed
 // coverity[autosar_cpp14_m3_4_1_violation]
-constexpr REG trapPosReg{REG::C};             ///< Register indicating where trap happened as position in bytecode (set only in debug mode)
+constexpr REG trapPosReg{REG::C}; ///< Register indicating where trap happened as position in bytecode (set only in debug mode)
+// coverity[autosar_cpp14_m3_4_1_violation]
 constexpr REG indirectCallReg{REG::D};        ///< Register for internal usage where the indirect call index will be passed
 constexpr REG stacktraceCollectorRet{REG::D}; ///< Register for internal usage where the return address will be kept
                                               ///< while executing the stacktrace collector

@@ -28,6 +28,7 @@
 #include "src/core/common/util.hpp"
 #include "src/core/compiler/common/Common.hpp"
 #include "src/core/compiler/common/MemWriter.hpp"
+#include "src/core/compiler/common/RegisterCopyResolver.hpp"
 #include "src/core/compiler/common/Stack.hpp"
 
 namespace vb {
@@ -144,10 +145,10 @@ public:
   /// @brief Produces machine code for a function call
   /// Consumes all arguments for the function from the compiler stack and loads them according to the calling convention
   ///
-  /// Can call either imported or non-imported WebAssembly functions
+  /// Can direct call either imported or non-imported WebAssembly functions
   ///
   /// @param fncIndex WebAssembly function index to call
-  void executeWasmFunctionCall(uint32_t const fncIndex);
+  void execDirectFncCall(uint32_t const fncIndex);
 
   ///
   /// @brief Produces machine code for an indirect function call, consuming an I32 index from the compiler stack
@@ -155,11 +156,11 @@ public:
   /// according to the calling convention
   ///
   /// Validates that the target conforms to the given signature index, traps otherwise or if the index is out of bounds
-  /// Can call either imported or non-imported WebAssembly functions
+  /// Can indirect call either imported or non-imported WebAssembly functions
   ///
   /// @param sigIndex Signature index of the function that will be called
   /// @param tableIndex Index of the WebAssembly table where the function is located
-  void executeIndirectWasmFunctionCall(uint32_t const sigIndex, uint32_t const tableIndex);
+  void execIndirectWasmCall(uint32_t const sigIndex, uint32_t const tableIndex);
 
   ///
   /// @brief Produces machine code for a Wasm table branch instruction, consuming an I32 that indexes onto a vector of
@@ -562,23 +563,17 @@ private:
 #endif
 
   ///
-  /// @brief Consume and load the parameters for a function call and return the result element onto the stack
+  /// @brief Produces a wrapper function that conforms to the WebAssembly calling convention, converts it to the native
+  /// calling convention and calls the imported function at the given function index
   ///
-  /// @param sigIndex Signature type index for the function type
-  /// @param fncIndex Function index to call
-  /// @param isIndirectCall Whether this is an indirect call
-  /// @param imported Whether this is an imported function
-  /// @param emitFunctionCallLambda A lambda which emits the raw function call
-  void execFncCallAndTrunc(uint32_t const sigIndex, uint32_t const fncIndex, bool const isIndirectCall, bool const imported,
-                           FunctionRef<void()> const &emitFunctionCallLambda);
-
+  /// @param fncIndex Index of the imported function to call (NOTE: Must be an imported function)
+  void emitV1ImportAdapterImpl(uint32_t const fncIndex);
   ///
-  /// @brief Consume and load the parameters for a import function call and return the result element onto the stack
+  /// @brief Produces a wrapper function that conforms to the WebAssembly calling convention, converts it to the native
+  /// calling convention and calls the imported function at the given function index
   ///
-  /// @param sigIndex Signature type index for the function type
-  /// @param fncIndex Function index to call
-  /// @param emitFunctionCallLambda A lambda which emits the raw function call
-  void execV2ImportFncCallAndTrunc(uint32_t const sigIndex, uint32_t const fncIndex, FunctionRef<void()> const &emitFunctionCallLambda);
+  /// @param fncIndex Index of the imported function to call (NOTE: Must be an imported function)
+  void emitV2ImportAdapterImpl(uint32_t const fncIndex) const;
 
   ///
   /// @brief Emits a memcpy without a bounds check from an arbitrary absolute address to another absolute address
@@ -803,9 +798,14 @@ private:
   MemWriter &output_;      ///< Reference to the output binary
   Common &common_;         ///< Reference to the common instance
   Compiler &compiler_;     ///<  Reference to the compiler instance
-  x86_64Assembler as_;     ///< AArch64 assembler instance that emits instructions
+  x86_64Assembler as_;     ///< x86_64 assembler instance that emits instructions
 
   friend x86_64Assembler; ///< So the assembler can access the compiler reference
+  friend class CallBase;
+  friend class DirectV2Import;
+  friend class V1CallBase;
+  friend class ImportCallV1;
+  friend class InternalCall;
 
 #if ENABLE_EXTENSIONS
   ///

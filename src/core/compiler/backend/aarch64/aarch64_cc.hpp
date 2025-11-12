@@ -80,7 +80,8 @@ constexpr REG jobMem{REG::R28}; ///< Pointer to base of job memory
 constexpr REG linMem{REG::FP};  ///< Pointer to base of linear memory
 constexpr REG trapReg{REG::R0}; ///< Register for internal usage where the trap indicator will be passed
 // coverity[autosar_cpp14_m3_4_1_violation]
-constexpr REG trapPosReg{REG::R1};      ///< Register indicating where trap happened as position in bytecode (set only in debug mode)
+constexpr REG trapPosReg{REG::R1}; ///< Register indicating where trap happened as position in bytecode (set only in debug mode)
+// coverity[autosar_cpp14_m3_4_1_violation]
 constexpr REG indirectCallReg{REG::R0}; ///< Register for internal usage where the indirect call index will be passed
 // coverity[autosar_cpp14_a8_5_2_violation]
 // coverity[autosar_cpp14_m3_4_1_violation]

@@ -101,6 +101,12 @@ private:
 /// @brief AArch64 compiler backend class
 ///
 class AArch64_Backend final {
+  friend class CallBase;
+  friend class DirectV2Import;
+  friend class V1CallBase;
+  friend class ImportCallV1;
+  friend class InternalCall;
+
 public:
   ///
   /// @brief Construct a new AArch64_Backend instance
@@ -197,7 +203,7 @@ public:
   /// Can call either imported or non-imported WebAssembly functions
   ///
   /// @param fncIndex WebAssembly function index to call
-  void executeWasmFunctionCall(uint32_t const fncIndex);
+  void execDirectFncCall(uint32_t const fncIndex);
 
   ///
   /// @brief Produces machine code for an indirect function call, consuming an I32 index from the compiler stack
@@ -209,7 +215,7 @@ public:
   ///
   /// @param sigIndex Signature index of the function that will be called
   /// @param tableIndex Index of the WebAssembly table where the function is located
-  void executeIndirectWasmFunctionCall(uint32_t const sigIndex, uint32_t const tableIndex);
+  void execIndirectWasmCall(uint32_t const sigIndex, uint32_t const tableIndex);
 
   ///
   /// @brief Produces machine code for a Wasm table branch instruction, consuming an I32 that indexes onto a vector of
@@ -632,23 +638,17 @@ private:
 #endif
 
   ///
-  /// @brief Consume and load the parameters for a function call and return the result element onto the stack
+  /// @brief Produces a wrapper function that conforms to the WebAssembly calling convention, converts it to the native
+  /// calling convention and calls the imported function at the given function index
   ///
-  /// @param sigIndex Signature type index for the function type
-  /// @param fncIndex Function index to call
-  /// @param isIndirectCall Whether this is an indirect call
-  /// @param imported Whether this is an imported function
-  /// @param emitFunctionCallLambda A lambda which emits the raw function call
-  void execFncCallAndTrunc(uint32_t const sigIndex, uint32_t const fncIndex, bool const isIndirectCall, bool const imported,
-                           FunctionRef<void()> const &emitFunctionCallLambda);
-
+  /// @param fncIndex Index of the imported function to call (NOTE: Must be an imported function)
+  void emitV1ImportAdapterImpl(uint32_t const fncIndex);
   ///
-  /// @brief Consume and load the parameters for a import function call and return the result element onto the stack
+  /// @brief Produces a wrapper function that conforms to the WebAssembly calling convention, converts it to the native
+  /// calling convention and calls the imported function at the given function index
   ///
-  /// @param sigIndex Signature type index for the function type
-  /// @param fncIndex Function index to call
-  /// @param emitFunctionCallLambda A lambda which emits the raw function call
-  void execV2ImportFncCallAndTrunc(uint32_t const sigIndex, uint32_t const fncIndex, FunctionRef<void()> const &emitFunctionCallLambda);
+  /// @param fncIndex Index of the imported function to call (NOTE: Must be an imported function)
+  void emitV2ImportAdapterImpl(uint32_t const fncIndex) const;
 
   ///
   /// @brief Emits a memcpy without a bounds check from an arbitrary absolute address to another absolute address
@@ -997,10 +997,6 @@ private:
   /// @param isGPR Whether the register is a general purpose register
   void updateRegPressureHistogram(bool const isGPR) const VB_NOEXCEPT;
 #endif
-
-  /// @brief Update new stackFrame size. Check overflow if needed
-  /// @param newAlignedStackFrameSize aligned new stackFrame size
-  void updateStackFrameSizeHelper(uint32_t const newAlignedStackFrameSize);
 };
 
 } // namespace aarch64

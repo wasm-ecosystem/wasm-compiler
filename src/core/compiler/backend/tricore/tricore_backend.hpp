@@ -189,7 +189,7 @@ public:
   /// Can call either imported or non-imported WebAssembly functions
   ///
   /// @param fncIndex WebAssembly function index to call
-  void executeWasmFunctionCall(uint32_t const fncIndex);
+  void execDirectFncCall(uint32_t const fncIndex);
 
   ///
   /// @brief Produces machine code for an indirect function call, consuming an I32 index from the compiler stack
@@ -201,7 +201,7 @@ public:
   ///
   /// @param sigIndex Signature index of the function that will be called
   /// @param tableIndex Index of the WebAssembly table where the function is located
-  void executeIndirectWasmFunctionCall(uint32_t const sigIndex, uint32_t const tableIndex);
+  void execIndirectWasmCall(uint32_t const sigIndex, uint32_t const tableIndex);
 
   ///
   /// @brief Produces machine code for a Wasm table branch instruction, consuming an I32 that indexes onto a vector of
@@ -643,24 +643,17 @@ private:
                            aux::MappedFncs const mappedFnc) const;
 
   ///
-  /// @brief Consume and load the parameters for a function call and return the result element onto the stack
+  /// @brief Produces a wrapper function that conforms to the WebAssembly calling convention, converts it to the native
+  /// calling convention and calls the imported function at the given function index
   ///
-  /// @param sigIndex Signature type index for the function type
-  /// @param fncIndex Function index to call
-  /// @param isIndirectCall Whether this is an indirect call
-  /// @param imported Whether this is an imported function
-  /// @param emitFunctionCallLambda A lambda which emits the raw function call
-  void execFncCallAndTrunc(uint32_t const sigIndex, uint32_t const fncIndex, bool const isIndirectCall, bool const imported,
-                           FunctionRef<void()> const &emitFunctionCallLambda);
-
+  /// @param fncIndex Index of the imported function to call (NOTE: Must be an imported function)
+  void emitV1ImportAdapterImpl(uint32_t const fncIndex);
   ///
-  /// @brief Consume and load the parameters for a import function call and return the result element onto the stack
+  /// @brief Produces a wrapper function that conforms to the WebAssembly calling convention, converts it to the native
+  /// calling convention and calls the imported function at the given function index
   ///
-  /// @param sigIndex Signature type index for the function type
-  /// @param fncIndex Function index to call
-  /// @param emitFunctionCallLambda A lambda which emits the raw function call
-  void execV2ImportFncCallAndTrunc(uint32_t const sigIndex, uint32_t const fncIndex, FunctionRef<void()> const &emitFunctionCallLambda);
-
+  /// @param fncIndex Index of the imported function to call (NOTE: Must be an imported function)
+  void emitV2ImportAdapterImpl(uint32_t const fncIndex) const;
   ///
   /// @brief Emits a memcpy without a bounds check from an arbitrary absolute address to another absolute address
   ///
@@ -994,9 +987,16 @@ private:
   MemWriter &output_;      ///< Reference to the output binary
   Common &common_;         ///< Reference to the common instance
   Compiler &compiler_;     ///< Reference to the compiler instance
-  Tricore_Assembler as_;   ///< AArch64 assembler instance that emits instructions
+  Tricore_Assembler as_;   ///< Tricore assembler instance that emits instructions
 
   friend Tricore_Assembler; ///< So the assembler can access the compiler reference
+
+  // Friend declarations for call dispatch classes
+  friend class CallBase;
+  friend class DirectV2Import;
+  friend class V1CallBase;
+  friend class ImportCallV1;
+  friend class InternalCall;
 
   /// @brief The offset between the address where the trap code is stored with and REG::SP.
   static constexpr uint32_t of_trapCodePtr_trapReentryPoint{0U};
@@ -1006,6 +1006,15 @@ private:
   /// @brief Update the pressure histogram when a new register is allocated
   void updateRegPressureHistogram() const VB_NOEXCEPT;
 #endif
+
+  ///
+  /// @brief Load and calculate memSize reg from job memory
+  inline void setupMemSizeReg() const {
+    as_.INSTR(LDA_Aa_deref_Ab_off16sx)
+        .setAa(WasmABI::REGS::memSize)
+        .setAb(WasmABI::REGS::linMem)
+        .setOff16sx(SafeInt<16U>::fromConst<-Basedata::FromEnd::actualLinMemByteSize>())();
+  }
 };
 
 } // namespace tc

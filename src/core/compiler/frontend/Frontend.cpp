@@ -1843,7 +1843,7 @@ void Frontend::parseCodeSection() {
             break;
           }
 #endif
-          compiler_.backend_.executeWasmFunctionCall(calledFunctionIndex);
+          compiler_.backend_.execDirectFncCall(calledFunctionIndex);
         }
 
         break;
@@ -1862,7 +1862,7 @@ void Frontend::parseCodeSection() {
         if (!currentFrameIsUnreachable()) {
           uint32_t const numParamsCallee{moduleInfo_.getNumParamsForSignature(sigIndex)};
           common_.condenseSideEffectInstructionBlewValentBlock(numParamsCallee);
-          compiler_.backend_.executeIndirectWasmFunctionCall(sigIndex, tableIndex);
+          compiler_.backend_.execIndirectWasmCall(sigIndex, tableIndex);
         }
         break;
       }
