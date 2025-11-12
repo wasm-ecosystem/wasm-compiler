@@ -218,7 +218,7 @@ static void createDebugLineSection(DebugLine const &debugLine, std::vector<uint8
   result.push_back(defaultIsStmt);
 
   // line_base (1 byte, signed)
-  constexpr uint8_t line_base = static_cast<uint8_t>(-3U);
+  constexpr uint8_t line_base = static_cast<uint8_t>(-3);
   result.push_back(line_base);
   // line_range (1 byte)
   constexpr uint8_t line_range = static_cast<uint8_t>(14U);
