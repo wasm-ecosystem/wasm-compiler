@@ -450,6 +450,10 @@ public:
   /// @return RegMask for moved regs.
   RegMask saveLocalsAndParamsForFuncCall(bool const onlySaveVolatileReg) const;
 
+  /// @brief marked spilled locals from STACK_REG to STACK
+  /// @param spillMask regs need to be spilled
+  void markLocalsAsSpilled(RegMask const spillMask) noexcept;
+
   /// @brief force initialized local with zero
   /// @param localIdx local index
   void initializedLocal(uint32_t const localIdx) const;
@@ -498,13 +502,6 @@ public:
   /// wrapper will not return. This adheres to the native calling convention and has produces a function with the
   /// signature void (linearMemoryAddress,trapCode);
   void emitGenericTrapHandler();
-
-  /// @brief if local reg is still available, we can use reg as source
-  ///
-  /// @param elem Element for which to get the optimized storage location
-  /// @param availableLocalsRegMask RegMask describing which registers still have locals in them
-  /// @return Optimized storage
-  VariableStorage getOptimizedSourceStorage(StackElement const &elem, RegMask const availableLocalsRegMask) const VB_NOEXCEPT;
 
   /// @brief control flow may jump from other basis block.
   /// for END of BLOCK, compiler has processed all potential branches.

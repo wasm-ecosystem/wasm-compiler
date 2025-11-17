@@ -1493,10 +1493,11 @@ void Backend::execDirectFncCall(uint32_t const fncIndex) {
     ImportCallV1 importCallV1Impl{*this, sigIndex};
 
     importCallV1Impl.storeLR();
-    RegMask const availableLocalsRegMask{common_.saveLocalsAndParamsForFuncCall(true)};
-    static_cast<void>(importCallV1Impl.iterateParams(paramsBase, availableLocalsRegMask));
+    RegMask const spilledLocalsRegMask{common_.saveLocalsAndParamsForFuncCall(true)};
+    static_cast<void>(importCallV1Impl.iterateParams(paramsBase));
     importCallV1Impl.prepareCtx();
     importCallV1Impl.resolveRegisterCopies();
+    common_.markLocalsAsSpilled(spilledLocalsRegMask);
     uint32_t const jobMemoryPtrPtrOffset{importCallV1Impl.getJobMemoryPtrPtrOffset()};
     // coverity[autosar_cpp14_a5_1_9_violation]
     importCallV1Impl.emitFncCallWrapper(fncIndex, FunctionRef<void()>([this, fncIndex, jobMemoryPtrPtrOffset]() {
@@ -1527,9 +1528,10 @@ void Backend::execDirectFncCall(uint32_t const fncIndex) {
 
     directWasmCallImpl.storeLR();
 
-    RegMask const availableLocalsRegMask{common_.saveLocalsAndParamsForFuncCall(imported)};
-    static_cast<void>(directWasmCallImpl.iterateParams(paramsBase, availableLocalsRegMask));
+    RegMask const spilledLocalsRegMask{common_.saveLocalsAndParamsForFuncCall(imported)};
+    static_cast<void>(directWasmCallImpl.iterateParams(paramsBase));
     directWasmCallImpl.resolveRegisterCopies();
+    common_.markLocalsAsSpilled(spilledLocalsRegMask);
     // coverity[autosar_cpp14_a5_1_9_violation]
     directWasmCallImpl.emitFncCallWrapper(fncIndex, FunctionRef<void()>([this, fncIndex]() {
                                             emitRawFunctionCall(fncIndex);
@@ -1547,12 +1549,13 @@ void Backend::execIndirectWasmCall(uint32_t const sigIndex, uint32_t const table
 
   InternalCall indirectCallImpl{*this, sigIndex};
   indirectCallImpl.storeLR();
-  RegMask const availableLocalsRegMask{common_.saveLocalsAndParamsForFuncCall(false)};
+  RegMask const spilledLocalsRegMask{common_.saveLocalsAndParamsForFuncCall(false)};
 
-  Stack::iterator const indirectCallIndex{indirectCallImpl.iterateParams(paramsBase, availableLocalsRegMask)};
-  indirectCallImpl.handleIndirectCallReg(indirectCallIndex, availableLocalsRegMask);
+  Stack::iterator const indirectCallIndex{indirectCallImpl.iterateParams(paramsBase)};
+  indirectCallImpl.handleIndirectCallReg(indirectCallIndex);
 
   indirectCallImpl.resolveRegisterCopies();
+  common_.markLocalsAsSpilled(spilledLocalsRegMask);
 
   indirectCallImpl.emitFncCallWrapper(
       UnknownIndex, FunctionRef<void()>([this, sigIndex]() {

@@ -135,7 +135,7 @@ protected:
 
 public:
   /// @brief Iterate through function parameters (base implementation)
-  Stack::iterator iterateParamsBase(Stack::iterator const paramsBase, RegMask const &availableLocalsRegMask, bool const isImported);
+  Stack::iterator iterateParamsBase(Stack::iterator const paramsBase, bool const isImported);
   /// @brief Iterate through function results
   void iterateResults();
 
@@ -169,8 +169,8 @@ public:
   }
 
   /// @brief Iterate through imported function parameters
-  inline Stack::iterator iterateParams(Stack::iterator const paramsBase, RegMask const &availableLocalsRegMask) {
-    return V1CallBase::iterateParamsBase(paramsBase, availableLocalsRegMask, true);
+  inline Stack::iterator iterateParams(Stack::iterator const paramsBase) {
+    return V1CallBase::iterateParamsBase(paramsBase, true);
   }
   /// @brief Prepare context for import call
   void prepareCtx();
@@ -189,11 +189,11 @@ public:
   }
 
   /// @brief Handle indirect call register
-  void handleIndirectCallReg(Stack::iterator const indirectCallIndex, RegMask const &availableLocalsRegMask) VB_NOEXCEPT;
+  void handleIndirectCallReg(Stack::iterator const indirectCallIndex) VB_NOEXCEPT;
 
   /// @brief Iterate through internal function parameters
-  inline Stack::iterator iterateParams(Stack::iterator const paramsBase, RegMask const &availableLocalsRegMask) {
-    return V1CallBase::iterateParamsBase(paramsBase, availableLocalsRegMask, false);
+  inline Stack::iterator iterateParams(Stack::iterator const paramsBase) {
+    return V1CallBase::iterateParamsBase(paramsBase, false);
   }
 };
 

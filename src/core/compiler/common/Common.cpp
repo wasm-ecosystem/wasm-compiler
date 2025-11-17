@@ -973,12 +973,24 @@ RegMask Common::saveLocalsAndParamsForFuncCall(bool const onlySaveVolatileReg) c
           compiler_.backend_.emitMoveImpl(VariableStorage::stackMemory(localDef.type, localDef.stackFramePosition),
                                           VariableStorage::reg(localDef.type, reg), false);
         }
-        localDef.currentStorageType = StorageType::STACKMEMORY;
+        localDef.currentStorageType = StorageType::STACK_REG;
         inRegMask.mask(compiler_.backend_.mask(reg, MachineTypeUtil::is64(localDef.type)));
       }
     }
   }
   return inRegMask;
+}
+
+void Common::markLocalsAsSpilled(RegMask const spillMask) noexcept {
+  for (uint32_t i{0U}; i < compiler_.moduleInfo_.fnc.numLocals; i++) {
+    ModuleInfo::LocalDef &localDef{compiler_.moduleInfo_.localDefs[i]};
+    if ((localDef.reg != TReg::NONE) && spillMask.contains(localDef.reg)) {
+      // GCOVR_EXCL_START
+      assert(localDef.currentStorageType == StorageType::STACK_REG);
+      // GCOVR_EXCL_STOP
+      localDef.currentStorageType = StorageType::STACKMEMORY;
+    }
+  }
 }
 
 void Common::initializedLocal(uint32_t const localIdx) const {
@@ -1092,18 +1104,6 @@ void Common::emitGenericTrapHandler() {
     compiler_.backend_.emitStackTraceCollector(stacktraceRecordCount);
   }
   compiler_.backend_.emitTrapHandler();
-}
-
-VariableStorage Common::getOptimizedSourceStorage(StackElement const &elem, RegMask const availableLocalsRegMask) const VB_NOEXCEPT {
-  // If target is reg which contains local, we should move local to stack first
-  if (elem.getBaseType() == StackType::LOCAL) {
-    ModuleInfo::LocalDef const localDef{compiler_.moduleInfo_.localDefs[elem.data.variableData.location.localIdx]};
-    TReg const sourceReg{localDef.reg};
-    if ((sourceReg != TReg::NONE) && availableLocalsRegMask.contains(sourceReg)) {
-      return VariableStorage::reg(localDef.type, sourceReg);
-    }
-  }
-  return compiler_.moduleInfo_.getStorage(elem);
 }
 
 /// @brief merge control flow state

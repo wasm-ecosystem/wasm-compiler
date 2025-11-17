@@ -80,13 +80,13 @@ void DirectV2Import::iterateParams(Stack::iterator const paramsBase) {
   // spill all locals in regs
   // All tricore regs are regarded as volatile registers since call is not used in function call, hardware won' auto
   // save CSA
-  RegMask const availableLocalsRegMask{backend_.common_.saveLocalsAndParamsForFuncCall(true)};
+  RegMask const spilledLocalsRegMask{backend_.common_.saveLocalsAndParamsForFuncCall(true)};
 
   Stack::iterator currentParam{paramsBase};
   uint32_t offsetInArgs{0U};
   backend_.moduleInfo_.iterateParamsForSignature(
-      sigIndex_, FunctionRef<void(MachineType)>([this, &offsetInArgs, &availableLocalsRegMask, &currentParam](MachineType const paramType) {
-        VariableStorage const sourceStorage{backend_.common_.getOptimizedSourceStorage(*currentParam, availableLocalsRegMask)};
+      sigIndex_, FunctionRef<void(MachineType)>([this, &offsetInArgs, &currentParam](MachineType const paramType) {
+        VariableStorage const sourceStorage{backend_.moduleInfo_.getStorage(*currentParam)};
         uint32_t const offsetFromSP{offsetInArgs};
         offsetInArgs += 8U; // Align to 8
         VariableStorage const targetStorage{VariableStorage::stackMemory(paramType, backend_.moduleInfo_.fnc.stackFrameSize - offsetFromSP)};
@@ -95,6 +95,7 @@ void DirectV2Import::iterateParams(Stack::iterator const paramsBase) {
         backend_.common_.removeReference(currentParam);
         currentParam = backend_.stack_.erase(currentParam);
       }));
+  backend_.common_.markLocalsAsSpilled(spilledLocalsRegMask);
 
   backend_.as_.INSTR(MOVAA_Aa_Ab).setAa(NativeABI::addrParamRegs[0]).setAb(REG::SP)();
   uint32_t const of_returnValues{stackParamWidth_};
@@ -122,13 +123,13 @@ void DirectV2Import::iterateResults() {
   }
 }
 
-Stack::iterator V1CallBase::iterateParamsBase(Stack::iterator const paramsBase, RegMask const &availableLocalsRegMask, bool const isImported) {
+Stack::iterator V1CallBase::iterateParamsBase(Stack::iterator const paramsBase, bool const isImported) {
   Stack::iterator currentParam{paramsBase};
   backend_.moduleInfo_.iterateParamsForSignature(
-      sigIndex_, FunctionRef<void(MachineType)>([this, isImported, &availableLocalsRegMask, &currentParam](MachineType const paramType) {
+      sigIndex_, FunctionRef<void(MachineType)>([this, isImported, &currentParam](MachineType const paramType) {
         VariableStorage targetStorage{};
         REG const targetReg{backend_.getREGForArg(paramType, isImported, tracker)};
-        VariableStorage const sourceStorage{backend_.common_.getOptimizedSourceStorage(*currentParam, availableLocalsRegMask)};
+        VariableStorage const sourceStorage{backend_.moduleInfo_.getStorage(*currentParam)};
 
         if (targetReg != REG::NONE) {
           targetStorage = VariableStorage::reg(paramType, targetReg);
@@ -221,9 +222,9 @@ void V1CallBase::resolveRegisterCopies() VB_THROW {
       }));
 }
 // coverity[autosar_cpp14_a8_4_7_violation]
-void InternalCall::handleIndirectCallReg(Stack::iterator const indirectCallIndex, RegMask const &availableLocalsRegMask) VB_NOEXCEPT {
+void InternalCall::handleIndirectCallReg(Stack::iterator const indirectCallIndex) VB_NOEXCEPT {
   constexpr VariableStorage indexTargetStorage{VariableStorage::reg(MachineType::I32, WasmABI::REGS::indirectCallReg)};
-  VariableStorage const sourceStorage{backend_.common_.getOptimizedSourceStorage(*indirectCallIndex, availableLocalsRegMask)};
+  VariableStorage const sourceStorage{backend_.moduleInfo_.getStorage(*indirectCallIndex)};
 
   if (!sourceStorage.inSameLocation(indexTargetStorage)) {
     gprCopyResolver.push(indexTargetStorage, sourceStorage);
