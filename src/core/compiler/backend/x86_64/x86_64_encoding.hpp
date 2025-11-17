@@ -485,43 +485,43 @@ constexpr AbstrInstr ROR_rm32_omit_CL{{0U, REX::NONE, B8F::NONE, OPCodeExt::i1, 
 // coverity[autosar_cpp14_m3_4_1_violation]
 constexpr AbstrInstr ROR_rm64_omit_CL{{0U, REX::W, B8F::NONE, OPCodeExt::i1, 0xD3U}, ArgType::rm64, ArgType::NONE, true, false};
 
-/// @brief IDIV r/m32: Signed divide EDX:EAX by r/m32, with result stored in EAX ← Quotient, EDX ← Remainder.
+/// @brief IDIV r/m32: Signed divide EDX:EAX by r/m32, with result stored in EAX <- Quotient, EDX <- Remainder.
 /// NOTE: Registers EDX and EAX must be loaded manually
 // coverity[autosar_cpp14_m3_4_1_violation]
 constexpr AbstrInstr IDIV_rm32{{0U, REX::NONE, B8F::NONE, OPCodeExt::i7, 0xF7U}, ArgType::NONE, ArgType::rm32, true, false};
-/// @brief IDIV r/m64: Signed divide RDX:RAX by r/m64, with result stored in RAX ← Quotient, RDX ← Remainder.
+/// @brief IDIV r/m64: Signed divide RDX:RAX by r/m64, with result stored in RAX <- Quotient, RDX <- Remainder.
 /// NOTE: Registers EDX and EAX must be loaded manually
 // coverity[autosar_cpp14_m3_4_1_violation]
 constexpr AbstrInstr IDIV_rm64{{0U, REX::W, B8F::NONE, OPCodeExt::i7, 0xF7U}, ArgType::NONE, ArgType::rm64, true, false};
-/// @brief DIV r/m32: Unsigned divide EDX:EAX by r/m32, with result stored in EAX ← Quotient, EDX ← Remainder.
+/// @brief DIV r/m32: Unsigned divide EDX:EAX by r/m32, with result stored in EAX <- Quotient, EDX <- Remainder.
 /// NOTE: Registers EDX and EAX must be loaded manually
 // coverity[autosar_cpp14_m3_4_1_violation]
 constexpr AbstrInstr DIV_rm32{{0U, REX::NONE, B8F::NONE, OPCodeExt::i6, 0xF7U}, ArgType::NONE, ArgType::rm32, true, false};
-/// @brief DIV r/m64: Unsigned divide RDX:RAX by r/m64, with result stored in RAX ← Quotient, RDX ← Remainder.
+/// @brief DIV r/m64: Unsigned divide RDX:RAX by r/m64, with result stored in RAX <- Quotient, RDX <- Remainder.
 /// NOTE: Registers EDX and EAX must be loaded manually
 // coverity[autosar_cpp14_m3_4_1_violation]
 constexpr AbstrInstr DIV_rm64{{0U, REX::W, B8F::NONE, OPCodeExt::i6, 0xF7U}, ArgType::NONE, ArgType::rm64, true, false};
 
-/// @brief IMUL r32, r/m32, imm8: doubleword register ← r/m32 ∗ sign-extended immediate byte.
+/// @brief IMUL r32, r/m32, imm8: doubleword register <- r/m32 * sign-extended immediate byte.
 /// NOTE: Immediate will not be emitted. Must be done manually.
 // coverity[autosar_cpp14_m3_4_1_violation]
 constexpr AbstrInstr IMUL_r32_rm32_omit_imm8sx{{0U, REX::NONE, B8F::NONE, OPCodeExt::R, 0x6BU}, ArgType::r32, ArgType::rm32, true, false};
-/// @brief IMUL r64, r/m64, imm8: quadword register ← r/m64 ∗ sign-extended immediate byte.
+/// @brief IMUL r64, r/m64, imm8: quadword register <- r/m64 * sign-extended immediate byte.
 /// NOTE: Immediate will not be emitted. Must be done manually.
 // coverity[autosar_cpp14_m3_4_1_violation]
 constexpr AbstrInstr IMUL_r64_rm64_omit_imm8sx{{0U, REX::W, B8F::NONE, OPCodeExt::R, 0x6BU}, ArgType::r64, ArgType::rm64, true, false};
-/// @brief IMUL r32, r/m32, imm32: doubleword register ← r/m32 ∗ immediate doubleword.
+/// @brief IMUL r32, r/m32, imm32: doubleword register <- r/m32 * immediate doubleword.
 /// NOTE: Immediate will not be emitted. Must be done manually.
 // coverity[autosar_cpp14_m3_4_1_violation]
 constexpr AbstrInstr IMUL_r32_rm32_omit_imm32{{0U, REX::NONE, B8F::NONE, OPCodeExt::R, 0x69U}, ArgType::r32, ArgType::rm32, true, false};
-/// @brief IMUL r64, r/m64, imm32: quadword register ← r/m64 ∗ immediate doubleword.
+/// @brief IMUL r64, r/m64, imm32: quadword register <- r/m64 * immediate doubleword.
 /// NOTE: Immediate will not be emitted. Must be done manually.
 // coverity[autosar_cpp14_m3_4_1_violation]
 constexpr AbstrInstr IMUL_r64_rm64_omit_imm32sx{{0U, REX::W, B8F::NONE, OPCodeExt::R, 0x69U}, ArgType::r64, ArgType::rm64, true, false};
-/// @brief IMUL r32, r/m32: doubleword register ← doubleword register ∗ r/m32.
+/// @brief IMUL r32, r/m32: doubleword register <- doubleword register * r/m32.
 // coverity[autosar_cpp14_m3_4_1_violation]
 constexpr AbstrInstr IMUL_r32_rm32{{0U, REX::NONE, B8F::NONE, OPCodeExt::R, 0x0FAFU}, ArgType::r32, ArgType::rm32, false, true};
-/// @brief IMUL r64, r/m64: quadword register ← quadword register ∗ r/m64.
+/// @brief IMUL r64, r/m64: quadword register <- quadword register * r/m64.
 constexpr AbstrInstr IMUL_r64_rm64{{0U, REX::W, B8F::NONE, OPCodeExt::R, 0x0FAFU}, ArgType::r64, ArgType::rm64, false, true};
 
 /// @brief NEG r/rm64: Two's complement negate r/m64.
@@ -748,10 +748,10 @@ constexpr OPCodeTemplate XCHG_rm32_r32_t{0U, REX::NONE, B8F::NONE, OPCodeExt::R,
 // coverity[autosar_cpp14_m3_4_1_violation]
 constexpr OPCodeTemplate XCHG_rm64_r64_t{0U, REX::W, B8F::NONE, OPCodeExt::R, 0x87U};
 
-/// @brief CDQ: EDX:EAX ← sign-extend of EAX.
+/// @brief CDQ: EDX:EAX <- sign-extend of EAX.
 // coverity[autosar_cpp14_m3_4_1_violation]
 constexpr OPCodeTemplate CDQ_t{0U, REX::NONE, B8F::NONE, OPCodeExt::NONE, 0x99U};
-/// @brief CDO: RDX:RAX← sign-extend of RAX.
+/// @brief CDO: RDX:RAX<- sign-extend of RAX.
 // coverity[autosar_cpp14_m3_4_1_violation]
 constexpr OPCodeTemplate CDO_t{0U, REX::W, B8F::NONE, OPCodeExt::NONE, 0x99U};
 
@@ -829,7 +829,7 @@ constexpr OPCodeTemplate LDMXCSR_m32_t{0U, REX::NONE, B8F::NONE, OPCodeExt::i2, 
 // coverity[autosar_cpp14_m3_4_1_violation]
 constexpr OPCodeTemplate BTC_rm64_imm8_t{0U, REX::W, B8F::NONE, OPCodeExt::i7, 0x0FBAU};
 
-/// @brief LAHF: Load: AH ← EFLAGS(SF:ZF:0:AF:0:PF:1:CF).
+/// @brief LAHF: Load: AH <- EFLAGS(SF:ZF:0:AF:0:PF:1:CF).
 constexpr OPCodeTemplate LAHF_T{0U, REX::NONE, B8F::NONE, OPCodeExt::NONE, 0x9FU};
 /// @brief SAHF: Loads SF, ZF, AF, PF, and CF from AH into EFLAGS register.
 constexpr OPCodeTemplate SAHF_T{0U, REX::NONE, B8F::NONE, OPCodeExt::NONE, 0x9EU};
