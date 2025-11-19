@@ -77,11 +77,6 @@ void CallBase::prepareStackFrame() {
 }
 
 void DirectV2Import::iterateParams(Stack::iterator const paramsBase) {
-  // spill all locals in regs
-  // All tricore regs are regarded as volatile registers since call is not used in function call, hardware won' auto
-  // save CSA
-  RegMask const spilledLocalsRegMask{backend_.common_.saveLocalsAndParamsForFuncCall(true)};
-
   Stack::iterator currentParam{paramsBase};
   uint32_t offsetInArgs{0U};
   backend_.moduleInfo_.iterateParamsForSignature(
@@ -95,7 +90,6 @@ void DirectV2Import::iterateParams(Stack::iterator const paramsBase) {
         backend_.common_.removeReference(currentParam);
         currentParam = backend_.stack_.erase(currentParam);
       }));
-  backend_.common_.markLocalsAsSpilled(spilledLocalsRegMask);
 
   backend_.as_.INSTR(MOVAA_Aa_Ab).setAa(NativeABI::addrParamRegs[0]).setAb(REG::SP)();
   uint32_t const of_returnValues{stackParamWidth_};

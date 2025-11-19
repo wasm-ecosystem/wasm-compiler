@@ -9,7 +9,7 @@
     local.set $arg0
     ;; AARCH64:       mov [[LOCAL_REG:w[0-9]+]], #0x111
     call $callee/0
-    ;; AARCH64:       str [[LOCAL_REG]],  [sp, [[OFFSET:#0x[0-9]+]]]
+    ;; AARCH64:       str [[LOCAL_REG]],  [sp, [[OFFSET:#0x[0-9a-f]+]]]
     ;; AARCH64:       bl  0x[[#%x,FUNC_ADDR:]]
     i32.const 0x222
     local.set $arg0
@@ -24,7 +24,7 @@
     local.set $arg0
     ;; AARCH64:         mov [[LOCAL_REG:w[0-9]+]], #0x111
     call $callee/0
-    ;; AARCH64:         str [[LOCAL_REG]],  [sp, [[OFFSET:#0x[0-9]+]]]
+    ;; AARCH64:         str [[LOCAL_REG]],  [sp, [[OFFSET:#0x[0-9a-f]+]]]
     ;; AARCH64:         bl  0x[[#%x,FUNC_ADDR:]]
     block
 
@@ -42,13 +42,14 @@
     local.set $arg0
     ;; AARCH64:         mov [[LOCAL_REG:w[0-9]+]], #0x111
     call $callee/0
-    ;; AARCH64:         str [[LOCAL_REG]],  [sp, [[OFFSET:#0x[0-9]+]]]
+    ;; AARCH64:         str [[LOCAL_REG]],  [sp, #0x[[#%x,OFFSET2:]]]
+    ;; AARCH64:         add  sp, sp, #0x[[#%x,STACK_CHANGE:]]
     ;; AARCH64:         bl  0x[[#%x,FUNC_ADDR:]]
 
     block
       local.get 1
       br_if 0
-      ;; AARCH64:       ldr [[LOCAL_REG]], [sp, [[OFFSET]]]
+      ;; AARCH64:       ldr [[LOCAL_REG]], [sp, #0x[[#%x,OFFSET2 - STACK_CHANGE]]]
       ;; AARCH64:       b.ne 0x[[#%x,BLOCK_END_ADDR:]]
       i32.const 0x222
       local.set $arg0

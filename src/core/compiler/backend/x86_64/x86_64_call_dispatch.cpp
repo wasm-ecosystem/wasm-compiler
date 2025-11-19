@@ -73,9 +73,6 @@ void CallBase::prepareStackFrame() {
 }
 
 void DirectV2Import::iterateParams(Stack::iterator const paramsBase) {
-  // Spill all locals in regs
-  RegMask const spilledLocalsRegMask{backend_.common_.saveLocalsAndParamsForFuncCall(true)};
-
   Stack::iterator currentParam{paramsBase};
   uint32_t offsetInArgs{of_stackParams_};
   backend_.moduleInfo_.iterateParamsForSignature(
@@ -89,7 +86,6 @@ void DirectV2Import::iterateParams(Stack::iterator const paramsBase) {
         backend_.common_.removeReference(currentParam);
         currentParam = backend_.stack_.erase(currentParam);
       }));
-  backend_.common_.markLocalsAsSpilled(spilledLocalsRegMask);
 
   RegStackTracker tracker{};
   REG const regForParamsPtr{backend_.getREGForArg(MachineType::I64, true, tracker)};

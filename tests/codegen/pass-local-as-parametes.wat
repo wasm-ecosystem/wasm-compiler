@@ -16,7 +16,7 @@
     ;; X86_64:         mov  ebp, 0x1234
     ;; X86_64:         call
 
-    ;; AARCH64:        str  w19, [sp, [[OFFSET:#0x[0-9]+]]]
+    ;; AARCH64:        str  w19, [sp, [[OFFSET:#0x[0-9a-f]+]]]
     ;; AARCH64:        mov  w8, w19
     ;; AARCH64:        mov  w19, #0x1234
     ;; AARCH64:        bl
@@ -27,7 +27,7 @@
     ;; store $arg0 to stack before load 0x1234 as 1st argument reg.
     ;; then do not need to load $arg1 from stack because it is already in 2nd parameter reg.
 
-    ;; TRICORE:        st.w  [sp]#0x10, d8
+    ;; TRICORE:        st.w  [sp][[OFFSET:#0x[0-9a-f]+]], d8
     ;; TRICORE:        mov.u  d8, #0x1234
     ;; TRICORE:        fcall
 

@@ -5,11 +5,11 @@
     (param $arg0 i32)
     block $loop
     ;; enter loop
-    ;; AARCH64:  add  sp, sp, #0x[[#%x,STACK_SIZE:]]
-      call $callee/0
     ;; before function call, locals should be stored in stack
     ;; AARCH64:  str  w19,
+    ;; AARCH64:  add  sp, sp, #0x[[#%x,STACK_SIZE:]]
     ;; AARCH64:  bl
+    call $callee/0
     ;; after function call, locals should be recover to reg
     ;; AARCH64:  ldr w19,
     end

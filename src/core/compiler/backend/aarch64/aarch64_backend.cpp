@@ -1455,6 +1455,7 @@ void Backend::execDirectFncCall(uint32_t const fncIndex) {
   assert((!imported || fncIndex != UnknownIndex) && "Need to provide fncIndex for imports");
 
   uint32_t const sigIndex{moduleInfo_.getFncSigIndex(fncIndex)};
+  RegMask const spilledLocalsRegMask{common_.saveLocalsAndParamsForFuncCall(imported)};
   Stack::iterator const paramsBase{common_.prepareCallParamsAndSpillContext(sigIndex, false)};
 
   // Load the parameters etc., set up everything then emit the actual call
@@ -1463,6 +1464,7 @@ void Backend::execDirectFncCall(uint32_t const fncIndex) {
     DirectV2Import v2ImportCall{*this, sigIndex};
     v2ImportCall.storeLR();
     v2ImportCall.iterateParams(paramsBase);
+    common_.markLocalsAsSpilled(spilledLocalsRegMask);
     uint32_t const jobMemoryPtrPtrOffset{v2ImportCall.getJobMemoryPtrPtrOffset()};
     // coverity[autosar_cpp14_a5_1_9_violation]
     v2ImportCall.emitFncCallWrapper(fncIndex, FunctionRef<void()>([this, fncIndex, jobMemoryPtrPtrOffset]() {
@@ -1493,7 +1495,7 @@ void Backend::execDirectFncCall(uint32_t const fncIndex) {
     ImportCallV1 importCallV1Impl{*this, sigIndex};
 
     importCallV1Impl.storeLR();
-    RegMask const spilledLocalsRegMask{common_.saveLocalsAndParamsForFuncCall(true)};
+
     static_cast<void>(importCallV1Impl.iterateParams(paramsBase));
     importCallV1Impl.prepareCtx();
     importCallV1Impl.resolveRegisterCopies();
@@ -1528,7 +1530,6 @@ void Backend::execDirectFncCall(uint32_t const fncIndex) {
 
     directWasmCallImpl.storeLR();
 
-    RegMask const spilledLocalsRegMask{common_.saveLocalsAndParamsForFuncCall(imported)};
     static_cast<void>(directWasmCallImpl.iterateParams(paramsBase));
     directWasmCallImpl.resolveRegisterCopies();
     common_.markLocalsAsSpilled(spilledLocalsRegMask);

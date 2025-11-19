@@ -643,13 +643,16 @@ void Backend::execDirectFncCall(uint32_t const fncIndex) {
   assert((!imported || fncIndex != UnknownIndex) && "Need to provide fncIndex for imports");
 
   uint32_t const sigIndex{moduleInfo_.getFncSigIndex(fncIndex)};
+  RegMask const spilledLocalsRegMask{common_.saveLocalsAndParamsForFuncCall(imported)};
   Stack::iterator const paramsBase{common_.prepareCallParamsAndSpillContext(sigIndex, false)};
 
   // Load the parameters etc., set up everything then emit the actual call
   if (moduleInfo_.functionIsV2Import(fncIndex)) {
     common_.moveGlobalsToLinkData();
     DirectV2Import v2ImportCall{*this, sigIndex};
+
     v2ImportCall.iterateParams(paramsBase);
+    common_.markLocalsAsSpilled(spilledLocalsRegMask);
     uint32_t const jobMemPtrPtrOffset{v2ImportCall.getJobMemoryPtrPtrOffset()};
     // coverity[autosar_cpp14_a5_1_9_violation]
     v2ImportCall.emitFncCallWrapper(fncIndex, FunctionRef<void()>([this, fncIndex, jobMemPtrPtrOffset]() {
@@ -676,7 +679,6 @@ void Backend::execDirectFncCall(uint32_t const fncIndex) {
     common_.moveGlobalsToLinkData();
     ImportCallV1 importCallV1Impl{*this, sigIndex};
 
-    RegMask const spilledLocalsRegMask{common_.saveLocalsAndParamsForFuncCall(true)};
     static_cast<void>(importCallV1Impl.iterateParams(paramsBase));
     importCallV1Impl.prepareCtx();
     importCallV1Impl.resolveRegisterCopies();
@@ -708,7 +710,6 @@ void Backend::execDirectFncCall(uint32_t const fncIndex) {
     // Direct call to a Wasm function
     InternalCall directWasmCallImpl{*this, sigIndex};
 
-    RegMask const spilledLocalsRegMask{common_.saveLocalsAndParamsForFuncCall(false)};
     static_cast<void>(directWasmCallImpl.iterateParams(paramsBase));
     directWasmCallImpl.resolveRegisterCopies();
     common_.markLocalsAsSpilled(spilledLocalsRegMask);
@@ -728,10 +729,11 @@ void Backend::execDirectFncCall(uint32_t const fncIndex) {
 void Backend::execIndirectWasmCall(uint32_t const sigIndex, uint32_t const tableIndex) {
   static_cast<void>(tableIndex);
   assert(moduleInfo_.hasTable && tableIndex == 0 && "Table not defined");
+  RegMask const spilledLocalsRegMask{common_.saveLocalsAndParamsForFuncCall(false)};
   Stack::iterator const paramsBase{common_.prepareCallParamsAndSpillContext(sigIndex, true)};
 
   InternalCall indirectCallImpl{*this, sigIndex};
-  RegMask const spilledLocalsRegMask{common_.saveLocalsAndParamsForFuncCall(false)};
+
   Stack::iterator const indirectCallIndex{indirectCallImpl.iterateParams(paramsBase)};
   indirectCallImpl.handleIndirectCallReg(indirectCallIndex);
   indirectCallImpl.resolveRegisterCopies();
