@@ -32,6 +32,7 @@ namespace vb {
 /// @brief Utility class that can be used to manage and conveniently write machine code or serialized data to an
 /// ExtendableMemory
 ///
+// coverity[autosar_cpp14_m3_4_1_violation]
 class MemWriter final {
 public:
   ///

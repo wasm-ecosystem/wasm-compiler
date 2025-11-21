@@ -30,14 +30,6 @@
 namespace vb {
 namespace aarch64 {
 
-Instruction::Instruction(OPCodeTemplate const opcode, MemWriter &binary) VB_NOEXCEPT : opcode_{opcode}, binary_(binary), emitted_(false) {
-}
-Instruction::Instruction(AbstrInstr const abstrInstr, MemWriter &binary) VB_NOEXCEPT : opcode_{abstrInstr.opcode}, binary_(binary), emitted_(false) {
-}
-Instruction::~Instruction() VB_NOEXCEPT {
-  assert(emitted_ && "Instruction was created, but has not been emitted");
-}
-
 Instruction &Instruction::setImm6(uint32_t const imm6) VB_NOEXCEPT {
   opcode_ |= imm6 << 10U;
   return *this;

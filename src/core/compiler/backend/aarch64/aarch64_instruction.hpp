@@ -17,6 +17,7 @@
 #ifndef AARCH64_INSTRUCTION_HPP
 #define AARCH64_INSTRUCTION_HPP
 
+#include <cassert>
 #include <cstdint>
 
 #include "aarch64_encoding.hpp"
@@ -40,14 +41,16 @@ public:
   ///
   /// @param opcode OPCode template
   /// @param binary Output binary
-  Instruction(OPCodeTemplate const opcode, MemWriter &binary) VB_NOEXCEPT;
+  inline Instruction(OPCodeTemplate const opcode, MemWriter &binary) VB_NOEXCEPT : opcode_{opcode}, binary_(binary), emitted_(false) {
+  }
 
   ///
   /// @brief Construct a new Instruction instance from an AbstrInstr
   ///
   /// @param abstrInstr Abstract instruction representation
   /// @param binary Output binary
-  Instruction(AbstrInstr const abstrInstr, MemWriter &binary) VB_NOEXCEPT;
+  inline Instruction(AbstrInstr const abstrInstr, MemWriter &binary) VB_NOEXCEPT : opcode_{abstrInstr.opcode}, binary_(binary), emitted_(false) {
+  }
 
   ///
   /// @brief Construct a new Instruction with the copy operator
@@ -65,7 +68,9 @@ public:
   /// @brief Destructor of the instruction instance that will check whether it was (probably) forgotten to emit this
   /// instruction via assert
   ///
-  ~Instruction() VB_NOEXCEPT;
+  inline ~Instruction() VB_NOEXCEPT {
+    assert(emitted_ && "Instruction was created, but has not been emitted");
+  }
 
   ///
   /// @brief Set a register to the D field

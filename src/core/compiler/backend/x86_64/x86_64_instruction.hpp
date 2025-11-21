@@ -17,6 +17,7 @@
 #ifndef X86_64_INSTRUCTION_HPP
 #define X86_64_INSTRUCTION_HPP
 
+#include <cassert>
 #include <cstdint>
 
 #include "x86_64_encoding.hpp"
@@ -38,14 +39,38 @@ public:
   ///
   /// @param opcode Basic opcode template
   /// @param binary Reference to the output binary
-  Instruction(OPCodeTemplate const opcode, MemWriter &binary) VB_NOEXCEPT;
+  inline Instruction(OPCodeTemplate const opcode, MemWriter &binary) VB_NOEXCEPT : opcode_{opcode},
+                                                                                   cc_(CC::NONE),
+                                                                                   rmType_(RMType::NONE),
+                                                                                   immType_(ImmType::NONE),
+                                                                                   immediate_(0U),
+                                                                                   rReg_(REG::NONE),
+                                                                                   rmBaseReg_(REG::NONE),
+                                                                                   rmIndexReg_(REG::NONE),
+                                                                                   rmIndexScalePow2_(0U),
+                                                                                   rmDisplacement_(0),
+                                                                                   binary_(binary),
+                                                                                   emitted_(false) {
+  }
 
   ///
   /// @brief Construct a new Instruction instance
   ///
   /// @param abstrInstr Abstract instruction
   /// @param binary Reference to the output binary
-  Instruction(AbstrInstr const &abstrInstr, MemWriter &binary) VB_NOEXCEPT;
+  inline Instruction(AbstrInstr const &abstrInstr, MemWriter &binary) VB_NOEXCEPT : opcode_{abstrInstr.opTemplate},
+                                                                                    cc_(CC::NONE),
+                                                                                    rmType_(RMType::NONE),
+                                                                                    immType_(ImmType::NONE),
+                                                                                    immediate_(0U),
+                                                                                    rReg_(REG::NONE),
+                                                                                    rmBaseReg_(REG::NONE),
+                                                                                    rmIndexReg_(REG::NONE),
+                                                                                    rmIndexScalePow2_(0U),
+                                                                                    rmDisplacement_(0),
+                                                                                    binary_(binary),
+                                                                                    emitted_(false) {
+  }
   Instruction(Instruction &) = delete;
 
   ///
@@ -54,7 +79,9 @@ public:
   Instruction(Instruction &&) = default;
   Instruction &operator=(const Instruction &) & = delete;
   Instruction &operator=(Instruction &&) & = delete;
-  ~Instruction() VB_NOEXCEPT;
+  inline ~Instruction() VB_NOEXCEPT {
+    assert(emitted_ && "Instruction was created, but has not been emitted");
+  }
 
   ///
   /// @brief Set a register to the r field

@@ -17,6 +17,7 @@
 #ifndef TRICORE_INSTRUCTION_HPP
 #define TRICORE_INSTRUCTION_HPP
 
+#include <cassert>
 #include <cstdint>
 
 #include "tricore_encoding.hpp"
@@ -40,7 +41,8 @@ public:
   ///
   /// @param opcode OPCode template
   /// @param binary Output binary
-  Instruction(OPCodeTemplate const opcode, MemWriter &binary) VB_NOEXCEPT;
+  Instruction(OPCodeTemplate const opcode, MemWriter &binary) VB_NOEXCEPT : opcode_{opcode}, binary_(binary), emitted_(false) {
+  }
 
   ///
   /// @brief Construct a new Instruction with the copy operator

@@ -30,36 +30,6 @@
 namespace vb {
 namespace x86_64 {
 
-Instruction::Instruction(OPCodeTemplate const opcode, MemWriter &binary) VB_NOEXCEPT : opcode_{opcode},
-                                                                                       cc_(CC::NONE),
-                                                                                       rmType_(RMType::NONE),
-                                                                                       immType_(ImmType::NONE),
-                                                                                       immediate_(0U),
-                                                                                       rReg_(REG::NONE),
-                                                                                       rmBaseReg_(REG::NONE),
-                                                                                       rmIndexReg_(REG::NONE),
-                                                                                       rmIndexScalePow2_(0U),
-                                                                                       rmDisplacement_(0),
-                                                                                       binary_(binary),
-                                                                                       emitted_(false) {
-}
-Instruction::Instruction(AbstrInstr const &abstrInstr, MemWriter &binary) VB_NOEXCEPT : opcode_{abstrInstr.opTemplate},
-                                                                                        cc_(CC::NONE),
-                                                                                        rmType_(RMType::NONE),
-                                                                                        immType_(ImmType::NONE),
-                                                                                        immediate_(0U),
-                                                                                        rReg_(REG::NONE),
-                                                                                        rmBaseReg_(REG::NONE),
-                                                                                        rmIndexReg_(REG::NONE),
-                                                                                        rmIndexScalePow2_(0U),
-                                                                                        rmDisplacement_(0),
-                                                                                        binary_(binary),
-                                                                                        emitted_(false) {
-}
-Instruction::~Instruction() VB_NOEXCEPT {
-  assert(emitted_ && "Instruction was created, but has not been emitted");
-}
-
 // Sets a register for the REG field in the MOD R/M byte.
 // For RADD (Register add to opcode) extension as in MOV rax, imm64 or
 // PUSH/POP, we set it to the rmBaseReg since it mandates the REX.B flag to be

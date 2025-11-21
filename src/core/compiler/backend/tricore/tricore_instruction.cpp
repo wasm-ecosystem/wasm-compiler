@@ -32,9 +32,6 @@
 namespace vb {
 namespace tc {
 
-Instruction::Instruction(OPCodeTemplate const opcode, MemWriter &binary) VB_NOEXCEPT : opcode_{opcode}, binary_(binary), emitted_(false) {
-}
-
 void Instruction::emitCode() {
   assert(!emitted_ && "Instruction can only be emitted once");
   // Set this to true before we try to write, otherwise the instruction might be destroyed without it being set to true
