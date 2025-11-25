@@ -23,7 +23,6 @@
 #include "Analytics.hpp"
 
 #include "src/core/compiler/common/StackElement.hpp"
-#include "src/core/compiler/common/StackType.hpp"
 
 namespace vb {
 namespace extension {
@@ -48,8 +47,13 @@ void Analytics::updateMemoryUsage(MemoryUsage &memoryUsage, uint32_t const compi
 /// @param maxBlocks Max number of blocks
 /// @param end String to print after the line
 void printGraphLine(float const percent, uint32_t const maxBlocks, std::string const &end = "\n") {
-  constexpr char fullBlock[4] = "█";                                                     // NOLINT(modernize-avoid-c-arrays)
-  constexpr std::array<char[4], 8> blockChars = {"", "▏", "▎", "▍", "▌", "▋", "▊", "▉"}; // NOLINT(modernize-avoid-c-arrays)
+  // Use explicit UTF-8 byte escape sequences so source remains pure ASCII and works on MSVC/GCC/Clang without /utf-8.
+  // Unicode: FULL BLOCK U+2588, LEFT 1/8..7/8 BLOCK U+258F..U+2589
+  // █
+  constexpr const char *fullBlock = "\xE2\x96\x88";
+  // "", "▏", "▎", "▍", "▌", "▋", "▊", "▉"
+  constexpr std::array<const char *, 8> blockChars{
+      "", "\xE2\x96\x8F", "\xE2\x96\x8E", "\xE2\x96\x8D", "\xE2\x96\x8C", "\xE2\x96\x8B", "\xE2\x96\x8A", "\xE2\x96\x89"};
 
   uint32_t const fullBlocks = static_cast<uint32_t>(percent * static_cast<float>(maxBlocks));
   uint32_t const eightsBlocks = static_cast<uint32_t>((percent * static_cast<float>(maxBlocks) - static_cast<float>(fullBlocks)) / 0.125F);
