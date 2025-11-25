@@ -1,5 +1,8 @@
 # Wasm Compiler Release Notes
 
+## 3.0.7
+- Fix encoding compatibility
+
 ## 3.0.6
 - Fix SPDX format
 
