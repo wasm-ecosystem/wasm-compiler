@@ -663,6 +663,7 @@ constexpr OPCodeTemplate SUB_Dc_Da_Db{(0x08_U32 << 20_U32) | 0x0B_U32};
 constexpr OPCodeTemplate SUB_Da_Db{0x00A2U};
 
 /// Add address register to address register instruction
+// coverity[autosar_cpp14_m3_4_1_violation]
 constexpr OPCodeTemplate ADDA_Ac_Aa_Ab{(0x01_U32 << 20_U32) | 0x01_U32};
 /// Add address register to address register instruction (16b instruction)
 constexpr OPCodeTemplate ADDA_Aa_Ab{0x0030U};

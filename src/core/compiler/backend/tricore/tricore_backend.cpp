@@ -1188,8 +1188,7 @@ void Backend::execBuiltinFncCall(BuiltinFunction const builtinFunction) {
         .setAb(WasmABI::REGS::linMem)
         .setOff16sx(SafeInt<16U>::fromConst<-BD::FromEnd::linkedMemPtr>())();
 
-    as_.INSTR(MOVA_Aa_Db).setAa(WasmABI::REGS::addrScrReg[2]).setDb(offsetReg)();
-    as_.INSTR(ADDA_Ac_Aa_Ab).setAc(WasmABI::REGS::memLdStReg).setAa(linkedMemPtrReg).setAb(WasmABI::REGS::addrScrReg[2])();
+    as_.INSTR(ADDSCA_Ac_Ab_Da_nSc).setAc(WasmABI::REGS::memLdStReg).setAb(linkedMemPtrReg).setDa(offsetReg).setNSc(SafeUInt<2>::fromConst<0U>())();
 
     // WasmABI::REGS::memLdStReg now contains the full raw ptr
 
