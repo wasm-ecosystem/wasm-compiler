@@ -1,6 +1,8 @@
 (module
     ;; CHECK-LABEL: Function[0] Body
     (func $localInRam (param i32) (local i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32)
+        local.get 0
+        local.set 29
         local.get 29
         i32.const 0
         i32.eq

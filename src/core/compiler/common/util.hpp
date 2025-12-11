@@ -120,6 +120,12 @@ template <class Target, class SourceType> inline bool in_range(SourceType const 
                 "in_range only works for integers with same signedness");
   return in_range<sizeof(Target) * 8U>(data);
 }
+/// @brief Convert a boolean value to uint32_t
+/// @param value Boolean input value
+/// @return 1 for true, 0 for false
+inline constexpr uint32_t boolToU32(bool const value) VB_NOEXCEPT {
+  return value ? static_cast<uint32_t>(1U) : static_cast<uint32_t>(0U);
+}
 
 } // namespace vb
 

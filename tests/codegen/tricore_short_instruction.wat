@@ -8,6 +8,8 @@
   (memory 1)
   ;; CHECK-LABEL: Function[0] Body
   (func $eq-tricore-16-bit-instruction (param i32) (result i32) (local i32 i32 i32 i32 i32 i32 i32 i32 i32)
+    local.get 0
+    local.set 9
     local.get 9
     i32.const 0
     ;; TRICORE: eq  d15, [[LOCAL_REG:d[0-9]+]], #0
@@ -22,6 +24,8 @@
   )
   ;; CHECK-LABEL: Function[1] Body
   (func $lt-tricore-16-bit-instruction (param i32) (result i32) (local i32 i32 i32 i32 i32 i32 i32 i32 i32)
+    local.get 0
+    local.set 9
     local.get 9
     i32.const 0
     ;; TRICORE: lt  d15, [[LOCAL_REG:d[0-9]+]], #{{[0-9]+}}

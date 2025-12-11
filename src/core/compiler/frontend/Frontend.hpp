@@ -306,6 +306,13 @@ private:
   /// @param blockIt Iterator to the block to be popped
   void popBlockAndPushReturnValues(Stack::iterator const blockIt) VB_NOEXCEPT;
 
+  ///
+  /// @brief Attempt constant propagation for comparison operations
+  ///
+  /// @param op The comparison opcode to evaluate
+  /// @return StackElement Valid StackElement with computed constant result if propagation succeeds, invalid StackElement otherwise
+  StackElement tryConstantPropagation(OPCode const op) VB_NOEXCEPT;
+
   BytecodeReader br_;                          ///< Bytecode reader
   Span<NativeSymbol const> const &symbolList_; ///< NativeSymbols that can be imported
   ModuleInfo &moduleInfo_;                     ///< Reference to the ModuleInfo

@@ -42,12 +42,12 @@
         i64.extend_i32_s
     )
     ;; CHECK-LABEL: Function[3] Body
-    (func $compareResult  (result i64)
-    i32.const 1
+    (func $compareResult (param i32)  (result i64)
+    local.get 0
     i32.const 1
     ;; X86_64:  sete  al
     ;; AARCH64: cset  w0, eq
-    ;; TRICORE:         eq  d2, d2, #1
+    ;; TRICORE:         eq  d2, [[REG:d[0-9]+]], #1
     ;; TRICORE-NEXT:    mov  d3, #0
     i32.eq
     i64.extend_i32_u
@@ -55,6 +55,8 @@
 
     ;; CHECK-LABEL: Function[4] Body
     (func $localInRam (param i32) (param i64) (local i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64)
+        i64.const 1
+        local.set 29
         local.get 29
         i64.const 0
         i64.eq
@@ -85,9 +87,9 @@
     (global (mut i64) (i64.const 0))
 
     ;; CHECK-LABEL: Function[6] Body
-    (func (result i64)
+    (func (param i64) (result i64)
     
-        i64.const 1
+        local.get 0
         i64.const -9223372036854775808
         i64.eq
         i64.extend_i32_u

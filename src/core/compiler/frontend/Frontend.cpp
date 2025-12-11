@@ -2384,6 +2384,13 @@ void Frontend::parseCodeSection() {
         if (currentFrameIsUnreachable()) {
           break;
         }
+
+        StackElement const constResult{tryConstantPropagation(instruction)};
+        if (constResult.type != StackType::INVALID) {
+          static_cast<void>(common_.pushOperandsToStack(constResult));
+          break;
+        }
+
         bool const canTrap{Common::opcodeCanTrap(instruction)};
         uint16_t const sideEffect{canTrap ? static_cast<uint16_t>(1U) : static_cast<uint16_t>(0U)};
         StackElement const action{StackElement::action(instruction, sideEffect, 0U)};
@@ -3214,5 +3221,132 @@ void Frontend::popBlockAndPushReturnValues(Stack::iterator const blockIt) VB_NOE
   } else {
     stack_.pop();
   }
+}
+
+StackElement Frontend::tryConstantPropagation(OPCode const op) VB_NOEXCEPT {
+  if ((op == OPCode::I32_EQZ) || (op == OPCode::I64_EQZ)) {
+    Stack::iterator const lastElem{stack_.last()};
+    if (lastElem->getBaseType() != StackType::CONSTANT) {
+      return StackElement::invalid();
+    }
+    uint32_t result{0U};
+    if (op == OPCode::I32_EQZ) {
+      result = boolToU32(lastElem->data.constUnion.u32 == 0U);
+    } else {
+      result = boolToU32(lastElem->data.constUnion.u64 == 0U);
+    }
+    common_.popAndUpdateReference();
+    return StackElement::i32Const(result);
+  }
+
+  // I32 binary comparisons
+  if ((op >= OPCode::I32_EQ) && (op <= OPCode::I32_GE_U)) {
+    Stack::iterator const lastElem{stack_.last()};
+    if (lastElem->getBaseType() != StackType::CONSTANT) {
+      return StackElement::invalid();
+    }
+
+    Stack::iterator const secondLastElem{lastElem.prev()};
+    if (secondLastElem->getBaseType() != StackType::CONSTANT) {
+      return StackElement::invalid();
+    }
+
+    uint32_t const lhs{secondLastElem->data.constUnion.u32};
+    uint32_t const rhs{lastElem->data.constUnion.u32};
+    uint32_t result{0U};
+    switch (op) {
+    case OPCode::I32_EQ:
+      result = boolToU32(lhs == rhs);
+      break;
+    case OPCode::I32_NE:
+      result = boolToU32(lhs != rhs);
+      break;
+    case OPCode::I32_LT_S:
+      result = boolToU32(static_cast<int32_t>(lhs) < static_cast<int32_t>(rhs));
+      break;
+    case OPCode::I32_LT_U:
+      result = boolToU32(lhs < rhs);
+      break;
+    case OPCode::I32_GT_S:
+      result = boolToU32(static_cast<int32_t>(lhs) > static_cast<int32_t>(rhs));
+      break;
+    case OPCode::I32_GT_U:
+      result = boolToU32(lhs > rhs);
+      break;
+    case OPCode::I32_LE_S:
+      result = boolToU32(static_cast<int32_t>(lhs) <= static_cast<int32_t>(rhs));
+      break;
+    case OPCode::I32_LE_U:
+      result = boolToU32(lhs <= rhs);
+      break;
+    case OPCode::I32_GE_S:
+      result = boolToU32(static_cast<int32_t>(lhs) >= static_cast<int32_t>(rhs));
+      break;
+    case OPCode::I32_GE_U:
+      result = boolToU32(lhs >= rhs);
+      break;
+    default:
+      UNREACHABLE(return StackElement::invalid(), "no other cases")
+    }
+
+    common_.popAndUpdateReference();
+    common_.popAndUpdateReference();
+    return StackElement::i32Const(result);
+  }
+
+  if ((op >= OPCode::I64_EQ) && (op <= OPCode::I64_GE_U)) {
+    Stack::iterator const lastElem{stack_.last()};
+    if (lastElem->getBaseType() != StackType::CONSTANT) {
+      return StackElement::invalid();
+    }
+
+    Stack::iterator const secondLastElem{lastElem.prev()};
+    if (secondLastElem->getBaseType() != StackType::CONSTANT) {
+      return StackElement::invalid();
+    }
+
+    uint64_t const lhs{secondLastElem->data.constUnion.u64};
+    uint64_t const rhs{lastElem->data.constUnion.u64};
+    uint32_t result{0U};
+    switch (op) {
+    case OPCode::I64_EQ:
+      result = boolToU32(lhs == rhs);
+      break;
+    case OPCode::I64_NE:
+      result = boolToU32(lhs != rhs);
+      break;
+    case OPCode::I64_LT_S:
+      result = boolToU32(static_cast<int64_t>(lhs) < static_cast<int64_t>(rhs));
+      break;
+    case OPCode::I64_LT_U:
+      result = boolToU32(lhs < rhs);
+      break;
+    case OPCode::I64_GT_S:
+      result = boolToU32(static_cast<int64_t>(lhs) > static_cast<int64_t>(rhs));
+      break;
+    case OPCode::I64_GT_U:
+      result = boolToU32(lhs > rhs);
+      break;
+    case OPCode::I64_LE_S:
+      result = boolToU32(static_cast<int64_t>(lhs) <= static_cast<int64_t>(rhs));
+      break;
+    case OPCode::I64_LE_U:
+      result = boolToU32(lhs <= rhs);
+      break;
+    case OPCode::I64_GE_S:
+      result = boolToU32(static_cast<int64_t>(lhs) >= static_cast<int64_t>(rhs));
+      break;
+    case OPCode::I64_GE_U:
+      result = boolToU32(lhs >= rhs);
+      break;
+    default:
+      UNREACHABLE(return StackElement::invalid(), "no other cases")
+    }
+    common_.popAndUpdateReference();
+    common_.popAndUpdateReference();
+    return StackElement::i32Const(result);
+  }
+
+  return StackElement::invalid(); // Invalid element for non-comparison operations
 }
 } // namespace vb
