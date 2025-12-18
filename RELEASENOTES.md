@@ -1,9 +1,15 @@
 # Wasm Compiler Release Notes
 
+## 3.0.8
+
+- Fixed wrong machine type for type_cast instruction
+
 ## 3.0.7
+
 - Fix encoding compatibility
 
 ## 3.0.6
+
 - Fix SPDX format
 
 ## 3.0.5

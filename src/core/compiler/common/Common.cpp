@@ -1235,6 +1235,7 @@ StackElement Common::getResultStackElement(StackElement const *const stackElemen
   } else if (baseType == StackType::TEMP_RESULT) {
     StackElement res{*stackElement};
     res.type = MachineTypeUtil::toStackTypeFlag(type) | StackType::TEMP_RESULT;
+    res.data.variableData.location.calculationResult.machineType = type;
     return res;
   } else {
     return *stackElement;

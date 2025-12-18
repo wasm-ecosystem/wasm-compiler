@@ -92,3 +92,24 @@
   (export "const-to-global" (func $const-to-global))
 )
 (assert_return (invoke "const-to-global") (i64.const 0))
+
+(module
+  (func (param i64 i32 f64 i64 i32 i32 i32)
+    i64.const 1711897462
+    local.tee 3
+    i32.const 323962463
+    local.tee 5
+    if (result f32)
+      f32.const 1
+    else
+      f32.const 2
+    end
+    f32.const -0x1p+0
+    f32.ge
+    i64.extend_i32_u
+    i64.rem_s
+    i64.const 5120369967748222491
+    i64.eq
+    local.set 6
+  )
+)
