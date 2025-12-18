@@ -25,6 +25,7 @@
 #include "src/config.hpp"
 #include "src/core/common/BinaryModule.hpp"
 #include "src/core/common/FunctionRef.hpp"
+#include "src/core/common/GlobalSymbol.hpp"
 #include "src/core/common/ILogger.hpp"
 #include "src/core/common/NativeSymbol.hpp"
 #include "src/core/common/SignatureType.hpp"
@@ -158,7 +159,7 @@ void Frontend::writeDebugMapPreamble() {
   uint32_t const globalStartOffset{compiler_.debugMap_.size()};
   compiler_.debugMap_.write<uint32_t>(moduleInfo_.numNonImportedGlobals); // Write number of non-imported globals
   for (uint32_t i{0U}; i < moduleInfo_.numNonImportedGlobals; i++) {
-    ModuleInfo::GlobalDef const &globalDef{moduleInfo_.globals[i]};
+    ModuleInfo::GlobalDef const &globalDef{moduleInfo_.nonImportGlobals[i]};
     if (globalDef.isMutable) {
       compiler_.debugMap_.write<uint32_t>(i);                        // Write index of mutable global
       compiler_.debugMap_.write<uint32_t>(globalDef.linkDataOffset); // Write offset in link data of global
@@ -299,16 +300,17 @@ Stack::iterator Frontend::findTargetBlock(uint32_t const branchDepth) const {
   return targetBlockElem;
 }
 
-Frontend::Frontend(Span<uint8_t const> const &bytecode, Span<NativeSymbol const> const &symbolList, ModuleInfo &moduleInfo, Stack &stack,
-                   MemWriter &memory, Common &common, Compiler &compiler, ValidationStack &validationStack) VB_NOEXCEPT
-    : br_{BytecodeReader(bytecode)},
-      symbolList_{symbolList},
-      moduleInfo_{moduleInfo},
-      stack_{stack},
-      memory_{memory},
-      common_{common},
-      compiler_{compiler},
-      validationStack_{validationStack} {
+Frontend::Frontend(Span<uint8_t const> const &bytecode, Span<NativeSymbol const> const &symbolList, Span<GlobalSymbol const> const &globalSymbols,
+                   ModuleInfo &moduleInfo, Stack &stack, MemWriter &memory, Common &common, Compiler &compiler,
+                   ValidationStack &validationStack) VB_NOEXCEPT : br_{BytecodeReader(bytecode)},
+                                                                   symbolList_{symbolList},
+                                                                   globalSymbols_{globalSymbols},
+                                                                   moduleInfo_{moduleInfo},
+                                                                   stack_{stack},
+                                                                   memory_{memory},
+                                                                   common_{common},
+                                                                   compiler_{compiler},
+                                                                   validationStack_{validationStack} {
 }
 
 // Wasm modules have to start with the wasm binary magic (number), make sure it does
@@ -447,6 +449,11 @@ void Frontend::parseTypeSection() {
 void Frontend::parseImportSection() {
   moduleInfo_.numImportedFunctions = 0U;
   uint32_t const numImports{br_.readLEB128<uint32_t>()};
+  moduleInfo_.importGlobals.setOffset(memory_.alignForType<ModuleInfo::GlobalDef>(), memory_);
+  memory_.step(numImports * static_cast<uint32_t>(sizeof(ModuleInfo::GlobalDef)));
+  if (!moduleInfo_.fncDefs.initialized()) {
+    moduleInfo_.fncDefs.setOffset(memory_.size(), memory_);
+  }
   for (uint32_t i{0U}; i < numImports; i++) {
     uint32_t const moduleNameLength{br_.readLEB128<uint32_t>()}; // e.g. "env"
     if (moduleNameLength > ImplementationLimits::maxStringLength) {
@@ -608,8 +615,89 @@ void Frontend::parseImportSection() {
       throw FeatureNotSupportedException(ErrorCode::Imported_table_not_supported);
     case WasmImportExportType::MEM:
       throw FeatureNotSupportedException(ErrorCode::Imported_memory_not_supported);
-    case WasmImportExportType::GLOBAL:
-      throw FeatureNotSupportedException(ErrorCode::Imported_global_not_supported);
+    case WasmImportExportType::GLOBAL: {
+      // Importing a global variable
+      WasmType const globalType{br_.readByte<WasmType>()};
+      uint8_t const mutabilityByte{br_.readByte<uint8_t>()};
+
+      // Validate mutability is either 0x00 (const) or 0x01 (mutable)
+      if (mutabilityByte > 1U) {
+        throw ValidationException(ErrorCode::Validation_failed);
+      }
+      bool const isMutable{mutabilityByte == 1U};
+
+      // Validate the global type
+      if (((globalType != WasmType::I32) && (globalType != WasmType::I64)) && ((globalType != WasmType::F32) && (globalType != WasmType::F64))) {
+        if (((globalType == WasmType::EXTERN_REF) || (globalType == WasmType::FUNC_REF)) || (globalType == WasmType::VEC_TYPE)) {
+          throw FeatureNotSupportedException(ErrorCode::Reference_type_feature_not_implemented);
+        } else {
+          throw ValidationException(ErrorCode::Invalid_global_type);
+        }
+      }
+
+      // Check if mutable imported globals are supported
+      if (isMutable) {
+        throw FeatureNotSupportedException(ErrorCode::Mutable_imported_globals_not_supported);
+      }
+
+      bool foundImport{false};
+      // Iterate through the provided list of importable globals by the embedder
+      for (uint32_t symbolIndex{0U}; symbolIndex < globalSymbols_.size(); symbolIndex++) {
+        GlobalSymbol const &symbol{globalSymbols_[symbolIndex]};
+        size_t const symbolNameLength{strlen_s(symbol.getFieldName(), static_cast<size_t>(ImplementationLimits::maxStringLength))};
+        size_t const symbolModuleNameLength{strlen_s(symbol.getModuleName(), static_cast<size_t>(ImplementationLimits::maxStringLength))};
+
+        // Module name and symbol name must match
+        if ((symbolModuleNameLength != moduleNameLength) || (symbolNameLength != fieldNameLength)) {
+          continue;
+        }
+
+        // If the module name and symbol name match
+        if ((std::strncmp(moduleName, symbol.getModuleName(), static_cast<size_t>(moduleNameLength)) == 0) &&
+            (std::strncmp(fieldName, symbol.getFieldName(), static_cast<size_t>(fieldNameLength)) == 0)) {
+          // Check if the type matches
+          if (symbol.getType() == globalType) {
+            ModuleInfo::GlobalDef &globalDef{moduleInfo_.importGlobals[moduleInfo_.numImportedGlobals]};
+            moduleInfo_.numImportedGlobals++;
+            globalDef.isMutable = isMutable;
+            globalDef.type = MachineTypeUtil::from(globalType);
+            globalDef.isImported = true;
+            globalDef.linkDataOffset = 0U;
+
+            // Set the initial value from the symbol
+            switch (globalType) {
+            case WasmType::I32:
+              globalDef.initialValue.u32 = symbol.getUInt32();
+              break;
+            case WasmType::I64:
+              globalDef.initialValue.u64 = symbol.getUInt64();
+              break;
+            case WasmType::F32:
+              globalDef.initialValue.f32 = symbol.getFloat32();
+              break;
+            case WasmType::F64:
+              globalDef.initialValue.f64 = symbol.getFloat64();
+              break;
+            default:
+              UNREACHABLE(break, "Invalid global type");
+            }
+
+            foundImport = true;
+            break;
+          }
+        }
+      }
+
+      if (!foundImport) {
+        if (compiler_.logging() != nullptr) {
+          *compiler_.logging() << "Linking failed for imported global: " << Span<char const>(moduleName, moduleNameLength) << " "
+                               << Span<char const>(fieldName, fieldNameLength) << &vb::endStatement<vb::LogLevel::LOGERROR>;
+        }
+        throw LinkingException(ErrorCode::Imported_symbol_could_not_be_found);
+      }
+
+      break;
+    }
     default:
       throw ValidationException(ErrorCode::Unknown_import_type);
     }
@@ -626,6 +714,9 @@ void Frontend::parseImportSection() {
 // functions that are defined in the Wasm module (non-imported) and their
 // signature/type index
 void Frontend::parseFunctionSection() {
+  if (!moduleInfo_.fncDefs.initialized()) {
+    moduleInfo_.fncDefs.setOffset(memory_.size(), memory_);
+  }
   uint32_t const numNonImportedFunctions{br_.readLEB128<uint32_t>()};
   if (numNonImportedFunctions > ImplementationLimits::numNonImportedFunctions) {
     throw ImplementationLimitationException(ErrorCode::Maximum_number_of_functions_exceeded);
@@ -760,7 +851,7 @@ static OPCode parseOpCode(BytecodeReader &br) {
 
 // Parse global section (section defining global variables; if it's there)
 void Frontend::parseGlobalSection() {
-  moduleInfo_.globals.setOffset(memory_.alignForType<ModuleInfo::GlobalDef>(), memory_);
+  moduleInfo_.nonImportGlobals.setOffset(memory_.alignForType<ModuleInfo::GlobalDef>(), memory_);
   moduleInfo_.numNonImportedGlobals = br_.readLEB128<uint32_t>();
   if (moduleInfo_.numNonImportedGlobals > ImplementationLimits::numNonImportedGlobals) {
     throw ImplementationLimitationException(ErrorCode::Too_many_globals);
@@ -772,7 +863,8 @@ void Frontend::parseGlobalSection() {
   for (uint32_t i{0U}; i < moduleInfo_.numNonImportedGlobals; i++) {
     // Write where variable would be stored, even if it's immutable. In that
     // case this is not relevant anyway
-    ModuleInfo::GlobalDef &globalDef{moduleInfo_.globals[i]};
+    ModuleInfo::GlobalDef &globalDef{moduleInfo_.nonImportGlobals[i]};
+    globalDef.isImported = false;
     globalDef.linkDataOffset = moduleInfo_.linkDataLength;
     WasmType const wasmType{br_.readByte<WasmType>()};
     if (!WasmTypeUtil::validateWasmType(wasmType)) {
@@ -811,7 +903,28 @@ void Frontend::parseGlobalSection() {
         throw ValidationException(ErrorCode::Malformed_global_initialization_expression);
       }
     } else if (instruction == OPCode::GLOBAL_GET) {
-      throw FeatureNotSupportedException(ErrorCode::Imported_globals_not_supported);
+      uint32_t const sourceGlobalIndex{br_.readLEB128<uint32_t>()};
+
+      // In MVP, global.get in constant expressions can only reference imported globals
+      if (sourceGlobalIndex >= moduleInfo_.numImportedGlobals) {
+        throw ValidationException(ErrorCode::Validation_failed);
+      }
+
+      ModuleInfo::GlobalDef const &sourceGlobal{moduleInfo_.getGlobalDef(sourceGlobalIndex)};
+
+      if (sourceGlobal.isMutable) {
+        throw ValidationException(ErrorCode::Validation_failed);
+      }
+
+      if (sourceGlobal.type != globalDef.type) {
+        throw ValidationException(ErrorCode::Validation_failed);
+      }
+
+      globalDef.initialValue = sourceGlobal.initialValue;
+      instruction = parseOpCode(br_);
+      if (instruction != OPCode::END) {
+        throw ValidationException(ErrorCode::Malformed_global_initialization_expression);
+      }
     } else {
       throw ValidationException(ErrorCode::Malformed_global_initialization_expression);
     }
@@ -835,7 +948,7 @@ void Frontend::parseGlobalSection() {
   // again.
   moduleInfo_.linkDataLength = roundUpToPow2(moduleInfo_.linkDataLength, 3U);
   for (uint32_t i{0U}; i < moduleInfo_.numNonImportedGlobals; i++) {
-    ModuleInfo::GlobalDef &globalDef{moduleInfo_.globals[i]};
+    ModuleInfo::GlobalDef &globalDef{moduleInfo_.nonImportGlobals[i]};
     uint32_t const size{MachineTypeUtil::getSize(globalDef.type)};
     if (globalDef.isMutable && (size == 8U)) {
       globalDef.linkDataOffset = moduleInfo_.linkDataLength;
@@ -883,7 +996,7 @@ void Frontend::parseExportSection() {
         throw ValidationException(ErrorCode::Function_out_of_range);
       }
     } else if (exportType == WasmImportExportType::GLOBAL) {
-      if (index >= moduleInfo_.numNonImportedGlobals) {
+      if (index >= moduleInfo_.getNumGlobals()) {
         throw ValidationException(ErrorCode::Global_out_of_range);
       }
     } else if (exportType == WasmImportExportType::MEM) {
@@ -1963,18 +2076,15 @@ void Frontend::parseCodeSection() {
 
       case OPCode::GLOBAL_GET: {
         uint32_t const globalIdx{br_.readLEB128<uint32_t>()};
-        if (globalIdx >= moduleInfo_.numNonImportedGlobals) {
-          throw ValidationException(ErrorCode::Global_out_of_range);
-        }
-        validationStack_.pushNumberVariable(moduleInfo_.globals[globalIdx].type);
-        if (currentFrameIsUnreachable()) {
-          break;
-        }
 
         // Retrieve the definition for this global variable
         // This includes the type, at which offset in link data it is stored, the initial value and whether it is
         // mutable
-        ModuleInfo::GlobalDef const &globalDef{moduleInfo_.globals[globalIdx]};
+        ModuleInfo::GlobalDef const &globalDef{moduleInfo_.getGlobalDef(globalIdx)};
+        validationStack_.pushNumberVariable(globalDef.type);
+        if (currentFrameIsUnreachable()) {
+          break;
+        }
 
         if (globalDef.isMutable) {
           // Record the (mutable) global variable (by reference) on the stack
@@ -1990,16 +2100,13 @@ void Frontend::parseCodeSection() {
       }
       case OPCode::GLOBAL_SET: {
         uint32_t const globalIdx{br_.readLEB128<uint32_t>()};
-        if (globalIdx >= moduleInfo_.numNonImportedGlobals) {
-          throw ValidationException(ErrorCode::Global_out_of_range);
-        }
-
-        validationStack_.validateLastNumberType(moduleInfo_.globals[globalIdx].type, true);
 
         // Retrieve the definition for this global variable
         // This includes the type, at which offset in link data it is stored, the initial value and whether it is
         // mutable
-        ModuleInfo::GlobalDef const &globalDef{moduleInfo_.globals[globalIdx]};
+        ModuleInfo::GlobalDef const &globalDef{moduleInfo_.getGlobalDef(globalIdx)};
+
+        validationStack_.validateLastNumberType(globalDef.type, true);
 
         if (!globalDef.isMutable) {
           throw ValidationException(ErrorCode::Cannot_set_immutable_global);
@@ -2597,7 +2704,7 @@ void Frontend::serializeWasmGlobalsBinarySection() {
   uint32_t const sectionStartSize{compiler_.output_.size()};
   uint32_t writtenGlobals{0U};
   for (uint32_t i{0U}; i < moduleInfo_.numNonImportedGlobals; i++) {
-    ModuleInfo::GlobalDef const &globalDef{moduleInfo_.globals[i]};
+    ModuleInfo::GlobalDef const &globalDef{moduleInfo_.nonImportGlobals[i]};
     // Non-mutable globals will be inlined anyway
     if (!globalDef.isMutable) {
       continue;
@@ -2714,7 +2821,7 @@ void Frontend::serializeExportedGlobalsBinarySection() {
       continue;
     }
 
-    ModuleInfo::GlobalDef const &globalDef{moduleInfo_.globals[index]};
+    ModuleInfo::GlobalDef const &globalDef{moduleInfo_.getGlobalDef(index)};
     if (globalDef.isMutable) {
       compiler_.output_.write<uint32_t>(globalDef.linkDataOffset); // OPBVMEM0A
     } else {
@@ -2996,12 +3103,6 @@ void Frontend::parseCustomSection(uint8_t const *const sectionEnd, FunctionRef<v
 // This action is performed directly after a specific section or where it would occur if it isn't present in the module
 void Frontend::postSectionAction(SectionType const sectionType) {
   switch (sectionType) {
-  case SectionType::TYPE: {
-    // Set pointer to compiler memory where function definitions can be stored. This must be available for both the
-    // import and function section, even if one or both of the two sections is missing
-    moduleInfo_.fncDefs.setOffset(memory_.size(), memory_);
-    break;
-  }
   case SectionType::FUNCTION: {
     // Initialize an array in memory containing the binary offsets (u32) in bytes (from the start of the binary) to
     // functions using the Wasm calling convention These functions can be either in-module Wasm functions or wrapper

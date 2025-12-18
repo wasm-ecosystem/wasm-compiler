@@ -48,7 +48,10 @@
 #endif
 
 #include "src/core/common/FunctionRef.hpp"
+#include "src/core/common/GlobalSymbol.hpp"
 #include "src/core/common/ILogger.hpp"
+#include "src/core/common/NativeSymbol.hpp"
+#include "src/core/common/Span.hpp"
 #include "src/core/common/TrapCode.hpp"
 #include "src/core/compiler/common/ManagedBinary.hpp"
 #include "src/core/runtime/Runtime.hpp"
@@ -435,6 +438,17 @@ public:
     return compile(bytecode, linkedFunctions, true, highPressureMode);
   }
 
+  /// @brief Load the WebAssembly module from bytecode with global imports
+  /// @param bytecode The bytecode of the WebAssembly module
+  /// @param linkedFunctions The list of functions that should be linked
+  /// @param linkedGlobals The list of global variables that should be linked
+  /// @param highPressureMode If true, the compiler will use high register pressure for testing purposes
+  /// @throws vb::RuntimeError If compilation failed
+  inline CompileResult compile(Span<uint8_t const> const &bytecode, Span<NativeSymbol const> const &linkedFunctions,
+                               Span<GlobalSymbol const> const &linkedGlobals, bool const highPressureMode) {
+    return compile(bytecode, linkedFunctions, linkedGlobals, true, highPressureMode);
+  }
+
   /// @brief call a raw exported function by name
   /// @param functionName The name of the function to call
   /// @param stackTop Pointer to the top of the stack
@@ -510,6 +524,16 @@ private:
   /// @throws vb::RuntimeError If compilation failed
   CompileResult compile(Span<uint8_t const> const &bytecode, Span<NativeSymbol const> const &linkedFunctions, bool const allowUnknownImports,
                         bool const highPressureMode);
+
+  /// @brief Load the WebAssembly module from bytecode with global imports
+  /// @param bytecode The bytecode of the WebAssembly module
+  /// @param linkedFunctions The list of functions that should be linked
+  /// @param linkedGlobals The list of global variables that should be linked
+  /// @param allowUnknownImports If true, the compiler will allow unknown imports and check for imports linking at runtime
+  /// @param highPressureMode If true, the compiler will use high register pressure for testing purposes
+  /// @throws vb::RuntimeError If compilation failed
+  CompileResult compile(Span<uint8_t const> const &bytecode, Span<NativeSymbol const> const &linkedFunctions,
+                        Span<GlobalSymbol const> const &linkedGlobals, bool const allowUnknownImports, bool const highPressureMode);
 
   ///
   /// @brief Init the Wasm module from pre compiled JIT code

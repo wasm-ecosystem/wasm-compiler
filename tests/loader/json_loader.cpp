@@ -142,6 +142,11 @@ std::unique_ptr<Command> JsonTestLoader::getNextCommand() {
     return std::make_unique<JsonInvalidCommand>(*commandsIt, testDataMapping_);
   }
 
+  case CommandType::REGISTER: {
+    // Skip these commands and get the next one
+    return getNextCommand();
+  }
+
   default:
     return nullptr;
   }

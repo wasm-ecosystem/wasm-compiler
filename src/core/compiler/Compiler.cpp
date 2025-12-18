@@ -21,6 +21,7 @@
 
 #include "src/config.hpp"
 #include "src/core/common/ExtendableMemory.hpp"
+#include "src/core/common/GlobalSymbol.hpp"
 #include "src/core/common/NativeSymbol.hpp"
 #include "src/core/common/Span.hpp"
 #include "src/core/compiler/backend/aarch64/aarch64_backend.hpp"
@@ -65,8 +66,9 @@ Compiler::Compiler(ReallocFnc const compilerMemoryReallocFnc, AllocFnc const com
 {
 } // namespace vb
 
-ManagedBinary Compiler::compile(Span<uint8_t const> const &bytecode, Span<NativeSymbol const> const &symbolList) {
-  Frontend frontend{bytecode, symbolList, moduleInfo_, stack_, memory_, common_, *this, validationStack_};
+ManagedBinary Compiler::compile(Span<uint8_t const> const &bytecode, Span<NativeSymbol const> const &symbolList,
+                                Span<GlobalSymbol const> const &globalSymbols) {
+  Frontend frontend{bytecode, symbolList, globalSymbols, moduleInfo_, stack_, memory_, common_, *this, validationStack_};
   frontend.startCompilation(forceHighRegisterPressureForTesting_);
 
   ManagedBinary outputBinary{output_.toManagedBinary()};

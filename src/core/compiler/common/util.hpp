@@ -31,32 +31,6 @@ namespace vb {
 constexpr uint32_t UnknownIndex{0xFF'FF'FF'FFU}; ///< Flag for unknown/no index flags
 
 ///
-/// @brief Represents a constant
-///
-union ConstUnion {
-  uint32_t u32; ///< 32-bit integer
-  uint64_t u64; ///< 64-bit integer
-  float f32;    ///< 32-bit float
-  double f64;   ///< 64-bit float
-
-  ///
-  /// @brief Get the raw, reinterpreted value of the float as an integer
-  ///
-  /// @return uint32_t Raw, reinterpreted value of the float
-  inline uint32_t rawF32() const VB_NOEXCEPT {
-    return bit_cast<uint32_t>(f32);
-  }
-
-  ///
-  /// @brief Get the raw, reinterpreted value of the float as an integer
-  ///
-  /// @return uint64_t Raw, reinterpreted value of the float
-  inline uint64_t rawF64() const VB_NOEXCEPT {
-    return bit_cast<uint64_t>(f64);
-  }
-};
-
-///
 /// @brief Checks whether the integral input value fits into an integral datatype of given width of same signedness
 ///
 /// @tparam bits_target Number of bits of the target integer

@@ -236,6 +236,8 @@ TestResult SingleCaseTest::testFromStream(TestLoader *loader, bool const enableD
   DummyLogger logger{};
   uint8_t const *const stackTop = pCast<uint8_t const *>(getStackTop());
   vb::Span<vb::NativeSymbol const> const importFunctions{vb::Span<NativeSymbol const>(spectestImports.data(), spectestImports.size())};
+  vb::Span<vb::GlobalSymbol const> const importGlobals{
+      vb::Span<GlobalSymbol const>(spectestGlobalImports.data(), static_cast<uint32_t>(spectestGlobalImports.size()))};
 
   std::unique_ptr<Command> command;
   while (nullptr != (command = loader->getNextCommand())) {
@@ -261,7 +263,7 @@ TestResult SingleCaseTest::testFromStream(TestLoader *loader, bool const enableD
           wasmModule->setStacktraceRecordCount(8U);
         }
         try {
-          vb::WasmModule::CompileResult const compileResult{wasmModule->compile(bytecode, importFunctions, forceHighRegisterPressure)};
+          vb::WasmModule::CompileResult const compileResult{wasmModule->compile(bytecode, importFunctions, importGlobals, forceHighRegisterPressure)};
 
           wasmModule->initFromCompiledBinary(compileResult.getModule().span(), importFunctions, compileResult.getDebugSymbol().span());
 
@@ -541,7 +543,7 @@ TestResult SingleCaseTest::testFromStream(TestLoader *loader, bool const enableD
         }
 
         try {
-          wasmModule->compile(bytecode, importFunctions, forceHighRegisterPressure);
+          wasmModule->compile(bytecode, importFunctions, importGlobals, forceHighRegisterPressure);
           testFailed(line, "Compilation should fail but didn't");
         } catch (ValidationException const &e) {
           // SUCCESS

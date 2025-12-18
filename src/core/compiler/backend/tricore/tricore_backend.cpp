@@ -4782,8 +4782,8 @@ void Backend::iterateScratchRegsAndGlobals(FunctionRef<void(StackElement const &
       lambda(StackElement::scratchReg(reg, MachineTypeUtil::toStackTypeFlag(type) | StackType::SCRATCHREGISTER));
     }
   }
-  for (uint32_t globalIdx{0U}; globalIdx < moduleInfo_.numNonImportedGlobals; globalIdx++) {
-    lambda(StackElement::global(globalIdx));
+  for (uint32_t i{0U}; i < moduleInfo_.numNonImportedGlobals; i++) {
+    lambda(StackElement::nonImportGlobal(i, moduleInfo_.numImportedGlobals));
   }
 }
 

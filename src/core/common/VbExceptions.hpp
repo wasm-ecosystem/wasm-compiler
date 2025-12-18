@@ -67,7 +67,7 @@ public:
     Imported_symbol_could_not_be_found,
     Imported_table_not_supported,
     Imported_memory_not_supported,
-    Imported_global_not_supported,
+    Mutable_imported_globals_not_supported,
     Unknown_import_type,
     Too_many_imported_functions,
     Maximum_number_of_functions_exceeded,

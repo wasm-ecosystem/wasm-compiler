@@ -5,6 +5,7 @@
 ### Feature
 
 - Support multi return values import function(not call_indirect)
+- Support immutable import globals
 
 ### Bug Fixes
 

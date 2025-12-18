@@ -253,6 +253,11 @@ public:
     return false;
   }
 
+  /// @brief Get the total number of globals in the module
+  inline uint32_t getNumGlobals() const VB_NOEXCEPT {
+    return numNonImportedGlobals + numImportedGlobals;
+  }
+
   /// @brief Definition of an element in the table of this WebAssembly module
   struct TableElement final {
     uint32_t fncIndex;            ///< Function index of the function in this WebAssembly module
@@ -283,10 +288,21 @@ public:
     uint32_t linkDataOffset = 0U; ///< At which offset in the link data within the job memory this variable is stored
     ConstUnion initialValue = {}; ///< Initial value of this global variable
     bool isMutable = false;       ///< Whether this global variable is mutable or constant
+    bool isImported = false;      ///< Whether this global variable is imported
     MachineType type = {};        ///< Type (I32, I64, F32 or F64) of this global variable
   };
-  uint32_t numNonImportedGlobals = 0U; ///< Number of non-imported global variables in this WebAssembly module
-  OffsetHandler<GlobalDef> globals;    ///< Array of GlobalDefs representing all global variables in this WebAssembly module
+  uint32_t numNonImportedGlobals = 0U;       ///< Number of non-imported global variables in this WebAssembly module
+  uint32_t numImportedGlobals = 0U;          ///< Number of imported global variables in this WebAssembly module
+  OffsetHandler<GlobalDef> importGlobals;    ///< Array of GlobalDefs representing all imported global variables in this WebAssembly module
+  OffsetHandler<GlobalDef> nonImportGlobals; ///< Array of GlobalDefs representing all non import global variables in this WebAssembly module
+
+  ///
+  /// @brief Retrieve the global definition for a given global index
+  ///
+  /// @param globalIdx The index of the global variable
+  /// @return Reference to the GlobalDef for the specified index
+  /// @throws ValidationException if globalIdx is out of range
+  GlobalDef const &getGlobalDef(uint32_t const globalIdx) const;
 
   uint32_t numGlobalsInGPR = 0U; ///< Number of globals that are stored in general purpose CPU registers
 
@@ -408,8 +424,8 @@ public:
                      ImplementationLimits::numNonImportedGlobals) +
                     1U)) <= UINT32_MAX,
                   "Index too large");
-
-    uint32_t const numEntries{((NBackend::totalNumRegs + fnc.numLocals) + numNonImportedGlobals) + 1_U32 /* TEMPSTACK */};
+    uint32_t const numGlobals{getNumGlobals()};
+    uint32_t const numEntries{((NBackend::totalNumRegs + fnc.numLocals) + numGlobals) + 1_U32 /* TEMPSTACK */};
     uint32_t const bytesToReserve{static_cast<uint32_t>(sizeof(Stack::iterator)) * numEntries};
 
     // Reserve space for references
@@ -422,7 +438,7 @@ public:
     referenceMap[static_cast<uint32_t>(StackType::SCRATCHREGISTER)] = 0U;
     referenceMap[static_cast<uint32_t>(StackType::LOCAL)] = NBackend::totalNumRegs;
     referenceMap[static_cast<uint32_t>(StackType::GLOBAL)] = NBackend::totalNumRegs + fnc.numLocals;
-    referenceMap[getStackMemoryInReferenceMapIndex()] = NBackend::totalNumRegs + fnc.numLocals + numNonImportedGlobals;
+    referenceMap[getStackMemoryInReferenceMapIndex()] = referenceMap[static_cast<uint32_t>(StackType::GLOBAL)] + numGlobals;
   }
 
   ///
@@ -640,6 +656,15 @@ private:
     static_assert(static_cast<uint32_t>(StackType::LOCAL) != index, "please select another index for stack memory");
     static_assert(static_cast<uint32_t>(StackType::GLOBAL) != index, "please select another index for stack memory");
     return index;
+  }
+
+  ///
+  /// @brief Retrieve the global definition for a given global index without range check
+  ///
+  /// @param globalIdx The index of the global variable
+  /// @return Reference to the GlobalDef for the specified index
+  GlobalDef const &getGlobalDefUnchecked(uint32_t const globalIdx) const VB_NOEXCEPT {
+    return (globalIdx < numImportedGlobals) ? importGlobals[globalIdx] : nonImportGlobals[globalIdx - numImportedGlobals];
   }
 };
 

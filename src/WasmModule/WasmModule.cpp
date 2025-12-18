@@ -27,6 +27,7 @@
 #include "WasmModule.hpp"
 
 #include "src/core/common/ExtendableMemory.hpp"
+#include "src/core/common/GlobalSymbol.hpp"
 #include "src/core/common/ILogger.hpp"
 #include "src/core/common/NativeSymbol.hpp"
 #include "src/core/common/Span.hpp"
@@ -98,6 +99,12 @@ void WasmModule::initFromBytecode(Span<uint8_t const> const &bytecode, Span<Nati
 
 WasmModule::CompileResult WasmModule::compile(Span<uint8_t const> const &bytecode, Span<NativeSymbol const> const &linkedFunctions,
                                               bool const allowUnknownImports, bool const highPressureMode) {
+  return compile(bytecode, linkedFunctions, Span<GlobalSymbol const>(), allowUnknownImports, highPressureMode);
+}
+
+WasmModule::CompileResult WasmModule::compile(Span<uint8_t const> const &bytecode, Span<NativeSymbol const> const &linkedFunctions,
+                                              Span<GlobalSymbol const> const &linkedGlobals, bool const allowUnknownImports,
+                                              bool const highPressureMode) {
   // coverity[autosar_cpp14_a16_2_3_violation] fake positive
   Compiler compiler{&compilerRealloc, &compilerMemoryAllocFnc, &compilerMemoryFreeFnc, this, &jitRealloc, allowUnknownImports};
   compiler.setLogger(&logger_);
@@ -113,7 +120,7 @@ WasmModule::CompileResult WasmModule::compile(Span<uint8_t const> const &bytecod
     compiler.enableDebugMode(&debugLineFnc);
   }
 
-  ManagedBinary module{compiler.compile(bytecode, linkedFunctions)};
+  ManagedBinary module{compiler.compile(bytecode, linkedFunctions, linkedGlobals)};
   ManagedBinary debugSymbol{compiler.retrieveDebugMap()};
 
   CompileResult compileResult{std::move(module), std::move(debugSymbol)};

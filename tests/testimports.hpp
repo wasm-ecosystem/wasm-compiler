@@ -22,6 +22,7 @@
 #include <vector>
 
 #include "src/WasmModule/WasmModule.hpp"
+#include "src/core/common/GlobalSymbol.hpp"
 #include "src/core/common/NativeSymbol.hpp"
 #include "src/core/common/Span.hpp"
 #include "src/core/common/TrapCode.hpp"
@@ -666,6 +667,14 @@ public:
       setRet<4>(results, p4 + 5.5F);
     }
   };
+
+  static auto makeGlobalImports() {
+    return vb::make_array(vb::GlobalSymbol::fromInt32("spectest", "global_i32", 666), vb::GlobalSymbol::fromInt32("test", "global-i32", 666),
+                          vb::GlobalSymbol::fromInt64("spectest", "global_i64", 666), vb::GlobalSymbol::fromInt64("test", "global_i64", 666),
+                          vb::GlobalSymbol::fromFloat32("spectest", "global_f32", 666.6F),
+                          vb::GlobalSymbol::fromFloat32("test", "global-f32", 666.6F), vb::GlobalSymbol::fromFloat64("spectest", "global_f64", 666.6),
+                          vb::GlobalSymbol::fromFloat64("test", "global-f64", 666.6));
+  }
 
   static auto makeImports() {
     return vb::make_array(

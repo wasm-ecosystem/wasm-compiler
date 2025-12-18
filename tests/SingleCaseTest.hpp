@@ -57,6 +57,7 @@ private:
 
   TestResult testResult{};
   decltype(spectest::ImportsMaker::makeImports()) spectestImports{spectest::ImportsMaker::makeImports()};
+  decltype(spectest::ImportsMaker::makeGlobalImports()) spectestGlobalImports{spectest::ImportsMaker::makeGlobalImports()};
 };
 
 } // namespace vb

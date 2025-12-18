@@ -1077,19 +1077,21 @@ void Common::recoverAllLocalsToRegBranch(bool const isReachable) const {
 
 void Common::recoverGlobalsToRegs() const {
   for (uint32_t i{0U}; i < compiler_.moduleInfo_.numNonImportedGlobals; i++) {
-    ModuleInfo::GlobalDef const &globalDef{compiler_.moduleInfo_.globals[i]};
+    ModuleInfo::GlobalDef const &globalDef{compiler_.moduleInfo_.nonImportGlobals[i]};
     if (globalDef.reg != TReg::NONE) {
       VariableStorage const memoryStorage{VariableStorage::linkData(globalDef.type, globalDef.linkDataOffset)};
-      compiler_.backend_.emitMoveImpl(compiler_.moduleInfo_.getStorage(StackElement::global(i)), memoryStorage, false);
+      compiler_.backend_.emitMoveImpl(compiler_.moduleInfo_.getStorage(StackElement::nonImportGlobal(i, compiler_.moduleInfo_.numImportedGlobals)),
+                                      memoryStorage, false);
     }
   }
 }
 void Common::moveGlobalsToLinkData() const {
   for (uint32_t i{0U}; i < compiler_.moduleInfo_.numNonImportedGlobals; i++) {
-    ModuleInfo::GlobalDef const &globalDef{compiler_.moduleInfo_.globals[i]};
+    ModuleInfo::GlobalDef const &globalDef{compiler_.moduleInfo_.nonImportGlobals[i]};
     if (globalDef.reg != TReg::NONE) {
       VariableStorage const memoryStorage{VariableStorage::linkData(globalDef.type, globalDef.linkDataOffset)};
-      compiler_.backend_.emitMoveImpl(memoryStorage, compiler_.moduleInfo_.getStorage(StackElement::global(i)), false);
+      compiler_.backend_.emitMoveImpl(
+          memoryStorage, compiler_.moduleInfo_.getStorage(StackElement::nonImportGlobal(i, compiler_.moduleInfo_.numImportedGlobals)), false);
     }
   }
 }

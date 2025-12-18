@@ -252,13 +252,6 @@
   "unknown import"
 )
 
-(assert_invalid
-  (module
-    (import "env" "unavailableimport" (global i32))
-  )
-  "unknown import"
-)
-
 (module
   (import "spectest" "nop" (func))
   (start 0)
@@ -300,16 +293,6 @@
     "\0b"                      ;; end
   )
   "Unknown instruction (i32.extend8_s)"
-)
-
-(assert_invalid
-(module
-  (import "env" "imp" (global i32))
-  (func)
-  (table 1 funcref)
-  (elem (global.get 0) 0)
-)
-"No support in VB for global initialization of elem"
 )
 
 (assert_malformed

@@ -22,6 +22,7 @@
 #include "BytecodeReader.hpp"
 
 #include "src/core/common/FunctionRef.hpp"
+#include "src/core/common/GlobalSymbol.hpp"
 #include "src/core/common/NativeSymbol.hpp"
 #include "src/core/common/Span.hpp"
 #include "src/core/compiler/common/Common.hpp"
@@ -48,14 +49,15 @@ public:
   ///
   /// @param bytecode Reference to the Span onto the bytecode that should be parsed and compiled
   /// @param symbolList Span onto the linkable NativeSymbols for resolving imported symbols
+  /// @param globalSymbols Span onto the global symbols
   /// @param moduleInfo Reference to the ModuleInfo
   /// @param stack Reference to the compiler stack
   /// @param memory Reference to the compiler memory
   /// @param common Reference to the common instance
   /// @param compiler Reference to the compiler
   /// @param validationStack Reference to the wasm validation stack
-  Frontend(Span<uint8_t const> const &bytecode, Span<NativeSymbol const> const &symbolList, ModuleInfo &moduleInfo, Stack &stack, MemWriter &memory,
-           Common &common, Compiler &compiler, ValidationStack &validationStack) VB_NOEXCEPT;
+  Frontend(Span<uint8_t const> const &bytecode, Span<NativeSymbol const> const &symbolList, Span<GlobalSymbol const> const &globalSymbols,
+           ModuleInfo &moduleInfo, Stack &stack, MemWriter &memory, Common &common, Compiler &compiler, ValidationStack &validationStack) VB_NOEXCEPT;
 
   ///
   /// @brief Start the compilation of the WebAssembly module
@@ -313,13 +315,14 @@ private:
   /// @return StackElement Valid StackElement with computed constant result if propagation succeeds, invalid StackElement otherwise
   StackElement tryConstantPropagation(OPCode const op) VB_NOEXCEPT;
 
-  BytecodeReader br_;                          ///< Bytecode reader
-  Span<NativeSymbol const> const &symbolList_; ///< NativeSymbols that can be imported
-  ModuleInfo &moduleInfo_;                     ///< Reference to the ModuleInfo
-  Stack &stack_;                               ///< Reference to the stack
-  MemWriter &memory_;                          ///< Reference to the compiler memory
-  Common &common_;                             ///< Reference to the common instance
-  Compiler &compiler_;                         ///< Reference to the compiler
+  BytecodeReader br_;                             ///< Bytecode reader
+  Span<NativeSymbol const> const &symbolList_;    ///< NativeSymbols that can be imported
+  Span<GlobalSymbol const> const &globalSymbols_; ///< GlobalSymbols that can be imported
+  ModuleInfo &moduleInfo_;                        ///< Reference to the ModuleInfo
+  Stack &stack_;                                  ///< Reference to the stack
+  MemWriter &memory_;                             ///< Reference to the compiler memory
+  Common &common_;                                ///< Reference to the common instance
+  Compiler &compiler_;                            ///< Reference to the compiler
 
   ValidationStack &validationStack_; ///< Reference to the validation stack
 };

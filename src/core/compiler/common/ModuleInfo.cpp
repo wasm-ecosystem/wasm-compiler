@@ -219,9 +219,12 @@ VariableStorage ModuleInfo::getStorage(StackElement const &element) const VB_NOE
         return VariableStorage::reg(localDef.type, localDef.reg);
       }
     } else if ((element.type == StackType::GLOBAL)) {
-      ModuleInfo::GlobalDef const &globalDef{globals[element.data.variableData.location.globalIdx]};
+      ModuleInfo::GlobalDef const &globalDef{getGlobalDefUnchecked(element.data.variableData.location.globalIdx)};
       assert(globalDef.isMutable && "Immutable globals are not allowed on the stack as global reference, reduce them to constants");
       if (globalDef.reg == TReg::NONE) {
+        // GCOVR_EXCL_START
+        assert(!globalDef.isImported && "Imported globals is not implemented");
+        // GCOVR_EXCL_STOP
         return VariableStorage::linkData(globalDef.type, globalDef.linkDataOffset);
       } else {
         return VariableStorage::reg(globalDef.type, globalDef.reg);
@@ -262,12 +265,20 @@ MachineType ModuleInfo::getMachineType(StackElement const *const element) const 
     assert(element->data.variableData.location.localIdx < fnc.numLocals && "Local out of range");
     return localDefs[element->data.variableData.location.localIdx].type;
   } else if (element->type == StackType::GLOBAL) {
-    assert(element->data.variableData.location.globalIdx < numNonImportedGlobals && "Global out of range");
-    return globals[element->data.variableData.location.globalIdx].type;
+    assert(element->data.variableData.location.globalIdx < getNumGlobals() && "Global out of range");
+    GlobalDef const &globalDef{getGlobalDefUnchecked(element->data.variableData.location.globalIdx)};
+    return globalDef.type;
   } else {
     static_cast<void>(0);
   }
   return MachineType::INVALID;
+}
+
+ModuleInfo::GlobalDef const &ModuleInfo::getGlobalDef(uint32_t const globalIdx) const {
+  if (globalIdx >= getNumGlobals()) {
+    throw ValidationException(ErrorCode::Global_out_of_range);
+  }
+  return getGlobalDefUnchecked(globalIdx);
 }
 
 } // namespace vb

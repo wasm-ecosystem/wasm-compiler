@@ -129,8 +129,8 @@ RuntimeError::operator const char *() const VB_NOEXCEPT {
   case (Code::Imported_memory_not_supported): {
     return "Imported memory not supported";
   }
-  case (Code::Imported_global_not_supported): {
-    return "Imported global not supported";
+  case (Code::Mutable_imported_globals_not_supported): {
+    return "Mutable imported globals not supported";
   }
   case (Code::Unknown_import_type): {
     return "Unknown import type";

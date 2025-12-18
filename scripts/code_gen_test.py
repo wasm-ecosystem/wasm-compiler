@@ -59,6 +59,11 @@ def run(case_path: str, args) -> bool:
             continue
 
         compiler = module.Compiler()
+        # Register import globals for test cases
+        compiler.register_global("test", "global_i32", module.WasmType.I32, "666")
+        compiler.register_global("test", "global_i64", module.WasmType.I64, "666")
+        compiler.register_global("test", "global_f32", module.WasmType.F32, "666.6")
+        compiler.register_global("test", "global_f64", module.WasmType.F64, "666.6")
         wasm_binary = wasm_utils.wat_to_wasm(path=case_path)
         dis_lines = compiler.disassemble_wasm(wasm_binary)
         config = dis.parse_config_str(module.get_configuration())

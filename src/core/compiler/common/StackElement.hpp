@@ -396,6 +396,19 @@ public:
   }
 
   ///
+  /// @brief Generator function for a GLOBAL StackElement from non-imported global index
+  ///
+  /// @param offset offset in non-imported globals array
+  /// @param numImportGlobal Number of imported globals in the module
+  /// @return StackElement Generated GLOBAL StackElement
+  static inline constexpr StackElement nonImportGlobal(uint32_t const offset, uint32_t const numImportGlobal) VB_NOEXCEPT {
+    StackElement res{};
+    res.type = StackType::GLOBAL;
+    res.data.variableData.location.globalIdx = offset + numImportGlobal;
+    return res;
+  }
+
+  ///
   /// @brief Generator function for an INVALID StackElement
   ///
   /// @return StackElement Generated INVALID StackElement

@@ -24,6 +24,7 @@
 #include "common/MemWriter.hpp"
 #include "frontend/Frontend.hpp"
 
+#include "src/core/common/GlobalSymbol.hpp"
 #include "src/core/common/ILogger.hpp"
 #include "src/core/common/Span.hpp"
 #include "src/core/compiler/backend/PlatformAdapter.hpp"
@@ -99,10 +100,33 @@ public:
   /// @brief Start compilation
   ///
   /// @param bytecode uint8_t bytecode Span
+  /// @return ManagedBinary Managed RAII output binary
+  /// @throws vb::RuntimeError If compilation failed
+  inline ManagedBinary compile(Span<uint8_t const> const &bytecode) {
+    return compile(bytecode, Span<NativeSymbol const>());
+  }
+
+  ///
+  /// @brief Start compilation
+  ///
+  /// @param bytecode uint8_t bytecode Span
   /// @param symbolList NativeSymbol SPan
   /// @return ManagedBinary Managed RAII output binary
   /// @throws vb::RuntimeError If compilation failed
-  ManagedBinary compile(Span<uint8_t const> const &bytecode, Span<NativeSymbol const> const &symbolList = Span<NativeSymbol const>());
+  inline ManagedBinary compile(Span<uint8_t const> const &bytecode, Span<NativeSymbol const> const &symbolList) {
+    return compile(bytecode, symbolList, Span<GlobalSymbol const>());
+  }
+
+  ///
+  /// @brief Start compilation
+  ///
+  /// @param bytecode uint8_t bytecode Span
+  /// @param symbolList NativeSymbol SPan
+  /// @param globalSymbols GlobalSymbol Span
+  /// @return ManagedBinary Managed RAII output binary
+  /// @throws vb::RuntimeError If compilation failed
+  ManagedBinary compile(Span<uint8_t const> const &bytecode, Span<NativeSymbol const> const &symbolList,
+                        Span<GlobalSymbol const> const &globalSymbols);
 
   ///
   /// @brief Force high register pressure for testing

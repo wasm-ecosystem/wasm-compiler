@@ -30,8 +30,10 @@
 #include "extensions/Analytics.hpp"
 #include "extensions/DwarfImpl.hpp"
 
+#include "src/core/common/GlobalSymbol.hpp"
 #include "src/core/common/NativeSymbol.hpp"
 #include "src/core/common/Span.hpp"
+#include "src/core/common/WasmType.hpp"
 #include "src/core/common/util.hpp"
 #include "src/core/compiler/Compiler.hpp"
 #include "src/utils/STDCompilerLogger.hpp"
@@ -44,6 +46,13 @@ class CompilerWrapper {
     std::string moduleName;
     std::string symbolName;
     std::string signature;
+  };
+
+  struct DynGlobalSymbolStorage final {
+    std::string moduleName;
+    std::string fieldName;
+    WasmType valueType;
+    std::string value;
   };
 
 public:
@@ -127,6 +136,15 @@ public:
     });
   }
 
+  void registerGlobal(std::string const &moduleName, std::string const &fieldName, WasmType const valueType, std::string const &value) {
+    globalSymbolStorage_.emplace_back(DynGlobalSymbolStorage{
+        moduleName,
+        fieldName,
+        valueType,
+        value,
+    });
+  }
+
   void setDebugMode(bool const isEnable) {
 #if defined(JIT_TARGET_TRICORE)
     if (isEnable) {
@@ -161,7 +179,27 @@ public:
           nullptr,
       });
     }
-    return compiler_.compile(Span<const uint8_t>{vb::pCast<uint8_t const *>(view.data()), view.size()}, nativeSymbols);
+    std::vector<vb::GlobalSymbol> globalSymbols{};
+    for (DynGlobalSymbolStorage const &globalStorage : globalSymbolStorage_) {
+      if (globalStorage.valueType == WasmType::I32) {
+        globalSymbols.emplace_back(
+            vb::GlobalSymbol::fromInt32(globalStorage.moduleName.c_str(), globalStorage.fieldName.c_str(), std::stoi(globalStorage.value)));
+      } else if (globalStorage.valueType == WasmType::I64) {
+        globalSymbols.emplace_back(
+            vb::GlobalSymbol::fromInt64(globalStorage.moduleName.c_str(), globalStorage.fieldName.c_str(), std::stoll(globalStorage.value)));
+      } else if (globalStorage.valueType == WasmType::F32) {
+        globalSymbols.emplace_back(
+            vb::GlobalSymbol::fromFloat32(globalStorage.moduleName.c_str(), globalStorage.fieldName.c_str(), std::stof(globalStorage.value)));
+      } else if (globalStorage.valueType == WasmType::F64) {
+        globalSymbols.emplace_back(
+            vb::GlobalSymbol::fromFloat64(globalStorage.moduleName.c_str(), globalStorage.fieldName.c_str(), std::stod(globalStorage.value)));
+      } else {
+        throw std::runtime_error("Unsupported global value type");
+      }
+    }
+    return compiler_.compile(Span<const uint8_t>{vb::pCast<uint8_t const *>(view.data()), view.size()},
+                             Span<NativeSymbol const>{nativeSymbols.data(), static_cast<uint32_t>(nativeSymbols.size())},
+                             Span<GlobalSymbol const>{globalSymbols.data(), static_cast<uint32_t>(globalSymbols.size())});
   }
 
   std::string disassembleWasm(pybind11::bytes const &script) {
@@ -184,6 +222,7 @@ private:
   Compiler compiler_;
   std::unique_ptr<ILogger> logger_;
   std::vector<DynNativeSymbolStorage> nativeSymbolStorage_;
+  std::vector<DynGlobalSymbolStorage> globalSymbolStorage_;
   std::unique_ptr<extension::Dwarf5Generator> dwarfGenerator_;
   std::unique_ptr<extension::Analytics> analytics_;
 };
@@ -212,6 +251,7 @@ void binding::bindingCompiler(pybind11::module_ &m) {
       .def("set_stacktrace_record_count", &CompilerWrapper::setStacktraceRecordCount)
       .def("enable_debug_mode", &CompilerWrapper::setDebugMode)
       .def("register_api", &CompilerWrapper::registerApi)
+      .def("register_global", &CompilerWrapper::registerGlobal)
       .def("disassemble_wasm", &CompilerWrapper::disassembleWasm)
       .def("disassemble_module", &CompilerWrapper::disassembleModule)
       .def("disassemble_debug_map", &CompilerWrapper::disassembleDebugMap);
