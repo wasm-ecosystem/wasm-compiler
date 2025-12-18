@@ -4,6 +4,8 @@
 
 ### Feature
 
+- Fix SPDX format
+
 - Support multi return values import function(not call_indirect)
 - Support immutable import globals
 
@@ -12,6 +14,8 @@
 - Fixed the problem that load opcode will trigger Implement Limitation on TRICORE.
 - Fixed the misbehavior of wasm memcpy on x86 backend
 - Fix SPDX format
+- Fix encoding compatibility
+- Fixed wrong machine type for type_cast instruction
 
 ## 3.0.3
 
