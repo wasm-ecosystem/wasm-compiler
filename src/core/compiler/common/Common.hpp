@@ -592,11 +592,16 @@ public:
   /// @return Stack::iterator Iterator to the pushed operand
   Stack::iterator pushOperandsToStack(StackElement const &arg) const;
 
-  /// @brief Condense params with sigIndex, spill scratchRegs and globals
+  /// @brief Condense params with sigIndex
   /// @param sigIndex Signature type index for the function type
   /// @param isIndirectCall Whether this is an indirect call
   /// @return Iterator to params base
-  Stack::iterator prepareCallParamsAndSpillContext(uint32_t const sigIndex, bool const isIndirectCall);
+  Stack::iterator prepareCallParams(uint32_t const sigIndex, bool const isIndirectCall);
+
+  /// @brief Spill scratch registers that are above function parameter VBs
+  /// @param sigIndex  Signature type index for the function type
+  /// @param isIndirectCall Whether this is an indirect call
+  void spillScratchRegsOutOfCallParams(uint32_t const sigIndex, bool const isIndirectCall);
 
 private:
   Compiler &compiler_; ///< Reference to the compiler instance

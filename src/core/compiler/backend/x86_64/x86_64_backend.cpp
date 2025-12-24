@@ -644,7 +644,8 @@ void Backend::execDirectFncCall(uint32_t const fncIndex) {
 
   uint32_t const sigIndex{moduleInfo_.getFncSigIndex(fncIndex)};
   RegMask const spilledLocalsRegMask{common_.saveLocalsAndParamsForFuncCall(imported)};
-  Stack::iterator const paramsBase{common_.prepareCallParamsAndSpillContext(sigIndex, false)};
+  common_.spillScratchRegsOutOfCallParams(sigIndex, false);
+  Stack::iterator const paramsBase{common_.prepareCallParams(sigIndex, false)};
 
   // Load the parameters etc., set up everything then emit the actual call
   if (moduleInfo_.functionIsV2Import(fncIndex)) {
@@ -730,7 +731,8 @@ void Backend::execIndirectWasmCall(uint32_t const sigIndex, uint32_t const table
   static_cast<void>(tableIndex);
   assert(moduleInfo_.hasTable && tableIndex == 0 && "Table not defined");
   RegMask const spilledLocalsRegMask{common_.saveLocalsAndParamsForFuncCall(false)};
-  Stack::iterator const paramsBase{common_.prepareCallParamsAndSpillContext(sigIndex, true)};
+  common_.spillScratchRegsOutOfCallParams(sigIndex, true);
+  Stack::iterator const paramsBase{common_.prepareCallParams(sigIndex, true)};
 
   InternalCall indirectCallImpl{*this, sigIndex};
 

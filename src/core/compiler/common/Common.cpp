@@ -1374,7 +1374,7 @@ Stack::iterator Common::pushOperandsToStack(StackElement const &arg) const {
   return argIt;
 }
 
-Stack::iterator Common::prepareCallParamsAndSpillContext(uint32_t const sigIndex, bool const isIndirectCall) {
+Stack::iterator Common::prepareCallParams(uint32_t const sigIndex, bool const isIndirectCall) {
   uint32_t const numParams{compiler_.moduleInfo_.getNumParamsForSignature(sigIndex)};
   uint32_t const numVBsToResolve{isIndirectCall ? (numParams + 1U) : numParams};
 
@@ -1383,11 +1383,16 @@ Stack::iterator Common::prepareCallParamsAndSpillContext(uint32_t const sigIndex
     paramsBase = condenseMultipleValentBlocksBelow(compiler_.stack_.end(), numVBsToResolve);
   }
 
-  // coverity[autosar_cpp14_a5_1_4_violation]
-  compiler_.backend_.iterateScratchRegsAndGlobals(FunctionRef<void(StackElement const &)>([this, paramsBase](StackElement const &element) {
-    compiler_.backend_.spillFromStack(element, RegMask::none(), true, false, paramsBase, Stack::iterator{});
-  }));
-
   return paramsBase;
+}
+
+void Common::spillScratchRegsOutOfCallParams(uint32_t const sigIndex, bool const isIndirectCall) {
+  uint32_t const numParams{compiler_.moduleInfo_.getNumParamsForSignature(sigIndex)};
+  uint32_t const numVBsToSkip{isIndirectCall ? (numParams + 1U) : numParams};
+  Stack::iterator const spillBase{skipValentBlock(numVBsToSkip)};
+  // coverity[autosar_cpp14_a5_1_4_violation]
+  compiler_.backend_.iterateScratchRegsAndGlobals(FunctionRef<void(StackElement const &)>([this, spillBase](StackElement const &element) {
+    compiler_.backend_.spillFromStack(element, RegMask::none(), true, false, spillBase, Stack::iterator{});
+  }));
 }
 } // namespace vb
