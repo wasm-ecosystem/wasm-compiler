@@ -48,16 +48,6 @@ namespace vb {
 namespace aarch64 {
 namespace BD = Basedata; ///< shortcut of Basedata
 
-void CallBase::updateStackFrameSizeHelper(uint32_t const newAlignedStackFrameSize) {
-  backend_.as_.setStackFrameSize(newAlignedStackFrameSize);
-#if ACTIVE_STACK_OVERFLOW_CHECK
-  if (backend_.moduleInfo_.currentState.checkedStackFrameSize < newAlignedStackFrameSize) {
-    backend_.moduleInfo_.currentState.checkedStackFrameSize = newAlignedStackFrameSize;
-    backend_.as_.checkStackFence(callScrRegs[0]); // SP change
-  }
-#endif
-}
-
 void CallBase::prepareStackFrame() {
   // RSP <------------ Stack growth direction (downwards)                                <---- lastMaximumOffset
   // | Stack Params  | Stack Return Values | LR | Stacktrace Record + Debug Info | JobMemoryPtrPtr | Padding |
@@ -74,7 +64,7 @@ void CallBase::prepareStackFrame() {
   // Reduce stack usage to minimum required and align stack before call
   uint32_t const lastMaximumOffset{backend_.common_.getCurrentMaximumUsedStackFramePosition()};
   uint32_t const newAlignedStackFrameSize{backend_.as_.alignStackFrameSize(lastMaximumOffset + of_post)};
-  updateStackFrameSizeHelper(newAlignedStackFrameSize);
+  backend_.updateStackFrameSizeHelper(newAlignedStackFrameSize);
 }
 
 void DirectV2Import::iterateParams(Stack::iterator const paramsBase) {

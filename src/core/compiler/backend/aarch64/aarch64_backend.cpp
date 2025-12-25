@@ -1457,13 +1457,13 @@ void Backend::execDirectFncCall(uint32_t const fncIndex) {
   uint32_t const sigIndex{moduleInfo_.getFncSigIndex(fncIndex)};
   RegMask const spilledLocalsRegMask{common_.saveLocalsAndParamsForFuncCall(imported)};
   common_.spillScratchRegsOutOfCallParams(sigIndex, false);
-  Stack::iterator const paramsBase{common_.prepareCallParams(sigIndex, false)};
 
   // Load the parameters etc., set up everything then emit the actual call
   if (moduleInfo_.functionIsV2Import(fncIndex)) {
     common_.moveGlobalsToLinkData();
     DirectV2Import v2ImportCall{*this, sigIndex};
     v2ImportCall.storeLR();
+    Stack::iterator const paramsBase{common_.prepareCallParams(sigIndex, false)};
     v2ImportCall.iterateParams(paramsBase);
     common_.markLocalsAsSpilled(spilledLocalsRegMask);
     uint32_t const jobMemoryPtrPtrOffset{v2ImportCall.getJobMemoryPtrPtrOffset()};
@@ -1496,6 +1496,7 @@ void Backend::execDirectFncCall(uint32_t const fncIndex) {
     ImportCallV1 importCallV1Impl{*this, sigIndex};
 
     importCallV1Impl.storeLR();
+    Stack::iterator const paramsBase{common_.prepareCallParams(sigIndex, false)};
 
     static_cast<void>(importCallV1Impl.iterateParams(paramsBase));
     importCallV1Impl.prepareCtx();
@@ -1530,7 +1531,7 @@ void Backend::execDirectFncCall(uint32_t const fncIndex) {
     InternalCall directWasmCallImpl{*this, sigIndex};
 
     directWasmCallImpl.storeLR();
-
+    Stack::iterator const paramsBase{common_.prepareCallParams(sigIndex, false)};
     static_cast<void>(directWasmCallImpl.iterateParams(paramsBase));
     directWasmCallImpl.resolveRegisterCopies();
     common_.markLocalsAsSpilled(spilledLocalsRegMask);
@@ -1549,11 +1550,10 @@ void Backend::execIndirectWasmCall(uint32_t const sigIndex, uint32_t const table
   assert(moduleInfo_.hasTable && tableIndex == 0 && "Table not defined");
   RegMask const spilledLocalsRegMask{common_.saveLocalsAndParamsForFuncCall(false)};
   common_.spillScratchRegsOutOfCallParams(sigIndex, true);
-  Stack::iterator const paramsBase{common_.prepareCallParams(sigIndex, true)};
 
   InternalCall indirectCallImpl{*this, sigIndex};
   indirectCallImpl.storeLR();
-
+  Stack::iterator const paramsBase{common_.prepareCallParams(sigIndex, true)};
   Stack::iterator const indirectCallIndex{indirectCallImpl.iterateParams(paramsBase)};
   indirectCallImpl.handleIndirectCallReg(indirectCallIndex);
 
@@ -3889,6 +3889,16 @@ bool Backend::hasEnoughScratchRegForScheduleInstruction(OPCode const opcode) con
     }
   }
   return availableRegsCount > minimalNumRegsReservedForCondense;
+}
+
+void Backend::updateStackFrameSizeHelper(uint32_t const newAlignedStackFrameSize) {
+  as_.setStackFrameSize(newAlignedStackFrameSize);
+#if ACTIVE_STACK_OVERFLOW_CHECK
+  if (moduleInfo_.currentState.checkedStackFrameSize < newAlignedStackFrameSize) {
+    moduleInfo_.currentState.checkedStackFrameSize = newAlignedStackFrameSize;
+    as_.checkStackFence(callScrRegs[0]); // SP change
+  }
+#endif
 }
 } // namespace aarch64
 } // namespace vb

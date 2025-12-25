@@ -1007,11 +1007,11 @@ void Backend::execDirectFncCall(uint32_t const fncIndex) {
   uint32_t const sigIndex{moduleInfo_.getFncSigIndex(fncIndex)};
   RegMask const spilledLocalsRegMask{common_.saveLocalsAndParamsForFuncCall(imported)};
   common_.spillScratchRegsOutOfCallParams(sigIndex, false);
-  Stack::iterator const paramsBase{common_.prepareCallParams(sigIndex, false)};
 
   // Load the parameters etc., set up everything then emit the actual call
   if (moduleInfo_.functionIsV2Import(fncIndex)) {
     DirectV2Import v2ImportCall{*this, sigIndex};
+    Stack::iterator const paramsBase{common_.prepareCallParams(sigIndex, false)};
     common_.moveGlobalsToLinkData();
     v2ImportCall.iterateParams(paramsBase);
     common_.markLocalsAsSpilled(spilledLocalsRegMask);
@@ -1031,7 +1031,7 @@ void Backend::execDirectFncCall(uint32_t const fncIndex) {
   } else if (imported) {
     // Direct call to V1 import native function
     ImportCallV1 importCallV1Impl{*this, sigIndex};
-
+    Stack::iterator const paramsBase{common_.prepareCallParams(sigIndex, false)};
     common_.moveGlobalsToLinkData();
     static_cast<void>(importCallV1Impl.iterateParams(paramsBase));
     importCallV1Impl.prepareCtx();
@@ -1054,7 +1054,7 @@ void Backend::execDirectFncCall(uint32_t const fncIndex) {
   } else {
     // Direct call to a Wasm function
     InternalCall directWasmCallImpl{*this, sigIndex};
-
+    Stack::iterator const paramsBase{common_.prepareCallParams(sigIndex, false)};
     static_cast<void>(directWasmCallImpl.iterateParams(paramsBase));
     directWasmCallImpl.resolveRegisterCopies();
     common_.markLocalsAsSpilled(spilledLocalsRegMask);
@@ -1071,10 +1071,9 @@ void Backend::execIndirectWasmCall(uint32_t const sigIndex, uint32_t const table
   assert(moduleInfo_.hasTable && tableIndex == 0 && "Table not defined");
   RegMask const spilledLocalsRegMask{common_.saveLocalsAndParamsForFuncCall(false)};
   common_.spillScratchRegsOutOfCallParams(sigIndex, true);
-  Stack::iterator const paramsBase{common_.prepareCallParams(sigIndex, true)};
 
   InternalCall indirectCallImpl{*this, sigIndex};
-
+  Stack::iterator const paramsBase{common_.prepareCallParams(sigIndex, true)};
   Stack::iterator const indirectCallIndex{indirectCallImpl.iterateParams(paramsBase)};
   indirectCallImpl.handleIndirectCallReg(indirectCallIndex);
   indirectCallImpl.resolveRegisterCopies();
@@ -4921,6 +4920,10 @@ bool Backend::hasEnoughScratchRegForScheduleInstruction(OPCode const opcode) con
     }
   }
   return availableRegsCount > minimalNumRegsReservedForCondense;
+}
+
+void Backend::updateStackFrameSizeHelper(uint32_t const newAlignedStackFrameSize) {
+  as_.setStackFrameSize(newAlignedStackFrameSize);
 }
 
 } // namespace tc

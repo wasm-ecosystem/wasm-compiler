@@ -68,15 +68,14 @@ uint32_t Common::getArithArity(OPCode const opcode) VB_NOEXCEPT {
 }
 
 uint32_t Common::getCurrentMaximumUsedStackFramePosition() const VB_NOEXCEPT {
+  uint32_t const minimalStackFrameSize{compiler_.moduleInfo_.fnc.getMinimalStackFrameSize()};
   Stack::iterator const lastOccurrenceTempStack{compiler_.moduleInfo_.getReferenceToLastOccurrenceOnStackForStackMemory()};
-  Stack::iterator const lastBlock{compiler_.moduleInfo_.fnc.lastBlockReference};
-  uint32_t const blockResultsStackOffset{(lastBlock.isEmpty()) ? compiler_.moduleInfo_.getFixedStackFrameWidth()
-                                                               : lastBlock->data.blockInfo.blockResultsStackOffset};
+
   uint32_t const stackFramePosition{(lastOccurrenceTempStack.isEmpty())
                                         ? 0U
                                         : lastOccurrenceTempStack->data.variableData.location.calculationResult.resultLocation.stackFramePosition};
-  uint32_t const maximumPosition{std::max(blockResultsStackOffset, stackFramePosition)};
-  assert(maximumPosition >= compiler_.moduleInfo_.getFixedStackFrameWidth() && maximumPosition <= compiler_.moduleInfo_.fnc.stackFrameSize &&
+  uint32_t const maximumPosition{std::max(minimalStackFrameSize, stackFramePosition)};
+  assert(maximumPosition >= compiler_.moduleInfo_.fnc.getFixedStackFrameWidth() && maximumPosition <= compiler_.moduleInfo_.fnc.stackFrameSize &&
          "Stack position error");
   return maximumPosition;
 }
@@ -750,7 +749,7 @@ void Common::addReference(Stack::iterator const element) const VB_NOEXCEPT {
       uint32_t const numUsedTempStackSlots = getNumUsedTempStackSlots();
       Stack::iterator const highestTempStack = compiler_.moduleInfo_.getReferenceToLastOccurrenceOnStack(*element);
       uint32_t const activeTempStackBytes = highestTempStack->data.variableData.location.calculationResult.resultLocation.stackFramePosition -
-                                            compiler_.moduleInfo_.getFixedStackFrameWidth();
+                                            compiler_.moduleInfo_.fnc.getFixedStackFrameWidth();
       uint32_t const activeSlots = activeTempStackBytes / 8U;
       compiler_.getAnalytics()->updateMaxUsedTempStackSlots(numUsedTempStackSlots, activeSlots);
     }
@@ -1170,15 +1169,15 @@ uint32_t Common::findFreeTempStackSlot(uint32_t const slotSize) const VB_NOEXCEP
     if (!nextElement.isEmpty()) {
       nextUsedOffset = nextElement->data.variableData.location.calculationResult.resultLocation.stackFramePosition;
     } else {
-      nextUsedOffset = compiler_.moduleInfo_.getFixedStackFrameWidth();
+      nextUsedOffset = compiler_.moduleInfo_.fnc.getFixedStackFrameWidth();
     }
 
     uint32_t const delta{currentElem->data.variableData.location.calculationResult.resultLocation.stackFramePosition - nextUsedOffset};
     if (delta >= (StackElement::tempStackSlotSize + slotSize)) {
       uint32_t const freeSlotOffset{nextUsedOffset + slotSize};
-      assert(freeSlotOffset > compiler_.moduleInfo_.getFixedStackFrameWidth());
-      Stack::iterator const lastBlock{compiler_.moduleInfo_.fnc.lastBlockReference};
-      if ((!lastBlock.isEmpty()) && (freeSlotOffset < lastBlock->data.blockInfo.entryStackFrameSize)) {
+      assert(freeSlotOffset > compiler_.moduleInfo_.fnc.getFixedStackFrameWidth());
+
+      if (freeSlotOffset < compiler_.moduleInfo_.fnc.getMinimalStackFrameSize()) {
         break;
       }
       return freeSlotOffset;
@@ -1377,12 +1376,13 @@ Stack::iterator Common::pushOperandsToStack(StackElement const &arg) const {
 Stack::iterator Common::prepareCallParams(uint32_t const sigIndex, bool const isIndirectCall) {
   uint32_t const numParams{compiler_.moduleInfo_.getNumParamsForSignature(sigIndex)};
   uint32_t const numVBsToResolve{isIndirectCall ? (numParams + 1U) : numParams};
-
+  compiler_.moduleInfo_.fnc.preserveStackSize();
   Stack::iterator paramsBase{};
   if (numVBsToResolve > 0U) {
     paramsBase = condenseMultipleValentBlocksBelow(compiler_.stack_.end(), numVBsToResolve);
   }
-
+  compiler_.backend_.updateStackFrameSizeHelper(compiler_.moduleInfo_.fnc.getPreservedStackSize());
+  compiler_.moduleInfo_.fnc.clearPreservedStackSize();
   return paramsBase;
 }
 

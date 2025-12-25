@@ -510,6 +510,10 @@ public:
   /// global
   void iterateScratchRegsAndGlobals(FunctionRef<void(StackElement const &)> const &lambda) const;
 
+  /// @brief Update new stackFrame size. Check overflow if needed
+  /// @param newAlignedStackFrameSize aligned new stackFrame size
+  void updateStackFrameSizeHelper(uint32_t const newAlignedStackFrameSize);
+
 private:
   /// @brief Widths of certain entries on the stack
   struct Widths final {
@@ -822,10 +826,6 @@ private:
   /// @param preserveFlags Whether to preserve CPU flags
   void emitMoveIntWithCastTo32(VariableStorage &targetStorage, VariableStorage const &sourceStorage, bool const unconditional,
                                bool const preserveFlags) const;
-
-  /// @brief Update new stackFrame size. Check overflow if needed
-  /// @param newAlignedStackFrameSize aligned new stackFrame size
-  void updateStackFrameSizeHelper(uint32_t const newAlignedStackFrameSize);
 };
 
 } // namespace x86_64

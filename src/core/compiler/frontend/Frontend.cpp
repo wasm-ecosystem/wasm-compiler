@@ -1244,7 +1244,7 @@ void Frontend::parseCodeSection() {
     // pointer of the memory, check if the expected value matches the actual value
     assert(memory_.ptr() == pCast<uint8_t *>(moduleInfo_.localDefs()) + sizeof(ModuleInfo::LocalDef) * moduleInfo_.fnc.numLocals &&
            "Incorrect number of locals allocated");
-    assert(moduleInfo_.fnc.stackFrameSize == moduleInfo_.getFixedStackFrameWidth() && "StackFrameSize unaligned");
+    assert(moduleInfo_.fnc.stackFrameSize == moduleInfo_.fnc.getFixedStackFrameWidth() && "StackFrameSize unaligned");
 
     for (uint32_t i{0U}; i < moduleInfo_.fnc.numLocals; i++) {
       if (moduleInfo_.localDefs[i].reg != TReg::NONE) {

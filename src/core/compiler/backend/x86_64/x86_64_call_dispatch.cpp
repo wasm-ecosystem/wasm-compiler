@@ -47,11 +47,6 @@ namespace vb {
 namespace x86_64 {
 namespace BD = Basedata; ///< shortcut of Basedata
 
-void CallBase::updateStackFrameSizeHelper(uint32_t const newAlignedStackFrameSize) {
-  backend_.as_.setStackFrameSize(newAlignedStackFrameSize);
-  backend_.moduleInfo_.fnc.stackFrameSize = newAlignedStackFrameSize;
-}
-
 void CallBase::prepareStackFrame() {
   // RSP <------------ Stack growth direction (downwards)                                          <----lastMaximumOffset
   // | Shadow Space(for imported) | Stack Params | Stack Return values | Stacktrace Record + Debug Info | (JobMemoryPtrPtr) |
@@ -69,7 +64,7 @@ void CallBase::prepareStackFrame() {
   // Reduce stack usage to minimum required and align stack before call
   uint32_t const lastMaximumOffset{backend_.common_.getCurrentMaximumUsedStackFramePosition()};
   uint32_t const newAlignedStackFrameSize{backend_.as_.alignStackFrameSize(lastMaximumOffset + of_post)};
-  updateStackFrameSizeHelper(newAlignedStackFrameSize);
+  backend_.updateStackFrameSizeHelper(newAlignedStackFrameSize);
 }
 
 void DirectV2Import::iterateParams(Stack::iterator const paramsBase) {

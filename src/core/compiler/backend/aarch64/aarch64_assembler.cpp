@@ -204,7 +204,8 @@ void Assembler::setStackFrameSize(uint32_t const frameSize, bool const temporary
   assert(frameSize >= moduleInfo_.getStackFrameSizeBeforeReturn() && "Cannot remove return address and parameters");
 
   if (!mayRemoveLocals) {
-    assert(frameSize >= moduleInfo_.getFixedStackFrameWidth() && "Cannot implicitly drop active variables (tempstack, local) by truncating stack");
+    assert(frameSize >= moduleInfo_.fnc.getFixedStackFrameWidth() &&
+           "Cannot implicitly drop active variables (tempstack, local) by truncating stack");
   }
 
   if (moduleInfo_.fnc.stackFrameSize != frameSize) {

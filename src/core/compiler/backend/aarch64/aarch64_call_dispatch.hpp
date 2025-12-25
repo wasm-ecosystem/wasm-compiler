@@ -78,10 +78,6 @@ public:
   /// @brief Emit function call wrapper with stack trace information
   void emitFncCallWrapper(uint32_t const fncIndex, FunctionRef<void()> const &emitFunctionCallLambda);
 
-  /// @brief Update new stackFrame size. Check overflow if needed
-  /// @param newAlignedStackFrameSize aligned new stackFrame size
-  void updateStackFrameSizeHelper(uint32_t const newAlignedStackFrameSize);
-
 private:
   /// @brief Prepare stack frame for function call
   void prepareStackFrame();

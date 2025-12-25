@@ -17,6 +17,7 @@
 #ifndef MODULEINFO_HPP
 #define MODULEINFO_HPP
 
+#include <algorithm>
 #include <array>
 #include <cassert>
 #include <cstdint>
@@ -354,21 +355,63 @@ public:
   ///
   class FunctionInfo final {
   public:
-    uint32_t index = 0U;                ///< Index of the current function
-    uint32_t numParams = 0U;            ///< Number of parameters of the current function
-    uint32_t numLocals = 0U;            ///< Number of locals of the current function
-    uint32_t numLocalsInGPR = 0U;       ///< Number of locals of the current function that are stored in general purpose CPU registers
-    uint32_t numLocalsInFPR = 0U;       ///< Number of locals of the current function that are stored in floating point CPU registers
-    uint32_t paramWidth = 0U;           ///< Total width/size of all stack-passed parameters of the current function in bytes
-    uint32_t directLocalsWidth = 0U;    ///< Total width/size of all locals of the current function that are stored on the stack in bytes
-    uint32_t stackFrameSize = 0U;       ///< Total size of the current stack frame in bytes (Parameters, potential return
-                                        ///< address, locals and stack variables)
+    uint32_t index = 0U;             ///< Index of the current function
+    uint32_t numParams = 0U;         ///< Number of parameters of the current function
+    uint32_t numLocals = 0U;         ///< Number of locals of the current function
+    uint32_t numLocalsInGPR = 0U;    ///< Number of locals of the current function that are stored in general purpose CPU registers
+    uint32_t numLocalsInFPR = 0U;    ///< Number of locals of the current function that are stored in floating point CPU registers
+    uint32_t paramWidth = 0U;        ///< Total width/size of all stack-passed parameters of the current function in bytes
+    uint32_t directLocalsWidth = 0U; ///< Total width/size of all locals of the current function that are stored on the stack in bytes
+    uint32_t stackFrameSize = 0U;    ///< Total size of the current stack frame in bytes (Parameters, potential return
+    ///< address, locals and stack variables)
     Stack::iterator lastBlockReference; ///< Iterator of the StackElement that represents the last block (BLOCK, LOOP, IFBLOCK) in
                                         ///< this function body (empty iterator means there is no open block)
 
     bool unreachable = false;        ///< Whether the current function frame has been marked unreachable
     bool properlyTerminated = false; ///< Whether the current function has been properly terminated (i.e. with an END
                                      ///< instruction and with the correct number of elements still on the stack)
+
+    ///
+    /// @brief Get the width of the always present portion of the stack frame in bytes
+    ///
+    /// This represents storage locations for parameters, the extra reserved stack width, local variables and, depending
+    /// on the specific CPU architecture, a return address that is stored on the stack
+    ///
+    /// @return uint32_t How many bytes of the stack frame will always be present until the function body is closed
+    inline uint32_t getFixedStackFrameWidth() const VB_NOEXCEPT {
+      return paramWidth + roundUpToPow2(NBackend::returnAddrWidth, 3U) + directLocalsWidth;
+    };
+
+    /// @brief Preserve the current stack size
+    inline void preserveStackSize() VB_NOEXCEPT {
+      preservedStackSize_ = stackFrameSize;
+    }
+
+    /// @brief Clear the preserved stack size
+    inline void clearPreservedStackSize() VB_NOEXCEPT {
+      preservedStackSize_ = 0U;
+    }
+
+    /// @brief Get the preserved stack size
+    inline uint32_t getPreservedStackSize() const VB_NOEXCEPT {
+      return preservedStackSize_;
+    }
+
+    /// @brief Get the minimal stack frame size required for this function
+    inline uint32_t getMinimalStackFrameSize() const VB_NOEXCEPT {
+      uint32_t const nonPreservedMinimalSize{(lastBlockReference.isEmpty()) ? getFixedStackFrameWidth()
+                                                                            : lastBlockReference->data.blockInfo.blockResultsStackOffset};
+      // GCOVR_EXCL_START
+      assert(nonPreservedMinimalSize >= getFixedStackFrameWidth());
+      // GCOVR_EXCL_STOP
+
+      uint32_t const minimalBookKeptStackFrameSize{std::max(preservedStackSize_, nonPreservedMinimalSize)};
+
+      return minimalBookKeptStackFrameSize;
+    }
+
+  private:
+    uint32_t preservedStackSize_ = 0U; ///< Size of the preserved stack size during function call before condense parameters.
   };
   FunctionInfo fnc; ///< FunctionInfo instance for the current function
 
@@ -518,17 +561,6 @@ public:
   uint32_t outputSizeBeforeLastParsedInstruction = 0U; ///< Size of the (compiled) output binary before the last parsed instruction
 
   bool forceHighRegisterPressureForTesting = false; ///< Whether to force high register pressure (ONLY FOR TESTING)
-
-  ///
-  /// @brief Get the width of the always present portion of the stack frame in bytes
-  ///
-  /// This represents storage locations for parameters, the extra reserved stack width, local variables and, depending
-  /// on the specific CPU architecture, a return address that is stored on the stack
-  ///
-  /// @return uint32_t How many bytes of the stack frame will always be present until the function body is closed
-  inline uint32_t getFixedStackFrameWidth() const VB_NOEXCEPT {
-    return fnc.paramWidth + roundUpToPow2(NBackend::returnAddrWidth, 3U) + fnc.directLocalsWidth;
-  };
 
   ///
   /// @brief Get the length of the basedata for this module

@@ -220,3 +220,130 @@
   (data (;0;) (i32.const 3) "6"))
 
 (assert_return (invoke "foo" )(i32.const 1))
+
+(module
+    ;; CHECK-LABEL: Function[0] Body
+    (func $goo (param i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32) (result i32)
+                local.get 0
+        local.get 1
+        i32.add
+        local.get 2
+        i32.add
+        local.get 3
+        i32.add
+        local.get 4
+        i32.add
+        local.get 5
+        i32.add
+        local.get 6
+        i32.add
+        local.get 7
+        i32.add
+        local.get 8
+        i32.add
+        local.get 9
+        i32.add
+        local.get 10
+        i32.add
+    )
+    ;; CHECK-LABEL: Function[1] Body
+    (func $foo (export "foo") (result i32)
+        (local $l0 i32) (local $l1 i32) (local $l2 i32) (local $l3 i32) (local $l4 i32) (local $l5 i32) (local $l6 i32) (local $l7 i32) (local $l8 i32) (local $l9 i32)
+        (local i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32)
+        i32.const 0
+        local.set 0
+        i32.const 1
+        local.set 1
+        i32.const 2
+        local.set 2
+        i32.const 3
+        local.set 3
+        i32.const 4
+        local.set 4
+        i32.const 5
+        local.set 5
+        i32.const 6
+        local.set 6
+        i32.const 7
+        local.set 7
+        i32.const 8
+        local.set 8
+        i32.const 9
+        local.set 9
+        i32.const 100
+        i32.const 100
+        i32.store
+        block (result i32)
+        i32.const 100
+        i32.load
+
+        local.get 0
+        local.get 1
+        local.get 2
+        local.get 3
+        local.get 4
+        local.get 5
+        local.get 6
+        local.get 7
+        
+
+        local.get 1
+        local.get 1
+        i32.add
+
+        local.get 1
+        local.get 1
+        i32.add
+
+        
+        local.get 1
+        local.get 1
+        i32.add
+
+        
+        local.get 1
+        local.get 1
+        i32.add
+
+       
+
+        local.get 1
+        local.get 1
+        i32.add
+
+        local.get 1
+        local.get 1
+        i32.add
+
+        local.get 1
+        local.get 1
+        i32.add
+
+        i32.add
+
+        i32.add
+
+        i32.add
+
+        i32.add
+
+        i32.add
+        i32.add
+
+        i32.const 1
+        local.get 2
+        i32.add
+
+        i32.const 1
+        local.get 2
+        i32.add
+
+        call $goo
+
+        i32.add
+
+        end
+    )
+    (memory 1)
+)
+(assert_return (invoke "foo") (i32.const 148))
