@@ -78,6 +78,11 @@ public:
   /// @brief Emit function call wrapper with stack trace information
   void emitFncCallWrapper(uint32_t const fncIndex, FunctionRef<void()> const &emitFunctionCallLambda);
 
+  /// @brief getter of stack parameter width
+  inline uint32_t getStackParamWidth() const VB_NOEXCEPT {
+    return stackParamWidth_;
+  }
+
 private:
   /// @brief Prepare stack frame for function call
   void prepareStackFrame();

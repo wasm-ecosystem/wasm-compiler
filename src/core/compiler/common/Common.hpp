@@ -29,8 +29,8 @@
 
 #include "src/core/common/FunctionRef.hpp"
 #include "src/core/common/Span.hpp"
+#include "src/core/compiler/common/ParamPos.hpp"
 #include "src/core/compiler/common/Stack.hpp"
-
 namespace vb {
 // coverity[autosar_cpp14_m3_2_3_violation]
 class Compiler;
@@ -592,11 +592,13 @@ public:
   /// @return Stack::iterator Iterator to the pushed operand
   Stack::iterator pushOperandsToStack(StackElement const &arg) const;
 
+  using ParamPosFunction = vb::FunctionRef<ParamPos(MachineType)>; ///< Type alias for parameter position function
   /// @brief Condense params with sigIndex
   /// @param sigIndex Signature type index for the function type
   /// @param isIndirectCall Whether this is an indirect call
+  /// @param paramPosFunc Function to get the parameter position
   /// @return Iterator to params base
-  Stack::iterator prepareCallParams(uint32_t const sigIndex, bool const isIndirectCall);
+  Stack::iterator prepareCallParams(uint32_t const sigIndex, bool const isIndirectCall, ParamPosFunction const &paramPosFunc);
 
   /// @brief Spill scratch registers that are above function parameter VBs
   /// @param sigIndex  Signature type index for the function type

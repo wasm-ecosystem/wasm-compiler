@@ -111,22 +111,35 @@
 
         i32.add
         i32.add
-
-        i32.const 1
-        local.get 2
-        i32.add
-
-        i32.const 1
-        local.get 2
-        i32.add
         ;; ---------- space used for temp results on stack ------------
         ;; X86_64_PASSIVE:  lea rsp, [rsp - 0x[[NUM:[0-9a-f]+]]]
+        ;; AARCH64_PASSIVE: sub sp, sp, #0x[[NUM:[0-9a-f]+]]
+        ;; TRICORE: sub.a  sp, #0x[[NUM:[0-9a-f]+]]
+
+        i32.const 1
+        local.get 2
+        ;; X86_64_PASSIVE: add [[REG:(r[0-9]+d?|[re](ax|cx|dx|bx|bp|si|di))]], 1
+        ;; AARCH64_PASSIVE: add  [[REG:w[0-9]+]], [[REG2:w[0-9]+]], #1
+        ;; TRICORE: addi  [[REG:d[0-9]+]], [[REG2:d[0-9]+]], #1
+        i32.add
+
+        i32.const 1
+        ;;------------------scratch reg should be reused when condense this vb-------------------
+        ;; X86_64_PASSIVE: add [[REG]], 1
+        ;; AARCH64_PASSIVE: add  [[REG]], [[REG2]], #1
+        ;; TRICORE: addi  [[REG]], [[REG2]], #1
+        local.get 2
+        i32.add
+        ;;------------------ mov scratch reg to callee param on stack -------------------
+        ;; X86_64_PASSIVE: mov  dword ptr [rsp + 0x[[NUM]]], [[REG]]
+        ;; AARCH64_PASSIVE: str  [[REG]], [sp, #0x[[NUM]]]
+        ;; TRICORE: st.w  [sp]#0x[[NUM]], [[REG]]
+        
+        ;;------------------ adjust stack back to param pos and call -------------------
         ;; X86_64_PASSIVE:  lea rsp, [rsp + 0x[[NUM]]]
         ;; X86_64_PASSIVE:  call
-        ;; AARCH64_PASSIVE: sub sp, sp, #0x[[NUM:[0-9a-f]+]]
         ;; AARCH64_PASSIVE: add sp, sp, #0x[[NUM]]
         ;; AARCH64_PASSIVE: bl
-        ;; TRICORE: sub.a  sp, #0x[[NUM:[0-9a-f]+]]
         ;; TRICORE: lea sp, [sp]#0x[[NUM]]
         ;; TRICORE: fcall
         call $goo

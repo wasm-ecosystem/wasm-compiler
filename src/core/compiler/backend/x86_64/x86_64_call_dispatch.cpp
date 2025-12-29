@@ -134,7 +134,7 @@ Stack::iterator V1CallBase::iterateParamsBase(Stack::iterator const paramsBase, 
             }
           }
         } else {
-          uint32_t const offsetFromSP{of_stackParams_ + x86_64_Backend::offsetInStackArgs(isImported, stackParamWidth_, tracker)};
+          uint32_t const offsetFromSP{adjustNativeABIOffset(x86_64_Backend::offsetInStackArgs(isImported, stackParamWidth_, tracker))};
           targetStorage = VariableStorage::stackMemory(paramType, backend_.moduleInfo_.fnc.stackFrameSize - offsetFromSP);
           // (reg|stack)->stack
           backend_.emitMoveImpl(targetStorage, sourceStorage, false);
@@ -182,7 +182,7 @@ void ImportCallV1::prepareCtx() {
   if (targetReg != REG::NONE) {
     gprCopyResolver.push(VariableStorage::reg(MachineType::I64, targetReg), ctxStorage);
   } else {
-    uint32_t const offsetFromSP{of_stackParams_ + x86_64_Backend::offsetInStackArgs(true, stackParamWidth_, tracker)};
+    uint32_t const offsetFromSP{adjustNativeABIOffset(x86_64_Backend::offsetInStackArgs(true, stackParamWidth_, tracker))};
     VariableStorage const targetStorage{VariableStorage::stackMemory(MachineType::I64, backend_.moduleInfo_.fnc.stackFrameSize - offsetFromSP)};
     backend_.emitMoveImpl(targetStorage, ctxStorage, false, false);
   }

@@ -70,6 +70,17 @@ public:
   /// @brief Emit function call wrapper with stack trace information
   void emitFncCallWrapper(uint32_t const fncIndex, FunctionRef<void()> const &emitFunctionCallLambda);
 
+  /// @brief getter of stack parameter width
+  inline uint32_t getStackParamWidth() const VB_NOEXCEPT {
+    return stackParamWidth_;
+  }
+
+  /// @brief windows ABI has shadow space, adjust offset accordingly
+  /// @param offsetBeforeAdjust original offset before adjustment
+  inline uint32_t adjustNativeABIOffset(uint32_t const offsetBeforeAdjust) const VB_NOEXCEPT {
+    return of_stackParams_ + offsetBeforeAdjust;
+  }
+
 private:
   /// @brief Prepare stack frame for function call
   void prepareStackFrame();

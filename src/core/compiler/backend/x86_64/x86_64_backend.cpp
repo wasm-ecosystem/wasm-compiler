@@ -55,6 +55,7 @@
 #include "src/core/compiler/common/MemWriter.hpp"
 #include "src/core/compiler/common/ModuleInfo.hpp"
 #include "src/core/compiler/common/OPCode.hpp"
+#include "src/core/compiler/common/ParamPos.hpp"
 #include "src/core/compiler/common/RegMask.hpp"
 #include "src/core/compiler/common/RegisterCopyResolver.hpp"
 #include "src/core/compiler/common/Stack.hpp"
@@ -650,7 +651,19 @@ void Backend::execDirectFncCall(uint32_t const fncIndex) {
   if (moduleInfo_.functionIsV2Import(fncIndex)) {
     common_.moveGlobalsToLinkData();
     DirectV2Import v2ImportCall{*this, sigIndex};
-    Stack::iterator const paramsBase{common_.prepareCallParams(sigIndex, false)};
+    constexpr uint32_t of_stackParams{NativeABI::shadowSpaceSize};
+    uint32_t paramOffset{of_stackParams};
+    // coverity[autosar_cpp14_a8_5_2_violation]
+    auto const paramPosFunction = [this, &paramOffset](MachineType const type) VB_NOEXCEPT -> ParamPos {
+      static_cast<void>(type);
+      ParamPos pos{};
+      pos.reg = REG::NONE;
+      pos.offsetToStackBase = moduleInfo_.fnc.getPreservedStackSize() - paramOffset;
+      paramOffset += 8U;
+      return pos;
+    };
+    // coverity[autosar_cpp14_a5_1_4_violation]
+    Stack::iterator const paramsBase{common_.prepareCallParams(sigIndex, false, Common::ParamPosFunction(paramPosFunction))};
 
     v2ImportCall.iterateParams(paramsBase);
     common_.markLocalsAsSpilled(spilledLocalsRegMask);
@@ -679,7 +692,20 @@ void Backend::execDirectFncCall(uint32_t const fncIndex) {
     // Direct call to V1 import native function
     common_.moveGlobalsToLinkData();
     ImportCallV1 importCallV1Impl{*this, sigIndex};
-    Stack::iterator const paramsBase{common_.prepareCallParams(sigIndex, false)};
+    RegStackTracker tracker{};
+    uint32_t const stackParamWidth{importCallV1Impl.getStackParamWidth()};
+    // coverity[autosar_cpp14_a8_5_2_violation]
+    auto const paramPosFunction = [this, &tracker, stackParamWidth, &importCallV1Impl](MachineType const type) VB_NOEXCEPT -> ParamPos {
+      ParamPos pos{};
+      pos.reg = getREGForArg(type, true, tracker);
+      if (pos.reg == REG::NONE) {
+        pos.offsetToStackBase =
+            moduleInfo_.fnc.getPreservedStackSize() - importCallV1Impl.adjustNativeABIOffset(offsetInStackArgs(true, stackParamWidth, tracker));
+      }
+      return pos;
+    };
+    // coverity[autosar_cpp14_a5_1_4_violation]
+    Stack::iterator const paramsBase{common_.prepareCallParams(sigIndex, false, Common::ParamPosFunction(paramPosFunction))};
 
     static_cast<void>(importCallV1Impl.iterateParams(paramsBase));
     importCallV1Impl.prepareCtx();
@@ -711,7 +737,20 @@ void Backend::execDirectFncCall(uint32_t const fncIndex) {
   } else {
     // Direct call to a Wasm function
     InternalCall directWasmCallImpl{*this, sigIndex};
-    Stack::iterator const paramsBase{common_.prepareCallParams(sigIndex, false)};
+    RegStackTracker tracker{};
+    uint32_t const stackParamWidth{directWasmCallImpl.getStackParamWidth()};
+    // coverity[autosar_cpp14_a8_5_2_violation]
+    // coverity[autosar_cpp14_a5_1_9_violation]
+    auto const paramPosFunction = [this, &tracker, stackParamWidth](MachineType const type) VB_NOEXCEPT -> ParamPos {
+      ParamPos pos{};
+      pos.reg = getREGForArg(type, false, tracker);
+      if (pos.reg == REG::NONE) {
+        pos.offsetToStackBase = moduleInfo_.fnc.getPreservedStackSize() - offsetInStackArgs(false, stackParamWidth, tracker);
+      }
+      return pos;
+    };
+    // coverity[autosar_cpp14_a5_1_4_violation]
+    Stack::iterator const paramsBase{common_.prepareCallParams(sigIndex, false, Common::ParamPosFunction(paramPosFunction))};
     static_cast<void>(directWasmCallImpl.iterateParams(paramsBase));
     directWasmCallImpl.resolveRegisterCopies();
     common_.markLocalsAsSpilled(spilledLocalsRegMask);
@@ -735,7 +774,19 @@ void Backend::execIndirectWasmCall(uint32_t const sigIndex, uint32_t const table
   common_.spillScratchRegsOutOfCallParams(sigIndex, true);
 
   InternalCall indirectCallImpl{*this, sigIndex};
-  Stack::iterator const paramsBase{common_.prepareCallParams(sigIndex, true)};
+  RegStackTracker tracker{};
+  uint32_t const stackParamWidth{indirectCallImpl.getStackParamWidth()};
+  // coverity[autosar_cpp14_a8_5_2_violation]
+  auto const paramPosFunction = [this, &tracker, stackParamWidth](MachineType const type) VB_NOEXCEPT -> ParamPos {
+    ParamPos pos{};
+    pos.reg = getREGForArg(type, false, tracker);
+    if (pos.reg == REG::NONE) {
+      pos.offsetToStackBase = moduleInfo_.fnc.getPreservedStackSize() - offsetInStackArgs(false, stackParamWidth, tracker);
+    }
+    return pos;
+  };
+  // coverity[autosar_cpp14_a5_1_4_violation]
+  Stack::iterator const paramsBase{common_.prepareCallParams(sigIndex, true, Common::ParamPosFunction(paramPosFunction))};
 
   Stack::iterator const indirectCallIndex{indirectCallImpl.iterateParams(paramsBase)};
   indirectCallImpl.handleIndirectCallReg(indirectCallIndex);

@@ -45,6 +45,7 @@
 #include "src/core/compiler/common/MemWriter.hpp"
 #include "src/core/compiler/common/ModuleInfo.hpp"
 #include "src/core/compiler/common/OPCode.hpp"
+#include "src/core/compiler/common/ParamPos.hpp"
 #include "src/core/compiler/common/RegMask.hpp"
 #include "src/core/compiler/common/Stack.hpp"
 #include "src/core/compiler/common/StackElement.hpp"
@@ -1373,13 +1374,51 @@ Stack::iterator Common::pushOperandsToStack(StackElement const &arg) const {
   return argIt;
 }
 
-Stack::iterator Common::prepareCallParams(uint32_t const sigIndex, bool const isIndirectCall) {
+Stack::iterator Common::prepareCallParams(uint32_t const sigIndex, bool const isIndirectCall, ParamPosFunction const &paramPosFunc) {
   uint32_t const numParams{compiler_.moduleInfo_.getNumParamsForSignature(sigIndex)};
   uint32_t const numVBsToResolve{isIndirectCall ? (numParams + 1U) : numParams};
+  uint32_t skipCount{numVBsToResolve};
   compiler_.moduleInfo_.fnc.preserveStackSize();
   Stack::iterator paramsBase{};
   if (numVBsToResolve > 0U) {
-    paramsBase = condenseMultipleValentBlocksBelow(compiler_.stack_.end(), numVBsToResolve);
+    compiler_.moduleInfo_.iterateParamsForSignature(
+        sigIndex, FunctionRef<void(MachineType)>([this, &paramsBase, &skipCount, &paramPosFunc](MachineType const paramType) {
+          skipCount--;
+          // coverity[autosar_cpp14_a4_5_1_violation]
+          ParamPos const targetPos{paramPosFunc(paramType)};
+
+          Stack::iterator const baseIt{skipValentBlock(skipCount)};
+
+          Stack::iterator const condenseResult{condenseValentBlockBelow(baseIt, nullptr)};
+          VariableStorage const sourceStorage{compiler_.moduleInfo_.getStorage(*condenseResult)};
+          // if source storage is not in register, no need to move it now, because condense may increase stack size
+          // then the sp offset for example mov reg, [sp + offset] is a larger value and consumes more code size
+          // After condense, the stack size will be recovered to a smaller size, then the offset is smaller and save code size
+          if (sourceStorage.type == StorageType::REGISTER) {
+            if (targetPos.reg == TReg::NONE) {
+              // Move to stack if target is stack memory
+              VariableStorage const targetStorage{VariableStorage::stackMemory(paramType, targetPos.offsetToStackBase)};
+
+              compiler_.backend_.emitMoveImpl(targetStorage, sourceStorage, false);
+              replaceAndUpdateReference(condenseResult,
+                                        StackElement::tempResult(paramType, targetStorage, compiler_.moduleInfo_.getStackMemoryReferencePosition()));
+            }
+          }
+
+          if (paramsBase.isEmpty()) {
+            paramsBase = condenseResult;
+          }
+        }));
+  }
+  if (isIndirectCall) {
+    // GCOVR_EXCL_START
+    assert(skipCount == 1U);
+    // GCOVR_EXCL_STOP
+    Stack::iterator const condenseResult{condenseValentBlockBelow(compiler_.stack_.end())};
+
+    if (paramsBase.isEmpty()) {
+      paramsBase = condenseResult;
+    }
   }
   compiler_.backend_.updateStackFrameSizeHelper(compiler_.moduleInfo_.fnc.getPreservedStackSize());
   compiler_.moduleInfo_.fnc.clearPreservedStackSize();

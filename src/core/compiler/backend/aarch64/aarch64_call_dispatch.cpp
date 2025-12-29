@@ -79,7 +79,6 @@ void DirectV2Import::iterateParams(Stack::iterator const paramsBase) {
         targetStorage = VariableStorage::stackMemory(paramType, backend_.moduleInfo_.fnc.stackFrameSize - offsetFromSP);
         // (reg|stack)->stack
         backend_.emitMoveImpl(targetStorage, sourceStorage, false);
-
         backend_.common_.removeReference(currentParam);
         currentParam = backend_.stack_.erase(currentParam);
       }));
