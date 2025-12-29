@@ -347,3 +347,72 @@
     (memory 1)
 )
 (assert_return (invoke "foo") (i32.const 148))
+
+(module
+
+  (func $foo  (result i32  i64 i64 )
+    (local f64)
+    (local i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32)
+    i32.const 0
+    local.set 1
+    i32.const 0
+    local.set 2
+    i32.const 0
+    local.set 3
+    i32.const 0
+    local.set 4
+    i32.const 0
+    local.set 5
+    i32.const 0
+    local.set 6
+    i32.const 0
+    local.set 7
+    i32.const 0
+    local.set 8
+    i32.const 0
+    local.set 9
+    i32.const 0
+    local.set 10
+    i32.const 0
+    local.set 11
+    i32.const 0
+    local.set 12
+    i32.const 0
+    local.set 13
+    i32.const 0
+    local.set 14
+    i32.const 0
+    local.set 15
+    i32.const 0
+    local.set 16
+    i32.const 0
+    local.set 17
+    i32.const 0
+    local.set 18
+    i32.const 0
+    local.set 19
+    i32.const 0
+    local.set 20
+
+    f64.const 0
+    local.set 0
+
+    block (result i32 i64 i64 )  ;; label = @1
+      
+      i32.const 672608812
+
+      i64.const 6727
+      i64.const 87
+      
+      local.get 0
+      i32.trunc_f64_u
+      i32.const 7
+      i32.rem_u
+      br_if 0 (;@1;)
+    end)
+
+  (export "func_16" (func $foo))
+
+)
+
+(assert_return (invoke "func_16") (i32.const 672608812) (i64.const 6727) (i64.const 87))

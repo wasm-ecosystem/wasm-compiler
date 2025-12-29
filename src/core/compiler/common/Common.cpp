@@ -1178,7 +1178,7 @@ uint32_t Common::findFreeTempStackSlot(uint32_t const slotSize) const VB_NOEXCEP
       uint32_t const freeSlotOffset{nextUsedOffset + slotSize};
       assert(freeSlotOffset > compiler_.moduleInfo_.fnc.getFixedStackFrameWidth());
 
-      if (freeSlotOffset < compiler_.moduleInfo_.fnc.getMinimalStackFrameSize()) {
+      if (freeSlotOffset < (compiler_.moduleInfo_.fnc.getMinimalStackFrameSize() + StackElement::tempStackSlotSize)) {
         break;
       }
       return freeSlotOffset;
