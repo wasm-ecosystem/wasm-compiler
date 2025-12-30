@@ -1,5 +1,8 @@
 # Wasm Compiler Release Notes
 
+## 3.0.9
+- x86_64 backend: fix wrong register selection of f32/f64 max/min.
+
 ## 3.0.8
 
 - Fixed wrong machine type for type_cast instruction
@@ -71,6 +74,11 @@
 #### Tricore backend
 
 - Stop supporting of tc1.6 and only support tc1.8
+
+## Release v2 known issues
+- [Bug fixed by 3.0.9](#309)
+- [Bug fixed by 3.0.4](#304)
+
 
 ## 2.2.3
 

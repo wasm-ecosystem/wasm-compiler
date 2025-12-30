@@ -3540,6 +3540,7 @@ StackElement Backend::emitInstrsFloatMinMax(StackElement *const arg0Ptr, StackEl
   }
 
   RegAllocTracker regAllocTracker{};
+  regAllocTracker.futureLifts = mask(arg1Ptr);
   REG const arg0Reg{common_.liftToRegInPlaceProt(*arg0Ptr, true, targetHint, regAllocTracker).reg};
   REG const arg1Reg{common_.liftToRegInPlaceProt(*arg1Ptr, false, regAllocTracker).reg};
 

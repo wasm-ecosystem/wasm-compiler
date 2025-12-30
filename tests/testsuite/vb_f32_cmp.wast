@@ -2457,3 +2457,23 @@
 (assert_return (invoke "le" (f32.const nan:0x200000) (f32.const nan)) (i32.const 0))
 (assert_return (invoke "le" (f32.const nan) (f32.const nan:0x200000)) (i32.const 0))
 (assert_return (invoke "le" (f32.const nan:0x200000) (f32.const nan:0x200000)) (i32.const 0))
+
+(module
+  
+  (func $foo (result f32)
+    (local f32)
+    f32.const 0
+    local.set 0
+    
+    f32.const 100
+    
+    local.get 0
+    f32.min
+    local.tee 0
+    
+    )
+
+  (export "func" (func $foo))
+)
+
+(assert_return (invoke "func") (f32.const 0))
