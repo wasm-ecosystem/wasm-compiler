@@ -690,6 +690,15 @@ private:
   /// @param element Iterator to the stack element
   /// @return True if the stack element is a scratch register and only used once on the stack
   static bool scratchRegOnlyOnceOnStack(Stack::iterator const element) VB_NOEXCEPT;
+
+  /// @brief Condense parameters before function call
+  /// @param targetPos Target position of the parameter
+  /// @param paramType Type of the parameter
+  /// @param currentParamCount Current count of parameters
+  /// @param allParamsStart iterator to the first Stack Element of all params
+  /// @return Iterator to the condensed parameter
+  Stack::iterator condenseParameter(ParamPos const targetPos, vb::MachineType const paramType, uint32_t const currentParamCount,
+                                    Stack::iterator const allParamsStart);
 };
 
 } // namespace vb

@@ -602,6 +602,13 @@ public:
   /// @param newAlignedStackFrameSize aligned new stackFrame size
   void updateStackFrameSizeHelper(uint32_t const newAlignedStackFrameSize);
 
+  /// @brief Check if a stack element conflicts with a given parameter register
+  /// @param element Stack element to be checked
+  /// @param paramReg Parameter register to be checked against
+  /// @param machineType Machine type of the stack element
+  /// @return true if there is conflict, false otherwise
+  bool stackElementConflictsWithParamReg(StackElement const &element, REG const paramReg, MachineType const machineType) const VB_NOEXCEPT;
+
 private:
   /// @brief Widths of certain entries on the stack
   struct Widths final {

@@ -3842,6 +3842,20 @@ void Backend::updateStackFrameSizeHelper(uint32_t const newAlignedStackFrameSize
 #endif
 }
 
+bool Backend::stackElementConflictsWithParamReg(StackElement const &element, REG const paramReg, MachineType const machineType) const VB_NOEXCEPT {
+  static_cast<void>(machineType);
+#if LINEAR_MEMORY_BOUNDS_CHECKS
+  if (paramReg == WasmABI::REGS::memSize) {
+    return true;
+  }
+#endif
+  VariableStorage const storage{moduleInfo_.getStorage(element)};
+  if (storage.type == StorageType::REGISTER) {
+    return storage.location.reg == paramReg;
+  }
+  return false;
+}
+
 } // namespace x86_64
 } // namespace vb
 #endif

@@ -468,7 +468,7 @@ public:
                     1U)) <= UINT32_MAX,
                   "Index too large");
     uint32_t const numGlobals{getNumGlobals()};
-    uint32_t const numEntries{((NBackend::totalNumRegs + fnc.numLocals) + numGlobals) + 1_U32 /* TEMPSTACK */};
+    uint32_t const numEntries{((NBackend::totalNumRegs + fnc.numLocals) + numGlobals + fnc.numLocals) + 1_U32 /* TEMPSTACK */};
     uint32_t const bytesToReserve{static_cast<uint32_t>(sizeof(Stack::iterator)) * numEntries};
 
     // Reserve space for references
@@ -480,8 +480,9 @@ public:
 
     referenceMap[static_cast<uint32_t>(StackType::SCRATCHREGISTER)] = 0U;
     referenceMap[static_cast<uint32_t>(StackType::LOCAL)] = NBackend::totalNumRegs;
-    referenceMap[static_cast<uint32_t>(StackType::GLOBAL)] = NBackend::totalNumRegs + fnc.numLocals;
-    referenceMap[getStackMemoryInReferenceMapIndex()] = referenceMap[static_cast<uint32_t>(StackType::GLOBAL)] + numGlobals;
+    referenceMap[static_cast<uint32_t>(StackType::GLOBAL)] = referenceMap[static_cast<uint32_t>(StackType::LOCAL)] + fnc.numLocals;
+    referenceMap[static_cast<uint32_t>(StackType::SAVED_LOCAL)] = referenceMap[static_cast<uint32_t>(StackType::GLOBAL)] + numGlobals;
+    referenceMap[getStackMemoryInReferenceMapIndex()] = referenceMap[static_cast<uint32_t>(StackType::SAVED_LOCAL)] + fnc.numLocals;
   }
 
   ///
@@ -492,7 +493,7 @@ public:
   inline uint32_t getReferencePosition(StackElement const &element) const VB_NOEXCEPT {
     StackType const baseType{element.getBaseType()};
     assert((baseType == StackType::LOCAL) || (baseType == StackType::GLOBAL) || (baseType == StackType::SCRATCHREGISTER) ||
-           (baseType == StackType::TEMP_RESULT));
+           (baseType == StackType::TEMP_RESULT) || (baseType == StackType::SAVED_LOCAL));
 
     if (baseType == StackType::TEMP_RESULT) {
       return element.data.variableData.location.calculationResult.referencePosition;
@@ -514,7 +515,7 @@ public:
   ///
   /// @param reg REG for which to find the reference to the last occurrence on stack
   /// @return Position on the referencesToLastOccurrenceOnStack of the given REG
-  inline uint32_t getReferencePosition(TReg const reg) const VB_NOEXCEPT {
+  inline uint32_t getScratchRegReferencePosition(TReg const reg) const VB_NOEXCEPT {
     return referenceMap[static_cast<uint32_t>(StackType::SCRATCHREGISTER)] + static_cast<uint32_t>(reg);
   }
 
@@ -546,7 +547,7 @@ public:
   /// @param reg REG for which to find the reference to the last occurrence on stack
   /// @return Reference to the variable where the last occurrence (stack::iterator) for the given element is stored
   inline Stack::iterator &getReferenceToLastOccurrenceOnStack(TReg const reg) const VB_NOEXCEPT {
-    return referencesToLastOccurrenceOnStack[getReferencePosition(reg)];
+    return referencesToLastOccurrenceOnStack[getScratchRegReferencePosition(reg)];
   }
 
   /// @brief see @b getReferenceToLastOccurrenceOnStack. It is specialization of stack memory.
@@ -680,14 +681,23 @@ public:
     return fnc.paramWidth + NBackend::returnAddrWidth;
   }
 
+  /// @brief Look up a register is assigned for which kind of stack element
+  /// @param reg The register to look for
+  /// @param type The stack type to look for
+  /// @return The StackElement Global, local or scratch register
+  StackElement getStackElementByReg(TReg const reg, StackType const type) const VB_NOEXCEPT;
+
 private:
+  static constexpr uint32_t tempstackReferenceMapIndex{2U}; ///< Index in reference map for stack memory
+
   /// @brief get reference map index for stack memory element
   inline static constexpr uint32_t getStackMemoryInReferenceMapIndex() VB_NOEXCEPT {
-    constexpr uint32_t index{2U};
-    static_assert(static_cast<uint32_t>(StackType::SCRATCHREGISTER) != index, "please select another index for stack memory");
-    static_assert(static_cast<uint32_t>(StackType::LOCAL) != index, "please select another index for stack memory");
-    static_assert(static_cast<uint32_t>(StackType::GLOBAL) != index, "please select another index for stack memory");
-    return index;
+    static_assert(static_cast<uint32_t>(StackType::SCRATCHREGISTER) != tempstackReferenceMapIndex, "please select another index for stack memory");
+    static_assert(static_cast<uint32_t>(StackType::LOCAL) != tempstackReferenceMapIndex, "please select another index for stack memory");
+    static_assert(static_cast<uint32_t>(StackType::GLOBAL) != tempstackReferenceMapIndex, "please select another index for stack memory");
+    static_assert(static_cast<uint32_t>(StackType::SAVED_LOCAL) != tempstackReferenceMapIndex, "please select another index for stack memory");
+
+    return tempstackReferenceMapIndex;
   }
 
   ///

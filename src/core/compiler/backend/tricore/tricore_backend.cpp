@@ -4976,6 +4976,32 @@ void Backend::updateStackFrameSizeHelper(uint32_t const newAlignedStackFrameSize
   as_.setStackFrameSize(newAlignedStackFrameSize);
 }
 
+bool Backend::stackElementConflictsWithParamReg(StackElement const &element, REG const paramReg, MachineType const machineType) const VB_NOEXCEPT {
+  // GCOVR_EXCL_START
+  assert(paramReg != WasmABI::REGS::memSize);
+  // GCOVR_EXCL_STOP
+
+  if (MachineTypeUtil::is64(machineType)) {
+    return true;
+  } else {
+    VariableStorage const storage{moduleInfo_.getStorage(element)};
+    if (storage.type == StorageType::REGISTER) {
+      if (storage.location.reg == paramReg) {
+        return true;
+      }
+      bool const stackElementIs64{MachineTypeUtil::is64(moduleInfo_.getMachineType(&element))};
+      if (stackElementIs64 && RegUtil::canBeExtReg(storage.location.reg)) {
+        REG const otherReg{RegUtil::getOtherExtReg(storage.location.reg)};
+        if (otherReg == paramReg) {
+          return true;
+        }
+      }
+    }
+  }
+
+  return false;
+}
+
 } // namespace tc
 } // namespace vb
 

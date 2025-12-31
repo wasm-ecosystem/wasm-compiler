@@ -281,4 +281,26 @@ ModuleInfo::GlobalDef const &ModuleInfo::getGlobalDef(uint32_t const globalIdx) 
   return getGlobalDefUnchecked(globalIdx);
 }
 
+StackElement ModuleInfo::getStackElementByReg(TReg const reg, StackType const type) const VB_NOEXCEPT {
+  for (uint32_t i{0U}; i < numGlobalsInGPR; i++) {
+    ModuleInfo::GlobalDef const &globalDef{nonImportGlobals[i]};
+    if (globalDef.reg == reg) {
+      return StackElement::global(numImportedGlobals + i);
+    }
+  }
+
+  for (uint32_t i{0U}; i < fnc.numLocals; i++) {
+    ModuleInfo::LocalDef const &localDef{localDefs[i]};
+    StackElement const localElement{StackElement::local(i)};
+    VariableStorage const storage{getStorage(localElement)};
+    if (storage.type == StorageType::REGISTER) {
+      if (localDef.reg == reg) {
+        return localElement;
+      }
+    }
+  }
+
+  return StackElement::scratchReg(reg, type);
+}
+
 } // namespace vb

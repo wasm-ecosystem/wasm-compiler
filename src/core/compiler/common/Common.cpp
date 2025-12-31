@@ -423,9 +423,6 @@ bool Common::scratchRegOnlyOnceOnStack(Stack::iterator const element) VB_NOEXCEP
       ((baseType == StackType::TEMP_RESULT) && (element->data.variableData.location.calculationResult.storageType == StorageType::REGISTER))) {
     StackElement::Data::VariableData::IndexData const &indexData{element->data.variableData.indexData};
     bool const onlyOnceOnStack{indexData.prevOccurrence.isEmpty() && indexData.nextOccurrence.isEmpty()};
-    // GCOVR_EXCL_START
-    assert((baseType != StackType::TEMP_RESULT) || onlyOnceOnStack);
-    // GCOVR_EXCL_STOP
     return onlyOnceOnStack;
   } else {
     return false;
@@ -676,7 +673,7 @@ void Common::addReference(Stack::iterator const element) const VB_NOEXCEPT {
     return; // For reinterpretations, which can stay constant
   }
   assert((elementBaseType == StackType::LOCAL || elementBaseType == StackType::GLOBAL || elementBaseType == StackType::SCRATCHREGISTER ||
-          (elementBaseType == StackType::TEMP_RESULT)) &&
+          (elementBaseType == StackType::TEMP_RESULT) || (elementBaseType == StackType::SAVED_LOCAL)) &&
          "Only variables can be referenced");
 
   Stack::iterator &majorReference{compiler_.moduleInfo_.getReferenceToLastOccurrenceOnStack(*element)};
@@ -780,7 +777,7 @@ void Common::removeReference(Stack::iterator const element) const VB_NOEXCEPT {
     return;
   }
   assert((elementBaseType == StackType::SCRATCHREGISTER || elementBaseType == StackType::LOCAL || elementBaseType == StackType::GLOBAL ||
-          elementBaseType == StackType::TEMP_RESULT) &&
+          elementBaseType == StackType::TEMP_RESULT || (elementBaseType == StackType::SAVED_LOCAL)) &&
          "Only variables can be occurrence");
 
   Stack::iterator *pTopGroupReference{&compiler_.moduleInfo_.getReferenceToLastOccurrenceOnStack(*element)};
@@ -1381,48 +1378,106 @@ Stack::iterator Common::prepareCallParams(uint32_t const sigIndex, bool const is
   compiler_.moduleInfo_.fnc.preserveStackSize();
   Stack::iterator paramsBase{};
   if (numVBsToResolve > 0U) {
+    Stack::iterator const allParamsStart{skipValentBlock(numVBsToResolve)};
+    for (Stack::iterator it{compiler_.stack_.begin()}; it != allParamsStart; it++) {
+      if (it->type == StackType::LOCAL) {
+        VariableStorage const localStorage{compiler_.moduleInfo_.getStorage(*it)};
+        if (localStorage.type == StorageType::REGISTER) {
+          StackElement savedLocal{*it};
+          savedLocal.type = StackType::SAVED_LOCAL;
+          replaceAndUpdateReference(it, savedLocal);
+        }
+      }
+    }
+
     compiler_.moduleInfo_.iterateParamsForSignature(
-        sigIndex, FunctionRef<void(MachineType)>([this, &paramsBase, &skipCount, &paramPosFunc](MachineType const paramType) {
+        sigIndex, FunctionRef<void(MachineType)>([this, &paramsBase, &skipCount, &paramPosFunc, allParamsStart](MachineType const paramType) {
           skipCount--;
           // coverity[autosar_cpp14_a4_5_1_violation]
           ParamPos const targetPos{paramPosFunc(paramType)};
-
-          Stack::iterator const baseIt{skipValentBlock(skipCount)};
-
-          Stack::iterator const condenseResult{condenseValentBlockBelow(baseIt, nullptr)};
-          VariableStorage const sourceStorage{compiler_.moduleInfo_.getStorage(*condenseResult)};
-          // if source storage is not in register, no need to move it now, because condense may increase stack size
-          // then the sp offset for example mov reg, [sp + offset] is a larger value and consumes more code size
-          // After condense, the stack size will be recovered to a smaller size, then the offset is smaller and save code size
-          if (sourceStorage.type == StorageType::REGISTER) {
-            if (targetPos.reg == TReg::NONE) {
-              // Move to stack if target is stack memory
-              VariableStorage const targetStorage{VariableStorage::stackMemory(paramType, targetPos.offsetToStackBase)};
-
-              compiler_.backend_.emitMoveImpl(targetStorage, sourceStorage, false);
-              replaceAndUpdateReference(condenseResult,
-                                        StackElement::tempResult(paramType, targetStorage, compiler_.moduleInfo_.getStackMemoryReferencePosition()));
-            }
-          }
-
+          Stack::iterator const condenseResult{
+              condenseParameter(targetPos, paramType, skipCount, paramsBase.isEmpty() ? allParamsStart : paramsBase)};
           if (paramsBase.isEmpty()) {
             paramsBase = condenseResult;
           }
         }));
-  }
-  if (isIndirectCall) {
-    // GCOVR_EXCL_START
-    assert(skipCount == 1U);
-    // GCOVR_EXCL_STOP
-    Stack::iterator const condenseResult{condenseValentBlockBelow(compiler_.stack_.end())};
 
-    if (paramsBase.isEmpty()) {
-      paramsBase = condenseResult;
+    if (isIndirectCall) {
+      skipCount--;
+      // GCOVR_EXCL_START
+      assert(skipCount == 0U);
+      // GCOVR_EXCL_STOP
+      ParamPos indirectCallRegPos{};
+      indirectCallRegPos.reg = NBackend::WasmABI::REGS::indirectCallReg;
+      Stack::iterator const condenseResult{
+          condenseParameter(indirectCallRegPos, MachineType::I32, skipCount, paramsBase.isEmpty() ? allParamsStart : paramsBase)};
+      if (paramsBase.isEmpty()) {
+        paramsBase = condenseResult;
+      }
+    }
+
+    for (Stack::iterator it{compiler_.stack_.begin()}; it != paramsBase; it++) {
+      if (it->type == StackType::SAVED_LOCAL) {
+        StackElement restoredLocal{*it};
+        restoredLocal.type = StackType::LOCAL;
+        replaceAndUpdateReference(it, restoredLocal);
+      }
     }
   }
+
   compiler_.backend_.updateStackFrameSizeHelper(compiler_.moduleInfo_.fnc.getPreservedStackSize());
   compiler_.moduleInfo_.fnc.clearPreservedStackSize();
   return paramsBase;
+}
+
+Stack::iterator Common::condenseParameter(ParamPos const targetPos, vb::MachineType const paramType, uint32_t const currentParamCount,
+                                          Stack::iterator const allParamsStart) {
+  StackElement targetHint{};
+  Stack::iterator const baseIt{skipValentBlock(currentParamCount)};
+  if (targetPos.reg != TReg::NONE) {
+    Stack::iterator const currentParamBegin{findBaseOfValentBlockBelow(baseIt)};
+    Stack::iterator const currentParamEnd{baseIt.prev()};
+    bool targetRegUsedByOtherParams{false};
+    for (Stack::iterator it{compiler_.stack_.end()}; it != currentParamEnd; it--) {
+      if (compiler_.backend_.stackElementConflictsWithParamReg(*it, targetPos.reg, paramType)) {
+        targetRegUsedByOtherParams = true;
+        break;
+      }
+    }
+
+    for (Stack::iterator it{allParamsStart}; it != currentParamBegin; it++) {
+      if (compiler_.backend_.stackElementConflictsWithParamReg(*it, targetPos.reg, paramType)) {
+        targetRegUsedByOtherParams = true;
+        break;
+      }
+    }
+
+    if (!targetRegUsedByOtherParams) {
+      VariableStorage const targetHintStorage{VariableStorage::reg(paramType, targetPos.reg)};
+      StackElement const regStackElement{compiler_.moduleInfo_.getStackElementByReg(targetPos.reg, MachineTypeUtil::toStackTypeFlag(paramType))};
+      uint32_t const referencePosition{compiler_.moduleInfo_.getReferencePosition(regStackElement)};
+
+      targetHint = StackElement::tempResult(paramType, targetHintStorage, referencePosition);
+    }
+  }
+
+  Stack::iterator const condenseResult{condenseValentBlockBelow(baseIt, (targetHint.type == StackType::INVALID) ? nullptr : &targetHint)};
+  VariableStorage const sourceStorage{compiler_.moduleInfo_.getStorage(*condenseResult)};
+  // if source storage is not in register, no need to move it now, because condense may increase stack size
+  // then the sp offset for example mov reg, [sp + offset] is a larger value and consumes more code size
+  // After condense, the stack size will be recovered to a smaller size, then the offset is smaller and save code size
+  if (sourceStorage.type == StorageType::REGISTER) {
+    if (targetPos.reg == TReg::NONE) {
+      // Move to stack if target is stack memory
+      VariableStorage const targetStorage{VariableStorage::stackMemory(paramType, targetPos.offsetToStackBase)};
+
+      compiler_.backend_.emitMoveImpl(targetStorage, sourceStorage, false);
+      replaceAndUpdateReference(condenseResult,
+                                StackElement::tempResult(paramType, targetStorage, compiler_.moduleInfo_.getStackMemoryReferencePosition()));
+    }
+  }
+
+  return condenseResult;
 }
 
 void Common::spillScratchRegsOutOfCallParams(uint32_t const sigIndex, bool const isIndirectCall) {

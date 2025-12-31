@@ -55,6 +55,7 @@ public:
 
   static constexpr uint32_t SCRATCHREGISTER{1U}; ///< StackElement representing a variable in a scratch register
   static constexpr uint32_t TEMP_RESULT{2U};     ///< StackElement representing a calculation result
+  static constexpr uint32_t SAVED_LOCAL{3U};     ///< StackElement representing a local variable that has been saved due to ABI calls
 
   static constexpr uint32_t CONSTANT{5U}; ///< StackElement representing a constant
 
