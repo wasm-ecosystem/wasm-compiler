@@ -3076,7 +3076,8 @@ StackElement Backend::emitDeferredAction(OPCode const opcode, StackElement *cons
       return as_.selectInstr(ops, arg0Ptr, arg1Ptr, targetHint, RegMask::none());
     }
     case OPCode::I32_CTZ: {
-      Assembler::PreparedArgs const prep{as_.loadArgsToRegsAndPrepDest(MachineType::I32, arg0Ptr, nullptr, targetHint, RegMask::none(), true, false)};
+      Assembler::PreparedArgs const prep{
+          as_.loadArgsToRegsAndPrepDest(MachineType::I32, arg0Ptr, nullptr, targetHint, RegMask::none(), false, false)};
       as_.INSTR(BIT_REFLECT_Dc_Da).setDc(prep.dest.reg).setDa(prep.arg0.reg)();
       as_.INSTR(CLZ_Dc_Da).setDc(prep.dest.reg).setDa(prep.dest.reg)();
       return prep.dest.elem;
@@ -4241,26 +4242,29 @@ StackElement Backend::emitI64AddImm(StackElement const &arg0, StackElement const
   I64OperandConstAnalyze const i64OperandConstAnalyze{analyzeImm64OperandConst(arg0, arg1, commutative)};
 
   if ((i64OperandConstAnalyze.immElement != nullptr) && (i64OperandConstAnalyze.regElement != nullptr)) {
-    Assembler::PreparedArgs const prep{
-        as_.loadArgsToRegsAndPrepDest(MachineType::I64, i64OperandConstAnalyze.regElement, nullptr, targetHint, RegMask::none(), true)};
-
     if (i64OperandConstAnalyze.arg0IsDirectConst || i64OperandConstAnalyze.arg1IsDirectConst) {
+      Assembler::PreparedArgs const prep{
+          as_.loadArgsToRegsAndPrepDest(MachineType::I64, i64OperandConstAnalyze.regElement, nullptr, targetHint, RegMask::none(), false)};
       as_.INSTR(ADDX_Dc_Da_const9sx).setDc(prep.dest.reg).setDa(prep.arg0.reg).setConst9sx(i64OperandConstAnalyze.rawLow.safeValue)();
       as_.INSTR(ADDC_Dc_Da_const9sx).setDc(prep.dest.secReg).setDa(prep.arg0.secReg).setConst9sx(i64OperandConstAnalyze.rawHigh.safeValue)();
-
+      return prep.dest.elem;
     } else if (i64OperandConstAnalyze.arg0LowIsDirectConst || i64OperandConstAnalyze.arg1LowIsDirectConst) {
+      Assembler::PreparedArgs const prep{
+          as_.loadArgsToRegsAndPrepDest(MachineType::I64, i64OperandConstAnalyze.regElement, nullptr, targetHint, RegMask::none(), true)};
       as_.INSTR(ADDX_Dc_Da_const9sx).setDc(prep.dest.reg).setDa(prep.arg0.reg).setConst9sx(i64OperandConstAnalyze.rawLow.safeValue)();
       emitMoveImpl(VariableStorage::reg(MachineType::I32, prep.dest.secReg),
                    VariableStorage::i32Const(static_cast<uint32_t>(i64OperandConstAnalyze.rawHigh.rawValue)), false);
       as_.INSTR(ADDC_Dc_Da_Db).setDc(prep.dest.secReg).setDa(prep.arg0.secReg).setDb(prep.dest.secReg)();
-
+      return prep.dest.elem;
     } else {
+      Assembler::PreparedArgs const prep{
+          as_.loadArgsToRegsAndPrepDest(MachineType::I64, i64OperandConstAnalyze.regElement, nullptr, targetHint, RegMask::none(), true)};
       emitMoveImpl(VariableStorage::reg(MachineType::I32, prep.dest.secReg),
                    VariableStorage::i32Const(static_cast<uint32_t>(i64OperandConstAnalyze.rawLow.rawValue)), false);
       as_.INSTR(ADDX_Dc_Da_Db).setDc(prep.dest.reg).setDa(prep.arg0.reg).setDb(prep.dest.secReg)();
       as_.INSTR(ADDC_Dc_Da_const9sx).setDc(prep.dest.secReg).setDa(prep.arg0.secReg).setConst9sx(i64OperandConstAnalyze.rawHigh.safeValue)();
+      return prep.dest.elem;
     }
-    return prep.dest.elem;
   } else {
     return StackElement::invalid();
   }
@@ -4284,28 +4288,33 @@ StackElement Backend::emitI64AndOrImm(OPCode const opcode, StackElement const &a
   OPCodeTemplate const regOpcode{regOps[static_cast<uint32_t>(opcode) - static_cast<uint32_t>(OPCode::I64_AND)]};
 
   if ((u64OperandConstAnalyze.immElement != nullptr) && (u64OperandConstAnalyze.regElement != nullptr)) {
-    Assembler::PreparedArgs const prep{
-        as_.loadArgsToRegsAndPrepDest(MachineType::I64, u64OperandConstAnalyze.regElement, nullptr, targetHint, RegMask::none(), true)};
-
     if (u64OperandConstAnalyze.arg0IsDirectConst || u64OperandConstAnalyze.arg1IsDirectConst) {
+      Assembler::PreparedArgs const prep{
+          as_.loadArgsToRegsAndPrepDest(MachineType::I64, u64OperandConstAnalyze.regElement, nullptr, targetHint, RegMask::none(), false)};
       // coverity[autosar_cpp14_a4_5_1_violation]
       emitImmInstruction(prep.dest.reg, prep.arg0.reg, u64OperandConstAnalyze.rawLow.safeValue);
       // coverity[autosar_cpp14_a4_5_1_violation]
       emitImmInstruction(prep.dest.secReg, prep.arg0.secReg, u64OperandConstAnalyze.rawHigh.safeValue);
+      return prep.dest.elem;
     } else if (u64OperandConstAnalyze.arg0LowIsDirectConst || u64OperandConstAnalyze.arg1LowIsDirectConst) {
+      Assembler::PreparedArgs const prep{
+          as_.loadArgsToRegsAndPrepDest(MachineType::I64, u64OperandConstAnalyze.regElement, nullptr, targetHint, RegMask::none(), true)};
       // coverity[autosar_cpp14_a4_5_1_violation]
       emitImmInstruction(prep.dest.reg, prep.arg0.reg, u64OperandConstAnalyze.rawLow.safeValue);
       emitMoveImpl(VariableStorage::reg(MachineType::I32, prep.dest.secReg), VariableStorage::i32Const(u64OperandConstAnalyze.rawHigh.rawValue),
                    false);
       as_.INSTR(regOpcode).setDc(prep.dest.secReg).setDa(prep.arg0.secReg).setDb(prep.dest.secReg)();
+      return prep.dest.elem;
     } else {
+      Assembler::PreparedArgs const prep{
+          as_.loadArgsToRegsAndPrepDest(MachineType::I64, u64OperandConstAnalyze.regElement, nullptr, targetHint, RegMask::none(), true)};
       emitMoveImpl(VariableStorage::reg(MachineType::I32, prep.dest.secReg), VariableStorage::i32Const(u64OperandConstAnalyze.rawLow.rawValue),
                    false);
       as_.INSTR(regOpcode).setDc(prep.dest.reg).setDa(prep.arg0.reg).setDb(prep.dest.secReg)();
       // coverity[autosar_cpp14_a4_5_1_violation]
       emitImmInstruction(prep.dest.secReg, prep.arg0.secReg, u64OperandConstAnalyze.rawHigh.safeValue);
+      return prep.dest.elem;
     }
-    return prep.dest.elem;
   } else {
     return StackElement::invalid();
   }
@@ -4315,15 +4324,14 @@ RegElement Backend::emitI64EqImm(OPCode const opcode, StackElement const &arg0, 
   I64OperandConstAnalyze const i64OperandConstAnalyze{analyzeImm64OperandConst(arg0, arg1, true)};
 
   if ((i64OperandConstAnalyze.immElement != nullptr) && (i64OperandConstAnalyze.regElement != nullptr)) {
-    Assembler::PreparedArgs const prep{
-        as_.loadArgsToRegsAndPrepDest(MachineType::I32, i64OperandConstAnalyze.regElement, nullptr, targetHint, RegMask::none(), true)};
-
     // coverity[autosar_cpp14_a8_5_2_violation]
     constexpr auto ops2Imm = make_array(ANDEQ_Dc_Da_const9sx, ORNE_Dc_Da_const9sx);
 
     uint32_t const index{static_cast<uint32_t>(opcode) - static_cast<uint32_t>(OPCode::I64_EQ)};
 
     if (i64OperandConstAnalyze.arg0IsDirectConst || i64OperandConstAnalyze.arg1IsDirectConst) {
+      Assembler::PreparedArgs const prep{
+          as_.loadArgsToRegsAndPrepDest(MachineType::I32, i64OperandConstAnalyze.regElement, nullptr, targetHint, RegMask::none(), false)};
       OPCodeTemplate const opHighImm{ops2Imm[index]};
       if (opcode == OPCode::I64_EQ) {
         as_.eqWordDcDaConst9sx(prep.dest.reg, prep.arg0.reg, i64OperandConstAnalyze.rawLow.safeValue);
@@ -4332,7 +4340,10 @@ RegElement Backend::emitI64EqImm(OPCode const opcode, StackElement const &arg0, 
       }
 
       as_.INSTR(opHighImm).setDc(prep.dest.reg).setDa(prep.arg0.secReg).setConst9sx(i64OperandConstAnalyze.rawHigh.safeValue)();
+      return {prep.dest.elem, prep.dest.reg};
     } else if (i64OperandConstAnalyze.arg0LowIsDirectConst || i64OperandConstAnalyze.arg1LowIsDirectConst) {
+      Assembler::PreparedArgs const prep{
+          as_.loadArgsToRegsAndPrepDest(MachineType::I32, i64OperandConstAnalyze.regElement, nullptr, targetHint, RegMask::none(), true)};
       OPCodeTemplate const opLowImm{ops2Imm[index]};
       emitMoveImpl(VariableStorage::reg(MachineType::I32, prep.dest.reg),
                    VariableStorage::i32Const(static_cast<uint32_t>(i64OperandConstAnalyze.rawHigh.rawValue)), false);
@@ -4343,7 +4354,10 @@ RegElement Backend::emitI64EqImm(OPCode const opcode, StackElement const &arg0, 
         as_.INSTR(NE_Dc_Da_Db).setDc(prep.dest.reg).setDa(prep.arg0.secReg).setDb(prep.dest.reg)();
       }
       as_.INSTR(opLowImm).setDc(prep.dest.reg).setDa(prep.arg0.reg).setConst9sx(i64OperandConstAnalyze.rawLow.safeValue)();
+      return {prep.dest.elem, prep.dest.reg};
     } else {
+      Assembler::PreparedArgs const prep{
+          as_.loadArgsToRegsAndPrepDest(MachineType::I32, i64OperandConstAnalyze.regElement, nullptr, targetHint, RegMask::none(), true)};
       OPCodeTemplate const opHighImm{ops2Imm[index]};
       emitMoveImpl(VariableStorage::reg(MachineType::I32, prep.dest.reg),
                    VariableStorage::i32Const(static_cast<uint32_t>(i64OperandConstAnalyze.rawLow.rawValue)), false);
@@ -4354,8 +4368,8 @@ RegElement Backend::emitI64EqImm(OPCode const opcode, StackElement const &arg0, 
       }
 
       as_.INSTR(opHighImm).setDc(prep.dest.reg).setDa(prep.arg0.secReg).setConst9sx(i64OperandConstAnalyze.rawHigh.safeValue)();
+      return {prep.dest.elem, prep.dest.reg};
     }
-    return {prep.dest.elem, prep.dest.reg};
   } else {
     return {StackElement::invalid(), REG::NONE};
   }

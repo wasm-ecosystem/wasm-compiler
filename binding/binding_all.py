@@ -101,6 +101,7 @@ def build(backend: str | None, is_active_mode: bool):
         ]
         + cmake_args,
         check=True,
+        env=os.environ,
     )
     subprocess.run(
         [
@@ -112,6 +113,7 @@ def build(backend: str | None, is_active_mode: bool):
             "--parallel",
         ],
         check=True,
+        env=os.environ,
     )
     so_path = os.path.join(
         args.venv_dir,

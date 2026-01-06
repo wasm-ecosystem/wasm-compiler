@@ -94,6 +94,68 @@ Assembler::PreparedArgs Assembler::loadArgsToRegsAndPrepDest(MachineType const d
   REG const verifiedTargetHintReg{backend_.getUnderlyingRegIfSuitable(targetHint, dstType, protRegs)};
   StackElement const *const verifiedTargetHint{(verifiedTargetHintReg != REG::NONE) ? targetHint : nullptr};
 
+  RegElement dstRegElem{RegElement{StackElement::invalid(), REG::NONE}};
+
+  if ((!noDest) && (verifiedTargetHint != nullptr)) {
+    // coverity[autosar_cpp14_a8_5_2_violation]
+    auto const isArgStoragePartOfTargetHint = [this, &verifiedTargetHint, verifiedTargetHintReg](StackElement const *const arg) VB_NOEXCEPT -> bool {
+      assert(verifiedTargetHintReg != REG::NONE);
+      if (arg == nullptr) {
+        return false;
+      }
+
+      MachineType const targetHintType{moduleInfo_.getMachineType(verifiedTargetHint)};
+
+      VariableStorage const argStorage{moduleInfo_.getStorage(*arg)};
+      if (argStorage.type != StorageType::REGISTER) {
+        return false;
+      }
+
+      // Both are regs, if targetHint is verified it's definitely in a register too
+      assert(verifiedTargetHintReg != REG::NONE);
+
+      REG const argReg{argStorage.location.reg};
+      if (argReg == verifiedTargetHintReg) {
+        return true;
+      }
+
+      if (MachineTypeUtil::getSize(targetHintType) != MachineTypeUtil::getSize(argStorage.machineType)) {
+        // One must be 64-bit, the other 32-bit
+        // GCOVR_EXCL_START
+        assert(argStorage.type == StorageType::REGISTER);
+        // GCOVR_EXCL_STOP
+        REG simpleReg;
+        REG extendedReg;
+        if (MachineTypeUtil::is64(targetHintType)) {
+          simpleReg = argStorage.location.reg;
+          extendedReg = verifiedTargetHintReg;
+        } else {
+          simpleReg = verifiedTargetHintReg;
+          extendedReg = argStorage.location.reg;
+        }
+        assert(RegUtil::canBeExtReg(extendedReg));
+        if ((simpleReg == extendedReg) || (simpleReg == RegUtil::getOtherExtReg(simpleReg))) {
+          return true;
+        }
+      }
+      return false;
+    };
+    // In the case param is already in target hint reg, target hint can't be used because it will lead to more spill
+    // local.get 0
+    // i64.const 1
+    // i64.mul
+    // i64.const 2
+    // i64.mul
+    // i64.const 3
+    // i64.mul
+    bool const targetHintConflictArg0{forceDstArg0Diff && isArgStoragePartOfTargetHint(arg0)};
+    bool const targetHintConflictArg1{((!unop) && forceDstArg1Diff) && isArgStoragePartOfTargetHint(arg1)};
+    if (!targetHintConflictArg0 && !targetHintConflictArg1) {
+      // coverity[autosar_cpp14_m0_1_9_violation]
+      dstRegElem = RegElement{*verifiedTargetHint, verifiedTargetHintReg};
+    }
+  }
+
   std::array<bool const, 2> const startedAsWritableScratchReg{{backend_.isWritableScratchReg(arg0), backend_.isWritableScratchReg(arg1)}};
   std::array<bool, 2> argCanBeDst{};
 
@@ -109,121 +171,77 @@ Assembler::PreparedArgs Assembler::loadArgsToRegsAndPrepDest(MachineType const d
   // Lambda functions that can be used to lift the arguments
   std::array<REG, 2> argRegs{{REG::NONE, REG::NONE}};
   // coverity[autosar_cpp14_a8_5_2_violation]
-  auto liftArgLambda = [this, &inputArgs, verifiedTargetHint, &argCanBeDst, argsAreEqual, protRegs, &argRegs](uint32_t const idx) mutable {
+  auto liftArgLambda = [this, &inputArgs, verifiedTargetHint, &argCanBeDst, &argRegs, dstRegElem](uint32_t const idx, bool const forceDstArgDiff,
+                                                                                                  RegAllocTracker &regAllocTracker) mutable {
     assert((argRegs[idx] == REG::NONE) && "Cannot lift arg twice");
-    assert((!protRegs.allMarked()) && "Cannot lift");
+
     assert(idx <= 1U && "Lift index out of range"); // As we only have two args, idx must be 0 or 1
 
-    // otherIdx is 1 if idx is 0, else otherIdx is 0
-    uint32_t const otherIdx{idx ^ 1U};
-    if (argsAreEqual && (argRegs[otherIdx] != REG::NONE)) {
-      inputArgs[idx] = inputArgs[otherIdx];
-      argRegs[idx] = argRegs[otherIdx];
+    StackElement const *verifiedTargetHintForArg;
+    if ((dstRegElem.reg != REG::NONE) && forceDstArgDiff) {
+      verifiedTargetHintForArg = nullptr;
+      regAllocTracker.writeProtRegs.mask(backend_.mask(&dstRegElem.elem));
     } else {
-      RegAllocTracker regAllocTracker{};
-      regAllocTracker.writeProtRegs = protRegs | backend_.mask(&inputArgs[otherIdx]);
-      argRegs[idx] = backend_.common_.liftToRegInPlaceProt(inputArgs[idx], true, verifiedTargetHint, regAllocTracker).reg;
+      verifiedTargetHintForArg = verifiedTargetHint;
     }
+    argRegs[idx] = backend_.common_.liftToRegInPlaceProt(inputArgs[idx], false, verifiedTargetHintForArg, regAllocTracker).reg;
 
-    // Lifted arg can now be dest, as it's now guaranteed to be in a writable register
-    argCanBeDst[idx] = true;
-
-    // If both args are equal, set the other arg to the newly lifted one and
-    // also set argCanBeDst accordingly
-    if (argsAreEqual && (argRegs[otherIdx] == REG::NONE)) {
-      inputArgs[otherIdx] = inputArgs[idx];
-      argCanBeDst[otherIdx] = true;
-      argRegs[otherIdx] = argRegs[idx];
-    }
+    argCanBeDst[idx] = backend_.isWritableScratchReg(&inputArgs[idx]);
   };
 
   // Lift arguments to registers
-
   VariableStorage const arg0Storage{moduleInfo_.getStorage(*arg0)}; // NOLINT(clang-analyzer-core.NonNullParamChecker)
   if (arg0Storage.type != StorageType::REGISTER) {
-    liftArgLambda(0U);
+    // GCOVR_EXCL_START
+    assert((!protRegs.allMarked()) && "Cannot lift");
+    // GCOVR_EXCL_STOP
+    RegAllocTracker regAllocTracker{};
+    regAllocTracker.writeProtRegs = protRegs;
+    regAllocTracker.futureLifts = backend_.mask(&inputArgs[1U]);
+    liftArgLambda(0U, forceDstArg0Diff, regAllocTracker);
   } else {
     argRegs[0] = arg0Storage.location.reg;
   }
 
-  if ((!unop) && (argRegs[1] == REG::NONE)) {
-    VariableStorage const arg1Storage{moduleInfo_.getStorage(*arg1)}; // NOLINT(clang-analyzer-core.NonNullParamChecker)
-    if (arg1Storage.type != StorageType::REGISTER) {
-      liftArgLambda(1U);
+  if (!unop) {
+    // GCOVR_EXCL_START
+    assert(argRegs[1] == REG::NONE);
+    // GCOVR_EXCL_STOP
+    if (argsAreEqual) {
+      inputArgs[1] = inputArgs[0];
+      argCanBeDst[1] = argCanBeDst[0];
+      argRegs[1] = argRegs[0];
     } else {
-      argRegs[1] = arg1Storage.location.reg;
+      VariableStorage const arg1Storage{moduleInfo_.getStorage(*arg1)}; // NOLINT(clang-analyzer-core.NonNullParamChecker)
+      if (arg1Storage.type != StorageType::REGISTER) {
+        RegAllocTracker regAllocTracker{};
+        regAllocTracker.writeProtRegs = protRegs;
+        regAllocTracker.readProtRegs = backend_.mask(&inputArgs[0U]);
+        liftArgLambda(1U, forceDstArg1Diff, regAllocTracker);
+      } else {
+        argRegs[1] = arg1Storage.location.reg;
+      }
     }
   }
 
-  RegElement dstRegElem{RegElement{StackElement::invalid(), REG::NONE}};
   if (!noDest) {
-    bool canUseTargetHintAsDst{false};
-    if (verifiedTargetHint != nullptr) {
-      // coverity[autosar_cpp14_a8_5_2_violation]
-      auto const isArgStoragePartOfTargetHint = [this, &verifiedTargetHint, verifiedTargetHintReg](StackElement const *const arg)
-                                                    VB_NOEXCEPT -> bool {
-        assert(verifiedTargetHintReg != REG::NONE);
-        if (arg == nullptr) {
-          return false;
-        }
-
-        MachineType const targetHintType{moduleInfo_.getMachineType(verifiedTargetHint)};
-
-        VariableStorage const argStorage{moduleInfo_.getStorage(*arg)};
-        if (argStorage.type != StorageType::REGISTER) {
-          return false;
-        }
-
-        // Both are regs, if targetHint is verified it's definitely in a register too
-        assert(verifiedTargetHintReg != REG::NONE);
-
-        REG const argReg{argStorage.location.reg};
-        if (argReg == verifiedTargetHintReg) {
-          return true;
-        }
-
-        if (MachineTypeUtil::getSize(targetHintType) != MachineTypeUtil::getSize(argStorage.machineType)) {
-          // One must be 64-bit, the other 32-bit
-          if (argStorage.type == StorageType::REGISTER) {
-            REG simpleReg;
-            REG extendedReg;
-            if (MachineTypeUtil::is64(targetHintType)) {
-              simpleReg = argStorage.location.reg;
-              extendedReg = verifiedTargetHintReg;
-            } else {
-              simpleReg = verifiedTargetHintReg;
-              extendedReg = argStorage.location.reg;
-            }
-            assert(RegUtil::canBeExtReg(extendedReg));
-            if ((simpleReg == extendedReg) || (simpleReg == RegUtil::getOtherExtReg(simpleReg))) {
-              return true;
-            }
-          }
-        }
-        return false;
-      };
-
-      canUseTargetHintAsDst = (!(forceDstArg0Diff && isArgStoragePartOfTargetHint(&inputArgs[0]))) &&
-                              (!(forceDstArg1Diff && isArgStoragePartOfTargetHint(&inputArgs[1])));
+    if (dstRegElem.reg == REG::NONE) {
+      if (((!forceDstArg0Diff) && argCanBeDst[0]) && (srcTypes[0] == dstType)) {
+        dstRegElem = RegElement{inputArgs[0], argRegs[0]};
+      } else if (((!forceDstArg1Diff) && argCanBeDst[1]) && (srcTypes[1] == dstType)) {
+        // coverity[autosar_cpp14_m0_1_9_violation]
+        dstRegElem = RegElement{inputArgs[1], argRegs[1]};
+      } else {
+        RegMask const targetHintMask{(verifiedTargetHint != nullptr) ? backend_.mask(verifiedTargetHint) : RegMask::none()};
+        RegAllocTracker fullRegAllocTracker{};
+        fullRegAllocTracker.readProtRegs = protRegs | backend_.mask(&inputArgs[0]) | backend_.mask(&inputArgs[1]) | targetHintMask;
+        dstRegElem = backend_.common_.reqScratchRegProt(dstType, fullRegAllocTracker, false);
+      }
     }
-    if (canUseTargetHintAsDst) {
-      // coverity[autosar_cpp14_m0_1_9_violation]
-      dstRegElem = RegElement{*verifiedTargetHint, verifiedTargetHintReg};
-    } else if (((!forceDstArg0Diff) && argCanBeDst[0]) && (srcTypes[0] == dstType)) {
-      dstRegElem = RegElement{inputArgs[0], argRegs[0]};
-    } else if (((!forceDstArg1Diff) && argCanBeDst[1]) && (srcTypes[1] == dstType)) {
-      // coverity[autosar_cpp14_m0_1_9_violation]
-      dstRegElem = RegElement{inputArgs[1], argRegs[1]};
-    } else {
-      assert(!canUseTargetHintAsDst && "Cannot use targetHint, otherwise canUseTargetHintAsDst would be true");
-      RegMask const targetHintMask{(verifiedTargetHint != nullptr) ? backend_.mask(verifiedTargetHint) : RegMask::none()};
-      RegAllocTracker fullRegAllocTracker{};
-      fullRegAllocTracker.readProtRegs = protRegs | backend_.mask(&inputArgs[0]) | backend_.mask(&inputArgs[1]) | targetHintMask;
-      dstRegElem = backend_.common_.reqScratchRegProt(dstType, fullRegAllocTracker, false);
-    }
-
+    // GCOVR_EXCL_START
     assert((!forceDstArg0Diff || !StackElement::equalsVariable(&dstRegElem.elem, &inputArgs[0])) && "Error, used forbidden arg as dest");
     assert((!forceDstArg1Diff || !StackElement::equalsVariable(&dstRegElem.elem, &inputArgs[1])) && "Error, used forbidden arg as dest");
+    // GCOVR_EXCL_STOP
   }
   // coverity[autosar_cpp14_a16_2_3_violation]
   PreparedArgs preparedArgs{};
@@ -232,10 +250,16 @@ Assembler::PreparedArgs Assembler::loadArgsToRegsAndPrepDest(MachineType const d
   preparedArgs.dest.secReg = (noDest || (MachineTypeUtil::getSize(dstType) == 4U)) ? REG::NONE : RegUtil::getOtherExtReg(preparedArgs.dest.reg);
   preparedArgs.arg0.elem = inputArgs[0];
   preparedArgs.arg0.reg = argRegs[0];
+  // GCOVR_EXCL_START
+  assert(preparedArgs.arg0.reg != REG::NONE);
+  // GCOVR_EXCL_STOP
   preparedArgs.arg0.secReg = (MachineTypeUtil::getSize(srcTypes[0]) == 4U) ? REG::NONE : RegUtil::getOtherExtReg(preparedArgs.arg0.reg);
   if (arg1 != nullptr) {
     preparedArgs.arg1.elem = inputArgs[1];
     preparedArgs.arg1.reg = argRegs[1];
+    // GCOVR_EXCL_START
+    assert(preparedArgs.arg1.reg != REG::NONE);
+    // GCOVR_EXCL_STOP
     preparedArgs.arg1.secReg = (MachineTypeUtil::getSize(srcTypes[1]) == 4U) ? REG::NONE : RegUtil::getOtherExtReg(preparedArgs.arg1.reg);
   }
   return preparedArgs;

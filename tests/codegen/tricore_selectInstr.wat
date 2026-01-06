@@ -173,4 +173,33 @@
     i32.load
     drop
   )
+
+  ;; CHECK-LABEL: Function[17] Body
+  (func $I64Sub (param i64) (result i64)
+     
+     local.get 0
+     i64.const 200
+    ;; TRICORE: addx  d2, [[REG:d[0-9]+]], #-[[IMM:(0x)?[0-9a-f]+]]
+    ;; TRICORE-NEXT: addc  d3, [[REG:d[0-9]+]], #-[[IMM:(0x)?[0-9a-f]+]]
+     i64.sub
+    ;; TRICORE-NOT: mov 
+    ;; TRICORE: fret
+     return
+  )
+
+  ;; CHECK-LABEL: Function[18] Body
+  (func $I64Mul (param i64) (result i64)
+        local.get 0
+        i64.const 1
+        ;; TRICORE: mul.u  e2, [[REG:d[0-9]+]], [[REG:d[0-9]+]]
+        i64.mul
+        i64.const 2
+        ;; TRICORE: mul.u  e6, [[REG:d[0-9]+]], [[REG:d[0-9]+]]
+        i64.mul
+        i64.const 3
+        ;; TRICORE: mul.u  e2, [[REG:d[0-9]+]], [[REG:d[0-9]+]]
+        i64.mul
+        ;; TRICORE-NOT: mov 
+        return
+  )
 )
