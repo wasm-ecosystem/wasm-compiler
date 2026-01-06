@@ -1437,24 +1437,25 @@ Stack::iterator Common::condenseParameter(ParamPos const targetPos, vb::MachineT
   if (targetPos.reg != TReg::NONE) {
     Stack::iterator const currentParamBegin{findBaseOfValentBlockBelow(baseIt)};
     Stack::iterator const currentParamEnd{baseIt.prev()};
+    StackElement const regStackElement{compiler_.moduleInfo_.getStackElementByReg(targetPos.reg, MachineTypeUtil::toStackTypeFlag(paramType))};
     bool targetRegUsedByOtherParams{false};
     for (Stack::iterator it{compiler_.stack_.end()}; it != currentParamEnd; it--) {
-      if (compiler_.backend_.stackElementConflictsWithParamReg(*it, targetPos.reg, paramType)) {
+      if (compiler_.backend_.stackElementConflictsWithParamReg(*it, targetPos.reg, paramType, regStackElement.type)) {
         targetRegUsedByOtherParams = true;
         break;
       }
     }
-
-    for (Stack::iterator it{allParamsStart}; it != currentParamBegin; it++) {
-      if (compiler_.backend_.stackElementConflictsWithParamReg(*it, targetPos.reg, paramType)) {
-        targetRegUsedByOtherParams = true;
-        break;
+    if (!targetRegUsedByOtherParams) {
+      for (Stack::iterator it{allParamsStart}; it != currentParamBegin; it++) {
+        if (compiler_.backend_.stackElementConflictsWithParamReg(*it, targetPos.reg, paramType, regStackElement.type)) {
+          targetRegUsedByOtherParams = true;
+          break;
+        }
       }
     }
 
     if (!targetRegUsedByOtherParams) {
       VariableStorage const targetHintStorage{VariableStorage::reg(paramType, targetPos.reg)};
-      StackElement const regStackElement{compiler_.moduleInfo_.getStackElementByReg(targetPos.reg, MachineTypeUtil::toStackTypeFlag(paramType))};
       uint32_t const referencePosition{compiler_.moduleInfo_.getReferencePosition(regStackElement)};
 
       targetHint = StackElement::tempResult(paramType, targetHintStorage, referencePosition);

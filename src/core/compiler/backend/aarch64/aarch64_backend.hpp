@@ -606,8 +606,10 @@ public:
   /// @param element Stack element to be checked
   /// @param paramReg Parameter register to be checked against
   /// @param machineType Machine type of the stack element
+  /// @param paramTypeInCaller Stack element type of the parameter in caller function
   /// @return true if there is conflict, false otherwise
-  bool stackElementConflictsWithParamReg(StackElement const &element, REG const paramReg, MachineType const machineType) const VB_NOEXCEPT;
+  bool stackElementConflictsWithParamReg(StackElement const &element, REG const paramReg, MachineType const machineType,
+                                         StackType const paramTypeInCaller) const VB_NOEXCEPT;
 
 private:
   /// @brief Widths of certain entries on the stack

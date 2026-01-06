@@ -4991,12 +4991,17 @@ void Backend::updateStackFrameSizeHelper(uint32_t const newAlignedStackFrameSize
   as_.setStackFrameSize(newAlignedStackFrameSize);
 }
 
-bool Backend::stackElementConflictsWithParamReg(StackElement const &element, REG const paramReg, MachineType const machineType) const VB_NOEXCEPT {
+bool Backend::stackElementConflictsWithParamReg(StackElement const &element, REG const paramReg, MachineType const machineType,
+                                                StackType const paramTypeInCaller) const VB_NOEXCEPT {
   // GCOVR_EXCL_START
   assert(paramReg != WasmABI::REGS::memSize);
   // GCOVR_EXCL_STOP
 
-  if (MachineTypeUtil::is64(machineType)) {
+  bool const paramIs64{MachineTypeUtil::is64(machineType)};
+
+  if (paramIs64 && (paramTypeInCaller == StackType::LOCAL)) {
+    // This case happens when native call, the target hint is 64bit which is used by caller local
+    // current checkIfEnforcedTargetIsOnlyInArgs can't handle this case, so always regard this case as conflict
     return true;
   } else {
     VariableStorage const storage{moduleInfo_.getStorage(element)};
@@ -5004,8 +5009,21 @@ bool Backend::stackElementConflictsWithParamReg(StackElement const &element, REG
       if (storage.location.reg == paramReg) {
         return true;
       }
+
+      if (paramIs64) {
+        // GCOVR_EXCL_START
+        assert(RegUtil::canBeExtReg(paramReg));
+        // GCOVR_EXCL_STOP
+        if (storage.location.reg == RegUtil::getOtherExtReg(paramReg)) {
+          return true;
+        }
+      }
+
       bool const stackElementIs64{MachineTypeUtil::is64(moduleInfo_.getMachineType(&element))};
-      if (stackElementIs64 && RegUtil::canBeExtReg(storage.location.reg)) {
+      if (stackElementIs64) {
+        // GCOVR_EXCL_START
+        assert(RegUtil::canBeExtReg(storage.location.reg));
+        // GCOVR_EXCL_STOP
         REG const otherReg{RegUtil::getOtherExtReg(storage.location.reg)};
         if (otherReg == paramReg) {
           return true;

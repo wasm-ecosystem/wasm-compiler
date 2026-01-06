@@ -3951,8 +3951,10 @@ void Backend::updateStackFrameSizeHelper(uint32_t const newAlignedStackFrameSize
 #endif
 }
 
-bool Backend::stackElementConflictsWithParamReg(StackElement const &element, REG const paramReg, MachineType const machineType) const VB_NOEXCEPT {
+bool Backend::stackElementConflictsWithParamReg(StackElement const &element, REG const paramReg, MachineType const machineType,
+                                                StackType const paramTypeInCaller) const VB_NOEXCEPT {
   static_cast<void>(machineType);
+  static_cast<void>(paramTypeInCaller);
 #if LINEAR_MEMORY_BOUNDS_CHECKS
   if (paramReg == WasmABI::REGS::memSize) {
     return true;
