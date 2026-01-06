@@ -18,6 +18,8 @@
 - Fixed wrong machine type for type_cast instruction
 - x86_64 backend: 
   - fix wrong register selection of f32/f64 max/min.
+- Tricore backend:
+  - fixed i32.load16_s and i32.load16_u producing incorrect results with unaligned addresses due to shared load cache between signed and unsigned variants 
 
 ## 3.0.3
 
@@ -72,6 +74,7 @@ Add u32 and u64 type to WasmValue
 - Stop supporting of tc1.6 and only support tc1.8
 
 ## Release v2 known issues
+- [Bug fixed by 3.0.10](#3010)
 - [Bug fixed by 3.0.9](#309)
 - [Bug fixed by 3.0.4](#304)
 

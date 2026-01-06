@@ -2057,9 +2057,10 @@ StackElement Backend::executeLinearMemoryLoad(OPCode const opcode, uint32_t cons
     RelPatchObj const end{as_.INSTR(J_disp24sx2).prepJmp()};
     unaligned.linkToHere();
     { // Unaligned
-      if (unalignedAccessCodePositions_.load2 == UINT32_MAX) {
+      uint32_t &load2PosRef{signExtend ? unalignedAccessCodePositions_.load2s : unalignedAccessCodePositions_.load2u};
+      if (load2PosRef == UINT32_MAX) {
         RelPatchObj const skip{as_.INSTR(J_disp24sx2).prepJmp()};
-        unalignedAccessCodePositions_.load2 = output_.size();
+        load2PosRef = output_.size();
         // Push register to the stack
         constexpr REG helperReg{REG::D15};
         as_.INSTR(STW_deref_Ab_off10sx_Da_preinc).setAb(REG::SP).setOff10sx(SafeInt<10>::fromConst<-4>()).setDa(helperReg)();
@@ -2080,7 +2081,7 @@ StackElement Backend::executeLinearMemoryLoad(OPCode const opcode, uint32_t cons
         skip.linkToHere();
       }
 
-      as_.INSTR(FCALL_disp24sx2).prepJmp().linkToBinaryPos(unalignedAccessCodePositions_.load2);
+      as_.INSTR(FCALL_disp24sx2).prepJmp().linkToBinaryPos(load2PosRef);
       as_.INSTR(MOVD_Da_Ab).setDa(targetRegElem.reg).setAb(WasmABI::REGS::memLdStReg)();
     }
     end.linkToHere();
