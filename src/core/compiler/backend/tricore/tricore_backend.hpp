@@ -733,9 +733,10 @@ private:
   /// @brief Positions of where the logic for unaligned memory load/store is, can be reused by later code to save space
   class UnalignedAccessCodePositions final {
   public:
-    uint32_t load2 = UINT32_MAX; ///< Position of unaligned load 2 bytes memory access
-    uint32_t load4 = UINT32_MAX; ///< Position of unaligned load 4 bytes memory access
-    uint32_t load8 = UINT32_MAX; ///< Position of unaligned load 8 bytes memory access
+    uint32_t load2s = UINT32_MAX; ///< Position of unaligned load 2 signed bytes memory access
+    uint32_t load2u = UINT32_MAX; ///< Position of unaligned load 2 unsigned bytes memory access
+    uint32_t load4 = UINT32_MAX;  ///< Position of unaligned load 4 bytes memory access
+    uint32_t load8 = UINT32_MAX;  ///< Position of unaligned load 8 bytes memory access
 
     uint32_t store2 = UINT32_MAX; ///< Position of unaligned store 2 bytes memory access
     uint32_t store4 = UINT32_MAX; ///< Position of unaligned store 4 bytes memory access
