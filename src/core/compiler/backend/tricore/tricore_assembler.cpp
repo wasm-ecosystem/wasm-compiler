@@ -134,7 +134,7 @@ Assembler::PreparedArgs Assembler::loadArgsToRegsAndPrepDest(MachineType const d
           extendedReg = argStorage.location.reg;
         }
         assert(RegUtil::canBeExtReg(extendedReg));
-        if ((simpleReg == extendedReg) || (simpleReg == RegUtil::getOtherExtReg(simpleReg))) {
+        if ((simpleReg == extendedReg) || (simpleReg == RegUtil::getOtherExtReg(extendedReg))) {
           return true;
         }
       }
