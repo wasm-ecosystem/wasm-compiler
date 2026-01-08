@@ -26,6 +26,7 @@
 
 #include "aarch64_assembler.hpp"
 #include "aarch64_cc.hpp"
+#include "aarch64_memory_addr_imm.hpp"
 
 #include "src/core/common/util.hpp"
 #include "src/core/compiler/common/Common.hpp"
@@ -647,7 +648,32 @@ private:
   /// @param addrReg Register holding the address relative to start of linear memory
   /// @param memObjSize Size in bytes of the data that should be accessed, if reg points to the end (byte AFTER the
   /// data, e.g. for memcpy), pass 0 here
-  void emitLinMemBoundsCheck(REG const addrReg, uint8_t const memObjSize);
+  inline void emitLinMemBoundsCheck(REG const addrReg, uint8_t const memObjSize) {
+    return emitLinMemBoundsCheck(VariableStorage::reg(addrReg, MachineType::I64), memObjSize);
+  }
+
+  ///
+  /// @brief Perform bounds checks for a register holding an address relative to start of linear memory for accessing
+  /// data
+  ///
+  /// @param addrStorage Storage holding the address relative to start of linear memory, can be register or imm
+  /// @param memObjSize Size in bytes of the data that should be accessed, if reg points to the end (byte AFTER the
+  /// data, e.g. for memcpy), pass 0 here
+  void emitLinMemBoundsCheck(VariableStorage const &addrStorage, uint8_t const memObjSize);
+
+  ///
+  /// @brief Perform bounds checks for a register holding an address relative to start of linear memory for accessing
+  /// data
+  ///
+  /// @param addrElem Stack Element holding the address relative to start of linear memory
+  /// @param memObjSize Size in bytes of the data that should be accessed, if reg points to the end (byte AFTER the
+  /// data, e.g. for memcpy), pass 0 here
+  /// @param offset Offset in Wasm memory load/store instruction
+  /// @param regAllocTracker A tracker to track the protected register mask which prevents the registers
+  /// @param targetHint A target hint that can be used as a scratch register or temporary variable location if the type
+  Common::LiftedReg emitLinMemBoundsCheck(Stack::iterator const addrElem, uint8_t const memObjSize, uint32_t const offset,
+                                          RegAllocTracker &regAllocTracker, StackElement const *const targetHint);
+
 #endif
 
   ///
@@ -984,6 +1010,29 @@ private:
   /// @param import Whether the register is used in an imported function call (NativeABI) or in a Wasm function call (WasmABI)
   /// @return Position of this register in the gpr or fpr array. UINT8_MAX if the register is not a parameter
   uint32_t getParamPos(REG const reg, bool const import) const VB_NOEXCEPT;
+
+  /// @brief Emit memory load/store with immediate offset
+  /// @param opcode memory load or store instruction opcode
+  /// @param valueReg register to load from or store to memory
+  /// @param immType  immediate encoding type
+  /// @param addrImmChecker address immediate offset checker
+  void emitMemoryLoadStoreWithImmOffset(OPCodeTemplate const opcode, REG const valueReg, Aarch64MemoryAddrImmType const immType,
+                                        Aarch64MemoryAddrImmChecker const addrImmChecker);
+  /// @brief Emit memory load probe to check memory access is valid
+  /// @param opcode memory load instruction opcode
+  /// @param memoryObjSize size of memory object, can be 1,2,4,8
+  /// @param addrReg register holds memory address
+  /// @note: // Probe first because memory accesses crossing page boundaries with different permissions are UNPREDICTABLE on ARM
+  // If EAGER_ALLOCATION is turned on, the whole formal size is guaranteed to be read-write accessible already.
+  void emitMemoryLoadProbe(vb::OPCode const opcode, uint8_t const memoryObjSize, REG const addrReg);
+
+  /// @brief Emit memory load probe to check memory access is valid
+  /// @param opcode memory load instruction opcode
+  /// @param immType immediate offset type
+  /// @param addrImmChecker address immediate offset checker
+  /// @note: // Probe first because memory accesses crossing page boundaries with different permissions are UNPREDICTABLE on ARM
+  // If EAGER_ALLOCATION is turned on, the whole formal size is guaranteed to be read-write accessible already.
+  void emitMemoryLoadProbe(vb::OPCode const opcode, Aarch64MemoryAddrImmType const immType, Aarch64MemoryAddrImmChecker const addrImmChecker);
 
   /// @brief Minimal number of registers that should be reserved for condense a vb.
   /// @details Need to keep 2 regs to avoid spill when add mem, mem or select reg, mem, mem.

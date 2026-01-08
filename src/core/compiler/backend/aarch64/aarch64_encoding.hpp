@@ -741,6 +741,7 @@ constexpr OPCodeTemplate LDRSB_wT_deref_xN_imm12zx_t{0x39C00000U};
 /// @brief LDRSB Xt, [Xn|SP{, pimm}]: Loads a byte from memory, sign-extends it to 64 bits, and writes the result to a
 /// register. The address that is used for the load is calculated from a base register and a scaled, unsigned immediate
 /// offset (in the range 0 to 4095).
+// coverity[autosar_cpp14_m3_4_1_violation]
 constexpr OPCodeTemplate LDRSB_xT_deref_xN_imm12zx_t{0x39800000U};
 /// @brief LDRSH Wt, [Xn|SP{, pimm}]: Loads a halfword from memory, sign-extends it to 32 bits, and writes the result to
 /// a register. The address that is used for the load is calculated from a base register and a scaled, unsigned
@@ -750,10 +751,12 @@ constexpr OPCodeTemplate LDRSH_wT_deref_xN_imm12zxls1_t{0x79C00000U};
 /// @brief LDRSH Xt, [Xn|SP{, pimm}]: Loads a halfword from memory, sign-extends it to 64 bits, and writes the result to
 /// a register. The address that is used for the load is calculated from a base register and a scaled, unsigned
 /// immediate offset (multiple of 2 in the range 0 to 8190).
+// coverity[autosar_cpp14_m3_4_1_violation]
 constexpr OPCodeTemplate LDRSH_xT_deref_xN_imm12zxls1_t{0x79800000U};
 /// @brief LDRSW Xt, [Xn|SP{, pimm}]: Loads a word from memory, sign-extends it to 64 bits, and writes the result to a
 /// register. The address that is used for the load is calculated from a base register and a scaled, unsigned immediate
 /// offset (multiple of 4 in the range 0 to 16380).
+// coverity[autosar_cpp14_m3_4_1_violation]
 constexpr OPCodeTemplate LDRSW_xT_deref_xN_imm12zxls2_t{0xB9800000U};
 
 /// @brief LDR Xt, [Xn|SP{, simm}]!: Loads a doubleword from memory and writes it to a register. The address that is
@@ -886,10 +889,12 @@ constexpr OPCodeTemplate STR_xT_deref_xN_imm12zxls3_t{0xF9000000U};
 /// @brief STRB Wt, [Xn|SP{, pimm}]: Stores the least significant byte of a 32-bit register to memory. The address that
 /// is used for the store is calculated from a base register and a scaled, unsigned immediate offset (in the range 0 to
 /// 4095).
+// coverity[autosar_cpp14_m3_4_1_violation]
 constexpr OPCodeTemplate STRB_wT_deref_xN_imm12zx_t{0x39000000U};
 /// @brief STRH Wt, [Xn|SP{, pimm}]: Stores the least significant halfword of a 32-bit register to memory. The address
 /// that is used for the store is calculated from a base register and a scaled, unsigned immediate offset (multiple of 2
 /// in the range 0 to 8190).
+// coverity[autosar_cpp14_m3_4_1_violation]
 constexpr OPCodeTemplate STRH_wT_deref_xN_imm12zxls1_t{0x79000000U};
 
 /// @brief STUR Wt, [Xn|SP{, simm}]: Stores a 32-bit word to memory. The address that is used for the store is

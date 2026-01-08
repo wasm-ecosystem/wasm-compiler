@@ -7,7 +7,7 @@
         ;; X86_64_PASSIVE:         mov  [[REG1:(r[0-9]+d?|[re](ax|cx|dx|bx|bp|si|di))]], dword ptr [rbx + [[NUM:[0-9a-f]+]]]
         ;; X86_64_PASSIVE-NEXT:    movzx [[REG2:(r[0-9]+d?|[re](ax|cx|dx|bx|bp|si|di))]], byte ptr [rbx + [[NUM:[0-9a-f]+]]]
         ;; AARCH64_PASSIVE: ldr [[REG1:w[0-9]+]], [x29, [[REG:x[0-9]+]]]
-        ;; AARCH64_PASSIVE: ldrb [[REG2:w[0-9]+]], [x29, [[REG:x[0-9]+]]]
+        ;; AARCH64_PASSIVE: ldrb [[REG2:w[0-9]+]], [x29, #2]
         ;; AARCH64_PASSIVE: ldrh [[REG3:w[0-9]+]], [x29, [[REG:x[0-9]+]]]
         i32.const 1
         i32.load
@@ -23,7 +23,7 @@
         ;; AARCH64_PASSIVE: add [[REG1]], [[REG1]], [[REG2]]
         i32.add
         ;; X86_64_PASSIVE-NEXT: movzx  [[REG3:(r[0-9]+d?|[re](ax|cx|dx|bx|bp|si|di))]], word ptr [rbx + [[NUM:[0-9a-f]+]]]
-        ;; AARCH64_PASSIVE: ldr [[REG4:w[0-9]+]], [x29, [[REG:x[0-9]+]]]
+        ;; AARCH64_PASSIVE: ldr [[REG4:w[0-9]+]], [x29, #4]
         i32.const 3
         i32.load16_u
         i32.const 4
@@ -58,7 +58,7 @@
         ;; AARCH64_PASSIVE: fadd [[REG1]], [[REG1]], [[REG2]]
         f32.add
         ;; X86_64_PASSIVE: movss  [[REG3:xmm[0-9]+]], dword ptr [rbx + [[NUM:[0-9a-f]+]]]
-        ;; AARCH64_PASSIVE: ldr [[REG4:[sdv][0-9]+]], [x29, [[REG:x[0-9]+]]]
+        ;; AARCH64_PASSIVE: ldr [[REG4:[sdv][0-9]+]], [x29, #4]
         i32.const 3
         f32.load
         i32.const 4

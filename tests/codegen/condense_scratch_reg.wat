@@ -4,16 +4,16 @@
     (local i32)
     i32.const 4
     ;; X86_64_NO_ACTIVE_STACK_OVERFLOW_CHECK: mov [[REG1:(r[0-9]+d?|[re](ax|cx|dx|bx|bp|si|di))]], dword ptr [rbx + [[NUM:[0-9]+]]]
-    ;; AARCH64_NO_ACTIVE_STACK_OVERFLOW_CHECK: ldr [[REG1:w[0-9]+]], [x29, [[REG:x[0-9]+]]]
+    ;; AARCH64_NO_ACTIVE_STACK_OVERFLOW_CHECK: ldr [[REG1:w[0-9]+]], [x29, #4]
     i32.load
     i32.const 0
     ;; X86_64_NO_ACTIVE_STACK_OVERFLOW_CHECK-NEXT: mov [[REG2:(r[0-9]+d?|[re](ax|cx|dx|bx|bp|si|di))]], dword ptr [rbx]
-    ;; AARCH64_NO_ACTIVE_STACK_OVERFLOW_CHECK: ldr [[REG2:w[0-9]+]], [x29, [[REG:x[0-9]+]]]
+    ;; AARCH64_NO_ACTIVE_STACK_OVERFLOW_CHECK: ldr [[REG2:w[0-9]+]], [x29]
     i32.load
 
     i32.const 4
     ;; X86_64_NO_ACTIVE_STACK_OVERFLOW_CHECK-NEXT: mov [[REG3:(r[0-9]+d?|[re](ax|cx|dx|bx|bp|si|di))]], dword ptr [rbx + [[NUM:[0-9a-f]+]]]
-    ;; AARCH64_NO_ACTIVE_STACK_OVERFLOW_CHECK: ldr [[REG3:w[0-9]+]], [x29, [[REG:x[0-9]+]]]
+    ;; AARCH64_NO_ACTIVE_STACK_OVERFLOW_CHECK: ldr [[REG3:w[0-9]+]], [x29, #4]
     i32.load
     local.set 2
 

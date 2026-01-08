@@ -26,6 +26,7 @@
 #include "aarch64_backend.hpp"
 #include "aarch64_cc.hpp"
 #include "aarch64_encoding.hpp"
+#include "aarch64_memory_addr_imm.hpp"
 
 #include "src/core/common/FunctionRef.hpp"
 #include "src/core/common/NativeSymbol.hpp"
@@ -2781,11 +2782,17 @@ Common::LiftedReg Backend::prepareLinMemAddrProt(StackElement *const addrElem, u
 }
 
 #if LINEAR_MEMORY_BOUNDS_CHECKS
-void Backend::emitLinMemBoundsCheck(REG const addrReg, uint8_t const memObjSize) {
+void Backend::emitLinMemBoundsCheck(VariableStorage const &addrStorage, uint8_t const memObjSize) {
   assert(moduleInfo_.helperFunctionBinaryPositions.extensionRequest != 0xFF'FF'FF'FF && "Extension request wrapper has not been produced yet");
   assert(moduleInfo_.fnc.stackFrameSize == as_.alignStackFrameSize(moduleInfo_.fnc.stackFrameSize) && "Stack not aligned");
-
-  as_.INSTR(CMP_xN_xM).setN(WasmABI::REGS::memSize).setM(addrReg)();
+  if (addrStorage.type == StorageType::REGISTER) {
+    as_.INSTR(CMP_xN_xM).setN(WasmABI::REGS::memSize).setM(addrStorage.location.reg)();
+  } else {
+    // GCOVR_EXCL_START
+    assert(addrStorage.type == StorageType::CONSTANT && "Invalid storage type for linear memory address");
+    // GCOVR_EXCL_STOP
+    as_.INSTR(CMP_xN_imm12zxols12).setN(WasmABI::REGS::memSize).setImm12zx(SafeUInt<12U>::fromUnsafe(addrStorage.location.constUnion.u32))();
+  }
   RelPatchObj const withinBounds = as_.prepareJMP(CC::GE);
 
   as_.INSTR(STP_xT1_xT2_deref_xN_scSImm7_t)
@@ -2793,10 +2800,17 @@ void Backend::emitLinMemBoundsCheck(REG const addrReg, uint8_t const memObjSize)
       .setT2(NABI::gpParams[0])
       .setN(WasmABI::REGS::linMem)
       .setSImm7ls3(SafeInt<10>::fromConst<-BD::FromEnd::spillRegion>())();
-  as_.INSTR(ADD_xD_xN_imm12zxols12)
-      .setD(NABI::gpParams[0])
-      .setN(addrReg)
-      .setImm12zx(SafeUInt<12U>::max() & static_cast<uint32_t>(memObjSize))(); // Move to gpParams[0] and add memObjSize
+  if (addrStorage.type == StorageType::REGISTER) {
+    // Move to gpParams[0] and add memObjSize
+    as_.INSTR(ADD_xD_xN_imm12zxols12)
+        .setD(NABI::gpParams[0])
+        .setN(addrStorage.location.reg)
+        .setImm12zx(SafeUInt<12U>::max() & static_cast<uint32_t>(memObjSize))();
+  } else {
+    as_.INSTR(MOVZ_xD_imm16ols_t)
+        .setD(NABI::gpParams[0])
+        .setImm16Ols(SafeUInt<16U>::fromUnsafe(addrStorage.location.constUnion.u32 + static_cast<uint32_t>(memObjSize)), 0U)();
+  }
   RelPatchObj const extensionRequestRelPatchObj = as_.INSTR(BL_imm26sxls2_t).setImm19o26ls2BranchPlaceHolder().prepJmp();
   extensionRequestRelPatchObj.linkToBinaryPos(moduleInfo_.helperFunctionBinaryPositions.extensionRequest); // CALL extension request or trap
   as_.INSTR(LDP_xT1_xT2_deref_xN_scSImm7_t)
@@ -2806,7 +2820,45 @@ void Backend::emitLinMemBoundsCheck(REG const addrReg, uint8_t const memObjSize)
       .setSImm7ls3(SafeInt<10>::fromConst<-BD::FromEnd::spillRegion>())();
   withinBounds.linkToHere();
 }
+
+Common::LiftedReg Backend::emitLinMemBoundsCheck(Stack::iterator const addrElem, uint8_t const memObjSize, uint32_t const offset,
+                                                 RegAllocTracker &regAllocTracker, StackElement const *const targetHint) {
+  Common::LiftedReg liftedAddrReg{REG::NONE, false};
+  Aarch64MemoryAddrImmChecker addrImmConstCmpChecker{};
+  if (addrImmConstCmpChecker.addressCanBeImmEncoded(Aarch64MemoryAddrImmType::IMM12, addrElem, offset)) {
+    emitLinMemBoundsCheck(VariableStorage::i32Const(addrImmConstCmpChecker.getImm12().value()), memObjSize);
+  } else {
+    liftedAddrReg = prepareLinMemAddrProt(addrElem.raw(), offset, regAllocTracker, targetHint);
+    emitLinMemBoundsCheck(liftedAddrReg.reg, memObjSize);
+  }
+
+  return liftedAddrReg;
+}
 #endif
+
+void Backend::emitMemoryLoadStoreWithImmOffset(OPCodeTemplate const opcode, REG const valueReg, Aarch64MemoryAddrImmType const immType,
+                                               Aarch64MemoryAddrImmChecker const addrImmChecker) {
+  switch (immType) {
+  case Aarch64MemoryAddrImmType::IMM12: {
+    as_.INSTR(opcode).setT(valueReg).setN(WasmABI::REGS::linMem).setImm12zx(addrImmChecker.getImm12())();
+    break;
+  }
+  case Aarch64MemoryAddrImmType::IMM12LS1: {
+    as_.INSTR(opcode).setT(valueReg).setN(WasmABI::REGS::linMem).setImm12zxls1(addrImmChecker.getImm12ls1())();
+    break;
+  }
+  case Aarch64MemoryAddrImmType::IMM12LS2: {
+    as_.INSTR(opcode).setT(valueReg).setN(WasmABI::REGS::linMem).setImm12zxls2(addrImmChecker.getImm12ls2())();
+    break;
+  }
+  default: { // GCOVR_EXCL_START
+    assert(immType == Aarch64MemoryAddrImmType::IMM12LS3 && "Invalid memory object size");
+    // GCOVR_EXCL_STOP
+    as_.INSTR(opcode).setT(valueReg).setN(WasmABI::REGS::linMem).setImm12zxls3(addrImmChecker.getImm12ls3())();
+    break;
+  }
+  }
+}
 
 StackElement Backend::executeLinearMemoryLoad(OPCode const opcode, uint32_t const offset, Stack::iterator const addrElem,
                                               StackElement const *const targetHint) {
@@ -2816,29 +2868,53 @@ StackElement Backend::executeLinearMemoryLoad(OPCode const opcode, uint32_t cons
 
   MachineType const resultType{getLoadResultType(opcode)};
   bool const resultIsInt{MachineTypeUtil::isInt(resultType)};
+  uint32_t const arrayIndex{static_cast<uint32_t>(opcode) - static_cast<uint32_t>(OPCode::I32_LOAD)};
   // coverity[autosar_cpp14_a8_5_2_violation]
   constexpr auto opcodeTemplates =
       make_array(LDR_wT_deref_xN_xM_t, LDR_xT_deref_xN_xM_t, LDR_sT_deref_xN_xM_t, LDR_dT_deref_xN_xM_t, LDRSB_wT_deref_xN_xM_t,
                  LDRB_wT_deref_xN_xM_t, LDRSH_wT_deref_xN_xM_t, LDRH_wT_deref_xN_xM_t, LDRSB_xT_deref_xN_xM_t, LDRB_wT_deref_xN_xM_t,
                  LDRSH_xT_deref_xN_xM_t, LDRH_wT_deref_xN_xM_t, LDRSW_xT_deref_xN_xM_t, LDR_wT_deref_xN_xM_t);
 
-  OPCodeTemplate const opcodeTemplate{opcodeTemplates[static_cast<uint32_t>(opcode) - static_cast<uint32_t>(OPCode::I32_LOAD)]};
-  static_cast<void>(memObjSizes);
+  OPCodeTemplate const opcodeTemplate{opcodeTemplates[arrayIndex]};
 
-  RegAllocTracker regAllocTracker{};
-  // coverity[autosar_cpp14_a5_3_2_violation]
-  Common::LiftedReg const liftedAddrReg{prepareLinMemAddrProt(addrElem.raw(), offset, regAllocTracker, targetHint)};
-  REG const addrReg{liftedAddrReg.reg};
-
+  uint8_t const memoryObjSize{memObjSizes[arrayIndex]};
+  Aarch64MemoryAddrImmType const immType{memoryObjectSizeToImmType(memoryObjSize)};
   StackElement const *const verifiedTargetHint{(getUnderlyingRegIfSuitable(targetHint, resultType, RegMask::none()) != REG::NONE) ? targetHint
                                                                                                                                   : nullptr};
+  RegElement targetRegElem{};
+  RegAllocTracker regAllocTracker{};
+
+  // coverity[autosar_cpp14_a5_3_2_violation]
+  Common::LiftedReg liftedAddrReg{REG::NONE, false};
 
 #if LINEAR_MEMORY_BOUNDS_CHECKS
-  emitLinMemBoundsCheck(addrReg, memObjSizes[opcode - OPCode::I32_LOAD]);
+  liftedAddrReg = emitLinMemBoundsCheck(addrElem, memoryObjSize, offset, regAllocTracker, targetHint);
 #endif
 
-  RegElement targetRegElem{};
+  // coverity[autosar_cpp14_m0_1_2_violation]
+  if (liftedAddrReg.reg == REG::NONE) {
+    Aarch64MemoryAddrImmChecker addrImmChecker{};
+    if (addrImmChecker.addressCanBeImmEncoded(immType, addrElem, offset)) {
+      targetRegElem = common_.reqScratchRegProt(resultType, verifiedTargetHint, regAllocTracker, false);
+      // coverity[autosar_cpp14_a8_5_2_violation]
+      constexpr auto opcodeTemplatesConstAddr =
+          make_array(LDR_wT_deref_xN_imm12zxls2_t, LDR_xT_deref_xN_imm12zxls3_t, LDR_sT_deref_xN_imm12zxls2_t, LDR_dT_deref_xN_imm12zxls3_t,
+                     LDRSB_wT_deref_xN_imm12zx_t, LDRB_wT_deref_xN_imm12zx_t, LDRSH_wT_deref_xN_imm12zxls1_t, LDRH_wT_deref_xN_imm12zxls1_t,
+                     LDRSB_xT_deref_xN_imm12zx_t, LDRB_wT_deref_xN_imm12zx_t, LDRSH_xT_deref_xN_imm12zxls1_t, LDRH_wT_deref_xN_imm12zxls1_t,
+                     LDRSW_xT_deref_xN_imm12zxls2_t, LDR_wT_deref_xN_imm12zxls2_t);
 
+      OPCodeTemplate const opcodeTemplateConstAddr{opcodeTemplatesConstAddr[arrayIndex]};
+      emitMemoryLoadStoreWithImmOffset(opcodeTemplateConstAddr, targetRegElem.reg, immType, addrImmChecker);
+      return targetRegElem.elem;
+    } else {
+      // coverity[autosar_cpp14_m3_4_1_violation]
+      // coverity[autosar_cpp14_a5_3_2_violation]
+      liftedAddrReg = prepareLinMemAddrProt(addrElem.raw(), offset, regAllocTracker, targetHint);
+    }
+  }
+  // GCOVR_EXCL_START
+  assert(liftedAddrReg.reg != REG::NONE && "lifted address register not prepared");
+  // GCOVR_EXCL_STOP
   REG targetReg{REG::NONE};
   if (verifiedTargetHint != nullptr) {
     VariableStorage const targetStorage{moduleInfo_.getStorage(*verifiedTargetHint)};
@@ -2847,14 +2923,14 @@ StackElement Backend::executeLinearMemoryLoad(OPCode const opcode, uint32_t cons
     }
   }
 
-  if (resultIsInt && (targetReg == addrReg)) {
-    targetRegElem = {common_.getResultStackElement(targetHint, resultType), addrReg};
+  if (resultIsInt && (targetReg == liftedAddrReg.reg)) {
+    targetRegElem = {common_.getResultStackElement(targetHint, resultType), liftedAddrReg.reg};
   } else if (resultIsInt && liftedAddrReg.writable) {
-    targetRegElem = {StackElement::scratchReg(liftedAddrReg.reg, MachineTypeUtil::toStackTypeFlag(resultType)), addrReg};
+    targetRegElem = {StackElement::scratchReg(liftedAddrReg.reg, MachineTypeUtil::toStackTypeFlag(resultType)), liftedAddrReg.reg};
   } else {
     targetRegElem = common_.reqScratchRegProt(resultType, verifiedTargetHint, regAllocTracker, false);
   }
-  as_.INSTR(opcodeTemplate).setT(targetRegElem.reg).setN(WasmABI::REGS::linMem).setM(addrReg)();
+  as_.INSTR(opcodeTemplate).setT(targetRegElem.reg).setN(WasmABI::REGS::linMem).setM(liftedAddrReg.reg)();
   return targetRegElem.elem;
 }
 
@@ -2862,57 +2938,109 @@ void Backend::executeLinearMemoryStore(OPCode const opcode, uint32_t const offse
   assert(moduleInfo_.hasMemory && "Memory not defined");
   // coverity[autosar_cpp14_a8_5_2_violation]
   constexpr auto memObjSizes = make_array(4_U8, 8_U8, 4_U8, 8_U8, 1_U8, 2_U8, 1_U8, 2_U8, 4_U8);
-  uint8_t const memObjSize{memObjSizes[static_cast<uint32_t>(opcode) - static_cast<uint32_t>(OPCode::I32_STORE)]};
-  static_cast<void>(memObjSize);
+  uint32_t const arrayIndex{static_cast<uint32_t>(opcode) - static_cast<uint32_t>(OPCode::I32_STORE)};
+  uint8_t const memObjSize{memObjSizes[arrayIndex]};
+  Aarch64MemoryAddrImmType const immType{memoryObjectSizeToImmType(memObjSize)};
+
   Stack::iterator const valueElem{common_.condenseValentBlockBelow(stack_.end())};
   Stack::iterator const addrElem{common_.condenseValentBlockBelow(valueElem)};
 
   RegAllocTracker regAllocTracker{};
-  regAllocTracker.futureLifts = mask(valueElem.unwrap());
-  REG const addrReg{prepareLinMemAddrProt(addrElem.unwrap(), offset, regAllocTracker, nullptr).reg};
-
-#if LINEAR_MEMORY_BOUNDS_CHECKS
-  emitLinMemBoundsCheck(addrReg, memObjSize);
-#elif !EAGER_ALLOCATION
-  // Probe first because memory accesses crossing page boundaries with different permissions are UNPREDICTABLE on ARM
-  // If EAGER_ALLOCATION is turned on, the whole formal size is guaranteed to be read-write accessible already.
-  if (memObjSize > 1U) {
-    // coverity[autosar_cpp14_a8_5_2_violation]
-    constexpr auto probeTemplates =
-        make_array(LDR_wT_deref_xN_xM_t, LDR_xT_deref_xN_xM_t, LDR_wT_deref_xN_xM_t, LDR_xT_deref_xN_xM_t, LDRB_wT_deref_xN_xM_t,
-                   LDRH_wT_deref_xN_xM_t, LDRB_wT_deref_xN_xM_t, LDRH_wT_deref_xN_xM_t, LDR_wT_deref_xN_xM_t);
-    as_.INSTR(probeTemplates[static_cast<uint32_t>(opcode) - static_cast<uint32_t>(OPCode::I32_STORE)])
-        .setT(REG::ZR)
-        .setN(WasmABI::REGS::linMem)
-        .setM(addrReg)();
-  }
-#endif
-  if (valueElem->isConstantZero()) {
-    constexpr REG valueReg{REG::ZR};
-    // coverity[autosar_cpp14_a8_5_2_violation]
-    constexpr auto opcodeTemplates =
-        make_array(STR_wT_deref_xN_xM_t, STR_xT_deref_xN_xM_t, STR_wT_deref_xN_xM_t, STR_xT_deref_xN_xM_t, STRB_wT_deref_xN_xM_t,
-                   STRH_wT_deref_xN_xM_t, STRB_wT_deref_xN_xM_t, STRH_wT_deref_xN_xM_t, STR_wT_deref_xN_xM_t);
-    as_.INSTR(opcodeTemplates[static_cast<uint32_t>(opcode) - static_cast<uint32_t>(OPCode::I32_STORE)])
-        .setT(valueReg)
-        .setN(WasmABI::REGS::linMem)
-        .setM(addrReg)();
+  regAllocTracker.futureLifts = mask(addrElem.unwrap());
+  REG valueReg;
+  bool const valueIsZero{valueElem->isConstantZero()};
+  if (valueIsZero) {
+    valueReg = REG::ZR;
   } else {
-    REG const valueReg{common_.liftToRegInPlaceProt(*valueElem, false, regAllocTracker).reg};
-    // coverity[autosar_cpp14_a8_5_2_violation]
-    constexpr auto opcodeTemplates =
-        make_array(STR_wT_deref_xN_xM_t, STR_xT_deref_xN_xM_t, STR_sT_deref_xN_xM_t, STR_dT_deref_xN_xM_t, STRB_wT_deref_xN_xM_t,
-                   STRH_wT_deref_xN_xM_t, STRB_wT_deref_xN_xM_t, STRH_wT_deref_xN_xM_t, STR_wT_deref_xN_xM_t);
-    as_.INSTR(opcodeTemplates[static_cast<uint32_t>(opcode) - static_cast<uint32_t>(OPCode::I32_STORE)])
-        .setT(valueReg)
-        .setN(WasmABI::REGS::linMem)
-        .setM(addrReg)();
+    valueReg = common_.liftToRegInPlaceProt(*valueElem, false, regAllocTracker).reg;
+  }
+  REG addrReg{REG::NONE};
+#if LINEAR_MEMORY_BOUNDS_CHECKS
+  addrReg = emitLinMemBoundsCheck(addrElem, memObjSize, offset, regAllocTracker, nullptr).reg;
+#endif
+
+  Aarch64MemoryAddrImmChecker addrImmChecker{};
+  // coverity[autosar_cpp14_m0_1_2_violation]
+  if ((addrReg == REG::NONE) && addrImmChecker.addressCanBeImmEncoded(immType, addrElem, offset)) {
+    emitMemoryLoadProbe(opcode, immType, addrImmChecker);
+
+    if (valueIsZero) {
+      // coverity[autosar_cpp14_a8_5_2_violation]
+      constexpr auto opcodeTemplatesStoreImm = make_array(STR_wT_deref_xN_imm12zxls2_t, STR_xT_deref_xN_imm12zxls3_t, STR_wT_deref_xN_imm12zxls2_t,
+                                                          STR_xT_deref_xN_imm12zxls3_t, STRB_wT_deref_xN_imm12zx_t, STRH_wT_deref_xN_imm12zxls1_t,
+                                                          STRB_wT_deref_xN_imm12zx_t, STRH_wT_deref_xN_imm12zxls1_t, STR_wT_deref_xN_imm12zxls2_t);
+      OPCodeTemplate const storeOpcode{opcodeTemplatesStoreImm[arrayIndex]};
+      emitMemoryLoadStoreWithImmOffset(storeOpcode, valueReg, immType, addrImmChecker);
+    } else {
+      // coverity[autosar_cpp14_a8_5_2_violation]
+      constexpr auto opcodeTemplatesStoreImm = make_array(STR_wT_deref_xN_imm12zxls2_t, STR_xT_deref_xN_imm12zxls3_t, STR_sT_deref_xN_imm12zxls2_t,
+                                                          STR_dT_deref_xN_imm12zxls3_t, STRB_wT_deref_xN_imm12zx_t, STRH_wT_deref_xN_imm12zxls1_t,
+                                                          STRB_wT_deref_xN_imm12zx_t, STRH_wT_deref_xN_imm12zxls1_t, STR_wT_deref_xN_imm12zxls2_t);
+      OPCodeTemplate const storeOpcode{opcodeTemplatesStoreImm[arrayIndex]};
+      emitMemoryLoadStoreWithImmOffset(storeOpcode, valueReg, immType, addrImmChecker);
+    }
+  } else {
+    // coverity[autosar_cpp14_m0_1_9_violation]
+    // coverity[autosar_cpp14_m0_1_2_violation]
+    if (addrReg == REG::NONE) {
+      addrReg = prepareLinMemAddrProt(addrElem.unwrap(), offset, regAllocTracker, nullptr).reg;
+    }
+
+    emitMemoryLoadProbe(opcode, memObjSize, addrReg);
+
+    if (valueIsZero) {
+      // coverity[autosar_cpp14_a8_5_2_violation]
+      constexpr auto opcodeTemplates =
+          make_array(STR_wT_deref_xN_xM_t, STR_xT_deref_xN_xM_t, STR_wT_deref_xN_xM_t, STR_xT_deref_xN_xM_t, STRB_wT_deref_xN_xM_t,
+                     STRH_wT_deref_xN_xM_t, STRB_wT_deref_xN_xM_t, STRH_wT_deref_xN_xM_t, STR_wT_deref_xN_xM_t);
+      as_.INSTR(opcodeTemplates[arrayIndex]).setT(valueReg).setN(WasmABI::REGS::linMem).setM(addrReg)();
+    } else {
+      // coverity[autosar_cpp14_a8_5_2_violation]
+      constexpr auto opcodeTemplates =
+          make_array(STR_wT_deref_xN_xM_t, STR_xT_deref_xN_xM_t, STR_sT_deref_xN_xM_t, STR_dT_deref_xN_xM_t, STRB_wT_deref_xN_xM_t,
+                     STRH_wT_deref_xN_xM_t, STRB_wT_deref_xN_xM_t, STRH_wT_deref_xN_xM_t, STR_wT_deref_xN_xM_t);
+      as_.INSTR(opcodeTemplates[arrayIndex]).setT(valueReg).setN(WasmABI::REGS::linMem).setM(addrReg)();
+    }
   }
 
   common_.removeReference(valueElem);
   common_.removeReference(addrElem);
   static_cast<void>(stack_.erase(valueElem));
   static_cast<void>(stack_.erase(addrElem));
+}
+
+void Backend::emitMemoryLoadProbe(vb::OPCode const opcode, uint8_t const memoryObjSize, REG const addrReg) {
+  static_cast<void>(opcode);
+  static_cast<void>(memoryObjSize);
+  static_cast<void>(addrReg);
+#if (LINEAR_MEMORY_BOUNDS_CHECKS == 0) && (!EAGER_ALLOCATION)
+  if (memoryObjSize > 1U) {
+    uint32_t const arrayIndex{static_cast<uint32_t>(opcode) - static_cast<uint32_t>(OPCode::I32_STORE)};
+    // coverity[autosar_cpp14_a8_5_2_violation]
+    constexpr auto probeTemplates =
+        make_array(LDR_wT_deref_xN_xM_t, LDR_xT_deref_xN_xM_t, LDR_wT_deref_xN_xM_t, LDR_xT_deref_xN_xM_t, LDRB_wT_deref_xN_xM_t,
+                   LDRH_wT_deref_xN_xM_t, LDRB_wT_deref_xN_xM_t, LDRH_wT_deref_xN_xM_t, LDR_wT_deref_xN_xM_t);
+    as_.INSTR(probeTemplates[arrayIndex]).setT(REG::ZR).setN(WasmABI::REGS::linMem).setM(addrReg)();
+  }
+#endif
+}
+
+void Backend::emitMemoryLoadProbe(vb::OPCode const opcode, Aarch64MemoryAddrImmType const immType, Aarch64MemoryAddrImmChecker const addrImmChecker) {
+  static_cast<void>(opcode);
+  static_cast<void>(immType);
+  static_cast<void>(addrImmChecker);
+#if (LINEAR_MEMORY_BOUNDS_CHECKS == 0) && (!EAGER_ALLOCATION)
+  if (immType != Aarch64MemoryAddrImmType::IMM12) {
+    uint32_t const arrayIndex{static_cast<uint32_t>(opcode) - static_cast<uint32_t>(OPCode::I32_STORE)};
+    // coverity[autosar_cpp14_a8_5_2_violation]
+    constexpr auto probeTemplatesImm = make_array(LDR_wT_deref_xN_imm12zxls2_t, LDR_xT_deref_xN_imm12zxls3_t, LDR_wT_deref_xN_imm12zxls2_t,
+                                                  LDR_xT_deref_xN_imm12zxls3_t, LDRB_wT_deref_xN_imm12zx_t, LDRH_wT_deref_xN_imm12zxls1_t,
+                                                  LDRB_wT_deref_xN_imm12zx_t, LDRH_wT_deref_xN_imm12zxls1_t, LDR_wT_deref_xN_imm12zxls2_t);
+
+    OPCodeTemplate const opcodeTemplateConstAddr{probeTemplatesImm[arrayIndex]};
+    emitMemoryLoadStoreWithImmOffset(opcodeTemplateConstAddr, REG::ZR, immType, addrImmChecker);
+  }
+#endif
 }
 
 void Backend::executeLinearMemoryCopy(Stack::iterator const dst, Stack::iterator const src, Stack::iterator const size) {

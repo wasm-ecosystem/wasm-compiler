@@ -27,7 +27,7 @@
       (local i32)
       i32.const 1
       ;; X86_64_NO_LINEAR_MEMORY_BOUNDS_CHECKS:  mov ebp,  dword ptr [rbx + [[NUM:[0-9a-f]+]]]
-      ;; AARCH64: ldr  w19, [[[REG:x[0-9]+]], [[REG:x[0-9]+]]]
+      ;; AARCH64_PASSIVE: ldr  w19, [[[REG:x[0-9]+]], #4]
 
       ;; TRICORE: ld.w  d[[#]], [a2]#4
       i32.const 4
@@ -48,12 +48,12 @@
 
       i32.const 4
       ;; X86_64_NO_LINEAR_MEMORY_BOUNDS_CHECKS:  mov eax,  dword ptr [rbx + [[NUM:[0-9a-f]+]]]
-      ;; AARCH64: ldr  w0, [[[REG:x[0-9]+]], [[REG:x[0-9]+]]]
+      ;; AARCH64_PASSIVE: ldr  w0, [[[REG:x[0-9]+]], #4]
 
       ;; TRICORE: ld.w  d[[#]], [a2]#4
       i32.load
       ;; X86_64_NO_LINEAR_MEMORY_BOUNDS_CHECKS: add eax, 1
-      ;; AARCH64: add w0, w0, #1
+      ;; AARCH64_PASSIVE: add w0, w0, #1
       ;; TRICORE: add d2, #1
       i32.add
       return
