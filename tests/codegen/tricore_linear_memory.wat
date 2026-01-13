@@ -134,7 +134,7 @@
     ;; TRICORE-NEXT: add.a  a[[#]], a2
     ;; TRICORE-NEXT: mov.d  d[[#]], a[[#]]
     ;; TRICORE-NEXT: mov.d  d[[#]], a[[#]]
-    ;; TRICORE-NEXT: jlt.u  d[[#]], d[[#]], #0x456
+    ;; TRICORE-NEXT: jlt.u  d[[#]], d[[#]], #[[OFFSET:(0x)?[0-9a-f]+]]
 
     ;; NO MORE 8-byte-copy operations including alignment check
     ;; TRICORE-NOT: xor  d[[#]], d[[#]]
@@ -142,10 +142,12 @@
     ;; TRICORE-NOT: jz.t  d[[#]], #0, 0x156
 
     ;; 1-byte-copy load store
-    ;; TRICORE-NEXT: jlt.u d[[#]], #1, #0x46e
-    ;; TRICORE-NEXT: ld.bu  d[[#]], [a[[#]]+]
+    ;; TRICORE-NEXT: jlt.u d[[#]], #1, #0x[[label1:[0-9a-f]+]]
+    ;; TRICORE-NEXT: [[label2:[0-9a-f]+]] {{[0-9a-f][0-9a-f] [0-9a-f][0-9a-f]( [0-9a-f][0-9a-f] [0-9a-f][0-9a-f])?}} ld.bu  d[[#]], [a[[#]]+]
     ;; TRICORE-NEXT: st.b  [a[[#]]+], d[[#]]
-    ;; TRICORE-NEXT: jned  d[[#]], #1, #0x44a
+    ;; TRICORE-NEXT: jned  d[[#]], #1, #0x[[label2]]
+    ;; TRICORE: [[label1]]  {{[0-9a-f][0-9a-f] [0-9a-f][0-9a-f]( [0-9a-f][0-9a-f] [0-9a-f][0-9a-f])?}} lea sp, [sp]#[[IMM:(0x)?[0-9a-f]+]]
+    ;; TRICORE-NEXT: fret
     memory.copy
   )
   ;; CHECK-LABEL: Function[13] Body
@@ -160,12 +162,76 @@
     ;; TRICORE-NEXT: st.b  [a[[#]]+], d[[#]]
 
     ;; NO MORE lessThan8Forward check, since size=9 is not less than 8 even decrement 1 by alingment
-    ;; TRICORE-NOT: jlt.u  d[[#]], #8, #0x4fa
+    ;; TRICORE-NOT: jlt.u  d[[#]], #8,  #[[OFFSET:(0x)?[0-9a-f]+]]
 
     ;; 8-byte-copy load store
     ;; TRICORE-NEXT: ld.d  e[[#]], [a[[#]]+]#8
     ;; TRICORE-NEXT: addi  d[[#]], d[[#]], #-8
     ;; TRICORE-NEXT: st.d  [a[[#]]+]#8, e[[#]]
     memory.copy
+  )
+  ;; CHECK-LABEL: Function[14] Body
+  (func
+    i32.const 0
+    ;; TRICORE: mov d15, #7
+    i32.const 7
+    ;; TRICORE: st.w  [a2], d15
+    i32.store
+  )
+
+  (func
+    (local i32)
+    i32.const 0
+    local.set 0
+    
+    i32.const 0
+    local.get 0
+    i32.const 7
+    ;; TRICORE: add  d15, d[[#]], #7
+    i32.add
+    ;; TRICORE: st.w  [a2], d15
+    i32.store
+  )
+
+  (func
+    (local i32 i32 i32 i32 i32 i32 i32 i32 i32 i32)
+    i32.const 0
+    ;; d15 is used as local, so a scratch register should be allocated
+    ;; TRICORE: mov [[REG:d([0-9])]], #7
+    i32.const 7
+    ;; TRICORE: st.w  [a2], [[REG]]
+    i32.store
+  )
+
+  (func
+    (local i32 i32 i32 i32 i32 i32 i32 i32)
+    i32.const 0
+    i32.load
+    i32.const 0
+    i32.load
+    
+    i32.const 0
+    ;; d15 is used by previous i32.load, so a scratch register should be allocated
+    ;; TRICORE: mov [[REG:d([0-9])]], #7
+    i32.const 7
+    ;; TRICORE: st.w  [a2], [[REG]]
+    i32.store
+
+    return
+  )
+
+  (func
+    (local i32 i32 i32 i32 i32 i32 i32 i32)
+
+    i32.const 0
+    i64.load
+    ;; e14 is used by previous i32.load, so a scratch register should be allocated
+    ;; TRICORE: mov [[REG:d([0-9])]], #7
+    i32.const 0
+    i32.const 7
+    ;; TRICORE: st.w  [a2], [[REG]]
+    i32.store
+
+    return
   )
 )

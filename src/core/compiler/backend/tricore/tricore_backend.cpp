@@ -2159,9 +2159,24 @@ void Backend::executeLinearMemoryStore(OPCode const opcode, uint32_t const offse
   assert(moduleInfo_.hasMemory && "Memory not defined");
   // coverity[autosar_cpp14_a8_5_2_violation]
   constexpr auto memObjSizes = make_array(4_U8, 8_U8, 4_U8, 8_U8, 1_U8, 2_U8, 1_U8, 2_U8, 4_U8);
-  uint8_t const memObjSize{memObjSizes[static_cast<uint32_t>(opcode) - static_cast<uint32_t>(OPCode::I32_STORE)]};
 
-  Stack::iterator const valueIt{common_.condenseValentBlockBelow(stack_.end())};
+  // coverity[autosar_cpp14_a8_5_2_violation]
+  constexpr auto valueTypes = make_array(MachineType::I32, MachineType::I64, MachineType::F32, MachineType::F64, MachineType::I32, MachineType::I32,
+                                         MachineType::I64, MachineType::I64, MachineType::I64);
+  uint32_t const arrayIndex{static_cast<uint32_t>(opcode) - static_cast<uint32_t>(OPCode::I32_STORE)};
+  uint8_t const memObjSize{memObjSizes[arrayIndex]};
+
+  MachineType const valueType{valueTypes[arrayIndex]};
+
+  StackElement valueCondenseTarget{};
+
+  if (((!MachineTypeUtil::is64(valueType)) && (!isStaticallyAllocatedReg(REG::D15))) && isFreeScratchDReg(REG::D15)) {
+    valueCondenseTarget = StackElement::scratchReg(REG::D15, MachineTypeUtil::toStackTypeFlag(valueType));
+  }
+
+  StackElement const *const valueTargethint{(valueCondenseTarget.type == StackType::INVALID) ? nullptr : &valueCondenseTarget};
+
+  Stack::iterator const valueIt{common_.condenseWithTargetHint(false, stack_.end(), valueTargethint).base};
   Stack::iterator const addrIt{common_.condenseValentBlockBelow(valueIt)};
   copyValueOfElemToAddrReg(WasmABI::REGS::memLdStReg, *addrIt);
   VariableStorage const addressStorage{moduleInfo_.getStorage(*addrIt)};
@@ -2171,7 +2186,7 @@ void Backend::executeLinearMemoryStore(OPCode const opcode, uint32_t const offse
 
   RegAllocTracker regAllocTracker{};
   regAllocTracker.writeProtRegs = mask(addressDReg, false);
-  REG const valueReg{common_.liftToRegInPlaceProt(*valueIt, false, regAllocTracker).reg};
+  REG const valueReg{common_.liftToRegInPlaceProt(*valueIt, false, valueTargethint, regAllocTracker).reg};
 
   common_.removeReference(valueIt);
   static_cast<void>(stack_.erase(valueIt));
@@ -2869,31 +2884,10 @@ RegAllocCandidate Backend::getRegAllocCandidate(MachineType const type, RegMask 
         continue;
       }
 
-      bool const canBeExtendedReg{RegUtil::canBeExtReg(currentReg)};
-      Stack::iterator const refToLastOccurrence{moduleInfo_.getReferenceToLastOccurrenceOnStack(currentReg)};
-      REG const otherReg{RegUtil::getOtherExtReg(currentReg)};
-      bool const empty{refToLastOccurrence.isEmpty()};
-      bool otherIsEmptyOrLocalOr32b{true};
-
-      if ((!canBeExtendedReg) && (!isStaticallyAllocatedReg(otherReg))) {
-        // Here we have to check whether a 64b value is loaded already, otherwise it's irrelevant because it's
-        // guaranteed to at most have a 32b value loaded
-        Stack::iterator const otherRefToLastOccurrence{moduleInfo_.getReferenceToLastOccurrenceOnStack(otherReg)};
-
-        if ((!otherRefToLastOccurrence.isEmpty()) && ((otherRefToLastOccurrence->type == StackType::SCRATCHREGISTER_I64) ||
-                                                      (otherRefToLastOccurrence->type == StackType::SCRATCHREGISTER_F64))) {
-          otherIsEmptyOrLocalOr32b = false;
-        }
-      }
-
-      // If the register is not on the stack at all, we choose the current register and mark it as unused
-      if (empty && otherIsEmptyOrLocalOr32b) {
-        // Primary empty, secondary empty
+      if (isFreeScratchDReg(currentReg)) {
         chosenReg = currentReg;
         break;
       }
-
-      assert((empty || otherIsEmptyOrLocalOr32b) && "Cannot be non-empty if other has 64b scratch register");
     }
 
     // There is no free 32-bit scratchReg here, find the first occurrence of register on the stack
@@ -2911,6 +2905,36 @@ RegAllocCandidate Backend::getRegAllocCandidate(MachineType const type, RegMask 
 
   assert((chosenReg != REG::NONE) && "No register found");
   return {chosenReg, isUsed};
+}
+
+bool Backend::isFreeScratchDReg(REG const reg) const VB_NOEXCEPT {
+  // GCOVR_EXCL_START
+  assert(!isStaticallyAllocatedReg(reg) && "Local register cannot be free scratch register");
+  // GCOVR_EXCL_END
+
+  bool const canBeExtendedReg{RegUtil::canBeExtReg(reg)};
+  Stack::iterator const refToLastOccurrence{moduleInfo_.getReferenceToLastOccurrenceOnStack(reg)};
+  REG const otherReg{RegUtil::getOtherExtReg(reg)};
+  bool const empty{refToLastOccurrence.isEmpty()};
+  bool otherIsEmptyOrLocalOr32b{true};
+
+  if ((!canBeExtendedReg) && (!isStaticallyAllocatedReg(otherReg))) {
+    // Here we have to check whether a 64b value is loaded already, otherwise it's irrelevant because it's
+    // guaranteed to at most have a 32b value loaded
+    Stack::iterator const otherRefToLastOccurrence{moduleInfo_.getReferenceToLastOccurrenceOnStack(otherReg)};
+
+    if ((!otherRefToLastOccurrence.isEmpty()) &&
+        ((otherRefToLastOccurrence->type == StackType::SCRATCHREGISTER_I64) || (otherRefToLastOccurrence->type == StackType::SCRATCHREGISTER_F64))) {
+      otherIsEmptyOrLocalOr32b = false;
+    }
+  }
+
+  // If the register is not on the stack at all, we choose the current register and mark it as unused
+  if (empty && otherIsEmptyOrLocalOr32b) {
+    return true;
+  }
+  assert((empty || otherIsEmptyOrLocalOr32b) && "Cannot be non-empty if other has 64b scratch register");
+  return false;
 }
 
 bool Backend::isWritableScratchReg(StackElement const *const pElem) const VB_NOEXCEPT {

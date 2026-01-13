@@ -16,3 +16,4 @@
 
 - gpr `[[REG:d[0-9]+]]` / `[[REG:e[0-9]+]]`
 - stack: `[[STACK:\[sp\]#0x[0-9a-f]+]]`
+- instruction machine code: `{{[0-9a-f][0-9a-f] [0-9a-f][0-9a-f]( [0-9a-f][0-9a-f] [0-9a-f][0-9a-f])?}}`

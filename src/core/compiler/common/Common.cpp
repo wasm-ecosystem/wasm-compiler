@@ -429,7 +429,7 @@ bool Common::scratchRegOnlyOnceOnStack(Stack::iterator const element) VB_NOEXCEP
   }
 }
 
-void Common::condenseSideEffectInstructionBelow(Stack::iterator const rootNode, StackElement const *const enforcedTarget) const {
+void Common::condenseSideEffectInstructionBelow(Stack::iterator const rootNode, StackElement const *const recommendedTargetHint) const {
   if (rootNode->type != StackType::DEFERREDACTION) {
     return;
   }
@@ -442,7 +442,7 @@ void Common::condenseSideEffectInstructionBelow(Stack::iterator const rootNode, 
       Stack::iterator const instructionPtr{currentIt};
 
       if (compiler_.backend_.hasEnoughScratchRegForScheduleInstruction(instructionPtr->data.deferredAction.opcode)) {
-        condenseValentBlockBasic(instructionPtr, enforcedTarget);
+        condenseValentBlockBasic(instructionPtr, recommendedTargetHint);
       } else {
         break;
       }
@@ -452,7 +452,7 @@ void Common::condenseSideEffectInstructionBelow(Stack::iterator const rootNode, 
   }
 }
 
-void Common::condenseValentBlockBasic(Stack::iterator const rootNode, StackElement const *const enforcedTarget) const {
+void Common::condenseValentBlockBasic(Stack::iterator const rootNode, StackElement const *const recommendedTargetHint) const {
   assert(rootNode->type == StackType::DEFERREDACTION);
 
   Stack::iterator const valentBlockTop{findBaseOfValentBlock(rootNode)};
@@ -472,8 +472,8 @@ void Common::condenseValentBlockBasic(Stack::iterator const rootNode, StackEleme
       }
 
       bool const propagateTargetHint{compiler_.backend_.checkIfEnforcedTargetIsOnlyInArgs(
-          Span<Stack::iterator>{args.data(), static_cast<size_t>(instructionArity)}, enforcedTarget)};
-      StackElement const *const targetHint{propagateTargetHint ? enforcedTarget : nullptr};
+          Span<Stack::iterator>{args.data(), static_cast<size_t>(instructionArity)}, recommendedTargetHint)};
+      StackElement const *const targetHint{propagateTargetHint ? recommendedTargetHint : nullptr};
       StackElement const result{evaluateInstruction(instructionPtr, args[0], args[1], args[2], targetHint)};
       replaceAndUpdateReference(instructionPtr, result);
     }
@@ -485,7 +485,7 @@ void Common::condenseValentBlockBasic(Stack::iterator const rootNode, StackEleme
   }
 }
 
-void Common::condenseScratchRegBelow(Stack::iterator const rootNode, StackElement const *const enforcedTarget) const {
+void Common::condenseScratchRegBelow(Stack::iterator const rootNode, StackElement const *const recommendedTargetHint) const {
   if (rootNode->type != StackType::DEFERREDACTION) {
     return;
   }
@@ -523,8 +523,8 @@ void Common::condenseScratchRegBelow(Stack::iterator const rootNode, StackElemen
 
       if (needCondense) {
         bool const propagateTargetHint{compiler_.backend_.checkIfEnforcedTargetIsOnlyInArgs(
-            Span<Stack::iterator>{args.data(), static_cast<size_t>(instructionArity)}, enforcedTarget)};
-        StackElement const *const targetHint{propagateTargetHint ? enforcedTarget : nullptr};
+            Span<Stack::iterator>{args.data(), static_cast<size_t>(instructionArity)}, recommendedTargetHint)};
+        StackElement const *const targetHint{propagateTargetHint ? recommendedTargetHint : nullptr};
         StackElement const result{evaluateInstruction(instructionPtr, args[0], args[1], args[2], targetHint)};
         replaceAndUpdateReference(instructionPtr, result);
       }
@@ -551,15 +551,35 @@ Common::ConditionResult Common::condenseValentBlockCoreBelow(bool const comparis
     assert(!enforcedTarget->isStackMemory() && "TEMPSTACK not allowed as enforced target");
     compiler_.backend_.spillFromStack(*enforcedTarget, RegMask::none(), false, false, findBaseOfValentBlockBelow(belowIt), belowIt);
   }
+
+  // coverity[autosar_cpp14_a5_3_2_violation]
+  Common::ConditionResult const condenseResult{condenseWithTargetHint(comparison, belowIt, enforcedTarget)};
+
+  if (enforcedTarget != nullptr) {
+    VariableStorage srcStorage{compiler_.moduleInfo_.getStorage(*condenseResult.base)};
+    VariableStorage const dstStorage{compiler_.moduleInfo_.getStorage(*enforcedTarget)};
+    if (srcStorage.machineType != dstStorage.machineType) {
+      assert(MachineTypeUtil::isInt(srcStorage.machineType) && MachineTypeUtil::isInt(dstStorage.machineType));
+      srcStorage.machineType = dstStorage.machineType;
+    }
+    compiler_.backend_.emitMoveImpl(dstStorage, srcStorage, false, false);
+
+    replaceAndUpdateReference(condenseResult.base, *enforcedTarget);
+  }
+  return condenseResult;
+}
+
+Common::ConditionResult Common::condenseWithTargetHint(bool const comparison, Stack::iterator const belowIt,
+                                                       StackElement const *const recommendedTargetHint) const {
   Stack::iterator const frameBase{getCurrentFrameBase()};
   static_cast<void>(frameBase);
   BC branchCond{BC::UNCONDITIONAL};
 
   Stack::iterator const vbBase{belowIt.prev()};
   // coverity[autosar_cpp14_a5_3_2_violation]
-  condenseSideEffectInstructionBelow(vbBase, enforcedTarget);
+  condenseSideEffectInstructionBelow(vbBase, recommendedTargetHint);
   // coverity[autosar_cpp14_a5_3_2_violation]
-  condenseScratchRegBelow(vbBase, enforcedTarget);
+  condenseScratchRegBelow(vbBase, recommendedTargetHint);
 
   Stack::iterator currentIt{findBaseOfValentBlock(vbBase)};
   Stack::iterator condenseResult{currentIt};
@@ -586,8 +606,8 @@ Common::ConditionResult Common::condenseValentBlockCoreBelow(bool const comparis
         break;
       } else {
         bool const propagateTargetHint{compiler_.backend_.checkIfEnforcedTargetIsOnlyInArgs(
-            Span<Stack::iterator>{args.data(), static_cast<size_t>(instructionArity)}, enforcedTarget)};
-        StackElement const *const targetHint{propagateTargetHint ? enforcedTarget : nullptr};
+            Span<Stack::iterator>{args.data(), static_cast<size_t>(instructionArity)}, recommendedTargetHint)};
+        StackElement const *const targetHint{propagateTargetHint ? recommendedTargetHint : nullptr};
         StackElement const result{evaluateInstruction(instructionPtr, args[0], args[1], args[2], targetHint)};
         replaceAndUpdateReference(instructionPtr, result);
         condenseResult = instructionPtr;
@@ -600,17 +620,6 @@ Common::ConditionResult Common::condenseValentBlockCoreBelow(bool const comparis
     }
   }
 
-  if (enforcedTarget != nullptr) {
-    VariableStorage srcStorage{compiler_.moduleInfo_.getStorage(*condenseResult)};
-    VariableStorage const dstStorage{compiler_.moduleInfo_.getStorage(*enforcedTarget)};
-    if (srcStorage.machineType != dstStorage.machineType) {
-      assert(MachineTypeUtil::isInt(srcStorage.machineType) && MachineTypeUtil::isInt(dstStorage.machineType));
-      srcStorage.machineType = dstStorage.machineType;
-    }
-    compiler_.backend_.emitMoveImpl(dstStorage, srcStorage, false, false);
-
-    replaceAndUpdateReference(condenseResult, *enforcedTarget);
-  }
   return {condenseResult, branchCond};
 }
 

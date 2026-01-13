@@ -991,6 +991,11 @@ private:
   /// @param reg2 Second register
   void swapReg(REG const reg1, REG const reg2);
 
+  /// @brief Check if a scratch register is free
+  /// @param reg Register to check
+  /// @return true if the scratch register is free, false otherwise
+  bool isFreeScratchDReg(REG const reg) const VB_NOEXCEPT;
+
   /// @brief Minimal number of registers that should be reserved for condense a vb.
   /// @details Need to keep 2 regs to avoid spill when add mem, mem or select reg, mem, mem.
   static constexpr uint32_t minimalNumRegsReservedForCondense{2U};

@@ -605,6 +605,13 @@ public:
   /// @param isIndirectCall Whether this is an indirect call
   void spillScratchRegsOutOfCallParams(uint32_t const sigIndex, bool const isIndirectCall);
 
+  /// @brief Condense a valent block consisting of one or multiple StackElements into a single semantically
+  /// @param comparison Whether this is a comparison. If true, this will not leave a result on the stack.
+  /// @param belowIt iterator that represents the root of the first valent block.
+  /// @param recommendedTargetHint Optional StackElement representing a storage location where the result should be put
+  /// @return ConditionResult Base of the valent block and an optional BranchCondition if this was a comparison
+  ConditionResult condenseWithTargetHint(bool const comparison, Stack::iterator const belowIt, StackElement const *const recommendedTargetHint) const;
+
 private:
   Compiler &compiler_; ///< Reference to the compiler instance
 
@@ -645,20 +652,20 @@ private:
   ///
   /// @brief Condense a scratch register in the valent block tree
   /// @param rootNode iterator that represents the first valent block.
-  /// @param enforcedTarget Optional StackElement representing a storage location where the result should be put
-  void condenseScratchRegBelow(Stack::iterator const rootNode, StackElement const *const enforcedTarget) const;
+  /// @param recommendedTargetHint Optional StackElement representing a storage location where the result should be put
+  void condenseScratchRegBelow(Stack::iterator const rootNode, StackElement const *const recommendedTargetHint) const;
 
   ///
   /// @brief Condense side effect instructions in the valent block tree.
   /// @details For better usage of CPU pipelines, the side effect instructions aka. div and memory load need to be scheduled earlier.
   /// @param rootNode iterator that represents the first valent block.
-  /// @param enforcedTarget Optional StackElement representing a storage location where the result should be put
-  void condenseSideEffectInstructionBelow(Stack::iterator const rootNode, StackElement const *const enforcedTarget) const;
+  /// @param recommendedTargetHint Optional StackElement representing a storage location where the result should be put
+  void condenseSideEffectInstructionBelow(Stack::iterator const rootNode, StackElement const *const recommendedTargetHint) const;
 
   /// @brief Condense a valent block in the valent block tree unconditionally
   /// @param rootNode iterator that represents the first valent block.
-  /// @param enforcedTarget Optional StackElement representing a storage location where the result should be put
-  void condenseValentBlockBasic(Stack::iterator const rootNode, StackElement const *const enforcedTarget) const;
+  /// @param recommendedTargetHint Optional StackElement representing a storage location where the result should be put
+  void condenseValentBlockBasic(Stack::iterator const rootNode, StackElement const *const recommendedTargetHint) const;
 
   /// @brief Get the first operand of a deferred action, which is the left child in valent block tree
   /// @param instruction Iterator to a deferred action

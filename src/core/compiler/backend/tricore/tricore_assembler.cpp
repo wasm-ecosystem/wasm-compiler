@@ -547,7 +547,12 @@ void Assembler::MOVimm(REG const reg, uint32_t const imm) const {
       SafeUInt<16U> const reducedHighPortion{SafeUInt<32U>::fromAny(imm + 0x8000U).rightShift<16U>()};
       INSTR(MOVHA_Ac_const16).setAc(reg).setConst16(reducedHighPortion)();
       if ((imm & 0xFFFFU) != 0U) {
-        INSTR(LEA_Aa_deref_Ab_off16sx).setAa(reg).setAb(reg).setOff16sx(Instruction::lower16sx(imm))();
+        SafeInt<16UL> const lower16sx{Instruction::lower16sx(imm)};
+        if (lower16sx.value() > 0) {
+          addImmToReg(reg, static_cast<uint32_t>(lower16sx.value()));
+        } else {
+          INSTR(LEA_Aa_deref_Ab_off16sx).setAa(reg).setAb(reg).setOff16sx(lower16sx)();
+        }
       }
     }
   }
