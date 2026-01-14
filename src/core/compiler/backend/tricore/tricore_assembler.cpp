@@ -672,14 +672,14 @@ void Assembler::checkStackFence(REG const dataScrReg, REG const addrScrReg) cons
 RelPatchObj Assembler::prepareJump(JumpCondition const &conditionJump) const {
   switch (conditionJump.getKind()) {
   case JumpCondition::Kind::bitFalse:
-    return INSTR(JZT_Da_n_disp15sx2).setDa(conditionJump.getRegA()).setN(static_cast<SafeUInt<5U>>(conditionJump.getImm())).prepJmp();
+    return INSTR(JZT_Da_n_disp15sx2).setDa(conditionJump.getRegA()).setN(static_cast<SafeUInt<5U>>(conditionJump.getImmSigned())).prepJmp();
   case JumpCondition::Kind::bitTrue:
-    return INSTR(JNZT_Da_n_disp15sx2).setDa(conditionJump.getRegA()).setN(static_cast<SafeUInt<5U>>(conditionJump.getImm())).prepJmp();
+    return INSTR(JNZT_Da_n_disp15sx2).setDa(conditionJump.getRegA()).setN(static_cast<SafeUInt<5U>>(conditionJump.getImmSigned())).prepJmp();
 
   case JumpCondition::Kind::I32LtConst4sx:
-    return INSTR(JLT_Da_const4sx_disp15sx2).setDa(conditionJump.getRegA()).setConst4sx(conditionJump.getImm()).prepJmp();
+    return INSTR(JLT_Da_const4sx_disp15sx2).setDa(conditionJump.getRegA()).setConst4sx(conditionJump.getImmSigned()).prepJmp();
   case JumpCondition::Kind::I32GeConst4sx:
-    return INSTR(JGE_Da_const4sx_disp15sx2).setDa(conditionJump.getRegA()).setConst4sx(conditionJump.getImm()).prepJmp();
+    return INSTR(JGE_Da_const4sx_disp15sx2).setDa(conditionJump.getRegA()).setConst4sx(conditionJump.getImmSigned()).prepJmp();
 
   case JumpCondition::Kind::I32LtReg:
     return INSTR(JLT_Da_Db_disp15sx2).setDa(conditionJump.getRegA()).setDb(conditionJump.getRegB()).prepJmp();
@@ -700,10 +700,19 @@ RelPatchObj Assembler::prepareJump(JumpCondition const &conditionJump) const {
     return INSTR(JNEA_Aa_Ab_disp15sx2).setAa(conditionJump.getRegA()).setAb(conditionJump.getRegB()).prepJmp();
 
   case JumpCondition::Kind::I32EqConst4sx:
-    return INSTR(JEQ_Da_const4sx_disp15sx2).setDa(conditionJump.getRegA()).setConst4sx(conditionJump.getImm()).prepJmp();
+    return INSTR(JEQ_Da_const4sx_disp15sx2).setDa(conditionJump.getRegA()).setConst4sx(conditionJump.getImmSigned()).prepJmp();
   case JumpCondition::Kind::I32NeConst4sx:
-    return INSTR(JNE_Da_const4sx_disp15sx2).setDa(conditionJump.getRegA()).setConst4sx(conditionJump.getImm()).prepJmp();
+    return INSTR(JNE_Da_const4sx_disp15sx2).setDa(conditionJump.getRegA()).setConst4sx(conditionJump.getImmSigned()).prepJmp();
 
+  case JumpCondition::Kind::U32GeConst4zx:
+    return INSTR(JGEU_Da_const4zx_disp15sx2).setDa(conditionJump.getRegA()).setConst4zx(conditionJump.getImmUnsigned()).prepJmp();
+  case JumpCondition::Kind::U32LtConst4zx:
+    return INSTR(JLTU_Da_const4zx_disp15sx2).setDa(conditionJump.getRegA()).setConst4zx(conditionJump.getImmUnsigned()).prepJmp();
+
+  case JumpCondition::Kind::AddrEqZero:
+    return INSTR(JZA_Aa_disp15sx2).setAa(conditionJump.getRegA()).prepJmp();
+  case JumpCondition::Kind::AddrNeZero:
+    return INSTR(JNZA_Aa_disp15sx2).setAa(conditionJump.getRegA()).prepJmp();
   default:
     UNREACHABLE(return RelPatchObj{}, "missing instruction for conditional jump");
   }

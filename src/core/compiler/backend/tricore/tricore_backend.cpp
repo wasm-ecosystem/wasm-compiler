@@ -1133,9 +1133,15 @@ void Backend::execIndirectWasmCall(uint32_t const sigIndex, uint32_t const table
   indirectCallImpl.emitFncCallWrapper(
       UnknownIndex, FunctionRef<void()>([this, sigIndex]() {
         // Check if dynamic function index is in range of table
-        // if (tableInitialSize - 1U < indirectCallReg) trap;
-        as_.MOVimm(callScrRegs[0], moduleInfo_.tableInitialSize - 1U);
-        as_.cTRAP(TrapCode::INDIRECTCALL_OUTOFBOUNDS, JumpCondition::u32LtReg(callScrRegs[0], WasmABI::REGS::indirectCallReg));
+        // if (indirectCallReg >= tableInitialSize) trap;
+        UnsignedInRangeCheck<4U> const tableIndexInRangeCheck{UnsignedInRangeCheck<4U>::check(moduleInfo_.tableInitialSize)};
+        if (tableIndexInRangeCheck.inRange()) {
+          as_.cTRAP(TrapCode::INDIRECTCALL_OUTOFBOUNDS,
+                    JumpCondition::u32GeConst4zx(WasmABI::REGS::indirectCallReg, tableIndexInRangeCheck.safeInt()));
+        } else {
+          as_.MOVimm(callScrRegs[0], moduleInfo_.tableInitialSize);
+          as_.cTRAP(TrapCode::INDIRECTCALL_OUTOFBOUNDS, JumpCondition::u32GeReg(WasmABI::REGS::indirectCallReg, callScrRegs[0]));
+        }
 
         // Load pointer to table start to addrScrReg[0]
         as_.INSTR(LDA_Aa_deref_Ab_off16sx)
@@ -1152,16 +1158,19 @@ void Backend::execIndirectWasmCall(uint32_t const sigIndex, uint32_t const table
 
         // Load function signature index and check if it matches
         as_.loadWordDRegDerefARegDisp16sx(callScrRegs[0], WasmABI::REGS::addrScrReg[0], SafeInt<16U>::fromConst<4>());
-        as_.MOVimm(callScrRegs[1], sigIndex);
-        as_.cTRAP(TrapCode::INDIRECTCALL_WRONGSIG, JumpCondition::i32NeReg(callScrRegs[0], callScrRegs[1]));
+        SignedInRangeCheck<4U> const indexInRangeCheck{SignedInRangeCheck<4U>::check(static_cast<int32_t>(sigIndex))};
+        if (indexInRangeCheck.inRange()) {
+          as_.cTRAP(TrapCode::INDIRECTCALL_WRONGSIG, JumpCondition::i32NeConst4sx(callScrRegs[0], indexInRangeCheck.safeInt()));
+        } else {
+          as_.MOVimm(callScrRegs[1], sigIndex);
+          as_.cTRAP(TrapCode::INDIRECTCALL_WRONGSIG, JumpCondition::i32NeReg(callScrRegs[0], callScrRegs[1]));
+        }
 
         // Load the offset
         as_.INSTR(LDA_Ac_deref_Ab).setAc(WasmABI::REGS::addrScrReg[1]).setAb(WasmABI::REGS::addrScrReg[0])();
 
         // Check if the offset is zero which means the function is not linked
-        as_.MOVimm(WasmABI::REGS::addrScrReg[2], 0U);
-
-        as_.cTRAP(TrapCode::CALLED_FUNCTION_NOT_LINKED, JumpCondition::addrEqReg(WasmABI::REGS::addrScrReg[1], WasmABI::REGS::addrScrReg[2]));
+        as_.cTRAP(TrapCode::CALLED_FUNCTION_NOT_LINKED, JumpCondition::addrEqZero(WasmABI::REGS::addrScrReg[1]));
 
         // Otherwise calculate the absolute address and execute the call
         // addrScrReg[0] = startAddressOfModuleBinary
@@ -1169,7 +1178,7 @@ void Backend::execIndirectWasmCall(uint32_t const sigIndex, uint32_t const table
             .setAa(WasmABI::REGS::addrScrReg[0])
             .setAb(WasmABI::REGS::linMem)
             .setOff16sx(SafeInt<16U>::fromConst<-Basedata::FromEnd::binaryModuleStartAddressOffset>())();
-        as_.INSTR(ADDA_Ac_Aa_Ab).setAc(WasmABI::REGS::addrScrReg[0]).setAa(WasmABI::REGS::addrScrReg[0]).setAb(WasmABI::REGS::addrScrReg[1])();
+        as_.INSTR(ADDA_Aa_Ab).setAa(WasmABI::REGS::addrScrReg[0]).setAb(WasmABI::REGS::addrScrReg[1])();
         as_.INSTR(FCALLI_Aa).setAa(WasmABI::REGS::addrScrReg[0])();
       }));
 
@@ -1344,9 +1353,15 @@ void Backend::execBuiltinFncCall(BuiltinFunction const builtinFunction) {
       // Get scratch register
       REG const importScratchReg{common_.reqScratchRegProt(MachineType::I32, regAllocTracker, false).reg};
       REG const genScratchReg{common_.reqScratchRegProt(MachineType::I32, regAllocTracker, false).reg};
-      as_.MOVimm(genScratchReg, moduleInfo_.tableInitialSize);
 
-      RelPatchObj const inRange{as_.INSTR(JLTU_Da_Db_disp15sx2).setDa(fncIdxReg).setDb(genScratchReg).prepJmp()};
+      UnsignedInRangeCheck<4U> const tableIndexInRangeCheck{UnsignedInRangeCheck<4U>::check(moduleInfo_.tableInitialSize)};
+      RelPatchObj inRange{};
+      if (tableIndexInRangeCheck.inRange()) {
+        inRange = as_.INSTR(JLTU_Da_const4zx_disp15sx2).setDa(fncIdxReg).setConst4zx(tableIndexInRangeCheck.safeInt()).prepJmp();
+      } else {
+        as_.MOVimm(genScratchReg, moduleInfo_.tableInitialSize);
+        inRange = as_.INSTR(JLTU_Da_Db_disp15sx2).setDa(fncIdxReg).setDb(genScratchReg).prepJmp();
+      }
 
       as_.MOVimm(importScratchReg, 0U);
       RelPatchObj const toEnd{as_.INSTR(J_disp24sx2).prepJmp()};
@@ -1685,8 +1700,16 @@ void Backend::executeTableBranch(uint32_t const numBranchTargets, FunctionRef<St
   RegElement const scratchRegElem{common_.reqScratchRegProt(MachineType::I32, regAllocTracker, false)};
 
   // Saturate indexReg to numBranchTargets
-  as_.MOVimm(scratchRegElem.reg, numBranchTargets);
-  RelPatchObj const inRange{as_.INSTR(JGEU_Da_Db_disp15sx2).setDa(scratchRegElem.reg).setDb(indexReg).prepJmp()};
+  uint32_t const branchTargetsMax{numBranchTargets + 1U};
+  RelPatchObj inRange{};
+  UnsignedInRangeCheck<4U> const branchTargetsInRangeCheck{UnsignedInRangeCheck<4U>::check(branchTargetsMax)};
+  if (branchTargetsInRangeCheck.inRange()) {
+    inRange = as_.INSTR(JLTU_Da_const4zx_disp15sx2).setDa(indexReg).setConst4zx(branchTargetsInRangeCheck.safeInt()).prepJmp();
+  } else {
+    as_.MOVimm(scratchRegElem.reg, branchTargetsMax);
+    inRange = as_.INSTR(JLTU_Da_Db_disp15sx2).setDa(indexReg).setDb(scratchRegElem.reg).prepJmp();
+  }
+
   as_.MOVimm(indexReg, numBranchTargets);
   inRange.linkToHere();
 

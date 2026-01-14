@@ -595,6 +595,8 @@ TrapCode SingleCaseTest::getTrapCodeFromTrapText(std::string const &text) {
       {"unknown import", TrapCode::CALLED_FUNCTION_NOT_LINKED},
       {"called function not linked", TrapCode::CALLED_FUNCTION_NOT_LINKED},
       {"indirect call not linked", TrapCode::INDIRECTCALL_WRONGSIG},
+      {"Indirect call out of bounds", TrapCode::INDIRECTCALL_OUTOFBOUNDS},
+      {"Indirect call performed with wrong signature", TrapCode::INDIRECTCALL_WRONGSIG},
   };
   auto const &found = trapCodeMap.find(text);
   if (found == trapCodeMap.end()) {

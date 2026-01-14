@@ -58,6 +58,9 @@ public:
     I32LtConst4sx, ///< i32 type less than immediate number
     I32GeConst4sx, ///< i32 type not less than immediate number
 
+    U32LtConst4zx, ///< i32 type less than immediate number
+    U32GeConst4zx, ///< i32 type not less than immediate number
+
     I32EqReg, ///< i32 equal register
     I32NeReg, ///< i32 not equal register
 
@@ -66,6 +69,9 @@ public:
 
     I32EqConst4sx, ///< i32 equal immediate number
     I32NeConst4sx, ///< i32 not equal immediate number
+
+    AddrEqZero, ///< addr equal zero
+    AddrNeZero  ///< addr not equal zero
   };
 
   /// @brief create specific bit is 1 (true) jump condition
@@ -103,6 +109,13 @@ public:
     return JumpCondition{Kind::U32LtReg, regA, regB, SafeInt<4U>::fromConst<0>()};
   }
 
+  /// @brief create regA >= regB (unsigned) jump condition
+  /// @param regA register 1
+  /// @param regB register 2
+  inline static JumpCondition u32GeReg(REG const regA, REG const regB) VB_NOEXCEPT {
+    return JumpCondition{Kind::U32GeReg, regA, regB, SafeInt<4U>::fromConst<0>()};
+  }
+
   /// @brief create reg < imm (signed) jump condition
   /// @param reg register
   /// @param imm immediate number
@@ -110,11 +123,30 @@ public:
     return JumpCondition{Kind::I32LtConst4sx, reg, REG::NONE, imm};
   }
 
+  /// @brief create reg >= imm (signed) jump condition
+  /// @param reg register
+  /// @param imm immediate number
+  inline static JumpCondition i32GeConst4sx(REG const reg, SafeInt<4U> const imm) VB_NOEXCEPT {
+    return JumpCondition{Kind::I32GeConst4sx, reg, REG::NONE, imm};
+  }
+  /// @brief create reg < imm (unsigned) jump condition
+  /// @param reg register
+  /// @param imm immediate number
+  inline static JumpCondition u32GeConst4zx(REG const reg, SafeUInt<4U> const imm) VB_NOEXCEPT {
+    return JumpCondition{Kind::U32GeConst4zx, reg, REG::NONE, imm};
+  }
+
   /// @brief create regA == regB jump condition
   /// @param regA addr register 1
   /// @param regB addr register 2
   inline static JumpCondition addrEqReg(REG const regA, REG const regB) VB_NOEXCEPT {
     return JumpCondition{Kind::AddrEqReg, regA, regB, SafeInt<4U>::fromConst<0>()};
+  }
+
+  /// @brief create reg == 0 jump condition
+  /// @param regA address register
+  inline static JumpCondition addrEqZero(REG const regA) VB_NOEXCEPT {
+    return JumpCondition{Kind::AddrEqZero, regA, REG::NONE, SafeInt<4U>::fromConst<0>()};
   }
 
   /// @brief create reg == imm jump condition
@@ -150,26 +182,56 @@ public:
   inline REG getRegB() const VB_NOEXCEPT {
     return regB_;
   }
-  /// @brief create immediate number
-  inline SafeInt<4U> getImm() const VB_NOEXCEPT {
-    return imm_;
+  /// @brief get signed immediate number
+  inline SafeInt<4U> getImmSigned() const VB_NOEXCEPT {
+    return imm_.immSigned;
+  }
+
+  /// @brief get unsigned immediate number
+  inline SafeUInt<4U> getImmUnsigned() const VB_NOEXCEPT {
+    return imm_.immUnsigned;
   }
 
 private:
-  Kind kind_;       ///< jump condition kind
-  REG regA_;        ///< reg 1
-  REG regB_;        ///< reg 2
-  SafeInt<4U> imm_; ///< immediate number
+  /// @brief jump condition imm can be encoded inside instruction
+  // coverity[autosar_cpp14_a11_0_1_violation]
+  union CondImm {
+    SafeInt<4U> immSigned;    ///< signed immediate number
+    SafeUInt<4U> immUnsigned; ///< unsigned immediate number
+
+    /// @brief constructor for signed immediate number
+    inline explicit CondImm(SafeInt<4U> const imm) VB_NOEXCEPT : immSigned(imm) {
+    }
+    /// @brief constructor for unsigned immediate number
+    inline explicit CondImm(SafeUInt<4U> const imm) VB_NOEXCEPT : immUnsigned(imm) {
+    }
+  };
+
+  Kind kind_;   ///< jump condition kind
+  REG regA_;    ///< reg 1
+  REG regB_;    ///< reg 2
+  CondImm imm_; ///< immediate number
 
   /// @brief constructor
   /// @param kind jump condition kind
   /// @param regA register 1
   /// @param regB register 2
-  /// @param imm immediate number
+  /// @param imm signed immediate number
   inline JumpCondition(Kind const kind, REG const regA, REG const regB, SafeInt<4U> const imm) VB_NOEXCEPT : kind_(kind),
                                                                                                              regA_(regA),
                                                                                                              regB_(regB),
-                                                                                                             imm_(imm) {
+                                                                                                             imm_{imm} {
+  }
+
+  /// @brief constructor
+  /// @param kind jump condition kind
+  /// @param regA register 1
+  /// @param regB register 2
+  /// @param imm unsigned immediate number
+  inline JumpCondition(Kind const kind, REG const regA, REG const regB, SafeUInt<4U> const imm) VB_NOEXCEPT : kind_(kind),
+                                                                                                              regA_(regA),
+                                                                                                              regB_(regB),
+                                                                                                              imm_{imm} {
   }
 };
 
