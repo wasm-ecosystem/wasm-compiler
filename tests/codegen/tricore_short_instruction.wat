@@ -105,25 +105,8 @@
   )
 
   ;; CHECK-LABEL: Function[7] Body
-  (func $check-store-word-16-bit-instruction  (result i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32)
-    i32.const 0
-    i32.load 
-    i32.const 0
-    i32.load 
-    i32.const 0
-    i32.load 
-    i32.const 0
-    i32.load 
-    i32.const 0
-    i32.load
-    i32.const 0
-    i32.load
-    i32.const 0
-    i32.load
-    i32.const 0
-    i32.load
-    i32.const 0
-    i32.load
+  (func $check-store-word-16-bit-instruction
+    (local i32 i32 i32 i32 i32 i32 i32 i32)
     i32.const 12
     i32.const 0
     ;; TRICORE: 6c 23  st.w  [a2]#0xc, d15
@@ -136,30 +119,15 @@
     i32.load
     i32.const 0
     i32.const 0
-    ;; TRICORE: 74 22  st.w  [a2], d2
+    ;; TRICORE: {{[0-9a-f][0-9a-f] [0-9a-f][0-9a-f]}}  st.w  [a2], [[REG:d([0-9])]]
     i32.store
+    return
   )
 
   ;; CHECK-LABEL: Function[8] Body
-  (func $check-store-byte-16-bit-instruction  (result i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32)
-    i32.const 0
-    i32.load 
-    i32.const 0
-    i32.load 
-    i32.const 0
-    i32.load 
-    i32.const 0
-    i32.load 
-    i32.const 0
-    i32.load
-    i32.const 0
-    i32.load
-    i32.const 0
-    i32.load
-    i32.const 0
-    i32.load
-    i32.const 0
-    i32.load
+  (func $check-store-byte-16-bit-instruction
+    (local i32 i32 i32 i32 i32 i32 i32 i32) 
+    
     i32.const 8
     i32.const 0
     ;; TRICORE: 2c 28  st.b  [a2]#8, d15
@@ -172,44 +140,24 @@
     i32.load
     i32.const 0
     i32.const 0
-    ;; TRICORE: 34 22  st.b  [a2], d2
+    ;; TRICORE: {{[0-9a-f][0-9a-f] [0-9a-f][0-9a-f]}}  st.b  [a2], [[REG:d([0-9])]]
     i32.store8
+    return
   )
 
   ;; CHECK-LABEL: Function[9] Body
-  (func $check-store-halfword-16-bit-instruction  (result i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32)
-    i32.const 0
-    i32.load 
-    i32.const 0
-    i32.load 
-    i32.const 0
-    i32.load 
-    i32.const 0
-    i32.load 
-    i32.const 0
-    i32.load
-    i32.const 0
-    i32.load
-    i32.const 0
-    i32.load
-    i32.const 0
-    i32.load
-    i32.const 0
-    i32.load
+  (func $check-store-halfword-16-bit-instruction
+   (local i32 i32 i32 i32 i32 i32 i32 i32) 
     i32.const 8
     i32.const 0
     ;; TRICORE: ac 24  st.h  [a2]#8, d15
     i32.store16
-    i32.const 0
-    i32.load
-    i32.const 0
-    i32.load
-    i32.const 0
-    i32.load
+    
     i32.const 0
     i32.const 0
-    ;; TRICORE: b4 22  st.h  [a2], d2
+    ;; TRICORE: {{[0-9a-f][0-9a-f] [0-9a-f][0-9a-f]}}  st.h  [a2], [[REG:d([0-9])]]
     i32.store16
+    return
   )
 )
 

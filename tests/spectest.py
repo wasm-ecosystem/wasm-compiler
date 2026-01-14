@@ -292,7 +292,7 @@ def assembly_binary(binary_filepaths: list[str]):
         with open(binary_filePath, "rb") as f:
             payload = f.read()
             payloads[-1] += list(payload)
-            if len(payloads[-1]) > 1.5 * 1024 * 1024:  # keep one file less than 1.5MB
+            if len(payloads[-1]) > 1.4 * 1024 * 1024:  # keep one file less than 1.4MB
                 payloads.append([])
 
     for i in range(len(payloads)):

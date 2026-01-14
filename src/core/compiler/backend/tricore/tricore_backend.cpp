@@ -1898,17 +1898,27 @@ StackElement Backend::executeLinearMemoryLoad(OPCode const opcode, uint32_t cons
   // coverity[autosar_cpp14_a8_5_2_violation]
   constexpr auto signExtends = make_array(false, false, false, false, true, false, true, false, true, false, true, false, true, false);
 
-  uint8_t const memObjSize{memObjSizes[static_cast<uint32_t>(opcode) - static_cast<uint32_t>(OPCode::I32_LOAD)]};
+  uint32_t const arrayIndex{static_cast<uint32_t>(opcode) - static_cast<uint32_t>(OPCode::I32_LOAD)};
+  uint8_t const memObjSize{memObjSizes[arrayIndex]};
   MachineType const resultType{getLoadResultType(opcode)};
-  bool const signExtend{signExtends[static_cast<uint32_t>(opcode) - static_cast<uint32_t>(OPCode::I32_LOAD)]};
+  bool const signExtend{signExtends[arrayIndex]};
 
   copyValueOfElemToAddrReg(WasmABI::REGS::memLdStReg, *addrElem);
   VariableStorage const addressStorage{moduleInfo_.getStorage(*addrElem)};
   REG const addressDReg{(addressStorage.type == StorageType::REGISTER) ? addressStorage.location.reg : REG::NONE};
   RegAllocTracker regAllocTracker{};
 
-  StackElement const *const verifiedTargetHint{(getUnderlyingRegIfSuitable(targetHint, resultType, RegMask::none()) != REG::NONE) ? targetHint
-                                                                                                                                  : nullptr};
+  StackElement const *verifiedTargetHint{(getUnderlyingRegIfSuitable(targetHint, resultType, RegMask::none()) != REG::NONE) ? targetHint : nullptr};
+  // coverity[autosar_cpp14_m3_4_1_violation] fake positive
+  StackElement valueTargetFor16BitInstruction{};
+
+  if (verifiedTargetHint == nullptr) {
+    if (((!MachineTypeUtil::is64(resultType)) && (!isStaticallyAllocatedReg(REG::D15))) && isFreeScratchDReg(REG::D15)) {
+      valueTargetFor16BitInstruction = StackElement::scratchReg(REG::D15, MachineTypeUtil::toStackTypeFlag(resultType));
+      verifiedTargetHint = &valueTargetFor16BitInstruction;
+    }
+  }
+
   RegElement const targetRegElem{common_.reqScratchRegProt(resultType, verifiedTargetHint, regAllocTracker, false)};
 
   regAllocTracker.writeProtRegs.mask(mask(addressDReg, false));

@@ -108,7 +108,7 @@
     ;; 0x7ffe + 0x2 = 0x8000. Not in_range int16(max is 0x7fff)
     ;; Use register calculated addrOffset
     ;; TRICORE: add.a  a15, a2
-    ;; TRICORE-NEXT: ld.w  d8, [a15]#-4
+    ;; TRICORE-NEXT: ld.w  d15, [a15]#-4
     i32.load offset=0x2
     drop
   )
@@ -178,7 +178,7 @@
     ;; TRICORE: st.w  [a2], d15
     i32.store
   )
-
+  ;; CHECK-LABEL: Function[15] Body
   (func
     (local i32)
     i32.const 0
@@ -192,7 +192,7 @@
     ;; TRICORE: st.w  [a2], d15
     i32.store
   )
-
+  ;; CHECK-LABEL: Function[16] Body
   (func
     (local i32 i32 i32 i32 i32 i32 i32 i32 i32 i32)
     i32.const 0
@@ -202,13 +202,21 @@
     ;; TRICORE: st.w  [a2], [[REG]]
     i32.store
   )
-
+  ;; CHECK-LABEL: Function[17] Body
   (func
     (local i32 i32 i32 i32 i32 i32 i32 i32)
-    i32.const 0
-    i32.load
-    i32.const 0
-    i32.load
+    i32.const 1
+    local.set 0
+    i32.const 2
+    local.set 1
+    local.get 0
+    local.get 1
+    
+    ;;Spill the locals to scratch registers
+    i32.const 2
+    local.set 0
+    i32.const 2
+    local.set 1
     
     i32.const 0
     ;; d15 is used by previous i32.load, so a scratch register should be allocated
@@ -219,17 +227,17 @@
 
     return
   )
-
+  ;; CHECK-LABEL: Function[18] Body
   (func
     (local i32 i32 i32 i32 i32 i32 i32 i32)
 
     i32.const 0
     i64.load
     ;; e14 is used by previous i32.load, so a scratch register should be allocated
-    ;; TRICORE: mov [[REG:d([0-9])]], #7
+    ;; TRICORE: mov d0, #7
     i32.const 0
     i32.const 7
-    ;; TRICORE: st.w  [a2], [[REG]]
+    ;; TRICORE: st.w  [a2], d0
     i32.store
 
     return
