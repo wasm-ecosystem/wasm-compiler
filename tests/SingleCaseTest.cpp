@@ -594,7 +594,7 @@ TrapCode SingleCaseTest::getTrapCodeFromTrapText(std::string const &text) {
       {"invalid conversion to integer", TrapCode::TRUNC_OVERFLOW},
       {"unknown import", TrapCode::CALLED_FUNCTION_NOT_LINKED},
       {"called function not linked", TrapCode::CALLED_FUNCTION_NOT_LINKED},
-      {"indirect call not linked", TrapCode::INDIRECTCALL_WRONGSIG},
+      {"indirect call not linked", TrapCode::CALLED_FUNCTION_NOT_LINKED},
       {"Indirect call out of bounds", TrapCode::INDIRECTCALL_OUTOFBOUNDS},
       {"Indirect call performed with wrong signature", TrapCode::INDIRECTCALL_WRONGSIG},
   };

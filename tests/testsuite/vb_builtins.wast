@@ -294,7 +294,7 @@
     call $unknown
   )
   (func (export "call_unknown_indirect")
-    i32.const 0
+    i32.const 1
     call_indirect 0
   )
   (table 3 funcref)
