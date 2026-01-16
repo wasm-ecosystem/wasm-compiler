@@ -28,4 +28,20 @@ TEST(TestCommonUtil, testCLZ) {
   ASSERT_EQ(clzImpl(num1), clzll(num1));
   ASSERT_EQ(clzImpl(num2), clz(num2));
 }
+
+// NOLINTNEXTLINE(cert-err58-cpp, cppcoreguidelines-special-member-functions)
+TEST(TestCommonUtil, testCTZ) {
+  // Test 64-bit variant
+  ASSERT_EQ(ctzImpl(uint64_t{0x100U}), 8);               // trailing zeros: 8
+  ASSERT_EQ(ctzImpl(uint64_t{0x8000000000000000U}), 63); // trailing zeros: 63
+  ASSERT_EQ(ctzImpl(uint64_t{0x1U}), 0);                 // trailing zeros: 0
+  ASSERT_EQ(ctzImpl(uint64_t{0xFFFFFFFFFFFFFFFFU}), 0);  // all bits set
+
+  // Test 32-bit variant
+  ASSERT_EQ(ctzImpl(uint32_t{0x100U}), 8);       // trailing zeros: 8
+  ASSERT_EQ(ctzImpl(uint32_t{0x80000000U}), 31); // trailing zeros: 31
+  ASSERT_EQ(ctzImpl(uint32_t{0x1U}), 0);         // trailing zeros: 0
+  ASSERT_EQ(ctzImpl(uint32_t{0xFFF0U}), 4);      // trailing zeros: 4
+  ASSERT_EQ(ctzImpl(uint32_t{0xFFFFFFFFU}), 0);  // all bits set
+}
 } // namespace vb

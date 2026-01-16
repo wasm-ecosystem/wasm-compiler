@@ -39,6 +39,7 @@
 #include "src/core/compiler/backend/tricore/tricore_encoding.hpp"
 #include "src/core/compiler/backend/tricore/tricore_instruction.hpp"
 #include "src/core/compiler/backend/tricore/tricore_relpatchobj.hpp"
+#include "src/core/compiler/common/BitCounter.hpp"
 #include "src/core/compiler/common/Common.hpp"
 #include "src/core/compiler/common/MachineType.hpp"
 #include "src/core/compiler/common/MemWriter.hpp"
@@ -556,6 +557,59 @@ void Assembler::MOVimm(REG const reg, uint32_t const imm) const {
       }
     }
   }
+}
+
+void Assembler::MOVimm64(REG const reg, uint64_t const imm) const {
+  SignedInRangeCheck<4U> const const4sxChecker{SignedInRangeCheck<4U>::check(static_cast<int64_t>(imm))};
+  if (const4sxChecker.inRange()) {
+    INSTR(MOV_Ea_const4sx).setEa(reg).setConst4sx(const4sxChecker.safeInt())();
+    return;
+  }
+  SignedInRangeCheck<16U> const const16sxChecker{SignedInRangeCheck<16U>::check(static_cast<int64_t>(imm))};
+  if (const16sxChecker.inRange()) {
+    INSTR(MOV_Ec_const16sx).setEc(reg).setConst16sx(const16sxChecker.safeInt())();
+    return;
+  }
+  uint32_t const lower32{static_cast<uint32_t>(imm)};
+  uint32_t const higher32{static_cast<uint32_t>(imm >> 32LLU)};
+
+  ContinuousBitSequence const higherContinuousOne{ContinuousBitSequence::count(higher32)};
+  uint32_t const posHigh{higherContinuousOne.getPos()};
+  uint32_t const widthHigh{higherContinuousOne.getWidth()};
+
+  if ((posHigh != vb::ContinuousBitSequence::invalidPos) && (widthHigh < 32U)) {
+    SafeUInt<4U> const val{SafeUInt<4U>::fromConst<0xFU>() & (lower32 >> posHigh)};
+    // GCOVR_EXCL_START
+    assert((posHigh + widthHigh) <= 32U);
+    // GCOVR_EXCL_STOP
+
+    if ((val.value() << posHigh) == lower32) {
+      INSTR(IMASK_Pos_Width_const4zx)
+          .setDc(reg)
+          .setConst4zx(val)
+          .setPos(SafeUInt<5U>::fromUnsafe(posHigh))
+          .setWidth(SafeUInt<5U>::fromUnsafe(widthHigh))();
+      return;
+    }
+  }
+
+  if (higher32 == 0U) {
+    ContinuousBitSequence const lowerContinuousOne{ContinuousBitSequence::count(lower32)};
+    uint32_t const posLow{lowerContinuousOne.getPos()};
+    uint32_t const widthLow{lowerContinuousOne.getWidth()};
+    if ((posLow != vb::ContinuousBitSequence::invalidPos) && (widthLow <= 4U)) {
+      // In this case, there is only 4bits 1 in the imm, and the 4bits are all in lower part
+      INSTR(IMASK_Pos_Width_const4zx)
+          .setDc(reg)
+          .setConst4zx(SafeUInt<4U>::fromUnsafe(lower32 >> posLow))
+          .setPos(SafeUInt<5U>::fromUnsafe(posLow))
+          .setWidth(SafeUInt<5U>::fromConst<0U>())();
+      return;
+    }
+  }
+
+  MOVimm(reg, lower32);
+  MOVimm(RegUtil::getOtherExtReg(reg), higher32);
 }
 
 void Assembler::loadWordDRegDerefARegDisp16sx(REG const dataReg, REG const addrReg, SafeInt<16U> const disp) const {

@@ -2621,8 +2621,7 @@ void Backend::emitMoveImpl(VariableStorage const &dstStorage, VariableStorage co
     if (srcStorage.type == StorageType::CONSTANT) { // CONSTANT -> REGISTER
       if (is64) {
         uint64_t const constant{(machineType == MachineType::F64) ? srcStorage.location.constUnion.rawF64() : srcStorage.location.constUnion.u64};
-        as_.MOVimm(dstReg, static_cast<uint32_t>(constant));
-        as_.MOVimm(RegUtil::getOtherExtReg(dstReg), static_cast<uint32_t>(constant >> 32LLU));
+        as_.MOVimm64(dstReg, constant);
       } else {
         uint32_t const constant{(machineType == MachineType::F32) ? srcStorage.location.constUnion.rawF32() : srcStorage.location.constUnion.u32};
         as_.MOVimm(dstReg, constant);
@@ -3773,10 +3772,7 @@ StackElement Backend::emitDeferredAction(OPCode const opcode, StackElement *cons
       unordered.linkToHere();
 
       // At least one is NaN, return NAN canonical
-
-      as_.MOVimm(prep.dest.reg, 0U);
-
-      as_.MOVimm(prep.dest.secReg, 0x7F'F8'00'00U);
+      as_.MOVimm64(prep.dest.reg, 0x7F'F8'00'00'00'00'00'00U);
 
       branchObj.linkToHere();
 
@@ -3867,8 +3863,7 @@ StackElement Backend::emitDeferredAction(OPCode const opcode, StackElement *cons
         regAllocTracker.writeProtRegs = mask(prep.arg0.reg, false);
         REG const helperReg{common_.reqScratchRegProt(MachineType::F64, targetHint, regAllocTracker, false).reg};
         uint64_t const rawUpperLimit{rawUpperLimits[static_cast<uint32_t>(opcode) - static_cast<uint32_t>(OPCode::I32_TRUNC_F64_S)]};
-        as_.MOVimm(helperReg, static_cast<uint32_t>(rawUpperLimit));
-        as_.MOVimm(RegUtil::getOtherExtReg(helperReg), static_cast<uint32_t>(rawUpperLimit >> 32LLU));
+        as_.MOVimm64(helperReg, rawUpperLimit);
 
         emitCMPF64(helperReg, prep.arg0.reg, helperReg);
         constexpr uint32_t immCond{static_cast<uint32_t>(CMPFFLAGS::GT) | static_cast<uint32_t>(CMPFFLAGS::EQ) |
@@ -3878,8 +3873,7 @@ StackElement Backend::emitDeferredAction(OPCode const opcode, StackElement *cons
 
         // Second Comparison
         uint64_t const rawLowerLimit{rawLowerLimits[static_cast<uint32_t>(opcode) - static_cast<uint32_t>(OPCode::I32_TRUNC_F64_S)]};
-        as_.MOVimm(helperReg, static_cast<uint32_t>(rawLowerLimit));
-        as_.MOVimm(RegUtil::getOtherExtReg(helperReg), static_cast<uint32_t>(rawLowerLimit >> 32LLU));
+        as_.MOVimm64(helperReg, rawLowerLimit);
 
         emitCMPF64(helperReg, prep.arg0.reg, helperReg);
 
@@ -3987,8 +3981,7 @@ StackElement Backend::emitDeferredAction(OPCode const opcode, StackElement *cons
         regAllocTracker.writeProtRegs = mask(prep.arg0.reg, true);
         REG const helperReg{common_.reqScratchRegProt(MachineType::F64, targetHint, regAllocTracker, false).reg};
         uint64_t const rawUpperLimit{rawUpperLimits[static_cast<uint32_t>(opcode) - static_cast<uint32_t>(OPCode::I64_TRUNC_F64_S)]};
-        as_.MOVimm(helperReg, static_cast<uint32_t>(rawUpperLimit));
-        as_.MOVimm(RegUtil::getOtherExtReg(helperReg), static_cast<uint32_t>(rawUpperLimit >> 32LLU));
+        as_.MOVimm64(helperReg, rawUpperLimit);
 
         emitCMPF64(helperReg, prep.arg0.reg, helperReg);
         constexpr uint32_t immCond{static_cast<uint32_t>(CMPFFLAGS::GT) | static_cast<uint32_t>(CMPFFLAGS::EQ) |
@@ -3998,8 +3991,7 @@ StackElement Backend::emitDeferredAction(OPCode const opcode, StackElement *cons
 
         // Second Comparison
         uint64_t const rawLowerLimit{rawLowerLimits[static_cast<uint32_t>(opcode) - static_cast<uint32_t>(OPCode::I64_TRUNC_F64_S)]};
-        as_.MOVimm(helperReg, static_cast<uint32_t>(rawLowerLimit));
-        as_.MOVimm(RegUtil::getOtherExtReg(helperReg), static_cast<uint32_t>(rawLowerLimit >> 32LLU));
+        as_.MOVimm64(helperReg, rawLowerLimit);
 
         emitCMPF64(helperReg, prep.arg0.reg, helperReg);
 

@@ -601,7 +601,11 @@ constexpr OPCodeTemplate MOV_Da_const4sx{0x0082U};
 // coverity[autosar_cpp14_m3_4_1_violation]
 constexpr OPCodeTemplate MOV_D15_const8zx{0x00DAU};
 /// Move constant to extended register instruction
+// coverity[autosar_cpp14_m3_4_1_violation]
 constexpr OPCodeTemplate MOV_Ec_const16sx{0x000000FBU};
+/// Move constant to extended register instruction (16b instruction)
+// coverity[autosar_cpp14_m3_4_1_violation]
+constexpr OPCodeTemplate MOV_Ea_const4sx{0x00D2U};
 /// Move register to register instruction
 constexpr OPCodeTemplate MOV_Dc_Db{(0x1F_U32 << 20_U32) | 0x0B_U32};
 /// Move register to register instruction (16b instruction)
@@ -1013,6 +1017,10 @@ constexpr OPCodeTemplate SEL_Dc_Da_Dd_const9sx{(0x04_U32 << 21_U32) | 0xAB_U32};
 /// otherwise copy const9 to D[c].
 // coverity[autosar_cpp14_m3_4_1_violation]
 constexpr OPCodeTemplate SELN_Dc_Da_Dd_const9sx{(0x05_U32 << 21_U32) | 0xAB_U32};
+
+/// @brief IMASK E[c], const4, pos, width (RCPW)
+// coverity[autosar_cpp14_m3_4_1_violation]
+constexpr OPCodeTemplate IMASK_Pos_Width_const4zx{(01_U32 << 21_U32) | 0xB7_U32};
 
 } // namespace tc
 } // namespace vb

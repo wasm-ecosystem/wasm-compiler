@@ -393,6 +393,11 @@ public:
   /// @param imm Immediate value to move to the register
   void MOVimm(REG const reg, uint32_t const imm) const;
 
+  /// @brief Efficiently move a 64-bit immediate value to a general purpose register
+  /// @param reg Register to move the immediate to
+  /// @param imm Immediate value to move to the register
+  void MOVimm64(REG const reg, uint64_t const imm) const;
+
   /// @brief DReg = M(AReg + disp, word)
   /// @param dataReg DReg in formula
   /// @param addrReg AReg in formula

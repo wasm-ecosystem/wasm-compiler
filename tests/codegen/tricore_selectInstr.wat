@@ -200,6 +200,42 @@
         ;; TRICORE: mul.u  e2, [[REG:d[0-9]+]], [[REG:d[0-9]+]]
         i64.mul
         ;; TRICORE-NOT: mov 
+        ;; TRICORE: fret
+        return
+  )
+
+  ;; CHECK-LABEL: Function[19] Body
+  (func  (result i64)
+        i64.const 0
+        ;; TRICORE: {{[0-9a-f][0-9a-f] [0-9a-f][0-9a-f]}} mov  e2, #0
+        return
+  )
+
+  ;; CHECK-LABEL: Function[20] Body
+  (func  (result i64)
+        i64.const 0x1000
+        ;; TRICORE: {{[0-9a-f][0-9a-f] [0-9a-f][0-9a-f] [0-9a-f][0-9a-f] [0-9a-f][0-9a-f]}} mov  e2, #0x1000
+        return
+  )
+
+  ;; CHECK-LABEL: Function[21] Body
+  (func  (result i64)
+        i64.const 0x7ff8000000000000
+        ;; TRICORE: imask e2, #0, #0x13, #0xc
+        return
+  )
+
+  ;; CHECK-LABEL: Function[22] Body
+  (func  (result i64)
+        i64.const 0x0001000000010000
+        ;; TRICORE: imask  e2, #1, #0x10, #1
+        return
+  )
+
+  ;; CHECK-LABEL: Function[23] Body
+  (func  (result i64)
+        i64.const 0xF00000
+        ;; TRICORE: imask e2, #0xf, #0x14, #0
         return
   )
 )

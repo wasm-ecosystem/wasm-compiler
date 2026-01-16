@@ -68,6 +68,13 @@ int32_t clzll(uint64_t const mask) VB_NOEXCEPT;
 ///
 /// @param mask Input value
 /// @return int32_t Trailing zeros of mask
+int32_t ctz(uint32_t const mask) VB_NOEXCEPT;
+
+///
+/// @brief Count trailing zeros implementation
+///
+/// @param mask Input value
+/// @return int32_t Trailing zeros of mask
 int32_t ctzll(uint64_t const mask) VB_NOEXCEPT;
 
 ///
@@ -267,6 +274,26 @@ template <typename T> int32_t clzImpl(T mask) VB_NOEXCEPT {
 }
 
 ///
+/// @brief Software implementation of ctz. Shall only be used when the target platform doesn't provide this feature
+///
+/// @tparam T Number type
+/// @param mask Input value
+/// @return int32_t Trailing zeros of mask
+///
+template <typename T> int32_t ctzImpl(T mask) VB_NOEXCEPT {
+  static_assert(std::is_integral<T>::value, "T must be a integral");
+  if (mask == 0) {
+    return static_cast<int32_t>(sizeof(T)) * 8;
+  }
+  int32_t count{0};
+  while ((mask & 1U) == 0U) {
+    mask >>= 1U;
+    ++count;
+  }
+  return count;
+}
+
+///
 /// @brief Software implementation of popcnt. Shall only be used when the target platform doesn't provide this feature
 ///
 /// @tparam T Number type
@@ -315,6 +342,16 @@ inline int32_t clz(uint32_t const mask) VB_NOEXCEPT {
   return 32; // Undefined Behavior.
 }
 
+inline int32_t ctz(uint32_t const mask) VB_NOEXCEPT {
+  unsigned long where;
+
+  // BitScanForward scans from LSB to MSB for first set bit.
+  if (_BitScanForward(&where, mask)) {
+    return static_cast<int32_t>(where);
+  }
+  return 32; // Undefined Behavior.
+}
+
 #if (defined _M_ARM64) || (defined _M_ARM)
 
 inline int32_t popcnt(uint32_t const mask) VB_NOEXCEPT {
@@ -352,6 +389,9 @@ inline int32_t clzll(uint64_t const mask) VB_NOEXCEPT {
 inline int32_t clz(uint32_t const mask) VB_NOEXCEPT {
   return __builtin_clz(mask);
 }
+inline int32_t ctz(uint32_t const mask) VB_NOEXCEPT {
+  return __builtin_ctz(mask);
+}
 inline int32_t ctzll(uint64_t const mask) VB_NOEXCEPT {
   return __builtin_ctzll(mask);
 }
@@ -370,6 +410,10 @@ inline int32_t clzll(uint64_t const mask) VB_NOEXCEPT {
 inline int32_t clz(uint32_t const mask) VB_NOEXCEPT {
   return __clz(static_cast<int32_t>(mask));
 }
+inline int32_t ctz(uint32_t const mask) VB_NOEXCEPT {
+  return ctzImpl(mask);
+}
+
 inline int32_t popcnt(uint32_t const mask) VB_NOEXCEPT {
   return __popcntw(mask);
 }
@@ -384,6 +428,12 @@ inline int32_t clzll(uint64_t const mask) VB_NOEXCEPT {
 }
 inline int32_t clz(uint32_t const mask) VB_NOEXCEPT {
   return clzImpl(mask);
+}
+inline int32_t ctz(uint32_t const mask) VB_NOEXCEPT {
+  return ctzImpl(mask);
+}
+inline int32_t ctzll(uint64_t const mask) VB_NOEXCEPT {
+  return ctzImpl(mask);
 }
 inline int32_t popcnt(uint32_t const mask) VB_NOEXCEPT {
   return popcntImpl(mask);

@@ -112,8 +112,7 @@
     (func $targetHintAsCallerScratchReg64Native (result i64)
         ;; X86_64_PASSIVE: mov edi, 7
         ;; AARCH64_PASSIVE: mov x0, #7
-        ;; TRICORE: mov d4, #7
-        ;; TRICORE: mov  d5, #0
+        ;; TRICORE: mov e4, #7
         i64.const 7
         ;; X86_64_PASSIVE: mov  rsi, qword ptr [rbx + 0x64]
         ;; AARCH64_PASSIVE: ldr x1,

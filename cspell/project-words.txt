@@ -383,6 +383,7 @@ qword
 RADD
 RAII
 rbit
+RCPW
 rdtsc
 readgsqword
 readx
