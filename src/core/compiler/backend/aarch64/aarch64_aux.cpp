@@ -68,7 +68,7 @@ bool processLogicalImmediate(uint64_t imm, bool const is64, uint64_t &encoding) 
   }
 
   // Second, determine the rotation to make the element be: 0^m 1^n.
-  uint64_t const mask{(elemSize == 64U) ? 0U : ((1_U64 << elemSize) - 1U)};
+  uint64_t const mask{(elemSize == 64U) ? UINT64_MAX : ((1_U64 << elemSize) - 1U)};
   imm &= mask;
 
   // Extract single element
