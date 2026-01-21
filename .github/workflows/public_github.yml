@@ -1,0 +1,52 @@
+name: Public GitHub
+
+on:
+  push:
+    branches:
+      - master
+      - develop
+      - 'release/*'
+  pull_request:
+    branches:
+      - master
+      - develop
+      - 'release/*'
+  workflow_dispatch:
+
+concurrency:
+  group: "${{ github.workflow }} @ ${{ github.event.pull_request.head.label || github.head_ref || github.ref }}"
+  cancel-in-progress: true
+
+jobs:
+  aarch64_windows_cmake_build_test:
+    runs-on: windows-11-arm
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - Compiler_type: aarch64_debug_msvc
+            cmake_arguments: -DVB_ENABLE_DEV_FEATURE=OFF -DENABLE_MSVC_PARALLEL=0 -DENABLE_WERROR=1 -A ARM64 -DENABLE_SPECTEST=1 -DENABLE_DEMO=1
+            Build_type: Debug
+          - Compiler_type: aarch64_relwithdebinfo_msvc
+            cmake_arguments: -DVB_ENABLE_DEV_FEATURE=OFF -DENABLE_MSVC_PARALLEL=0 -DENABLE_WERROR=1 -A ARM64 -DENABLE_SPECTEST=1 -DENABLE_DEMO=1
+            Build_type: RelWithDebInfo
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      # Here x86_64 executable file can be used because windows has instruction emulator.
+      - name: Install wabt
+        run: |
+          aria2c https://github.com/WebAssembly/wabt/releases/download/1.0.36/wabt-1.0.36-windows.tar.gz
+          tar -xzf wabt-1.0.36-windows.tar.gz
+          mv wabt-1.0.36 C:\wabt-1.0.36
+          echo "C:\wabt-1.0.36\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+      - name: gen testcase
+        run: python tests/spectest.py
+      - name: Build and test
+        run: |
+          mkdir build
+          cd build
+          cmake .. ${{ matrix.cmake_arguments }}
+          cmake --build . --config ${{ matrix.Build_type }}
+          ctest --verbose -C ${{ matrix.Build_type }}

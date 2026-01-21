@@ -35,6 +35,32 @@ static_assert(false, "OS not supported");
 #endif
 
 namespace vb {
+
+///
+/// @brief RAII wrapper to set and reset runtime pointer for signal handling
+///
+/// Sets the thread-local runtime pointer in constructor and resets to nullptr in destructor
+///
+class ScopedRuntimeGuard final {
+public:
+  ///
+  /// @brief Construct and set the runtime pointer
+  ///
+  /// @param runtime The runtime to set
+  ///
+  explicit ScopedRuntimeGuard(Runtime const &runtime) VB_NOEXCEPT;
+
+  ///
+  /// @brief Destructor resets runtime pointer to nullptr
+  ///
+  ~ScopedRuntimeGuard() VB_NOEXCEPT;
+
+  ScopedRuntimeGuard(ScopedRuntimeGuard const &) = delete;
+  ScopedRuntimeGuard &operator=(ScopedRuntimeGuard const &) & = delete;
+  ScopedRuntimeGuard(ScopedRuntimeGuard &&) = delete;
+  ScopedRuntimeGuard &operator=(ScopedRuntimeGuard &&) & = delete;
+};
+
 ///
 /// @brief A wrapper to run Wasm function inside signal handler
 ///
@@ -51,7 +77,7 @@ public:
   /// @throws std::runtime_error signal handler setup failed
   ///
   static inline void start(Runtime &runtime) {
-    trySetRuntime(runtime);
+    ScopedRuntimeGuard const guard{runtime};
     SignalFunction::call_raw(start_wrapper, runtime);
   }
 
@@ -77,7 +103,7 @@ public:
   template <size_t NumReturnValue, typename... FunctionArguments>
   static std::array<WasmValue, NumReturnValue> call(ModuleFunction<NumReturnValue, FunctionArguments...> const &function,
                                                     FunctionArguments... args) VB_THROW {
-    trySetRuntime(function.getRuntime());
+    ScopedRuntimeGuard const guard{function.getRuntime()};
     return SignalFunction::call_raw<NumReturnValue>(function, args...);
   }
 
@@ -91,7 +117,7 @@ public:
   /// @throws std::runtime_error signal handler setup failed
   ///
   static void call(RawModuleFunction const &function, uint8_t const *const serializedArgs, uint8_t *const results) {
-    trySetRuntime(function.getRuntime());
+    ScopedRuntimeGuard const guard{function.getRuntime()};
     return SignalFunction::call_raw(callRawModuleFunction_wrapper, function, serializedArgs, results);
   }
 
@@ -105,7 +131,7 @@ public:
   /// @throws std::runtime_error signal handler setup failed
   ///
   static void call(RawModuleFunction const &function, WasmValue const *const serializedArgs, WasmValue *const results) {
-    trySetRuntime(function.getRuntime());
+    ScopedRuntimeGuard const guard{function.getRuntime()};
     return SignalFunction::call_raw(callRawModuleFunction_wrapper, function, pCast<uint8_t const *const>(serializedArgs),
                                     pCast<uint8_t *const>(results));
   }
@@ -131,18 +157,6 @@ public:
 #endif
 
 private:
-  ///
-  /// @brief Set the runtime pointer of current thread
-  ///
-  /// @param runtime
-  /// @note If signal handler is not required by current build config, this function will do nothing
-  static void trySetRuntime(Runtime const &runtime) VB_NOEXCEPT {
-#if !LINEAR_MEMORY_BOUNDS_CHECKS || !ACTIVE_STACK_OVERFLOW_CHECK
-    pRuntime_ = &runtime;
-#else
-    static_cast<void>(runtime);
-#endif
-  }
   ///
   /// @brief wrap the raw module function in a function type
   ///
@@ -191,8 +205,25 @@ private:
   static void probeLinearMemoryOffset() VB_NOEXCEPT;
 #endif
 
-  friend SignalFunction; ///< Allow OS specific signal function to access private members
+  friend SignalFunction;     ///< Allow OS specific signal function to access private members
+  friend ScopedRuntimeGuard; ///< Allow RAII guard to access pRuntime_
 };
+
+// ScopedRuntimeGuard implementation (after SignalFunctionWrapper is complete)
+// coverity[autosar_cpp14_a3_1_5_violation]
+inline ScopedRuntimeGuard::ScopedRuntimeGuard(Runtime const &runtime) VB_NOEXCEPT {
+  static_cast<void>(runtime);
+#if !LINEAR_MEMORY_BOUNDS_CHECKS || !ACTIVE_STACK_OVERFLOW_CHECK
+  SignalFunctionWrapper::pRuntime_ = &runtime;
+#endif
+}
+// coverity[autosar_cpp14_a3_1_5_violation]
+// coverity[autosar_cpp14_a12_7_1_violation]
+inline ScopedRuntimeGuard::~ScopedRuntimeGuard() VB_NOEXCEPT {
+#if !LINEAR_MEMORY_BOUNDS_CHECKS || !ACTIVE_STACK_OVERFLOW_CHECK
+  SignalFunctionWrapper::pRuntime_ = nullptr;
+#endif
+}
 
 } // namespace vb
 #endif
