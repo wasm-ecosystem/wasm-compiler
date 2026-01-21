@@ -50,3 +50,53 @@ jobs:
           cmake .. ${{ matrix.cmake_arguments }}
           cmake --build . --config ${{ matrix.Build_type }}
           ctest --verbose -C ${{ matrix.Build_type }}
+
+  aarch64_android_cmake_build_test:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Install dependencies
+        run: |
+          export HOMEBREW_NO_AUTO_UPDATE=1
+          brew install cmake wabt
+
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
+      - name: Setup Android SDK
+        run: |
+          set -ex
+          brew install --cask android-commandlinetools
+          echo "ANDROID_SDK_ROOT=$(brew --prefix)/share/android-commandlinetools" >> $GITHUB_ENV
+          echo "ANDROID_HOME=$(brew --prefix)/share/android-commandlinetools" >> $GITHUB_ENV
+
+      - name: Accept Android SDK licenses
+        run: |
+          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses
+
+      - name: Install Android NDK and emulator
+        run: |
+          $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --install "ndk;27.2.12479018" "emulator" "platform-tools" "system-images;android-35;google_apis;arm64-v8a"
+          echo "ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/27.2.12479018" >> $GITHUB_ENV
+
+      - name: Create Android virtual device
+        run: |
+          $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/avdmanager create avd -n arm64_emulator -k "system-images;android-35;google_apis;arm64-v8a" -d "pixel_6"
+
+      - name: gen testcase
+        run: python3 tests/spectest.py
+
+      - name: Build for Android
+        run: |
+          cmake -DVB_ENABLE_DEV_FEATURE=OFF -DENABLE_SPECTEST=1 -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_HOME/build/cmake/android.toolchain.cmake -DANDROID_ABI=arm64-v8a -DANDROID_PLATFORM=android-35 -B build_android
+          cmake --build build_android --parallel
+
+      - name: Run Android tests
+        run: |
+          python3 ./scripts/android/android_test.py --avd arm64_emulator

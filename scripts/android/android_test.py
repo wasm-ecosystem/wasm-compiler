@@ -32,11 +32,32 @@ def setup_logging(debug=False):
     )
 
 
+def get_android_sdk_root():
+    """Get the Android SDK root path from environment variables."""
+    sdk_root = os.environ.get(
+        "ANDROID_SDK_ROOT") or os.environ.get("ANDROID_HOME")
+    if not sdk_root:
+        sdk_root = "/opt/android-sdk"
+        logging.info(
+            f"ANDROID_SDK_ROOT/ANDROID_HOME not set, using default path: {sdk_root}")
+    return sdk_root
+
+
+def get_emulator_path():
+    """Get the path to the Android emulator executable."""
+    return os.path.join(get_android_sdk_root(), "emulator", "emulator")
+
+
+def get_adb_path():
+    """Get the path to the adb executable."""
+    return os.path.join(get_android_sdk_root(), "platform-tools", "adb")
+
+
 def launch_emulator(avd_name="x86_64_emulator"):
     """Launch the Android emulator"""
     logging.info("Starting Android emulator...")
     emulator_cmd = [
-        "/opt/android-sdk/emulator/emulator",
+        get_emulator_path(),
         "-avd",
         avd_name,
         "-no-audio",
@@ -58,11 +79,12 @@ def launch_emulator(avd_name="x86_64_emulator"):
 def is_emulator_ready(timeout=180, check_interval=5):
     """Check if the emulator is running and ready."""
     logging.info("Checking if emulator is ready...")
+    adb = get_adb_path()
 
     # First wait for device to be detected
     try:
         subprocess.run(
-            ["/opt/android-sdk/platform-tools/adb", "wait-for-device"],
+            [adb, "wait-for-device"],
             check=True,
             timeout=timeout,
         )
@@ -76,7 +98,7 @@ def is_emulator_ready(timeout=180, check_interval=5):
         try:
             result = subprocess.run(
                 [
-                    "/opt/android-sdk/platform-tools/adb",
+                    adb,
                     "shell",
                     "getprop",
                     "sys.boot_completed",
@@ -103,11 +125,12 @@ def is_emulator_ready(timeout=180, check_interval=5):
 
 def run_tests():
     """Run the spectest on the emulator."""
+    adb = get_adb_path()
     try:
         logging.info("Pushing test binary to the emulator...")
         subprocess.run(
             [
-                "/opt/android-sdk/platform-tools/adb",
+                adb,
                 "push",
                 "./build_android/bin/vb_spectest_json",
                 "/tmp",
@@ -118,7 +141,7 @@ def run_tests():
         logging.info("Pushing test cases to the emulator...")
         subprocess.run(
             [
-                "/opt/android-sdk/platform-tools/adb",
+                adb,
                 "push",
                 "./tests/testcases.json",
                 "/tmp",
@@ -129,7 +152,7 @@ def run_tests():
         # Make the binary executable
         subprocess.run(
             [
-                "/opt/android-sdk/platform-tools/adb",
+                adb,
                 "shell",
                 "chmod +x /tmp/vb_spectest_json",
             ],
@@ -139,7 +162,7 @@ def run_tests():
         logging.info("Running tests on the emulator...")
         process = subprocess.Popen(
             [
-                "/opt/android-sdk/platform-tools/adb",
+                adb,
                 "shell",
                 "/tmp/vb_spectest_json",
                 "/tmp/testcases.json",
@@ -157,14 +180,16 @@ def run_tests():
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Run Android tests in emulator")
+    parser = argparse.ArgumentParser(
+        description="Run Android tests in emulator")
     parser.add_argument(
         "--avd", default="x86_64_emulator", help="Name of the AVD to use"
     )
     parser.add_argument(
         "--timeout", type=int, default=180, help="Timeout for emulator boot in seconds"
     )
-    parser.add_argument("--debug", action="store_true", help="Enable debug logging")
+    parser.add_argument("--debug", action="store_true",
+                        help="Enable debug logging")
     return parser.parse_args()
 
 
@@ -187,7 +212,7 @@ def main():
         # Kill the emulator before exiting
         logging.info("Shutting down the emulator...")
         subprocess.run(
-            ["/opt/android-sdk/platform-tools/adb", "emu", "kill"], check=False
+            [get_adb_path(), "emu", "kill"], check=False
         )
 
     # Return test result
