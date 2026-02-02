@@ -369,6 +369,17 @@ public:
   bool checkIfEnforcedTargetIsOnlyInArgs(Span<Stack::iterator> const &args, StackElement const *const enforcedTarget) const VB_NOEXCEPT;
 
   ///
+  /// @brief Check if a given enforced target is only among the input operands and can thus be assumed to be writable
+  /// without destroying any relevant/important information
+  ///
+  /// @param args argument list
+  /// @param enforcedTarget Enforced target to compare
+  /// @param filterFunction Additional filter function to apply to each argument when checking for equality
+  /// @return bool Whether this enforced target is only among the (up to 2) input operands
+  bool checkIfEnforcedTargetIsOnlyInArgs(Span<Stack::iterator> const &args, StackElement const *const enforcedTarget,
+                                         vb::FunctionRef<bool(Stack::iterator)> const &filterFunction) const VB_NOEXCEPT;
+
+  ///
   /// @brief Result of liftToRegInPlaceProt
   ///
   struct LiftedReg final {

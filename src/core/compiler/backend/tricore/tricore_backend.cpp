@@ -3085,7 +3085,14 @@ bool Backend::checkIfEnforcedTargetIsOnlyInArgs(Span<Stack::iterator> const &arg
         return common_.checkIfEnforcedTargetIsOnlyInArgs(args, enforcedTarget);
       } else {
         StackElement const otherElem{StackElement::scratchReg(RegUtil::getOtherExtReg(enforcedReg), StackType::SCRATCHREGISTER)};
-        return common_.checkIfEnforcedTargetIsOnlyInArgs(args, enforcedTarget) && common_.checkIfEnforcedTargetIsOnlyInArgs(args, &otherElem);
+
+        return common_.checkIfEnforcedTargetIsOnlyInArgs(args, enforcedTarget) &&
+               // only check for e[n] and d[n+1] conflicts
+               common_.checkIfEnforcedTargetIsOnlyInArgs(
+                   args, &otherElem, vb::FunctionRef<bool(Stack::iterator)>([this](Stack::iterator const occurrence) VB_NOEXCEPT -> bool {
+                     MachineType const machineType{moduleInfo_.getMachineType(occurrence.raw())};
+                     return MachineTypeUtil::is64(machineType);
+                   }));
       }
     }
   }

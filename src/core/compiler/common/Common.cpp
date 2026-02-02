@@ -382,6 +382,11 @@ Stack::iterator Common::condenseMultipleValentBlocksWithTargetHintBelow(Stack::i
 }
 
 bool Common::checkIfEnforcedTargetIsOnlyInArgs(Span<Stack::iterator> const &args, StackElement const *const enforcedTarget) const VB_NOEXCEPT {
+  return checkIfEnforcedTargetIsOnlyInArgs(args, enforcedTarget, vb::FunctionRef<bool(Stack::iterator)>(nullptr));
+}
+
+bool Common::checkIfEnforcedTargetIsOnlyInArgs(Span<Stack::iterator> const &args, StackElement const *const enforcedTarget,
+                                               vb::FunctionRef<bool(Stack::iterator)> const &filterFunction) const VB_NOEXCEPT {
   if (enforcedTarget == nullptr) {
     return true;
   }
@@ -389,7 +394,9 @@ bool Common::checkIfEnforcedTargetIsOnlyInArgs(Span<Stack::iterator> const &args
   Stack::iterator currentOccurrenceElement{compiler_.moduleInfo_.getReferenceToLastOccurrenceOnStack(*enforcedTarget)};
 
   while (!currentOccurrenceElement.isEmpty()) {
-    if (!args.contains(currentOccurrenceElement)) {
+    bool const checkThisOccurrence{!filterFunction.notNull() || filterFunction(currentOccurrenceElement)};
+
+    if (checkThisOccurrence && (!args.contains(currentOccurrenceElement))) {
       return false;
     }
     currentOccurrenceElement = currentOccurrenceElement->data.variableData.indexData.prevOccurrence;
