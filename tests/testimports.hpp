@@ -39,8 +39,15 @@ public:
 
   static inline void func_i64_i64(uint64_t I1, uint64_t I2, void *const ctx) noexcept {
     static_cast<void>(ctx);
+    assertStackAlignment();
     static_cast<void>(I1);
     static_cast<void>(I2);
+  }
+
+  static inline uint32_t func_i32_i32(uint32_t i1, uint32_t i2, void *const ctx) noexcept {
+    static_cast<void>(ctx);
+    assertStackAlignment();
+    return i1 + i2;
   }
 
   static inline uint32_t sumI(uint32_t i1, uint32_t i2, uint32_t i3, uint32_t i4, uint32_t i5, uint32_t i6, uint32_t i7, uint32_t i8, uint32_t i9,
@@ -683,6 +690,7 @@ public:
         DYNAMIC_LINK("spectest", "setTraceBuffer", setTraceBuffer),
         //
         DYNAMIC_LINK("spectest", "nop", nop), DYNAMIC_LINK("spectest", "func-i64-i64", func_i64_i64),
+        DYNAMIC_LINK("spectest", "func-i32-i32", func_i32_i32),
         //
         DYNAMIC_LINK("test", "func", func), DYNAMIC_LINK("test", "func-i32", func_i32), DYNAMIC_LINK("test", "func-f32", func_f32),
         DYNAMIC_LINK("test", "func->i32", func_ret_i32), DYNAMIC_LINK("test", "func->f32", func_ret_f32),

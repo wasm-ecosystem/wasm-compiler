@@ -416,3 +416,24 @@
 )
 
 (assert_return (invoke "func_16") (i32.const 672608812) (i64.const 6727) (i64.const 87))
+
+
+(module
+
+  (import "spectest" "func-i32-i32" (func (param i32 i32) (result i32)))
+
+  (func $target-reg-is-res-scratch-reg-tricore (param i32) (param i64) (result i32)
+    (local i64 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32)
+    
+    local.get 0
+
+    local.get 1
+    i64.const 2
+    i64.mul
+    i32.wrap_i64
+    call 0
+  )
+  (export "target-reg-is-res-scratch-reg-tricore" (func $target-reg-is-res-scratch-reg-tricore))
+)
+
+(assert_return (invoke "target-reg-is-res-scratch-reg-tricore" (i32.const 1) (i64.const 2)) (i32.const 5))

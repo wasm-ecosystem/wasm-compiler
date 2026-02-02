@@ -1471,10 +1471,16 @@ Stack::iterator Common::condenseParameter(ParamPos const targetPos, vb::MachineT
     }
 
     if (!targetRegUsedByOtherParams) {
-      VariableStorage const targetHintStorage{VariableStorage::reg(paramType, targetPos.reg)};
-      uint32_t const referencePosition{compiler_.moduleInfo_.getReferencePosition(regStackElement)};
-
-      targetHint = StackElement::tempResult(paramType, targetHintStorage, referencePosition);
+      if (regStackElement.getBaseType() == StackType::SCRATCHREGISTER) {
+        // if the regStackElement is scratch register, then use it as scratch register type because reqScratchRegProt may need to spill it
+        // when there is no free scratch register
+        targetHint = regStackElement;
+      } else {
+        // otherwise it'a reg used by local, then the target hint type should be temp result type
+        VariableStorage const targetHintStorage{VariableStorage::reg(paramType, targetPos.reg)};
+        uint32_t const referencePosition{compiler_.moduleInfo_.getReferencePosition(regStackElement)};
+        targetHint = StackElement::tempResult(paramType, targetHintStorage, referencePosition);
+      }
     }
   }
 
