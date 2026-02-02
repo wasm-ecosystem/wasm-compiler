@@ -670,6 +670,7 @@ void Backend::execDirectFncCall(uint32_t const fncIndex) {
     uint32_t const jobMemPtrPtrOffset{v2ImportCall.getJobMemoryPtrPtrOffset()};
     // coverity[autosar_cpp14_a5_1_9_violation]
     v2ImportCall.emitFncCallWrapper(fncIndex, FunctionRef<void()>([this, fncIndex, jobMemPtrPtrOffset]() {
+                                      static_cast<void>(jobMemPtrPtrOffset);
 #if LINEAR_MEMORY_BOUNDS_CHECKS
                                       cacheJobMemoryPtrPtr(jobMemPtrPtrOffset, callScrRegs[0]);
 #endif

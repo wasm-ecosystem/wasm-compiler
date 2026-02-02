@@ -423,7 +423,7 @@ jobs:
 
       - name: Build for Android
         run: |
-          cmake -DVB_ENABLE_DEV_FEATURE=OFF -DENABLE_SPECTEST=1 -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=/opt/android-ndk/build/cmake/android.toolchain.cmake -DANDROID_ABI=x86_64 -DANDROID_PLATFORM=android-35 -B build_android
+          cmake -DVB_ENABLE_DEV_FEATURE=OFF -DENABLE_WERROR=ON -DENABLE_SPECTEST=1 -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=/opt/android-ndk/build/cmake/android.toolchain.cmake -DANDROID_ABI=x86_64 -DANDROID_PLATFORM=android-35 -B build_android
           cmake --build build_android --parallel
 
       - name: Run Android tests

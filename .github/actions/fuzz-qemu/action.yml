@@ -32,7 +32,7 @@ runs:
       run: |
         mkdir -p /dev/shm/wasm-fuzz
     - shell: bash
-      run: node .github/scripts/run_qemu_fuzz.cjs
+      run: node .github/scripts/run_qemu_fuzz.cjs 2>&1 | tee ${{ steps.set-output.outputs.log_file }}
       env:
         TIMEOUT: ${{ inputs.timeout }}
         VB_FUZZ_TARGET_DIR: /dev/shm/wasm-fuzz
