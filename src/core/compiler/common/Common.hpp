@@ -371,13 +371,35 @@ public:
   ///
   /// @brief Check if a given enforced target is only among the input operands and can thus be assumed to be writable
   /// without destroying any relevant/important information
-  ///
+  /// @tparam VisitorT Type of the visitor to use for walking occurrences
   /// @param args argument list
   /// @param enforcedTarget Enforced target to compare
-  /// @param filterFunction Additional filter function to apply to each argument when checking for equality
+  /// @param moduleInfo Module information needed to get references
+  /// @param visitor Visitor to use for walking occurrences
   /// @return bool Whether this enforced target is only among the (up to 2) input operands
-  bool checkIfEnforcedTargetIsOnlyInArgs(Span<Stack::iterator> const &args, StackElement const *const enforcedTarget,
-                                         vb::FunctionRef<bool(Stack::iterator)> const &filterFunction) const VB_NOEXCEPT;
+  template <typename VisitorT>
+  bool checkIfEnforcedTargetIsOnlyInArgs(Span<Stack::iterator> const &args, StackElement const *const enforcedTarget, ModuleInfo const &moduleInfo,
+                                         // coverity[autosar_cpp14_a8_4_7_violation]
+                                         VisitorT const &visitor) const VB_NOEXCEPT {
+    if (enforcedTarget == nullptr) {
+      return true;
+    }
+
+    Stack::iterator const currentOccurrenceElement{moduleInfo.getReferenceToLastOccurrenceOnStack(*enforcedTarget)};
+    bool onlyInArgs{true};
+    // coverity[autosar_cpp14_a8_5_2_violation]
+    // coverity[autosar_cpp14_a5_1_9_violation]
+    auto const checker = [&args, &onlyInArgs](Stack::iterator const occ) VB_NOEXCEPT -> bool {
+      if (!args.contains(occ)) {
+        onlyInArgs = false;
+        return false; // stop walking
+      }
+      return true; // continue walking
+    };
+    // coverity[autosar_cpp14_a5_1_4_violation]
+    visitor.walk(currentOccurrenceElement, vb::FunctionRef<bool(Stack::iterator const &)>(checker));
+    return onlyInArgs;
+  }
 
   ///
   /// @brief Result of liftToRegInPlaceProt

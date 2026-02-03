@@ -22,6 +22,7 @@
 #include <cstddef>
 #include <cstdint>
 
+#include "ERegReferenceChainVisitor.hpp"
 #include "tricore_assembler.hpp"
 #include "tricore_aux.hpp"
 #include "tricore_backend.hpp"
@@ -3085,14 +3086,10 @@ bool Backend::checkIfEnforcedTargetIsOnlyInArgs(Span<Stack::iterator> const &arg
         return common_.checkIfEnforcedTargetIsOnlyInArgs(args, enforcedTarget);
       } else {
         StackElement const otherElem{StackElement::scratchReg(RegUtil::getOtherExtReg(enforcedReg), StackType::SCRATCHREGISTER)};
-
+        ERegReferenceChainVisitor const visitor{moduleInfo_};
         return common_.checkIfEnforcedTargetIsOnlyInArgs(args, enforcedTarget) &&
                // only check for e[n] and d[n+1] conflicts
-               common_.checkIfEnforcedTargetIsOnlyInArgs(
-                   args, &otherElem, vb::FunctionRef<bool(Stack::iterator)>([this](Stack::iterator const occurrence) VB_NOEXCEPT -> bool {
-                     MachineType const machineType{moduleInfo_.getMachineType(occurrence.raw())};
-                     return MachineTypeUtil::is64(machineType);
-                   }));
+               common_.checkIfEnforcedTargetIsOnlyInArgs(args, &otherElem, moduleInfo_, visitor);
       }
     }
   }
