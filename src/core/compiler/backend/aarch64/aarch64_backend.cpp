@@ -1013,19 +1013,7 @@ void Backend::spillAllVariables(Stack::iterator const below) const {
 }
 
 #if INTERRUPTION_REQUEST
-void Backend::checkForInterruptionRequest(REG const scrReg) const {
-  as_.INSTR(LDURB_wT_deref_xN_unscSImm9_t)
-      .setT(scrReg)
-      .setN(WasmABI::REGS::linMem)
-      .setUnscSImm9(SafeInt<9>::fromConst<-BD::FromEnd::statusFlags>())();
-
-  RelPatchObj const statusFlagIsZero{as_.prepareJMPIfRegIsZero(scrReg, false)};
-  // Retrieve the trapCode from the actual flag
-  if (scrReg != WasmABI::REGS::trapReg) {
-    as_.INSTR(MOV_wD_wM_t).setD(WasmABI::REGS::trapReg).setM(scrReg)();
-  }
-  as_.TRAP(TrapCode::NONE);
-  statusFlagIsZero.linkToHere();
+void Backend::checkForInterruptionRequest(REG const) const {
 }
 #endif
 

@@ -41,6 +41,7 @@
 #include "src/core/common/VbExceptions.hpp"
 #include "src/core/common/basedataoffsets.hpp"
 #include "src/core/common/util.hpp"
+#include "src/utils/MemUtils.hpp"
 
 namespace vb {
 
@@ -363,6 +364,13 @@ public:
   /// default) NOTE: TrapCode::NONE will not lead to a trap
   ///
   NO_THREAD_SANITIZE void requestInterruption(TrapCode const trapCode = TrapCode::RUNTIME_INTERRUPT_REQUESTED) const VB_NOEXCEPT;
+  TrapCode getRequestInterruption() const VB_NOEXCEPT;
+
+  static void interruptRecoverHandler(Runtime &self) {
+    MemUtils::setPermissionRX(pRemoveConst(self.binaryModule_.getStartAddress()),
+                              static_cast<size_t>(self.binaryModule_.getEndAddress() - self.binaryModule_.getStartAddress()));
+    self.tryTrap(self.getRequestInterruption());
+  }
 #endif
 
 #if BUILTIN_FUNCTIONS

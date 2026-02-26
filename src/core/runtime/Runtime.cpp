@@ -549,6 +549,12 @@ void Runtime::requestInterruption(TrapCode const trapCode) const VB_NOEXCEPT {
   uint8_t const rawTrapCode{static_cast<uint8_t>(static_cast<uint32_t>(trapCode))};
   *ptr = rawTrapCode;
 }
+TrapCode Runtime::getRequestInterruption() const VB_NOEXCEPT {
+  TrapCode trapCode{TrapCode::NONE};
+  uint8_t *const ptr{pSubI(getLinearMemoryBase(), Basedata::FromEnd::statusFlags)};
+  memcpy(&trapCode, ptr, sizeof(TrapCode));
+  return trapCode;
+}
 #endif
 
 void Runtime::resetTrapInfo() const VB_NOEXCEPT {

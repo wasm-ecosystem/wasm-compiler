@@ -252,6 +252,7 @@ void WasmModule::requestInterruption(vb::TrapCode const trapCode) VB_NOEXCEPT {
 #endif
 #if INTERRUPTION_REQUEST
     runtime_.requestInterruption(trapCode);
+    MemUtils::setPermissionRW(const_cast<uint8_t *>(executableMemory_.data()), executableMemory_.size());
 #else
     static_cast<void>(trapCode);
     UNREACHABLE(_, "Should not be called if interruption is not requested");
