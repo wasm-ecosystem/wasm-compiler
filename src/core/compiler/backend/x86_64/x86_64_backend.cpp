@@ -614,13 +614,6 @@ void Backend::spillAllVariables(Stack::iterator const below) const {
 
 #if INTERRUPTION_REQUEST
 void Backend::checkForInterruptionRequest() const {
-  as_.INSTR(CMP_rm8_imm8).setM4RM(WasmABI::REGS::linMem, -BD::FromEnd::statusFlags).setImm8(0x0U)();
-
-  RelPatchObj const relPatchObj{as_.prepareJMP(true, CC::E)};
-  // Retrieve the trapCode from the actual flag
-  as_.INSTR(MOVZX_r32_rm8_t).setR(WasmABI::REGS::trapReg).setM4RM(WasmABI::REGS::linMem, -BD::FromEnd::statusFlags)();
-  as_.TRAP(TrapCode::NONE, false);
-  relPatchObj.linkToHere();
 }
 #endif
 

@@ -303,7 +303,14 @@ void SignalFunctionWrapperUnix::memorySignalHandler(int32_t const signalId, sigi
 #else
     static_cast<void>(si);
 #endif
-
+    if (trapCode == 0) {
+      trapCode = static_cast<uint32_t>(SignalFunctionWrapper::pRuntime_->getRequestInterruption());
+      if (trapCode != 0U) {
+        setReturnFromSignalHandler(uc, pCast<void const *>(&Runtime::interruptRecoverHandler));
+        setParamsForReturn(uc, (uint64_t)SignalFunctionWrapper::pRuntime_, 0U);
+        return;
+      }
+    }
     if (trapCode != 0U) {
       handleTrap(uc, trapCode);
       return;
