@@ -215,30 +215,29 @@ uint32_t Runtime::initializeModule(Span<NativeSymbol const> const &dynamicallyLi
     uint32_t const dataSegmentSize{readNextValue<uint32_t>(&dataSegmentsCursor)};       // OPBVLM2
     dataSegmentsCursor = pSubI(dataSegmentsCursor, roundUpToPow2(dataSegmentSize, 2U)); // OPBVLM1
 
-#if LINEAR_MEMORY_BOUNDS_CHECKS
     uint32_t const maximumSegmentOffset{dataSegmentStart + dataSegmentSize};
+    // Check if linear memory can accommodate this segment, otherwise request extension
     if (maximumSegmentOffset > maximumDataOffset) {
-      // Check if linear memory can accommodate this segment, otherwise request extension
+      // extend linear memory if needed.
+#if LINEAR_MEMORY_BOUNDS_CHECKS
       jobMemory_.resize(linearMemoryBaseOffset + maximumSegmentOffset);
       // Init linear memory data to zeros
       static_cast<void>(std::memset(pAddI(getMemoryBase(), linearMemoryBaseOffset + maximumDataOffset), 0x00,
                                     static_cast<size_t>(maximumSegmentOffset) - static_cast<size_t>(maximumDataOffset)));
-      maximumDataOffset = maximumSegmentOffset;
-    }
-#endif
-
-    if (dataSegmentSize > 0U) {
-#if !LINEAR_MEMORY_BOUNDS_CHECKS
-      if (!probeLinearMemory((dataSegmentStart + dataSegmentSize) - 1U)) {
+#else  // LINEAR_MEMORY_BOUNDS_CHECKS
+      if (!probeLinearMemory(maximumSegmentOffset - 1U)) {
         throw RuntimeError(ErrorCode::Could_not_extend_linear_memory);
       }
-#endif
+#endif // LINEAR_MEMORY_BOUNDS_CHECKS
+      maximumDataOffset = maximumSegmentOffset;
+    }
+    if (dataSegmentSize > 0U) {
       uint8_t const *const data{dataSegmentsCursor}; // OPBVLM0
       static_cast<void>(std::memcpy(pAddI(getMemoryBase(), linearMemoryBaseOffset + dataSegmentStart), data, static_cast<size_t>(dataSegmentSize)));
     }
   }
 
-  uint32_t const actualMemorySize{binaryModule_.hasLinearMemory() ? maximumDataOffset : 0U};
+  uint32_t const actualMemorySize{maximumDataOffset};
   // Write it to metadata memory, everything has already been initialized to zero
   uint8_t *const actualMemoryBaseData{pAddI(getMemoryBase(), basedataLength - static_cast<uint32_t>(Basedata::FromEnd::actualLinMemByteSize))};
 
