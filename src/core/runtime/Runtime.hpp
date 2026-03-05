@@ -22,7 +22,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
-#include <functional>
 #include <type_traits>
 #include <utility>
 
@@ -41,6 +40,7 @@
 #include "src/core/common/VbExceptions.hpp"
 #include "src/core/common/basedataoffsets.hpp"
 #include "src/core/common/util.hpp"
+#include "src/core/runtime/IMemoryManager.hpp"
 
 namespace vb {
 
@@ -76,10 +76,7 @@ public:
       lhs.jobMemory_ = std::move(rhs.jobMemory_);
 #else
       lhs.jobMemoryStart_ = rhs.jobMemoryStart_;
-      lhs.memoryExtendFunction_ = std::move(rhs.memoryExtendFunction_);
-      lhs.memoryProbeFunction_ = std::move(rhs.memoryProbeFunction_);
-      lhs.memoryShrinkFunction_ = std::move(rhs.memoryShrinkFunction_);
-      lhs.memoryUsageFunction_ = std::move(rhs.memoryUsageFunction_);
+      lhs.memoryManager_ = rhs.memoryManager_;
       rhs.jobMemoryStart_ = nullptr;
 #endif
     }
@@ -154,99 +151,55 @@ public:
 
   /// @brief Construct a new default runtime
   // coverity[autosar_cpp14_a12_1_5_violation] initial member variable with nullptr
-  inline Runtime() VB_NOEXCEPT : disabled_(true),
-                                 queuedStartFncOffset_(0U),
-                                 jobMemoryStart_(nullptr),
-                                 memoryExtendFunction_(nullptr),
-                                 memoryProbeFunction_(nullptr),
-                                 binaryModule_() {
+  inline Runtime() VB_NOEXCEPT : disabled_(true), queuedStartFncOffset_(0U), jobMemoryStart_(nullptr), memoryManager_(nullptr), binaryModule_() {
   }
 
   ///
   /// @brief Construct a new runtime instance from a binary and an allocator
   ///
-  /// @tparam Allocator Allocator type. Any class that implements init(..), extend(..) and probe(..), e.g.
-  /// LinearMemoryAllocator
   /// @tparam Binary Input binary type. Any class that implements data() (returning a uint8_t *) and size()
   /// @param module Input binary; executable produced by the compiler
-  /// @param allocator Allocator object; e.g. an instance of LinearMemoryAllocator
+  /// @param memoryManager Memory manager object; e.g. an instance of LinearMemoryAllocator
   /// @param ctx Custom context for import functions
-  template <typename Allocator, typename Binary>
-  Runtime(Binary const &module, Allocator &allocator, void *const ctx)
-      : disabled_(false), queuedStartFncOffset_(0U), jobMemoryStart_(nullptr), binaryModule_() {
-    initRuntime(Span<uint8_t const>(module.data(), module.size()), allocator, Span<NativeSymbol const>(), ctx);
+  template <typename Binary>
+  Runtime(Binary const &module, IMemoryManager &memoryManager, void *const ctx)
+      : Runtime(Span<uint8_t const>{module.data(), module.size()}, memoryManager, Span<NativeSymbol const>{}, ctx) {
   }
 
   ///
   /// @brief Construct a new runtime instance from a binary, an allocator and a list of NativeSymbols that should be
   /// linked dynamically
   ///
-  /// @tparam Allocator Allocator type. Any class that implements init(..), extend(..) and probe(..), e.g.
-  /// LinearMemoryAllocator
   /// @tparam Binary Input binary type. Any class that implements data() (returning a uint8_t *) and size()
   /// @tparam SymbolList NativeSymbol list type. Any class that implements data() (returning a NativeSymbol *) and
   /// size()
   /// @param module Input binary; executable produced by the compiler
-  /// @param allocator Allocator object; e.g. an instance of LinearMemoryAllocator
+  /// @param memoryManager Memory manager object; e.g. an instance of LinearMemoryAllocator
   /// @param dynamicallyLinkedSymbols List of host functions that should be linked dynamically
   /// @param ctx Custom context for import functions
-  template <typename Allocator, typename Binary, typename SymbolList>
-  Runtime(Binary const &module, Allocator &allocator, SymbolList const &dynamicallyLinkedSymbols, void *const ctx)
-      : disabled_(false), queuedStartFncOffset_(0U), jobMemoryStart_(nullptr), binaryModule_() {
-    initRuntime(Span<uint8_t const>(module.data(), module.size()), allocator,
-                Span<NativeSymbol const>(dynamicallyLinkedSymbols.data(), dynamicallyLinkedSymbols.size()), ctx);
+  template <typename Binary, typename SymbolList>
+  Runtime(Binary const &module, IMemoryManager &memoryManager, SymbolList const &dynamicallyLinkedSymbols, void *const ctx)
+      : Runtime(Span<uint8_t const>{module.data(), module.size()}, memoryManager,
+                Span<NativeSymbol const>{dynamicallyLinkedSymbols.data(), dynamicallyLinkedSymbols.size()}, ctx) {
   }
 
   ///
   /// @brief Construct a new runtime instance from a binary, an allocator and a list of NativeSymbols that should be
   /// linked dynamically
   ///
-  /// @tparam Allocator Allocator type. Any class that implements init(..), extend(..) and probe(..), e.g.
   /// LinearMemoryAllocator
   /// @param module Input binary; executable produced by the compiler
-  /// @param allocator Allocator object; e.g. an instance of LinearMemoryAllocator
+  /// @param memoryManager Memory manager object; e.g. an instance of LinearMemoryAllocator
   /// @param dynamicallyLinkedSymbols List of host functions that should be linked dynamically
   /// @param ctx Custom context for import functions
-  template <typename Allocator>
-  Runtime(Span<uint8_t const> const &module, Allocator &allocator, Span<NativeSymbol const> const &dynamicallyLinkedSymbols, void *const ctx) VB_THROW
-      : disabled_(false),
-        queuedStartFncOffset_(0U),
-        jobMemoryStart_(nullptr),
-        binaryModule_() {
-    initRuntime(module, allocator, dynamicallyLinkedSymbols, ctx);
-  }
-
-  ///
-  /// @brief Initialize a new runtime instance from a binary, an allocator and a list of NativeSymbols that should be
-  /// linked dynamically
-  ///
-  /// @tparam Allocator Allocator type. Any class that implements init(..), extend(..) and probe(..), e.g.
-  /// LinearMemoryAllocator
-  /// @param module Input binary; executable produced by the compiler
-  /// @param allocator Allocator object; e.g. an instance of LinearMemoryAllocator
-  /// @param dynamicallyLinkedSymbols List of host functions that should be linked dynamically
-  /// @param ctx Custom context for import functions
-  template <typename Allocator>
-  void initRuntime(Span<uint8_t const> const &module, Allocator &allocator, Span<NativeSymbol const> const &dynamicallyLinkedSymbols,
-                   void *const ctx) VB_THROW {
+  Runtime(Span<uint8_t const> const &module, IMemoryManager &memoryManager, Span<NativeSymbol const> const &dynamicallyLinkedSymbols,
+          void *const ctx) VB_THROW : disabled_(false),
+                                      queuedStartFncOffset_(0U),
+                                      jobMemoryStart_(nullptr),
+                                      memoryManager_(&memoryManager),
+                                      binaryModule_() {
     binaryModule_.init(module);
-    jobMemoryStart_ = pCast<uint8_t *>(allocator.init(getBasedataLength(), getInitialLinMemSizeInPages()));
-    // coverity[autosar_cpp14_a5_1_4_violation]
-    memoryExtendFunction_ = [&allocator](uint32_t const linearMemoryTotalPages) VB_THROW -> bool {
-      return allocator.extend(linearMemoryTotalPages);
-    };
-    // coverity[autosar_cpp14_a5_1_4_violation]
-    memoryProbeFunction_ = [&allocator](uint32_t const address) VB_THROW -> bool {
-      return allocator.probe(address);
-    };
-    // coverity[autosar_cpp14_a5_1_4_violation]
-    memoryShrinkFunction_ = [&allocator](uint32_t const minimumLength) VB_THROW -> bool {
-      return allocator.shrink(minimumLength);
-    };
-    // coverity[autosar_cpp14_a5_1_4_violation]
-    memoryUsageFunction_ = [&allocator](uint32_t const baseDataSize) VB_NOEXCEPT -> uint32_t {
-      return static_cast<uint32_t>(allocator.getLinearMemorySize(baseDataSize));
-    };
+    jobMemoryStart_ = memoryManager.init(getBasedataLength(), getInitialLinMemSizeInPages());
     init(dynamicallyLinkedSymbols, ctx);
   }
 
@@ -426,7 +379,7 @@ public:
   /// @return bool Whether the probe was successful. If false it returned, memory could not be extended to the given
   /// offset.
   inline bool probeLinearMemory(uint32_t const offset) const VB_NOEXCEPT {
-    bool const success{memoryProbeFunction_(offset)};
+    bool const success{memoryManager_->probe(offset)};
     updateLinearMemorySizeForDebugger();
     return success;
   }
@@ -438,7 +391,7 @@ public:
   /// @return bool Whether the shrink was successful. If false it returned, memory could not be shrunken to the given
   /// minimal length.
   inline bool shrinkLinearMemory(uint32_t const minimumLength) const VB_NOEXCEPT {
-    bool const success{memoryShrinkFunction_(minimumLength)};
+    bool const success{memoryManager_->shrink(minimumLength)};
     updateLinearMemorySizeForDebugger();
     return success;
   }
@@ -463,7 +416,7 @@ public:
   /// @param size
   /// @return success or not
   inline bool extendMemory(uint32_t const size) const {
-    return memoryExtendFunction_(size);
+    return memoryManager_->extend(size);
   }
 #endif
 
@@ -631,16 +584,10 @@ private:
   ExtendableMemory jobMemory_; ///< ExtendableMemory representing the job memory where basedata (link data, globals,
                                ///< dynamic imports etc.) and the linear memory are stored
 #else
-  uint8_t *jobMemoryStart_; ///< Start of the job memory after which the basedata (link data, globals, dynamic imports
-                            ///< etc.) and the linear memory are stored
-
-  using MemoryExtendFncType = bool(uint32_t linearMemoryTotalPages); ///< Type of the allocator extend function
-  using MemoryProbeFncType = bool(uint32_t address);                 ///< Type of the allocator probe function
-  using MemoryShrinkFncType = bool(uint32_t address);                ///< Type of the allocator shrink function
-  std::function<MemoryExtendFncType> memoryExtendFunction_;          ///< Allocator extend function
-  std::function<MemoryProbeFncType> memoryProbeFunction_;            ///< Allocator probe function
-  std::function<MemoryShrinkFncType> memoryShrinkFunction_;          ///< Allocator shrink function
-  std::function<uint32_t(uint32_t)> memoryUsageFunction_;            ///< Allocator usage function
+  uint8_t *jobMemoryStart_;       ///< Start of the job memory after which the basedata (link data, globals, dynamic imports
+                                  ///< etc.) and the linear memory are stored
+  IMemoryManager *memoryManager_; ///< Memory manager that is used to manage the linear memory of the WebAssembly module (e.g. an instance of
+                                  ///< LinearMemoryAllocator)
 #endif
   BinaryModule binaryModule_; ///< binary module of current JIT code
 

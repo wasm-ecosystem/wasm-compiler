@@ -19,7 +19,6 @@
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
-#include <functional>
 #include <utility>
 
 #include "Runtime.hpp"
@@ -40,6 +39,7 @@
 #include "src/core/common/implementationlimits.hpp"
 #include "src/core/common/util.hpp"
 #include "src/core/compiler/common/MachineType.hpp"
+#include "src/core/runtime/IMemoryManager.hpp"
 #include "src/core/runtime/MemoryHelper.hpp"
 
 #if defined(JIT_TARGET_TRICORE)
@@ -65,10 +65,7 @@ Runtime::Runtime(Runtime &&other) VB_NOEXCEPT : disabled_(other.disabled_),
 Runtime::Runtime(Runtime &&other) VB_NOEXCEPT : disabled_(other.disabled_),
                                                 queuedStartFncOffset_(other.queuedStartFncOffset_),
                                                 jobMemoryStart_(other.jobMemoryStart_),
-                                                memoryExtendFunction_(std::move(other.memoryExtendFunction_)),
-                                                memoryProbeFunction_(std::move(other.memoryProbeFunction_)),
-                                                memoryShrinkFunction_(std::move(other.memoryShrinkFunction_)),
-                                                memoryUsageFunction_(std::move(other.memoryUsageFunction_)),
+                                                memoryManager_(other.memoryManager_),
                                                 // coverity[autosar_cpp14_a8_4_5_violation]
                                                 // coverity[autosar_cpp14_a12_8_4_violation]
                                                 binaryModule_(other.binaryModule_) {
@@ -519,7 +516,7 @@ void Runtime::updateLinearMemorySizeForDebugger() const VB_NOEXCEPT {
   if (!binaryModule_.debugMode()) {
     return;
   }
-  uint32_t const linearMemorySize{memoryUsageFunction_(getBasedataLength())};
+  uint32_t const linearMemorySize{memoryManager_->getLinearMemorySize(getBasedataLength())};
 
   writeToPtr<uint32_t>(pSubI(getLinearMemoryBase(), Basedata::FromEnd::actualLinMemByteSize), linearMemorySize);
 }

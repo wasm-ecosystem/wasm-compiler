@@ -26,12 +26,13 @@
 #include "src/config.hpp"
 #include "src/core/common/WasmConstants.hpp"
 #include "src/core/common/util.hpp"
+#include "src/core/runtime/IMemoryManager.hpp"
 
 namespace vb {
 ///
 /// @brief Allocator of Wasm Linear memory in passive linear memory protection mode
 ///
-class LinearMemoryAllocator final {
+class LinearMemoryAllocator : public IMemoryManager {
 public:
   ///
   /// @brief Construct a new LinearMemoryAllocator
@@ -65,43 +66,26 @@ public:
       lhs.pagedMemoryLimit_.store(std::move(rhs.pagedMemoryLimit_));
     }
   }
-  ///
+
   /// @brief Default destructor
-  ///
-  ~LinearMemoryAllocator() = default;
-  ///
-  /// @brief Initialize the memory for a WebAssembly module so that the linear memory after the basedata starts at a
-  /// memory page boundary
-  ///
-  /// @param basedataSize Size of the module's basedata section in the job memory (Part before the linear memory starts)
-  /// @param initialLinMemPages Maximum size of the module's linear memory (in Wasm pages)
-  /// @return void* Start of the WebAssembly basedata
+
+  ~LinearMemoryAllocator() override = default;
+
+  /// @brief see @b IMemoryManager
   /// @throws std::runtime_error allocate initial memory failed
-  void *init(uint32_t const basedataSize, uint32_t const initialLinMemPages);
-  ///
-  /// @brief extend linear memory
-  ///
-  /// @param newTotalLinMemPages new total linear memory pages
-  /// @return true extend success
-  /// @return false extend failed
-  ///
-  bool extend(uint32_t const newTotalLinMemPages) VB_NOEXCEPT;
-  ///
-  /// @brief shrink linear memory to minimal length
-  ///
-  /// @param minimumLength the minimal length needed by linear memory
-  /// @return true shrink success
-  /// @return false shrink failed
-  ///
-  bool shrink(uint32_t const minimumLength) VB_NOEXCEPT;
-  ///
-  /// @brief probe access the linear memory
-  ///
-  /// @param linMemOffset the linear memory offset to probe
-  /// @return true The probe address is ready commited or commit success
-  /// @return false Commit failed during probe
-  ///
-  bool probe(uint32_t const linMemOffset) VB_NOEXCEPT;
+
+  uint8_t *init(uint32_t const basedataSize, uint32_t const initialLinMemPages) override;
+  /// @brief see @b IMemoryManager
+
+  bool extend(uint32_t const newTotalLinMemPages) VB_NOEXCEPT override;
+
+  /// @brief see @b IMemoryManager
+
+  bool shrink(uint32_t const minimumLength) VB_NOEXCEPT override;
+
+  /// @brief see @b IMemoryManager
+
+  bool probe(uint32_t const linMemOffset) VB_NOEXCEPT override;
   ///
   /// @brief Get the Memory Usage
   ///
@@ -110,13 +94,11 @@ public:
   inline uint64_t getMemoryUsage() const VB_NOEXCEPT {
     return virtualMemoryAllocator_.getCommitedSize();
   }
-  ///
-  /// @brief Calculate linear memory size
-  ///
-  /// @param baseDataSize base data size
-  /// @return uint32_t Actual linear memory size
-  ///
-  uint32_t getLinearMemorySize(uint32_t const baseDataSize) const VB_NOEXCEPT;
+
+  /// @brief see @b IMemoryManager
+
+  uint32_t getLinearMemorySize(uint32_t const baseDataSize) const VB_NOEXCEPT override;
+
   ///
   /// @brief Get the Memory Limit
   ///

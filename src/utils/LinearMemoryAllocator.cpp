@@ -27,16 +27,19 @@
 #include "src/core/common/VbExceptions.hpp"
 #include "src/core/common/WasmConstants.hpp"
 #include "src/core/common/util.hpp"
+#include "src/core/runtime/IMemoryManager.hpp"
 #include "src/utils/VirtualMemoryAllocator.hpp"
 
 namespace vb {
 
+// coverity[autosar_cpp14_a12_1_1_violation]
 LinearMemoryAllocator::LinearMemoryAllocator() VB_NOEXCEPT : pagedBasedataSize_(0U),
                                                              linMemPages_(0U),
                                                              pagedMemoryLimit_(UINT64_MAX),
                                                              maxDesiredRamOnMemoryExtendFailed_(0U) {
 }
 
+// coverity[autosar_cpp14_a12_1_1_violation]
 LinearMemoryAllocator::LinearMemoryAllocator(LinearMemoryAllocator &&other) VB_NOEXCEPT
     : virtualMemoryAllocator_(std::move(other.virtualMemoryAllocator_)),
       pagedBasedataSize_(other.pagedBasedataSize_),
@@ -53,7 +56,7 @@ LinearMemoryAllocator &LinearMemoryAllocator::operator=(LinearMemoryAllocator &&
   return *this;
 }
 
-void *LinearMemoryAllocator::init(uint32_t const basedataSize, uint32_t const initialLinMemPages) {
+uint8_t *LinearMemoryAllocator::init(uint32_t const basedataSize, uint32_t const initialLinMemPages) {
   static_assert(sizeof(size_t) > sizeof(uint32_t), "platform with unsupported size_t");
   assert(initialLinMemPages <= WasmConstants::maxWasmPages && "Too many pages");
 
@@ -122,15 +125,10 @@ bool LinearMemoryAllocator::shrink(uint32_t const minimumLength) VB_NOEXCEPT {
   try {
     size_t const newRuntimeMemorySize{pagedBasedataSize_ + MemUtils::roundDownToOSMemoryPageSize(static_cast<size_t>(minimumLength))};
     return commit(newRuntimeMemorySize);
-  } catch (vb::RuntimeError const &e) {
-    static_cast<void>(e);
+    // coverity[autosar_cpp14_a15_3_4_violation]
+  } catch (...) {
     return false;
   }
-  // GCOVR_EXCL_START
-  catch (...) {
-    UNREACHABLE(return false, "should not throw other except than RuntimeError");
-  }
-  // GCOVR_EXCL_STOP
 }
 
 bool LinearMemoryAllocator::probe(uint32_t const linMemOffset) VB_NOEXCEPT {
@@ -147,15 +145,10 @@ bool LinearMemoryAllocator::probe(uint32_t const linMemOffset) VB_NOEXCEPT {
     try {
       size_t const newRuntimeMemorySize{pagedBasedataSize_ + MemUtils::roundUpToOSMemoryPageSize(static_cast<size_t>(linMemOffset) + 1U)};
       return commit(newRuntimeMemorySize);
-    } catch (vb::RuntimeError const &e) {
-      static_cast<void>(e);
+      // coverity[autosar_cpp14_a15_3_4_violation]
+    } catch (...) {
       return false;
     }
-    // GCOVR_EXCL_START
-    catch (...) {
-      UNREACHABLE(return false, "should not throw other except than RuntimeError");
-    }
-    // GCOVR_EXCL_STOP
   } else {
     return false;
   }

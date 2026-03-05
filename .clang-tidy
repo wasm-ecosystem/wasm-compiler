@@ -178,3 +178,5 @@ CheckOptions:
     value: true
   - key: misc-const-correctness.WarnPointersAsPointers
     value: false
+  - key: cppcoreguidelines-explicit-virtual-functions.AllowOverrideAndFinal
+    value: true
