@@ -64,13 +64,11 @@ Runtime::Runtime(Runtime &&other) VB_NOEXCEPT : disabled_(other.disabled_),
 #else
 Runtime::Runtime(Runtime &&other) VB_NOEXCEPT : disabled_(other.disabled_),
                                                 queuedStartFncOffset_(other.queuedStartFncOffset_),
-                                                jobMemoryStart_(other.jobMemoryStart_),
                                                 memoryManager_(other.memoryManager_),
                                                 // coverity[autosar_cpp14_a8_4_5_violation]
                                                 // coverity[autosar_cpp14_a12_8_4_violation]
                                                 binaryModule_(other.binaryModule_) {
   other.disabled_ = true;
-  other.jobMemoryStart_ = nullptr;
 }
 #endif
 
@@ -515,7 +513,7 @@ void Runtime::updateLinearMemorySizeForDebugger() const VB_NOEXCEPT {
   if (!binaryModule_.debugMode()) {
     return;
   }
-  uint32_t const linearMemorySize{memoryManager_->getLinearMemorySize(getBasedataLength())};
+  uint32_t const linearMemorySize{memoryManager_->getLinearMemorySize()};
 
   writeToPtr<uint32_t>(pSubI(getLinearMemoryBase(), Basedata::FromEnd::actualLinMemByteSize), linearMemorySize);
 }
@@ -600,7 +598,7 @@ uint8_t *Runtime::getMemoryBase() const VB_NOEXCEPT {
 #if LINEAR_MEMORY_BOUNDS_CHECKS
   uint8_t *const res{jobMemory_.data()};
 #else
-  uint8_t *const res{jobMemoryStart_};
+  uint8_t *const res{memoryManager_->getBasedataStart()};
 #endif
   return res;
 }

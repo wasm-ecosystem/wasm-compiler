@@ -61,6 +61,7 @@ public:
   static inline void swap(LinearMemoryAllocator &lhs, LinearMemoryAllocator &&rhs) VB_NOEXCEPT {
     if (&lhs != &rhs) {
       lhs.virtualMemoryAllocator_ = std::move(rhs.virtualMemoryAllocator_);
+      lhs.basedataStart_ = rhs.basedataStart_;
       lhs.pagedBasedataSize_ = rhs.pagedBasedataSize_;
       lhs.linMemPages_ = rhs.linMemPages_;
       lhs.pagedMemoryLimit_.store(std::move(rhs.pagedMemoryLimit_));
@@ -68,24 +69,24 @@ public:
   }
 
   /// @brief Default destructor
-
   ~LinearMemoryAllocator() override = default;
 
   /// @brief see @b IMemoryManager
   /// @throws std::runtime_error allocate initial memory failed
+  void init(uint32_t const basedataSize, uint32_t const initialLinMemPages) override;
 
-  uint8_t *init(uint32_t const basedataSize, uint32_t const initialLinMemPages) override;
   /// @brief see @b IMemoryManager
+  uint8_t *getBasedataStart() const VB_NOEXCEPT override;
 
+  /// @brief see @b IMemoryManager
   bool extend(uint32_t const newTotalLinMemPages) VB_NOEXCEPT override;
 
   /// @brief see @b IMemoryManager
-
   bool shrink(uint32_t const minimumLength) VB_NOEXCEPT override;
 
   /// @brief see @b IMemoryManager
-
   bool probe(uint32_t const linMemOffset) VB_NOEXCEPT override;
+
   ///
   /// @brief Get the Memory Usage
   ///
@@ -96,23 +97,17 @@ public:
   }
 
   /// @brief see @b IMemoryManager
+  uint32_t getLinearMemorySize() const VB_NOEXCEPT override;
 
-  uint32_t getLinearMemorySize(uint32_t const baseDataSize) const VB_NOEXCEPT override;
-
-  ///
   /// @brief Get the Memory Limit
-  ///
   /// @return Memory limit in bytes
-  ///
   inline uint64_t getMemoryLimit() const VB_NOEXCEPT {
     return pagedMemoryLimit_.load();
   }
-  ///
+
   /// @brief Set the Memory Limit
-  ///
   /// @param memoryLimit new memory limit in bytes
   /// @throws std::runtime_error new memory limit is less than already used memory
-  ///
   void setMemoryLimit(uint64_t const memoryLimit);
 
   /// @brief get max desired RAM on memory extend failed
@@ -135,6 +130,7 @@ private:
   bool commit(size_t const newPagedSize);
 
   VirtualMemoryAllocator virtualMemoryAllocator_; ///< The virtual memory allocator
+  uint8_t *basedataStart_;                        ///< Start of the module basedata in job memory
   size_t pagedBasedataSize_;                      ///< The base data size
   uint32_t linMemPages_;                          ///< The pages of the linear memory
   std::atomic<uint64_t> pagedMemoryLimit_;        ///< The OS page aligned memory limit

@@ -75,9 +75,7 @@ public:
 #if LINEAR_MEMORY_BOUNDS_CHECKS
       lhs.jobMemory_ = std::move(rhs.jobMemory_);
 #else
-      lhs.jobMemoryStart_ = rhs.jobMemoryStart_;
       lhs.memoryManager_ = rhs.memoryManager_;
-      rhs.jobMemoryStart_ = nullptr;
 #endif
     }
   }
@@ -151,7 +149,7 @@ public:
 
   /// @brief Construct a new default runtime
   // coverity[autosar_cpp14_a12_1_5_violation] initial member variable with nullptr
-  inline Runtime() VB_NOEXCEPT : disabled_(true), queuedStartFncOffset_(0U), jobMemoryStart_(nullptr), memoryManager_(nullptr), binaryModule_() {
+  inline Runtime() VB_NOEXCEPT : disabled_(true), queuedStartFncOffset_(0U), memoryManager_(nullptr), binaryModule_() {
   }
 
   ///
@@ -195,11 +193,10 @@ public:
   Runtime(Span<uint8_t const> const &module, IMemoryManager &memoryManager, Span<NativeSymbol const> const &dynamicallyLinkedSymbols,
           void *const ctx) VB_THROW : disabled_(false),
                                       queuedStartFncOffset_(0U),
-                                      jobMemoryStart_(nullptr),
                                       memoryManager_(&memoryManager),
                                       binaryModule_() {
     binaryModule_.init(module);
-    jobMemoryStart_ = memoryManager.init(getBasedataLength(), getInitialLinMemSizeInPages());
+    memoryManager.init(getBasedataLength(), getInitialLinMemSizeInPages());
     init(dynamicallyLinkedSymbols, ctx);
   }
 
@@ -250,9 +247,12 @@ public:
   uint8_t *getLinearMemoryRegion(uint32_t const offset, uint32_t const size) const;
 
   ///
-  /// @brief Get the current formal linear memory size in multiples of WebAssembly page size (64kB)
+  /// @brief Get the current formal/allowed linear memory size in multiples of WebAssembly page size (64kB)
   ///
-  /// @return uint32_t Current linear memory size in multiples of WebAssembly page size
+  /// This is the size permitted by the Wasm specification for this module instance.
+  /// It is different from the currently usable/committed size and can be larger.
+  ///
+  /// @return uint32_t Current formal/allowed linear memory size in multiples of WebAssembly page size
   uint32_t getLinearMemorySizeInPages() const VB_NOEXCEPT;
 
 #if LINEAR_MEMORY_BOUNDS_CHECKS
@@ -371,25 +371,23 @@ public:
 
 #if !LINEAR_MEMORY_BOUNDS_CHECKS
   ///
-  /// @brief Calls the memory probe function
+  /// @brief Ensure a linear-memory offset can be used
   ///
-  /// This makes sure that the linear memory is properly allocated at least to the given offset
+  /// This makes sure linear memory is available up to the given offset.
   ///
-  /// @param offset Offset until which the linear memory should be probed
-  /// @return bool Whether the probe was successful. If false it returned, memory could not be extended to the given
-  /// offset.
+  /// @param offset Linear-memory offset that must be usable
+  /// @return bool Whether the probe was successful
   inline bool probeLinearMemory(uint32_t const offset) const VB_NOEXCEPT {
     bool const success{memoryManager_->probe(offset)};
     updateLinearMemorySizeForDebugger();
     return success;
   }
-  /// @brief Calls the memory shrink function
+  /// @brief Decrease the currently used/committed linear-memory size
   ///
-  /// Try to shrink linear memory to given minimal length
+  /// Try to shrink linear memory while keeping at least the requested minimum length usable.
   ///
-  /// @param minimumLength Minimal length that required by linear memory
-  /// @return bool Whether the shrink was successful. If false it returned, memory could not be shrunken to the given
-  /// minimal length.
+  /// @param minimumLength Minimal linear-memory length in bytes that must remain usable
+  /// @return bool Whether shrinking succeeded
   inline bool shrinkLinearMemory(uint32_t const minimumLength) const VB_NOEXCEPT {
     bool const success{memoryManager_->shrink(minimumLength)};
     updateLinearMemorySizeForDebugger();
@@ -412,11 +410,11 @@ public:
   /// @return LandingPadFnc Pointer to the landing pad that can then be "returned to" from a signal handler
   LandingPadFnc prepareLandingPad(void (*const targetFnc)(), void *const originalReturnAddress) const VB_NOEXCEPT;
 
-  /// @brief Wrapper function to call memoryExtendFunction_
-  /// @param size
-  /// @return success or not
-  inline bool extendMemory(uint32_t const size) const {
-    return memoryManager_->extend(size);
+  /// @brief Increase the allowed linear-memory size
+  /// @param totalLinMemPages New total allowed linear-memory size in Wasm pages
+  /// @return bool Whether increasing the allowed size succeeded
+  inline bool extendMemory(uint32_t const totalLinMemPages) const {
+    return memoryManager_->extend(totalLinMemPages);
   }
 #endif
 
@@ -584,8 +582,6 @@ private:
   ExtendableMemory jobMemory_; ///< ExtendableMemory representing the job memory where basedata (link data, globals,
                                ///< dynamic imports etc.) and the linear memory are stored
 #else
-  uint8_t *jobMemoryStart_;       ///< Start of the job memory after which the basedata (link data, globals, dynamic imports
-                                  ///< etc.) and the linear memory are stored
   IMemoryManager *memoryManager_; ///< Memory manager that is used to manage the linear memory of the WebAssembly module (e.g. an instance of
                                   ///< LinearMemoryAllocator)
 #endif
@@ -629,7 +625,7 @@ private:
 
 #if !LINEAR_MEMORY_BOUNDS_CHECKS
   ///
-  /// @brief Update the linear memory size in job memory
+  /// @brief Update the stored usable linear-memory size in job memory
   ///
   void updateLinearMemorySizeForDebugger() const VB_NOEXCEPT;
 #endif

@@ -24,11 +24,20 @@
 
 namespace vb {
 
-/// @brief memory manager interface for wasm linear memory management
+/// @brief Common memory manager interface for Wasm linear memory handling
+///
+/// This interface defines the linear-memory contract used by the runtime and is intended to be shared across
+/// different bounds-check modes (active and passive).
+///
+/// Two sizes are used by this contract:
+/// - Allowed size: Size permitted by the Wasm specification for the module (formal size, page-based).
+/// - Usable size: Size that is currently available for safe access.
+///
+/// These sizes are intentionally different. The usable size is smaller than the allowed size.
 class IMemoryManager {
 public:
   IMemoryManager() VB_NOEXCEPT = default;
-  /// @brief deconstructor
+  /// @brief destructor
   // coverity[autosar_cpp14_a12_8_6_violation]
   virtual ~IMemoryManager() = default;
   /// @brief constructor
@@ -45,48 +54,61 @@ public:
   IMemoryManager &operator=(IMemoryManager &&) &VB_NOEXCEPT = default;
 
   ///
-  /// @brief Initialize the memory for a WebAssembly module so that the linear memory after the basedata starts at a
-  /// memory page boundary
+  /// @brief Initialize memory state for one WebAssembly module instance
+  ///
+  /// Implementations set up basedata and the initial allowed/usable linear-memory configuration.
   ///
   /// @param basedataSize Size of the module's basedata section in the job memory (Part before the linear memory starts)
-  /// @param initialLinMemPages Maximum size of the module's linear memory (in Wasm pages)
-  /// @return uint8_t* Start of the WebAssembly basedata
-  virtual uint8_t *init(uint32_t const basedataSize, uint32_t const initialLinMemPages) = 0;
+  /// @param initialLinMemPages Initial allowed linear memory size in Wasm pages
+  virtual void init(uint32_t const basedataSize, uint32_t const initialLinMemPages) = 0;
 
   ///
-  /// @brief extend linear memory
+  /// @brief Get the start of the WebAssembly basedata
   ///
-  /// @param newTotalLinMemPages new total linear memory pages
-  /// @return true extend success
-  /// @return false extend failed
+  /// @return uint8_t* Start of the WebAssembly basedata
+  virtual uint8_t *getBasedataStart() const = 0;
+
+  ///
+  /// @brief Increase the allowed linear memory size
+  ///
+  /// This changes the formal limit that the module is permitted to access.
+  /// It does not imply that the same amount is already usable.
+  ///
+  /// @param newTotalLinMemPages New total allowed linear memory size in Wasm pages
+  /// @return true The new allowed size was applied successfully
+  /// @return false The allowed size could not be increased
   ///
   virtual bool extend(uint32_t const newTotalLinMemPages) = 0;
 
   ///
-  /// @brief shrink linear memory to minimal length
+  /// @brief Decrease the currently used linear memory size
   ///
-  /// @param minimumLength the minimal length needed by linear memory
-  /// @return true shrink success
-  /// @return false shrink failed
+  /// This changes the usable size, while keeping at least the given minimum length available.
+  ///
+  /// @param minimumLength Minimum required linear-memory length in bytes that must remain usable
+  /// @return true Shrinking succeeded
+  /// @return false Shrinking failed
   ///
   virtual bool shrink(uint32_t const minimumLength) = 0;
 
   ///
-  /// @brief probe access the linear memory
+  /// @brief Ensure a linear-memory offset can be safely used
   ///
-  /// @param linMemOffset the linear memory offset to probe
-  /// @return true The probe address is ready commited or commit success
-  /// @return false Commit failed during probe
+  /// This operation may increase usable size up to what is required for the given offset,
+  /// but never beyond the current allowed size.
+  ///
+  /// @param linMemOffset Linear-memory offset to validate and make usable if needed
+  /// @return true The offset is usable after probing
+  /// @return false The offset could not be made usable
   ///
   virtual bool probe(uint32_t const linMemOffset) = 0;
 
   ///
-  /// @brief Calculate linear memory size
+  /// @brief Get the current usable linear-memory size
   ///
-  /// @param baseDataSize base data size
-  /// @return uint32_t Actual linear memory size
+  /// @return uint32_t Current usable linear-memory size in bytes
   ///
-  virtual uint32_t getLinearMemorySize(uint32_t const baseDataSize) const = 0;
+  virtual uint32_t getLinearMemorySize() const = 0;
 };
 
 } // namespace vb

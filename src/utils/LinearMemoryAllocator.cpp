@@ -33,7 +33,8 @@
 namespace vb {
 
 // coverity[autosar_cpp14_a12_1_1_violation]
-LinearMemoryAllocator::LinearMemoryAllocator() VB_NOEXCEPT : pagedBasedataSize_(0U),
+LinearMemoryAllocator::LinearMemoryAllocator() VB_NOEXCEPT : basedataStart_(nullptr),
+                                                             pagedBasedataSize_(0U),
                                                              linMemPages_(0U),
                                                              pagedMemoryLimit_(UINT64_MAX),
                                                              maxDesiredRamOnMemoryExtendFailed_(0U) {
@@ -42,6 +43,7 @@ LinearMemoryAllocator::LinearMemoryAllocator() VB_NOEXCEPT : pagedBasedataSize_(
 // coverity[autosar_cpp14_a12_1_1_violation]
 LinearMemoryAllocator::LinearMemoryAllocator(LinearMemoryAllocator &&other) VB_NOEXCEPT
     : virtualMemoryAllocator_(std::move(other.virtualMemoryAllocator_)),
+      basedataStart_(other.basedataStart_),
       pagedBasedataSize_(other.pagedBasedataSize_),
       linMemPages_(other.linMemPages_),
       // coverity[autosar_cpp14_a8_4_5_violation]
@@ -56,9 +58,10 @@ LinearMemoryAllocator &LinearMemoryAllocator::operator=(LinearMemoryAllocator &&
   return *this;
 }
 
-uint8_t *LinearMemoryAllocator::init(uint32_t const basedataSize, uint32_t const initialLinMemPages) {
+void LinearMemoryAllocator::init(uint32_t const basedataSize, uint32_t const initialLinMemPages) {
   static_assert(sizeof(size_t) > sizeof(uint32_t), "platform with unsupported size_t");
   assert(initialLinMemPages <= WasmConstants::maxWasmPages && "Too many pages");
+  basedataStart_ = nullptr;
 
   pagedBasedataSize_ = MemUtils::roundUpToOSMemoryPageSize(static_cast<size_t>(basedataSize));
   linMemPages_ = initialLinMemPages;
@@ -77,6 +80,7 @@ uint8_t *LinearMemoryAllocator::init(uint32_t const basedataSize, uint32_t const
   // coverity[autosar_cpp14_a15_0_2_violation]
   if (!commit(initialCommit)) {
     virtualMemoryAllocator_.freeVirtualMemory();
+    basedataStart_ = nullptr;
     // coverity[autosar_cpp14_a15_0_2_violation]
     throw RuntimeError(ErrorCode::Could_not_extend_linear_memory);
   }
@@ -85,10 +89,12 @@ uint8_t *LinearMemoryAllocator::init(uint32_t const basedataSize, uint32_t const
   uint8_t *const linearMemoryStart{pAddI(virtualMemoryStart, pagedBasedataSize_)};
   assert(pToNum(linearMemoryStart) % 8 == 0 && "Linear memory must be 8B aligned");
 
-  uint8_t *const jobMemoryStart{pSubI(linearMemoryStart, basedataSize)};
-  assert(pToNum(jobMemoryStart) % 8 == 0 && "Module memory must be 8B aligned");
+  basedataStart_ = pSubI(linearMemoryStart, basedataSize);
+  assert(pToNum(basedataStart_) % 8 == 0 && "Module memory must be 8B aligned");
+}
 
-  return jobMemoryStart;
+uint8_t *LinearMemoryAllocator::getBasedataStart() const VB_NOEXCEPT {
+  return basedataStart_;
 }
 
 bool LinearMemoryAllocator::extend(uint32_t const newTotalLinMemPages) VB_NOEXCEPT {
@@ -174,8 +180,8 @@ bool LinearMemoryAllocator::commit(size_t const newPagedSize) {
   return true;
 }
 
-uint32_t LinearMemoryAllocator::getLinearMemorySize(uint32_t const baseDataSize) const VB_NOEXCEPT {
-  uint64_t const linearMemorySize{getMemoryUsage() - MemUtils::roundUpToOSMemoryPageSize(static_cast<size_t>(baseDataSize))};
+uint32_t LinearMemoryAllocator::getLinearMemorySize() const VB_NOEXCEPT {
+  uint64_t const linearMemorySize{getMemoryUsage() - pagedBasedataSize_};
   return static_cast<uint32_t>(linearMemorySize);
 }
 
