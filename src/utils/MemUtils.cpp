@@ -169,15 +169,15 @@ static void *alignedReduce(void *const ptr, size_t const size, size_t const alig
 /// @brief wrapper of mmap, throw std::bad_alloc when mmap failed
 /// @param addr bypass to mmap
 /// @param length bypass to mmap
-/// @param port bypass to mmap
+/// @param prot bypass to mmap
 /// @param flags bypass to mmap
 /// @param fd bypass to mmap
 /// @param offset bypass to mmap
 /// @return result of mmap when mmap success
 /// @throw throw std::bad_alloc when mmap failed
-static uint8_t *wrapperMmap(void *const addr, size_t const length, int32_t const port, int32_t const flags, int32_t const fd, off_t const offset) {
+static uint8_t *wrapperMmap(void *const addr, size_t const length, int32_t const prot, int32_t const flags, int32_t const fd, off_t const offset) {
   // coverity[autosar_cpp14_a16_2_3_violation]
-  void *const ptr{mmap(addr, length, port, flags, fd, offset)};
+  void *const ptr{mmap(addr, length, prot, flags, fd, offset)};
   // coverity[autosar_cpp14_a16_2_3_violation]
   // coverity[autosar_cpp14_a5_2_2_violation]
   // coverity[autosar_cpp14_m5_2_9_violation]
@@ -381,35 +381,42 @@ void memcpyAndClearInstrCache(uint8_t *const dest, uint8_t const *const source, 
   clearInstructionCache(dest, size);
 }
 
-MmapMemory allocPagedMemory(size_t const size) {
+MmapMemory allocPagedMemory(size_t const size, uint8_t const *const data) {
   MmapMemory mmapMemory{nullptr, -1};
 #ifdef VB_WIN32
   mmapMemory.ptr = allocAlignedMemory(size, getOSMemoryPageSize());
   return mmapMemory;
 #else
   size_t const alignedSize{roundUpToOSMemoryPageSize(size)};
-#ifdef __linux__
+#if defined(__linux__) || defined(__QNX__)
   static std::atomic<uint64_t> fileCounter{0U}; ///< counter of mmap files
   // coverity[autosar_cpp14_a16_2_3_violation]
   std::stringstream ss{};
   uint64_t const localCounter{fileCounter};
   fileCounter++;
   ss << getpid() << "_vb_wasm_mem" << localCounter;
+  #if defined(__linux__)
   int32_t const jitCodeMapFile{
       // coverity[autosar_cpp14_a16_2_3_violation]
       static_cast<int32_t>(syscall(__NR_memfd_create, ss.str().c_str(), MFD_CLOEXEC))}; // NOLINT(cppcoreguidelines-pro-type-vararg)
+  #elif defined __QNX__
+    // Instead of SHM_ANON, let's name the file
+    int32_t const jitCodeMapFile{shm_open(ss.str().c_str(), O_RDWR | O_CREAT, 0600)};
+  #endif
+
   if (jitCodeMapFile == -1) {
     return mmapMemory;
   }
 
   int32_t error{ftruncate(jitCodeMapFile, static_cast<off_t>(alignedSize))};
 
-  if (error != 0) {
+  if ((error != 0) || (write(jitCodeMapFile, data, size) == -1)) {
     error = close(jitCodeMapFile);
     static_cast<void>(error);
     assert(error == 0 && "close file failed");
     return mmapMemory;
   }
+
   // coverity[autosar_cpp14_a16_2_3_violation]
   constexpr int32_t flag{MAP_SHARED};
   mmapMemory.fd = jitCodeMapFile;
@@ -419,7 +426,11 @@ MmapMemory allocPagedMemory(size_t const size) {
   constexpr int32_t flag = static_cast<int32_t>(uflag);
 #endif
   // coverity[autosar_cpp14_a16_2_3_violation]
-  constexpr uint32_t prot{static_cast<uint32_t>(PROT_READ) | static_cast<uint32_t>(PROT_WRITE)};
+  uint32_t prot{static_cast<uint32_t>(PROT_READ) | static_cast<uint32_t>(PROT_WRITE)};
+  if(data != nullptr)
+  {
+    prot = static_cast<uint32_t>(PROT_READ) | static_cast<uint32_t>(PROT_EXEC);
+  }
   mmapMemory.ptr = wrapperMmap(nullptr, alignedSize, static_cast<int32_t>(prot), static_cast<int32_t>(flag), mmapMemory.fd, 0);
 
   return mmapMemory;

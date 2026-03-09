@@ -113,10 +113,11 @@ struct MmapMemory final {
 /// @brief Allocate page aligned memory
 ///
 /// @param size size of to be allocated memory
+/// @param data pointer to be mapped as an anonymous file
 /// @throw std::bad_alloc memory allocation failed
 /// @return MmapMemory
 ///
-MmapMemory allocPagedMemory(size_t const size);
+MmapMemory allocPagedMemory(size_t const size, uint8_t const *const data = nullptr);
 ///
 /// @brief Free page aligned memory
 ///

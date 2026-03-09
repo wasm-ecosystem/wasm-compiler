@@ -57,22 +57,20 @@ void ExecutableMemory::init(uint8_t const *const data) {
     return;
   }
 
-  MemUtils::MmapMemory const mmapMemory{MemUtils::allocPagedMemory(size_)};
-  uint8_t *const readWriteMemory{mmapMemory.ptr};
+  MemUtils::MmapMemory const mmapMemory{MemUtils::allocPagedMemory(size_, data)};
+  uint8_t *const readWriteOrExecuteMemory{mmapMemory.ptr};
 
-  if (readWriteMemory != nullptr) {
+  if (readWriteOrExecuteMemory != nullptr) {
     fd_ = mmapMemory.fd;
-    MemUtils::memcpyAndClearInstrCache(readWriteMemory, data, size_);
+    data_ = readWriteOrExecuteMemory;
   } else {
     throw std::bad_alloc(); // GCOVR_EXCL_LINE
   }
 
-#ifdef __linux__
-  uint8_t *const readExecuteMemory{MemUtils::mapRXMemory(size_, fd_)};
-  data_ = readExecuteMemory;
-  MemUtils::freePagedMemory(readWriteMemory, size_);
+#if defined(__linux__) || defined(__QNX__)
+  MemUtils::clearInstructionCache(data_, size_);
 #else
-  data_ = readWriteMemory;
+  MemUtils::memcpyAndClearInstrCache(data_, data, size_);
   MemUtils::setPermissionRX(data_, size_);
 #endif
 }
