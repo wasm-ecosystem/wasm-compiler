@@ -388,20 +388,19 @@ MmapMemory allocPagedMemory(size_t const size, uint8_t const *const data) {
   return mmapMemory;
 #else
   size_t const alignedSize{roundUpToOSMemoryPageSize(size)};
-#if defined(__linux__) || defined(__QNX__)
-  static std::atomic<uint64_t> fileCounter{0U}; ///< counter of mmap files
-  // coverity[autosar_cpp14_a16_2_3_violation]
-  std::stringstream ss{};
-  uint64_t const localCounter{fileCounter};
-  fileCounter++;
-  ss << getpid() << "_vb_wasm_mem" << localCounter;
-  #if defined(__linux__)
-  int32_t const jitCodeMapFile{
+  #if defined(__linux__) || defined(__QNX__)
+    #if defined(__linux__)
+    static std::atomic<uint64_t> fileCounter{0U}; ///< counter of mmap files
+    // coverity[autosar_cpp14_a16_2_3_violation]
+    std::stringstream ss{};
+    uint64_t const localCounter{fileCounter};
+    fileCounter++;
+    ss << getpid() << "_vb_wasm_mem" << localCounter;
+    int32_t const jitCodeMapFile{
       // coverity[autosar_cpp14_a16_2_3_violation]
       static_cast<int32_t>(syscall(__NR_memfd_create, ss.str().c_str(), MFD_CLOEXEC))}; // NOLINT(cppcoreguidelines-pro-type-vararg)
   #elif defined __QNX__
-    // Instead of SHM_ANON, let's name the file
-    int32_t const jitCodeMapFile{shm_open(ss.str().c_str(), O_RDWR | O_CREAT, 0600)};
+    int32_t const jitCodeMapFile{SHM_ANON, O_RDWR | O_CREAT, 0600)};
   #endif
 
   if (jitCodeMapFile == -1) {
@@ -409,8 +408,7 @@ MmapMemory allocPagedMemory(size_t const size, uint8_t const *const data) {
   }
 
   int32_t error{ftruncate(jitCodeMapFile, static_cast<off_t>(alignedSize))};
-
-  if ((error != 0) || (write(jitCodeMapFile, data, size) == -1)) {
+  if ((error != 0) || (data == nullptr) || (write(jitCodeMapFile, data, size) == -1)) {
     error = close(jitCodeMapFile);
     static_cast<void>(error);
     assert(error == 0 && "close file failed");
@@ -418,13 +416,15 @@ MmapMemory allocPagedMemory(size_t const size, uint8_t const *const data) {
   }
 
   // coverity[autosar_cpp14_a16_2_3_violation]
-  constexpr int32_t flag{MAP_SHARED};
+  constexpr int32_t flag{MAP_PRIVATE};
   mmapMemory.fd = jitCodeMapFile;
-#else
-  mmapMemory.fd = -1;
-  constexpr uint32_t uflag = static_cast<uint32_t>(MAP_ANONYMOUS) | static_cast<uint32_t>(MAP_PRIVATE);
-  constexpr int32_t flag = static_cast<int32_t>(uflag);
-#endif
+
+  #else
+    mmapMemory.fd = -1;
+    constexpr uint32_t uflag = static_cast<uint32_t>(MAP_ANONYMOUS) | static_cast<uint32_t>(MAP_PRIVATE);
+    constexpr int32_t flag = static_cast<int32_t>(uflag);
+  #endif
+
   // coverity[autosar_cpp14_a16_2_3_violation]
   uint32_t prot{static_cast<uint32_t>(PROT_READ) | static_cast<uint32_t>(PROT_WRITE)};
   if(data != nullptr)
