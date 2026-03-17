@@ -130,7 +130,6 @@ public:
         ctx_{ctx},
 #if LINEAR_MEMORY_BOUNDS_CHECKS
         runtimeMemoryManager_{&runtimeMemoryAllocFncRaw, this},
-        maxDesiredRamOnMemoryExtendFailed_{0U},
 #endif
         debugBuild_{debugBuild},
         stackRecordCount_{stackRecordCount} {
@@ -596,7 +595,6 @@ private:
   std::mutex linearMemoryMutex_; ///< The mutex to protect linear memory realloc. Avoid raise condition when kill Wasm Module from other thread
 #endif
   vb::ActiveMemoryManager runtimeMemoryManager_; ///< The allocator for linear memory in active linear memory protection mode
-  uint64_t maxDesiredRamOnMemoryExtendFailed_;   ///< Maximum desired RAM size for the module in bytes
 #else
   vb::LinearMemoryAllocator linearMemoryAllocator_; ///< The allocator for linear memory in passive linear memory protection mode
 #endif

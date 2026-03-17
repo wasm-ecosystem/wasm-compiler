@@ -71,6 +71,9 @@ public:
   /// @brief Get current usable linear-memory size.
   /// @return Usable linear-memory size in bytes.
   uint32_t getLinearMemorySize() const VB_NOEXCEPT override;
+  /// @brief Get the maximal desired RAM when a memory extension failed.
+  /// @return Maximal requested total RAM in bytes that could not be fulfilled.
+  uint64_t getMaxDesiredRamOnMemoryExtendFailed() const VB_NOEXCEPT override;
   /// @brief Get currently allocated backing memory size.
   /// @return Total allocation size in bytes.
   uint32_t getAllocationSize() const VB_NOEXCEPT;
@@ -100,6 +103,8 @@ private:
   uint32_t allowedLinMemPages_;
   /// @brief Currently usable linear-memory size in bytes.
   uint32_t usableLinMemBytes_;
+  /// @brief Maximal requested total RAM in bytes that could not be fulfilled.
+  uint64_t maxDesiredRamOnMemoryExtendFailed_;
 };
 
 } // namespace vb

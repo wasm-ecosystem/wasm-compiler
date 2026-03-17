@@ -117,6 +117,13 @@ public:
   /// @return uint32_t Current usable linear-memory size in bytes
   ///
   virtual uint32_t getLinearMemorySize() const = 0;
+
+  ///
+  /// @brief Get the maximal desired RAM when a memory extension failed
+  ///
+  /// @return uint64_t Maximal requested total RAM in bytes that could not be fulfilled
+  ///
+  virtual uint64_t getMaxDesiredRamOnMemoryExtendFailed() const VB_NOEXCEPT = 0;
 };
 
 } // namespace vb

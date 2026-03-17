@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-#include "src/config.hpp"
-
-#ifndef JIT_TARGET_TRICORE
 #include <array>
 #include <atomic>
 #include <chrono>
@@ -33,10 +30,13 @@
 #include "WabtCmd.hpp"
 
 #include "src/WasmModule/WasmModule.hpp"
+#include "src/config.hpp"
 #include "src/core/common/function_traits.hpp"
 #include "src/core/runtime/TrapException.hpp"
 #include "src/utils/MemUtils.hpp"
 #include "src/utils/STDCompilerLogger.hpp"
+
+#if CXX_TARGET == JIT_TARGET
 
 static std::filesystem::path const getProjectRoot() {
   std::filesystem::path const currentFilePath(__FILE__);
@@ -435,6 +435,42 @@ TEST(TestWasmModule, testOutOfMemory) {
   module.start(stackTop);
   // NOLINTNEXTLINE(cppcoreguidelines-avoid-goto)
   ASSERT_THROW(module.callExportedFunctionWithName<0>(stackTop, "_start"), vb::TrapException);
+
+  vb::WasmModule::destroyEnvironment();
+}
+
+// NOLINTNEXTLINE(cert-err58-cpp)
+TEST(TestWasmModule, testGetMaxDesiredRamOnMemoryExtendFailed) {
+  vb::WasmModule::initEnvironment(&malloc, &realloc, &free);
+
+  vb::STDCompilerLogger logger{};
+
+  constexpr uint32_t address{0x30000};
+  constexpr uint32_t maxRam{0x30000};
+
+  vb::WasmModule module(maxRam, logger, false, nullptr, 0U);
+
+  std::string_view constexpr watStr = R"(
+  (module
+    (func $_start
+      i32.const 0x30000
+      i32.const 1
+      i32.store
+    )
+    (export "_start" (func $_start))
+    (memory 4 4)
+  )
+  )";
+
+  std::vector<uint8_t> const bytecode{vb::test::WabtCmd::loadWasmFromWat(watStr)};
+
+  module.initFromBytecode(vb::Span<const uint8_t>(bytecode.data(), bytecode.size()), vb::Span<vb::NativeSymbol const>{}, true);
+
+  uint8_t const *const stackTop{getStackTop()};
+  module.start(stackTop);
+  // NOLINTNEXTLINE(cppcoreguidelines-avoid-goto)
+  ASSERT_THROW(module.callExportedFunctionWithName<0>(stackTop, "_start"), vb::TrapException);
+  EXPECT_GT(module.getMaxDesiredRamOnMemoryExtendFailed(), address);
 
   vb::WasmModule::destroyEnvironment();
 }

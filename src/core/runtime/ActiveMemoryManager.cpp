@@ -36,13 +36,15 @@ ActiveMemoryManager::ActiveMemoryManager(ReallocFnc const extensionRequestPtr, v
       basedataStart_(nullptr),
       basedataSize_(0U),
       allowedLinMemPages_(0U),
-      usableLinMemBytes_(0U) {
+      usableLinMemBytes_(0U),
+      maxDesiredRamOnMemoryExtendFailed_(0U) {
 }
 
 void ActiveMemoryManager::init(uint32_t const basedataSize, uint32_t const initialLinMemPages) {
   basedataSize_ = basedataSize;
   allowedLinMemPages_ = initialLinMemPages;
   usableLinMemBytes_ = 0U;
+  maxDesiredRamOnMemoryExtendFailed_ = 0U;
 
   if (!ensureCapacityForLinearSize(0U)) {
     throw RuntimeError(ErrorCode::Could_not_extend_linear_memory);
@@ -115,6 +117,10 @@ uint32_t ActiveMemoryManager::getLinearMemorySize() const VB_NOEXCEPT {
   return usableLinMemBytes_;
 }
 
+uint64_t ActiveMemoryManager::getMaxDesiredRamOnMemoryExtendFailed() const VB_NOEXCEPT {
+  return maxDesiredRamOnMemoryExtendFailed_;
+}
+
 uint32_t ActiveMemoryManager::getAllocationSize() const VB_NOEXCEPT {
   return jobMemory_.size();
 }
@@ -126,12 +132,14 @@ uint8_t *const *ActiveMemoryManager::getBasedataStartPtrPtr() const VB_NOEXCEPT 
 bool ActiveMemoryManager::ensureCapacityForLinearSize(uint32_t const requiredLinearBytes) VB_NOEXCEPT {
   uint64_t const requiredTotalSize{static_cast<uint64_t>(basedataSize_) + static_cast<uint64_t>(requiredLinearBytes)};
   if (requiredTotalSize > UINT32_MAX) {
+    maxDesiredRamOnMemoryExtendFailed_ = requiredTotalSize;
     return false;
   }
 
   uint32_t roundedRequiredSize{static_cast<uint32_t>(requiredTotalSize)};
   if ((roundedRequiredSize & 1U) != 0U) {
     if (roundedRequiredSize == UINT32_MAX) {
+      maxDesiredRamOnMemoryExtendFailed_ = static_cast<uint64_t>(UINT32_MAX) + 1U;
       return false;
     }
     roundedRequiredSize++;
@@ -142,6 +150,7 @@ bool ActiveMemoryManager::ensureCapacityForLinearSize(uint32_t const requiredLin
   }
 
   if (!jobMemory_.hasExtensionRequest()) {
+    maxDesiredRamOnMemoryExtendFailed_ = static_cast<uint64_t>(roundedRequiredSize);
     return false;
   }
 
@@ -149,6 +158,8 @@ bool ActiveMemoryManager::ensureCapacityForLinearSize(uint32_t const requiredLin
   bool const success{(jobMemory_.data() != nullptr) && (jobMemory_.size() >= roundedRequiredSize)};
   if (success) {
     syncBasedataStart();
+  } else {
+    maxDesiredRamOnMemoryExtendFailed_ = static_cast<uint64_t>(roundedRequiredSize);
   }
   return success;
 }

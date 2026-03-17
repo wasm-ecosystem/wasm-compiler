@@ -221,7 +221,6 @@ void WasmModule::runtimeMemoryAllocFnc(ExtendableMemory &currentObject, uint32_t
   }
   if (minimumLength > maxRam_) {
     // out of limitation
-    maxDesiredRamOnMemoryExtendFailed_ = minimumLength;
     return;
   }
   // Current limitation of the runtime
@@ -243,7 +242,6 @@ void WasmModule::runtimeMemoryAllocFnc(ExtendableMemory &currentObject, uint32_t
     currentObject.reset(vb::pCast<uint8_t *const>(newPtr), minimumLength);
     return;
   }
-  maxDesiredRamOnMemoryExtendFailed_ = minimumLength;
 }
 #endif
 
@@ -315,7 +313,7 @@ void WasmModule::setupRuntime(Span<uint8_t const> const &compiledBinary, Span<Na
 
 #if LINEAR_MEMORY_BOUNDS_CHECKS
 uint64_t WasmModule::getMaxDesiredRamOnMemoryExtendFailed() const VB_NOEXCEPT {
-  return maxDesiredRamOnMemoryExtendFailed_;
+  return runtimeMemoryManager_.getMaxDesiredRamOnMemoryExtendFailed();
 }
 #else
 uint64_t WasmModule::getMaxDesiredRamOnMemoryExtendFailed() const VB_NOEXCEPT {

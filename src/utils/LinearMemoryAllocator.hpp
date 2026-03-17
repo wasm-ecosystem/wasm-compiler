@@ -111,7 +111,7 @@ public:
   void setMemoryLimit(uint64_t const memoryLimit);
 
   /// @brief get max desired RAM on memory extend failed
-  uint64_t getMaxDesiredRamOnMemoryExtendFailed() const VB_NOEXCEPT {
+  uint64_t getMaxDesiredRamOnMemoryExtendFailed() const VB_NOEXCEPT override {
     return maxDesiredRamOnMemoryExtendFailed_;
   }
 
