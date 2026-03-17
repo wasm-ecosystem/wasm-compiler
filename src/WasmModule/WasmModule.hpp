@@ -56,6 +56,10 @@
 #include "src/core/compiler/common/ManagedBinary.hpp"
 #include "src/core/runtime/Runtime.hpp"
 
+#if LINEAR_MEMORY_BOUNDS_CHECKS
+#include "src/core/runtime/ActiveMemoryManager.hpp"
+#endif
+
 #ifndef ENABLE_ADVANCED_APIS
 #define ENABLE_ADVANCED_APIS 0
 #endif
@@ -125,6 +129,7 @@ public:
         maxRam_{maxRam},
         ctx_{ctx},
 #if LINEAR_MEMORY_BOUNDS_CHECKS
+        runtimeMemoryManager_{&runtimeMemoryAllocFncRaw, this},
         maxDesiredRamOnMemoryExtendFailed_{0U},
 #endif
         debugBuild_{debugBuild},
@@ -590,7 +595,8 @@ private:
 #ifndef JIT_TARGET_TRICORE
   std::mutex linearMemoryMutex_; ///< The mutex to protect linear memory realloc. Avoid raise condition when kill Wasm Module from other thread
 #endif
-  uint64_t maxDesiredRamOnMemoryExtendFailed_; ///< Maximum desired RAM size for the module in bytes
+  vb::ActiveMemoryManager runtimeMemoryManager_; ///< The allocator for linear memory in active linear memory protection mode
+  uint64_t maxDesiredRamOnMemoryExtendFailed_;   ///< Maximum desired RAM size for the module in bytes
 #else
   vb::LinearMemoryAllocator linearMemoryAllocator_; ///< The allocator for linear memory in passive linear memory protection mode
 #endif

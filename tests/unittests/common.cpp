@@ -16,7 +16,9 @@
 
 #include "common.hpp"
 
-#if !LINEAR_MEMORY_BOUNDS_CHECKS
+#if LINEAR_MEMORY_BOUNDS_CHECKS
+#include "src/core/runtime/ActiveMemoryManager.hpp"
+#else
 #include "src/utils/LinearMemoryAllocator.hpp"
 #endif
 
@@ -25,17 +27,18 @@ namespace test {
 
 Runtime createRuntime(ExecutableMemory const &executableMemory) {
 #if LINEAR_MEMORY_BOUNDS_CHECKS
-  return Runtime{executableMemory,
-                 [](vb::ExtendableMemory &currentObject, uint32_t minimumLength, void *const ctx) {
-                   static_cast<void>(ctx);
-                   if (minimumLength == 0) {
-                     free(currentObject.data());
-                   } else {
-                     minimumLength = std::max(minimumLength, static_cast<uint32_t>(1000U)) * 2U;
-                     currentObject.reset(vb::pCast<uint8_t *>(realloc(currentObject.data(), minimumLength)), minimumLength);
-                   }
-                 },
-                 nullptr};
+  static ActiveMemoryManager activeMemoryManager{[](vb::ExtendableMemory &currentObject, uint32_t minimumLength, void *const ctx) {
+                                                   static_cast<void>(ctx);
+                                                   if (minimumLength == 0) {
+                                                     free(currentObject.data());
+                                                   } else {
+                                                     minimumLength = std::max(minimumLength, static_cast<uint32_t>(1000U)) * 2U;
+                                                     currentObject.reset(vb::pCast<uint8_t *>(realloc(currentObject.data(), minimumLength)),
+                                                                         minimumLength);
+                                                   }
+                                                 },
+                                                 nullptr};
+  return Runtime{executableMemory, activeMemoryManager, nullptr};
 #else
   static LinearMemoryAllocator linearMemoryAllocator;
   return Runtime{executableMemory, linearMemoryAllocator, nullptr};

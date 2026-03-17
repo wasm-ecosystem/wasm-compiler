@@ -72,11 +72,7 @@ public:
       lhs.queuedStartFncOffset_ = rhs.queuedStartFncOffset_;
       // coverity[autosar_cpp14_a8_4_5_violation]
       lhs.binaryModule_ = rhs.binaryModule_;
-#if LINEAR_MEMORY_BOUNDS_CHECKS
-      lhs.jobMemory_ = std::move(rhs.jobMemory_);
-#else
       lhs.memoryManager_ = rhs.memoryManager_;
-#endif
     }
   }
 
@@ -84,64 +80,53 @@ public:
 
   /// @brief Construct a new default runtime
   // coverity[autosar_cpp14_a12_1_5_violation]
-  inline Runtime() VB_NOEXCEPT : disabled_(true), queuedStartFncOffset_(0U), binaryModule_() {
+  inline Runtime() VB_NOEXCEPT : disabled_(true), queuedStartFncOffset_(0U), memoryManager_(nullptr), binaryModule_() {
   }
 
   ///
-  /// @brief Construct a new runtime from a binary and a realloc-like function for allocation of the job memory
+  /// @brief Construct a new runtime instance from a binary and an allocator
   ///
   /// @tparam Binary Input binary type. Any class that implements data() (returning a uint8_t *) and size()
   /// @param module Input binary; executable produced by the compiler
-  /// @param jobMemoryReallocFnc A realloc-like function for allocation of the job memory
+  /// @param memoryManager Memory manager object; e.g. an instance of ActiveMemoryManager
   /// @param ctx Custom context for import functions
   template <typename Binary>
-  Runtime(Binary const &module, ReallocFnc jobMemoryReallocFnc, void *const ctx)
-      : disabled_(false), queuedStartFncOffset_(0U), jobMemory_{ExtendableMemory(jobMemoryReallocFnc, nullptr, 0U, ctx)}, binaryModule_() {
-    initRuntime(Span<const uint8_t>{module.data(), module.size()}, Span<NativeSymbol const>{}, ctx);
+  Runtime(Binary const &module, IMemoryManager &memoryManager, void *const ctx)
+      : Runtime(Span<uint8_t const>{module.data(), module.size()}, memoryManager, Span<NativeSymbol const>{}, ctx) {
   }
 
   ///
-  /// @brief Construct a new runtime instance from a binary, a realloc-like function for allocation of the job memory
+  /// @brief Construct a new runtime instance from a binary, an allocator
   /// and a list of NativeSymbols that should be linked dynamically
   ///
   /// @tparam Binary Input binary type. Any class that implements data() (returning a uint8_t *) and size()
   /// @tparam SymbolList NativeSymbol list type. Any class that implements data() (returning a NativeSymbol *) and
   /// size()
   /// @param module Input binary; executable produced by the compiler
-  /// @param jobMemoryReallocFnc A realloc-like function for allocation of the job memory
+  /// @param memoryManager Memory manager object; e.g. an instance of ActiveMemoryManager
   /// @param ctx Custom context for callback functions
   /// @param dynamicallyLinkedSymbols List of host functions that should be linked dynamically
   template <typename Binary, typename SymbolList>
-  Runtime(Binary const &module, ReallocFnc jobMemoryReallocFnc, SymbolList const &dynamicallyLinkedSymbols, void *const ctx)
-      : disabled_(false), queuedStartFncOffset_(0U), jobMemory_{ExtendableMemory(jobMemoryReallocFnc, nullptr, 0U, ctx)}, binaryModule_() {
-    initRuntime(Span<const uint8_t>{module.data(), module.size()},
-                Span<NativeSymbol const>(dynamicallyLinkedSymbols.data(), dynamicallyLinkedSymbols.size()), ctx);
+  Runtime(Binary const &module, IMemoryManager &memoryManager, SymbolList const &dynamicallyLinkedSymbols, void *const ctx)
+      : Runtime(Span<uint8_t const>{module.data(), module.size()}, memoryManager,
+                Span<NativeSymbol const>{dynamicallyLinkedSymbols.data(), dynamicallyLinkedSymbols.size()}, ctx) {
   }
 
   ///
-  /// @brief Construct a new runtime instance from a binary, a realloc-like function for allocation of the job memory
+  /// @brief Construct a new runtime instance from a binary, an allocator
   /// and a list of NativeSymbols that should be linked dynamically
   ///
   /// @param module Input binary; executable produced by the compiler
-  /// @param jobMemoryReallocFnc A realloc-like function for allocation of the job memory
+  /// @param memoryManager Memory manager object; e.g. an instance of ActiveMemoryManager
   /// @param dynamicallyLinkedSymbols List of host functions that should be linked dynamically
   /// @param ctx Custom context
-  Runtime(Span<uint8_t const> const &module, ReallocFnc const jobMemoryReallocFnc,
-          Span<NativeSymbol const> const &dynamicallyLinkedSymbols = Span<NativeSymbol const>(), void *const ctx = nullptr)
-      : disabled_(false), queuedStartFncOffset_(0U), jobMemory_{ExtendableMemory(jobMemoryReallocFnc, nullptr, 0U, ctx)}, binaryModule_() {
-    initRuntime(module, dynamicallyLinkedSymbols, ctx);
-  }
-
-  ///
-  /// @brief Initialize a new runtime instance from a binary, a realloc-like function for allocation of the job memory
-  /// and a list of NativeSymbols that should be linked dynamically
-  ///
-  /// @param module Input binary; executable produced by the compiler
-  /// @param dynamicallyLinkedSymbols List of host functions that should be linked dynamically
-  /// @param ctx Custom context for import functions
-  inline void initRuntime(Span<uint8_t const> const &module, Span<NativeSymbol const> const &dynamicallyLinkedSymbols, void *const ctx) {
+  Runtime(Span<uint8_t const> const &module, IMemoryManager &memoryManager, Span<NativeSymbol const> const &dynamicallyLinkedSymbols,
+          void *const ctx) VB_THROW : disabled_(false),
+                                      queuedStartFncOffset_(0U),
+                                      memoryManager_(&memoryManager),
+                                      binaryModule_() {
     binaryModule_.init(module);
-    jobMemory_.resize(8U);
+    memoryManager.init(getBasedataLength(), getInitialLinMemSizeInPages());
     init(dynamicallyLinkedSymbols, ctx);
   }
 
@@ -280,9 +265,7 @@ public:
   /// in the constructor of the runtime.
   ///
   /// @return uint32_t Size of the underlying allocation for the job memory in bytes
-  inline uint32_t getAllocationSize() const VB_NOEXCEPT {
-    return jobMemory_.size();
-  }
+  uint32_t getAllocationSize() const VB_NOEXCEPT;
 
   ///
   /// @brief Calls the ReallocFnc with minimumLength equal to the basedata size.
@@ -376,11 +359,11 @@ public:
   /// This makes sure linear memory is available up to the given offset.
   ///
   /// @param offset Linear-memory offset that must be usable
-  /// @return bool Whether the probe was successful
-  inline bool probeLinearMemory(uint32_t const offset) const VB_NOEXCEPT {
-    bool const success{memoryManager_->probe(offset)};
+  /// @return IMemoryManager::ProbeResult Probe outcome
+  inline IMemoryManager::ProbeResult probeLinearMemory(uint32_t const offset) const VB_NOEXCEPT {
+    IMemoryManager::ProbeResult const probeResult{memoryManager_->probe(offset)};
     updateLinearMemorySizeForDebugger();
-    return success;
+    return probeResult;
   }
   /// @brief Decrease the currently used/committed linear-memory size
   ///
@@ -578,14 +561,9 @@ private:
   ///
   uint32_t queuedStartFncOffset_;
 
-#if LINEAR_MEMORY_BOUNDS_CHECKS
-  ExtendableMemory jobMemory_; ///< ExtendableMemory representing the job memory where basedata (link data, globals,
-                               ///< dynamic imports etc.) and the linear memory are stored
-#else
-  IMemoryManager *memoryManager_; ///< Memory manager that is used to manage the linear memory of the WebAssembly module (e.g. an instance of
-                                  ///< LinearMemoryAllocator)
-#endif
-  BinaryModule binaryModule_; ///< binary module of current JIT code
+  IMemoryManager *memoryManager_; ///< Memory manager that is used to manage the linear memory of the WebAssembly module
+                                  ///< (e.g. an instance of LinearMemoryAllocator)
+  BinaryModule binaryModule_;     ///< binary module of current JIT code
 
   ///
   /// @brief Initialize the runtime
@@ -696,6 +674,12 @@ private:
   /// @brief Update the reference to the runtime instance in the basedata which can be used by the MemoryHelper
   ///
   void updateRuntimeReference() const VB_NOEXCEPT;
+
+#if LINEAR_MEMORY_BOUNDS_CHECKS
+  /// @brief Handle active-mode memory extension requests coming from generated code via MemoryHelper
+  ///
+  uint8_t *handleExtensionRequest(uint64_t const minLinMemLengthNeeded, uint32_t const basedataLength) const VB_NOEXCEPT;
+#endif
 
   ///
   /// @brief Set the pointer to the memory helper in the basedata so the WebAssembly code can call it

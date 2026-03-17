@@ -51,7 +51,9 @@
 #include <mutex>
 #endif
 
-#if LINEAR_MEMORY_BOUNDS_CHECKS == 0
+#if LINEAR_MEMORY_BOUNDS_CHECKS
+#include "src/core/runtime/ActiveMemoryManager.hpp"
+#else
 #include "src/utils/LinearMemoryAllocator.hpp"
 #endif
 
@@ -297,7 +299,7 @@ void WasmModule::setupRuntime(Span<uint8_t const> const &compiledBinary, Span<Na
   machineCode = compiledBinary;
 #endif
 #if LINEAR_MEMORY_BOUNDS_CHECKS
-  runtime_ = vb::Runtime(machineCode, &runtimeMemoryAllocFncRaw, linkedFunctions, this);
+  runtime_ = vb::Runtime(machineCode, runtimeMemoryManager_, linkedFunctions, this);
 #else
   linearMemoryAllocator_.setMemoryLimit(maxRam_);
   // coverity[autosar_cpp14_a15_0_2_violation]

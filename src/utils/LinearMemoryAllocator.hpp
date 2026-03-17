@@ -85,7 +85,7 @@ public:
   bool shrink(uint32_t const minimumLength) VB_NOEXCEPT override;
 
   /// @brief see @b IMemoryManager
-  bool probe(uint32_t const linMemOffset) VB_NOEXCEPT override;
+  ProbeResult probe(uint32_t const linMemOffset) VB_NOEXCEPT override;
 
   ///
   /// @brief Get the Memory Usage

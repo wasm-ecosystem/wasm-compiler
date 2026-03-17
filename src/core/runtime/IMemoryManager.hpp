@@ -36,6 +36,13 @@ namespace vb {
 /// These sizes are intentionally different. The usable size is smaller than the allowed size.
 class IMemoryManager {
 public:
+  /// @brief Result of probing a linear-memory offset.
+  enum class ProbeResult : uint8_t {
+    Ok,                ///< Offset is usable.
+    AllocationFailure, ///< Offset is in allowed range but required allocation failed.
+    OutOfBounds,       ///< Offset exceeds the current allowed linear-memory range.
+  };
+
   IMemoryManager() VB_NOEXCEPT = default;
   /// @brief destructor
   // coverity[autosar_cpp14_a12_8_6_violation]
@@ -98,10 +105,11 @@ public:
   /// but never beyond the current allowed size.
   ///
   /// @param linMemOffset Linear-memory offset to validate and make usable if needed
-  /// @return true The offset is usable after probing
-  /// @return false The offset could not be made usable
+  /// @return ProbeResult::Ok The offset is usable after probing
+  /// @return ProbeResult::AllocationFailure The offset is in allowed range but memory could not be made usable
+  /// @return ProbeResult::OutOfBounds The offset exceeds the currently allowed linear-memory range
   ///
-  virtual bool probe(uint32_t const linMemOffset) = 0;
+  virtual ProbeResult probe(uint32_t const linMemOffset) = 0;
 
   ///
   /// @brief Get the current usable linear-memory size

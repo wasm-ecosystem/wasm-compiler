@@ -42,6 +42,10 @@
 #include "src/core/runtime/IMemoryManager.hpp"
 #include "src/core/runtime/MemoryHelper.hpp"
 
+#if LINEAR_MEMORY_BOUNDS_CHECKS
+#include "src/core/runtime/ActiveMemoryManager.hpp"
+#endif
+
 #if defined(JIT_TARGET_TRICORE)
 #if TC_LINK_AUX_FNCS_DYNAMICALLY
 #include "src/core/compiler/backend/tricore/tricore_aux.hpp"
@@ -52,10 +56,30 @@ namespace vb {
 
 static_assert(sizeof(WasmValue) == 8U, "WasmValue size mismatch");
 
+/// @brief Map linear-memory probe results to runtime error codes.
+/// @param probeResult Result returned by IMemoryManager::probe.
+/// @return Matching runtime ErrorCode for trap/reporting paths.
+static ErrorCode mapProbeResultToErrorCode(IMemoryManager::ProbeResult const probeResult) VB_NOEXCEPT {
+  if (probeResult == IMemoryManager::ProbeResult::OutOfBounds) {
+    return ErrorCode::Linear_memory_address_out_of_bounds;
+  }
+  return ErrorCode::Could_not_extend_linear_memory;
+}
+
+#if LINEAR_MEMORY_BOUNDS_CHECKS
+/// @brief Cast generic memory-manager interface to active implementation.
+/// @param manager Runtime memory-manager instance.
+/// @return ActiveMemoryManager pointer used by bounds-check build.
+static ActiveMemoryManager const *asActiveMemoryManager(IMemoryManager const *const manager) VB_NOEXCEPT {
+  // LINEAR_MEMORY_BOUNDS_CHECKS can only use ActiveMemoryManager
+  return pCast<ActiveMemoryManager const *>(manager);
+}
+#endif
+
 #if LINEAR_MEMORY_BOUNDS_CHECKS
 Runtime::Runtime(Runtime &&other) VB_NOEXCEPT : disabled_(other.disabled_),
                                                 queuedStartFncOffset_(other.queuedStartFncOffset_),
-                                                jobMemory_(std::move(other.jobMemory_)),
+                                                memoryManager_(other.memoryManager_),
                                                 // coverity[autosar_cpp14_a12_8_4_violation]
                                                 // coverity[autosar_cpp14_a8_4_5_violation]
                                                 binaryModule_(other.binaryModule_) {
@@ -115,12 +139,6 @@ uint32_t Runtime::initializeModule(Span<NativeSymbol const> const &dynamicallyLi
   uint32_t const linkDataLength{binaryModule_.getLinkDataLength()};
 
   uint32_t const basedataLength{Basedata::length(linkDataLength, binaryModule_.getStacktraceEntryCount())};
-
-  // Check if length of memory region is enough to fit base data (link data etc.) in there, without linear memory
-  // contents
-#if LINEAR_MEMORY_BOUNDS_CHECKS
-  jobMemory_.resize(basedataLength);
-#endif
 
   writeToPtr<uintptr_t>(pAddI(getMemoryBase(), basedataLength - static_cast<uint32_t>(Basedata::FromEnd::binaryModuleStartAddressOffset)),
                         pToNum(binaryModule_.getStartAddress()));
@@ -216,17 +234,17 @@ uint32_t Runtime::initializeModule(Span<NativeSymbol const> const &dynamicallyLi
     uint32_t const maximumSegmentOffset{dataSegmentStart + dataSegmentSize};
     // Check if linear memory can accommodate this segment, otherwise request extension
     if (maximumSegmentOffset > maximumDataOffset) {
-      // extend linear memory if needed.
 #if LINEAR_MEMORY_BOUNDS_CHECKS
-      jobMemory_.resize(linearMemoryBaseOffset + maximumSegmentOffset);
-      // Init linear memory data to zeros
-      static_cast<void>(std::memset(pAddI(getMemoryBase(), linearMemoryBaseOffset + maximumDataOffset), 0x00,
-                                    static_cast<size_t>(maximumSegmentOffset) - static_cast<size_t>(maximumDataOffset)));
-#else  // LINEAR_MEMORY_BOUNDS_CHECKS
-      if (!probeLinearMemory(maximumSegmentOffset - 1U)) {
-        throw RuntimeError(ErrorCode::Could_not_extend_linear_memory);
+      IMemoryManager::ProbeResult const probeResult{memoryManager_->probe(maximumSegmentOffset - 1U)};
+      if (probeResult != IMemoryManager::ProbeResult::Ok) {
+        throw RuntimeError(mapProbeResultToErrorCode(probeResult));
       }
-#endif // LINEAR_MEMORY_BOUNDS_CHECKS
+#else
+      IMemoryManager::ProbeResult const probeResult{probeLinearMemory(maximumSegmentOffset - 1U)};
+      if (probeResult != IMemoryManager::ProbeResult::Ok) {
+        throw RuntimeError(mapProbeResultToErrorCode(probeResult));
+      }
+#endif
       maximumDataOffset = maximumSegmentOffset;
     }
     if (dataSegmentSize > 0U) {
@@ -364,10 +382,14 @@ void Runtime::clearTraceBuffer() VB_NOEXCEPT {
 
 // coverity[autosar_cpp14_a8_4_7_violation]
 void Runtime::setTraceBuffer(Span<uint32_t> buffer) VB_NOEXCEPT {
-#if CXX_TARGET == ISA_AARCH64
-  assert((pToNum(buffer.data()) % 16U) == 0U && "arm stp ldp requires 16 byte alignment");
-#endif
   assert(buffer.size() <= UINT32_MAX && buffer.size() >= 2U);
+#if CXX_TARGET == ISA_AARCH64
+  // AArch64 backend emits 64-bit accesses to trace entries, so keep at least 8-byte alignment.
+  if ((pToNum(&buffer[2]) % alignof(uint64_t)) != 0U) {
+    clearTraceBuffer();
+    return;
+  }
+#endif
   buffer[0] = static_cast<uint32_t>((buffer.size() >> 1U) - 1U);
   writeToPtr<uint32_t *>(pSubI(getLinearMemoryBase(), Basedata::FromEnd::traceBufferPtr), &buffer[2]);
 }
@@ -443,7 +465,8 @@ void Runtime::updateRuntimeReference() const VB_NOEXCEPT {
   void const *const ptr{pCast<void const *>(this)};
   writeToPtr<void const *>(pSubI(getLinearMemoryBase(), Basedata::FromEnd::runtimePtrOffset), ptr);
 #if LINEAR_MEMORY_BOUNDS_CHECKS
-  void const *const jobMemoryDataPtrPtr{pCast<void const *>(&this->jobMemory_.data_)};
+  ActiveMemoryManager const *const activeManager{asActiveMemoryManager(memoryManager_)};
+  void const *const jobMemoryDataPtrPtr{pCast<void const *>(activeManager->getBasedataStartPtrPtr())};
   writeToPtr<void const *>(pSubI(getLinearMemoryBase(), Basedata::FromEnd::jobMemoryDataPtrPtr), jobMemoryDataPtrPtr);
 #endif
 }
@@ -454,22 +477,20 @@ uint32_t Runtime::getLinearMemorySizeInPages() const VB_NOEXCEPT {
 
 #if LINEAR_MEMORY_BOUNDS_CHECKS
 uint64_t Runtime::getMemoryUsage() const VB_NOEXCEPT {
-  uint32_t const basedataLength{getBasedataLength()};
-  uint32_t const linearMemoryLength{
-      readFromPtr<uint32_t>(pAddI(getMemoryBase(), basedataLength - static_cast<uint32_t>(Basedata::FromEnd::actualLinMemByteSize)))};
-  return static_cast<uint64_t>(linearMemoryLength) + basedataLength;
+  return static_cast<uint64_t>(memoryManager_->getLinearMemorySize()) + getBasedataLength();
+}
+
+uint32_t Runtime::getAllocationSize() const VB_NOEXCEPT {
+  ActiveMemoryManager const *const activeManager{asActiveMemoryManager(memoryManager_)};
+  if (activeManager != nullptr) {
+    return activeManager->getAllocationSize();
+  }
+  return memoryManager_->getLinearMemorySize();
 }
 
 void Runtime::reallocShrinkToBasedataSize() {
-  // New memory region must be at least of getBasedataLength() size to fit job basedata into. Use getBasedataLength to
-  // size the memory region.
-  uint32_t const basedataLength{getBasedataLength()};
-  shrinkToSize(basedataLength);
-
-  // Some active data has been removed, this is an unsafe procedure
-  if (jobMemory_.size() < getMemoryUsage()) {
-    writeToPtr<uint32_t>(pSubI(getLinearMemoryBase(), Basedata::FromEnd::actualLinMemByteSize), jobMemory_.size() - basedataLength);
-  }
+  // Keep basedata only.
+  shrinkToSize(0U);
 }
 
 void Runtime::reallocShrinkToActiveSize() {
@@ -482,15 +503,10 @@ void Runtime::reallocShrinkToActiveSize() {
 // coverity[autosar_cpp14_a15_4_4_violation]
 void Runtime::shrinkToSize(uint32_t const minimumLength) {
 #if LINEAR_MEMORY_BOUNDS_CHECKS
-  if ((minimumLength < jobMemory_.size()) && jobMemory_.hasExtensionRequest()) {
-    uint32_t const metadataLength{getBasedataLength()};
-    uint32_t const minMemLength{metadataLength + minimumLength};
-    jobMemory_.extensionRequest(minMemLength);
-    writeToPtr<uint32_t>(pSubI(pAddI(getMemoryBase(), metadataLength), Basedata::FromEnd::actualLinMemByteSize), minimumLength);
-    if ((getMemoryBase() == nullptr) || (jobMemory_.size() < minimumLength)) {
-      throw RuntimeError(ErrorCode::Memory_reallocation_failed);
-    }
+  if (!memoryManager_->shrink(minimumLength)) {
+    throw RuntimeError(ErrorCode::Memory_reallocation_failed);
   }
+  writeToPtr<uint32_t>(pSubI(getLinearMemoryBase(), Basedata::FromEnd::actualLinMemByteSize), memoryManager_->getLinearMemorySize());
 #else
   static_cast<void>(shrinkLinearMemory(minimumLength));
 #endif
@@ -595,11 +611,7 @@ void Runtime::handleTrapCode(TrapCode const trapCode) const {
 }
 
 uint8_t *Runtime::getMemoryBase() const VB_NOEXCEPT {
-#if LINEAR_MEMORY_BOUNDS_CHECKS
-  uint8_t *const res{jobMemory_.data()};
-#else
   uint8_t *const res{memoryManager_->getBasedataStart()};
-#endif
   return res;
 }
 
@@ -611,26 +623,45 @@ uint8_t *Runtime::getLinearMemoryRegion(uint32_t const offset, uint32_t const si
   if (size != 0U) {
     uint64_t const maxAccessedByte{(static_cast<uint64_t>(offset) + size) - 1U};
 #if LINEAR_MEMORY_BOUNDS_CHECKS
-    uint32_t const metadataLength{getBasedataLength()};
-    uint8_t *const extensionResult{MemoryHelper::extensionRequest(maxAccessedByte + 1U, metadataLength, pAddI(getMemoryBase(), metadataLength))};
-
-    if (extensionResult == nullptr) {
-      throw RuntimeError(ErrorCode::Could_not_extend_linear_memory);
+    static_cast<void>(memoryManager_->extend(getLinearMemorySizeInPages()));
+    IMemoryManager::ProbeResult const probeResult{memoryManager_->probe(static_cast<uint32_t>(maxAccessedByte))};
+    if (probeResult != IMemoryManager::ProbeResult::Ok) {
+      throw RuntimeError(mapProbeResultToErrorCode(probeResult));
     }
-    if (extensionResult == numToP<uint8_t *>(~static_cast<uintptr_t>(0))) {
-      throw RuntimeError(ErrorCode::Linear_memory_address_out_of_bounds);
-    }
+    writeToPtr<uint32_t>(pSubI(getLinearMemoryBase(), Basedata::FromEnd::actualLinMemByteSize), memoryManager_->getLinearMemorySize());
 #else
-    if (maxAccessedByte >= (static_cast<uint64_t>(getLinearMemorySizeInPages()) * WasmConstants::wasmPageSize)) {
-      throw RuntimeError(ErrorCode::Linear_memory_address_out_of_bounds);
-    }
-    if (!probeLinearMemory(static_cast<uint32_t>(maxAccessedByte))) {
-      throw RuntimeError(ErrorCode::Could_not_extend_linear_memory);
+    IMemoryManager::ProbeResult const probeResult{probeLinearMemory(static_cast<uint32_t>(maxAccessedByte))};
+    if (probeResult != IMemoryManager::ProbeResult::Ok) {
+      throw RuntimeError(mapProbeResultToErrorCode(probeResult));
     }
 #endif
   }
   return pAddI(getLinearMemoryBase(), offset);
 }
+
+#if LINEAR_MEMORY_BOUNDS_CHECKS
+uint8_t *Runtime::handleExtensionRequest(uint64_t const minLinMemLengthNeeded, uint32_t const basedataLength) const VB_NOEXCEPT {
+  if ((minLinMemLengthNeeded + basedataLength) > UINT32_MAX) {
+    return nullptr;
+  }
+
+  if (minLinMemLengthNeeded == 0U) {
+    return getMemoryBase();
+  }
+
+  uint32_t const minimumLinearMemoryLengthNeeded{static_cast<uint32_t>(minLinMemLengthNeeded)};
+  static_cast<void>(memoryManager_->extend(getLinearMemorySizeInPages()));
+  IMemoryManager::ProbeResult const probeResult{memoryManager_->probe(minimumLinearMemoryLengthNeeded - 1U)};
+  if (probeResult == IMemoryManager::ProbeResult::OutOfBounds) {
+    return numToP<uint8_t *>(~static_cast<uintptr_t>(0));
+  }
+  if (probeResult == IMemoryManager::ProbeResult::AllocationFailure) {
+    return nullptr;
+  }
+  writeToPtr<uint32_t>(pSubI(getLinearMemoryBase(), Basedata::FromEnd::actualLinMemByteSize), memoryManager_->getLinearMemorySize());
+  return getMemoryBase();
+}
+#endif
 
 void Runtime::updateBinaryModule(BinaryModule const &module) const VB_NOEXCEPT {
   writeToPtr<uintptr_t>(getMemoryBase(), pToNum(module.getEndAddress()));

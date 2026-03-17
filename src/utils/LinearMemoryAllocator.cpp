@@ -137,26 +137,26 @@ bool LinearMemoryAllocator::shrink(uint32_t const minimumLength) VB_NOEXCEPT {
   }
 }
 
-bool LinearMemoryAllocator::probe(uint32_t const linMemOffset) VB_NOEXCEPT {
+IMemoryManager::ProbeResult LinearMemoryAllocator::probe(uint32_t const linMemOffset) VB_NOEXCEPT {
   if (virtualMemoryAllocator_.data() == nullptr) {
-    return false;
+    return ProbeResult::AllocationFailure;
   }
 
   size_t const linMemCommitedSize{virtualMemoryAllocator_.getCommitedSize() - pagedBasedataSize_};
   if (linMemOffset < linMemCommitedSize) {
     // Already commited
-    return true;
+    return ProbeResult::Ok;
   } else if (static_cast<size_t>(linMemOffset) < (static_cast<size_t>(linMemPages_) * static_cast<size_t>(WasmConstants::wasmPageSize))) {
     // Commit new pages
     try {
       size_t const newRuntimeMemorySize{pagedBasedataSize_ + MemUtils::roundUpToOSMemoryPageSize(static_cast<size_t>(linMemOffset) + 1U)};
-      return commit(newRuntimeMemorySize);
+      return commit(newRuntimeMemorySize) ? ProbeResult::Ok : ProbeResult::AllocationFailure;
       // coverity[autosar_cpp14_a15_3_4_violation]
     } catch (...) {
-      return false;
+      return ProbeResult::AllocationFailure;
     }
   } else {
-    return false;
+    return ProbeResult::OutOfBounds;
   }
 }
 

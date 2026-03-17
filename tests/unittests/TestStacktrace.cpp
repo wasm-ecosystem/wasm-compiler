@@ -28,6 +28,7 @@
 #include "src/core/runtime/Runtime.hpp"
 #include "src/core/runtime/TrapException.hpp"
 #include "src/utils/ExecutableMemory.hpp"
+#include "src/utils/SignalFunctionWrapper.hpp"
 
 #if CXX_TARGET == JIT_TARGET
 

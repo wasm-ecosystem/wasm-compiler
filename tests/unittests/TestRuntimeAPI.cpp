@@ -29,9 +29,14 @@
 #include "src/core/compiler/Compiler.hpp"
 #include "src/core/runtime/Runtime.hpp"
 #include "src/utils/ExecutableMemory.hpp"
-#include "src/utils/LinearMemoryAllocator.hpp"
 #include "src/utils/MemUtils.hpp"
 #include "src/utils/STDCompilerLogger.hpp"
+
+#if LINEAR_MEMORY_BOUNDS_CHECKS
+#include "src/core/runtime/ActiveMemoryManager.hpp"
+#else
+#include "src/utils/LinearMemoryAllocator.hpp"
+#endif
 
 #if CXX_TARGET == JIT_TARGET
 
@@ -66,7 +71,8 @@ TEST(TestRuntimeAPI, testGetMemoryUsage) {
 
   // Initialize the module, populate linear memory initial data etc.
 #if LINEAR_MEMORY_BOUNDS_CHECKS
-  vb::Runtime const runtime(executableMemory, memoryFnc);
+  vb::ActiveMemoryManager memoryManager{memoryFnc, nullptr};
+  vb::Runtime const runtime(executableMemory, memoryManager, nullptr);
   uint64_t const mem = runtime.getMemoryUsage();
   ASSERT_LE(mem, 200U);
 #else

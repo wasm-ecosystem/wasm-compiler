@@ -26,6 +26,7 @@
 #include "extensions/Tracing.hpp"
 
 #include "src/WasmModule/WasmModule.hpp"
+#include "src/utils/MemUtils.hpp"
 #include "src/utils/STDCompilerLogger.hpp"
 
 #if CXX_TARGET == JIT_TARGET

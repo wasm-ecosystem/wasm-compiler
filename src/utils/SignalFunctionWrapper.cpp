@@ -26,6 +26,7 @@
 #include "src/core/common/TrapCode.hpp"
 #include "src/core/common/WasmConstants.hpp"
 #include "src/core/common/util.hpp"
+#include "src/core/runtime/IMemoryManager.hpp"
 #include "src/core/runtime/Runtime.hpp"
 
 namespace vb {
@@ -72,7 +73,7 @@ int64_t SignalFunctionWrapper::getOffsetInLinearMemoryAllocation(void *const add
 }
 
 void SignalFunctionWrapper::probeLinearMemoryOffset() VB_NOEXCEPT {
-  if (!pRuntime_->probeLinearMemory(landingPadData_)) {
+  if (pRuntime_->probeLinearMemory(landingPadData_) != IMemoryManager::ProbeResult::Ok) {
     // Memory commit was not successful
     pRuntime_->tryTrap(TrapCode::LINMEM_COULDNOTEXTEND);
   }

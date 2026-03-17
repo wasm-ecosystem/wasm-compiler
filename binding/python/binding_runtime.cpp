@@ -42,7 +42,10 @@
 #if ACTIVE_STACK_OVERFLOW_CHECK
 #include "src/utils/StackTop.hpp"
 #endif
-#if !LINEAR_MEMORY_BOUNDS_CHECKS
+
+#if LINEAR_MEMORY_BOUNDS_CHECKS
+#include "src/core/runtime/ActiveMemoryManager.hpp"
+#else
 #include "src/utils/LinearMemoryAllocator.hpp"
 #endif
 
@@ -92,7 +95,7 @@ public:
     }});
 
 #if LINEAR_MEMORY_BOUNDS_CHECKS
-    runtime_ = Runtime(*executableMemory_, memoryFnc, dynamicallyLinkedSymbols, nullptr);
+    runtime_ = Runtime(*executableMemory_, activeMemoryManager_, dynamicallyLinkedSymbols, nullptr);
 #if ACTIVE_STACK_OVERFLOW_CHECK
     runtime_.setStackFence(getStackTop());
 #endif // ACTIVE_STACK_OVERFLOW_CHECK
@@ -235,7 +238,9 @@ public:
   }
 
 private:
-#if !LINEAR_MEMORY_BOUNDS_CHECKS
+#if LINEAR_MEMORY_BOUNDS_CHECKS
+  ActiveMemoryManager activeMemoryManager_{memoryFnc, nullptr};
+#else
   LinearMemoryAllocator allocator_;
 #endif
   Runtime runtime_;

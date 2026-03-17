@@ -195,6 +195,7 @@ template <typename TargetType, typename SourceType> inline TargetType pCast(Sour
 // coverity[autosar_cpp14_a16_7_1_violation]
 #pragma GCC diagnostic ignored "-Wcast-align"
 #endif
+  // coverity[autosar_cpp14_m5_2_3_violation]
   // coverity[autosar_cpp14_m5_2_8_violation]
   // coverity[autosar_cpp14_m5_2_9_violation]
   // coverity[autosar_cpp14_a5_2_4_violation]
