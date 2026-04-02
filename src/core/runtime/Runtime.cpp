@@ -744,12 +744,13 @@ uint32_t Runtime::findExportedGlobalByName(char const *const name, size_t nameLe
       return static_cast<uint32_t>(pSubAddr(binaryModule_.getEndAddress(), exportedGlobalCursor));
     }
 
-    exportedGlobalCursor = pSubI(exportedGlobalCursor, 2U); // Padding
-    bool const isMutable{readNextValue<bool>(&exportedGlobalCursor)};
+    exportedGlobalCursor = pSubI(exportedGlobalCursor, 2U);                                 // Padding OPBVEG2
+    SignatureType const signatureType{readNextValue<SignatureType>(&exportedGlobalCursor)}; // OPBVEG1
+    bool const isMutable{readNextValue<bool>(&exportedGlobalCursor)};                       // OPBVEG0
+
     if (isMutable) {
       exportedGlobalCursor = pSubI(exportedGlobalCursor, 4U);
     } else {
-      SignatureType const signatureType{readNextValue<SignatureType>(&exportedGlobalCursor)};
       exportedGlobalCursor =
           pSubI(exportedGlobalCursor, ((signatureType == SignatureType::I32) || (signatureType == SignatureType::F32)) ? 4_U32 : 8_U32);
     }

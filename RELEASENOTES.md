@@ -16,6 +16,7 @@
 - Fix SPDX format
 - Fix encoding compatibility
 - Fixed wrong machine type for type_cast instruction
+- Fix missed signatureType in findGlobalByName
 - x86_64 backend: 
   - fix wrong register selection of f32/f64 max/min.
 - Tricore backend:

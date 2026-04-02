@@ -474,4 +474,28 @@ TEST(TestWasmModule, testGetMaxDesiredRamOnMemoryExtendFailed) {
 
   vb::WasmModule::destroyEnvironment();
 }
+
+// NOLINTNEXTLINE(cert-err58-cpp)
+TEST(TestWasmModule, testGetExportedGlobalByName) {
+  vb::WasmModule::initEnvironment(&malloc, &realloc, &free);
+
+  std::filesystem::path const wasmPath = getWasmTestCasesDir(getProjectRoot()) / "globexport.wasm";
+
+  vb::STDCompilerLogger logger{};
+
+  constexpr uint32_t maxRam{16U * 4096U * 2U};
+
+  vb::WasmModule module(maxRam, logger, true, nullptr, 0U);
+
+  std::vector<uint8_t> const bytecode{readWasmFile(wasmPath)};
+
+  module.initFromBytecode(vb::Span<const uint8_t>(bytecode.data(), bytecode.size()), vb::Span<vb::NativeSymbol const>{}, true);
+
+  uint8_t const *const stackTop{getStackTop()};
+  module.start(stackTop);
+
+  EXPECT_EQ(module.getExportedGlobalByName<int32_t>("muta").getValue(), -12);
+
+  vb::WasmModule::destroyEnvironment();
+}
 #endif
