@@ -1319,7 +1319,7 @@ void Backend::emitV1ImportAdapterImpl(uint32_t const fncIndex) {
 void Backend::emitV2ImportAdapterImpl(uint32_t const fncIndex) const {
   static_cast<void>(fncIndex);
   static_cast<void>(this);
-  // Need handle muti return values to wasm style
+  // Need handle multi return values to wasm style
   throw FeatureNotSupportedException(ErrorCode::Not_implemented);
 }
 
@@ -1359,7 +1359,7 @@ void Backend::emitRawFunctionCall(uint32_t const fncIndex) {
 #endif
 
     // We have to call an actual C++ host function
-    NativeSymbol const &nativeSymbol{moduleInfo_.importSymbols[impFuncDef.symbolIndex]};
+    NativeSymbol const &nativeSymbol{moduleInfo_.getImportSymbol(impFuncDef.symbolIndex)};
     if (nativeSymbol.linkage == NativeSymbol::Linkage::STATIC) {
       // A statically linked symbol where the address is known at compile time
       // Load the address as a constant into RAX and call it

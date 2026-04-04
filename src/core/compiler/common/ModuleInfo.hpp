@@ -120,7 +120,21 @@ class ModuleInfo final {
 public:
   BranchCondition lastBC = BranchCondition::UNCONDITIONAL; ///< Last branch condition
 
-  NativeSymbol const *importSymbols = nullptr; ///< Data to the array of NativeSymbols that are provided to the compiler for linkage
+  NativeSymbol const *importSymbols = nullptr;        ///< Data to the array of NativeSymbols that are provided to the compiler for linkage
+  uint32_t importSymbolsCount = 0U;                   ///< Number of import symbols
+  NativeSymbol const *defaultImportSymbols = nullptr; ///< Data to the array of default import symbols injected by the compiler
+  uint32_t defaultImportSymbolsCount = 0U;            ///< Number of default import symbols
+
+  /// @brief Get the NativeSymbol for a given symbol index
+  /// @details If index < importSymbolsCount, returns from importSymbols; otherwise from defaultImportSymbols
+  /// @param index The symbol index stored in ImpFuncDef::symbolIndex
+  /// @return Reference to the corresponding NativeSymbol
+  NativeSymbol const &getImportSymbol(uint32_t const index) const VB_NOEXCEPT {
+    if (index < importSymbolsCount) {
+      return importSymbols[index];
+    }
+    return defaultImportSymbols[(index - importSymbolsCount)];
+  }
 
   uint32_t numTypes = 0U;              ///< Number of function types defined in the Wasm module
   OffsetHandler<uint32_t> typeOffsets; ///< Offsets in the "types" OffsetHandler where the specific function type signatures start
@@ -152,10 +166,10 @@ public:
     ///
     /// @brief Which builtin function this imported function is representing
     ///
-    /// If this function is not representing a builtin function, this is set to BuiltinFunction::UNKNOWN which in turn
+    /// If this function is not representing a builtin function, this is set to BuiltinFunction::UNDEFINED which in turn
     /// means that this is a regular imported C++ function
     ///
-    BuiltinFunction builtinFunction = {};
+    BuiltinFunction builtinFunction = BuiltinFunction::UNDEFINED;
 
     ///
     /// @brief Whether this function is linked

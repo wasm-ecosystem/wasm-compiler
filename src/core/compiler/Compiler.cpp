@@ -67,8 +67,8 @@ Compiler::Compiler(ReallocFnc const compilerMemoryReallocFnc, AllocFnc const com
 } // namespace vb
 
 ManagedBinary Compiler::compile(Span<uint8_t const> const &bytecode, Span<NativeSymbol const> const &symbolList,
-                                Span<GlobalSymbol const> const &globalSymbols) {
-  Frontend frontend{bytecode, symbolList, globalSymbols, moduleInfo_, stack_, memory_, common_, *this, validationStack_};
+                                Span<GlobalSymbol const> const &globalSymbols, Span<NativeSymbol const> const &defaultImportSymbols) {
+  Frontend frontend{bytecode, symbolList, globalSymbols, moduleInfo_, stack_, memory_, common_, *this, validationStack_, defaultImportSymbols};
   frontend.startCompilation(forceHighRegisterPressureForTesting_);
 
   ManagedBinary outputBinary{output_.toManagedBinary()};

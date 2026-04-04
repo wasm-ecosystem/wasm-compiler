@@ -38,6 +38,12 @@
 #include "src/core/runtime/Runtime.hpp"
 #include "src/extensions/Extension.hpp"
 
+#if ENABLE_EXTENSIONS
+#include "extensions/MemoryDumpAPI.hpp"
+
+#include "src/core/common/function_traits.hpp"
+#endif
+
 #ifdef VB_WIN32_OR_POSIX
 #include <atomic>
 
@@ -58,6 +64,18 @@
 #endif
 
 namespace vb {
+
+namespace {
+
+#if ENABLE_EXTENSIONS
+// NOLINTNEXTLINE(cert-err58-cpp)
+NativeSymbol const defaultImportSymbolStorage{DYNAMIC_LINK("MemoryDump", "dumpMemoryRegion", vb::extension::MemoryDumpExtension::dumpMemoryRegion)};
+Span<NativeSymbol const> const defaultImportSymbols{&defaultImportSymbolStorage, 1U};
+#else
+Span<NativeSymbol const> const defaultImportSymbols{};
+#endif
+
+} // namespace
 
 WasmModule::MallocFunction WasmModule::mallocFunction_{nullptr};
 WasmModule::ReallocFunction WasmModule::reallocFunction_{nullptr};
@@ -122,7 +140,7 @@ WasmModule::CompileResult WasmModule::compile(Span<uint8_t const> const &bytecod
     compiler.enableDebugMode(&debugLineFnc);
   }
 
-  ManagedBinary module{compiler.compile(bytecode, linkedFunctions, linkedGlobals)};
+  ManagedBinary module{compiler.compile(bytecode, linkedFunctions, linkedGlobals, defaultImportSymbols)};
   ManagedBinary debugSymbol{compiler.retrieveDebugMap()};
 
   CompileResult compileResult{std::move(module), std::move(debugSymbol)};
@@ -297,11 +315,11 @@ void WasmModule::setupRuntime(Span<uint8_t const> const &compiledBinary, Span<Na
   machineCode = compiledBinary;
 #endif
 #if LINEAR_MEMORY_BOUNDS_CHECKS
-  runtime_ = vb::Runtime(machineCode, runtimeMemoryManager_, linkedFunctions, this);
+  runtime_ = vb::Runtime(machineCode, runtimeMemoryManager_, linkedFunctions, this, defaultImportSymbols);
 #else
   linearMemoryAllocator_.setMemoryLimit(maxRam_);
   // coverity[autosar_cpp14_a15_0_2_violation]
-  runtime_ = Runtime(machineCode, linearMemoryAllocator_, linkedFunctions, this);
+  runtime_ = Runtime(machineCode, linearMemoryAllocator_, linkedFunctions, this, defaultImportSymbols);
 #endif
 
 #if ENABLE_EXTENSIONS

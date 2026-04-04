@@ -120,14 +120,15 @@ public:
   /// @param memoryManager Memory manager object; e.g. an instance of ActiveMemoryManager
   /// @param dynamicallyLinkedSymbols List of host functions that should be linked dynamically
   /// @param ctx Custom context
-  Runtime(Span<uint8_t const> const &module, IMemoryManager &memoryManager, Span<NativeSymbol const> const &dynamicallyLinkedSymbols,
-          void *const ctx) VB_THROW : disabled_(false),
-                                      queuedStartFncOffset_(0U),
-                                      memoryManager_(&memoryManager),
-                                      binaryModule_() {
+  /// @param defaultDynamicallyLinkedSymbols Default import symbols injected by the runtime
+  Runtime(Span<uint8_t const> const &module, IMemoryManager &memoryManager, Span<NativeSymbol const> const &dynamicallyLinkedSymbols, void *const ctx,
+          Span<NativeSymbol const> const &defaultDynamicallyLinkedSymbols = Span<NativeSymbol const>()) VB_THROW : disabled_(false),
+                                                                                                                   queuedStartFncOffset_(0U),
+                                                                                                                   memoryManager_(&memoryManager),
+                                                                                                                   binaryModule_() {
     binaryModule_.init(module);
     memoryManager.init(getBasedataLength(), getInitialLinMemSizeInPages());
-    init(dynamicallyLinkedSymbols, ctx);
+    init(dynamicallyLinkedSymbols, ctx, defaultDynamicallyLinkedSymbols);
   }
 
 #else
@@ -175,14 +176,15 @@ public:
   /// @param memoryManager Memory manager object; e.g. an instance of LinearMemoryAllocator
   /// @param dynamicallyLinkedSymbols List of host functions that should be linked dynamically
   /// @param ctx Custom context for import functions
-  Runtime(Span<uint8_t const> const &module, IMemoryManager &memoryManager, Span<NativeSymbol const> const &dynamicallyLinkedSymbols,
-          void *const ctx) VB_THROW : disabled_(false),
-                                      queuedStartFncOffset_(0U),
-                                      memoryManager_(&memoryManager),
-                                      binaryModule_() {
+  /// @param defaultDynamicallyLinkedSymbols Default import symbols injected by the runtime
+  Runtime(Span<uint8_t const> const &module, IMemoryManager &memoryManager, Span<NativeSymbol const> const &dynamicallyLinkedSymbols, void *const ctx,
+          Span<NativeSymbol const> const &defaultDynamicallyLinkedSymbols = Span<NativeSymbol const>()) VB_THROW : disabled_(false),
+                                                                                                                   queuedStartFncOffset_(0U),
+                                                                                                                   memoryManager_(&memoryManager),
+                                                                                                                   binaryModule_() {
     binaryModule_.init(module);
     memoryManager.init(getBasedataLength(), getInitialLinMemSizeInPages());
-    init(dynamicallyLinkedSymbols, ctx);
+    init(dynamicallyLinkedSymbols, ctx, defaultDynamicallyLinkedSymbols);
   }
 
 #endif
@@ -572,7 +574,9 @@ private:
   ///
   /// @param dynamicallyLinkedSymbols List of dynamically linked functions
   /// @param ctx Custom context for import functions
-  void init(Span<NativeSymbol const> const &dynamicallyLinkedSymbols, void *const ctx);
+  /// @param defaultDynamicallyLinkedSymbols Default import symbols injected by the runtime
+  void init(Span<NativeSymbol const> const &dynamicallyLinkedSymbols, void *const ctx,
+            Span<NativeSymbol const> const &defaultDynamicallyLinkedSymbols = Span<NativeSymbol const>());
 
   ///
   /// @brief This will set up the basedata, allocate memory for the job memory, insert default data into the linear
@@ -580,9 +584,26 @@ private:
   ///
   /// @param dynamicallyLinkedSymbols  List of dynamically linked functions
   /// @param ctx Custom context for import functions
+  /// @param defaultDynamicallyLinkedSymbols Default import symbols injected by the runtime
   /// @return uint32_t Offset from the end of the binary where the body of the start section function is located
   /// (0xFFFF'FFFF if this WebAssembly module does not have a start section)
-  uint32_t initializeModule(Span<NativeSymbol const> const &dynamicallyLinkedSymbols, void *const ctx);
+  uint32_t initializeModule(Span<NativeSymbol const> const &dynamicallyLinkedSymbols, void *const ctx,
+                            Span<NativeSymbol const> const &defaultDynamicallyLinkedSymbols = Span<NativeSymbol const>());
+
+  /// @brief Link a dynamic import by searching a symbol list and writing the function pointer to link data
+  /// @param symbols The symbol list to search
+  /// @param moduleName Module name from the serialized import
+  /// @param moduleNameLength Length of the module name
+  /// @param importName Import name from the serialized import
+  /// @param importNameLength Length of the import name
+  /// @param signature Signature string from the serialized import
+  /// @param signatureLength Length of the signature
+  /// @param linkDataOffset Offset in the link data where the function pointer should be written
+  /// @param linkDataLength Total length of the link data (for bounds checking)
+  /// @return true if a matching symbol was found and linked
+  bool linkDynamicImportFromSymbolList(Span<NativeSymbol const> const &symbols, char const *const moduleName, uint32_t const moduleNameLength,
+                                       char const *const importName, uint32_t const importNameLength, char const *const signature,
+                                       uint32_t const signatureLength, uint32_t const linkDataOffset, uint32_t const linkDataLength) noexcept;
 
   ///
   /// @brief Check whether this runtime can be used to perform actions

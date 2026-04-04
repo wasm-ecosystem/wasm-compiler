@@ -1206,7 +1206,7 @@ void Backend::spillRestoreRegsRaw(Span<REG const> const &regs, bool const restor
 void Backend::emitV2ImportAdapterImpl(uint32_t const fncIndex) const {
   static_cast<void>(fncIndex);
   static_cast<void>(this);
-  // Need handle muti return values to wasm style
+  // Need handle multi return values to wasm style
   throw FeatureNotSupportedException(ErrorCode::Not_implemented);
 }
 
@@ -1409,10 +1409,10 @@ void Backend::emitRawFunctionCall(uint32_t const fncIndex, bool const linkRegist
 #endif
 
     ModuleInfo::ImpFuncDef const impFuncDef{moduleInfo_.getImpFuncDef(fncIndex)};
-
     // Load the address into a register
     constexpr REG callReg{callScrRegs[0]};
-    NativeSymbol const &nativeSymbol{moduleInfo_.importSymbols[impFuncDef.symbolIndex]};
+
+    NativeSymbol const &nativeSymbol{moduleInfo_.getImportSymbol(impFuncDef.symbolIndex)};
     if (nativeSymbol.linkage == NativeSymbol::Linkage::STATIC) {
       as_.MOVimm64(callReg, bit_cast<uint64_t>(nativeSymbol.ptr));
     } else {
@@ -1425,6 +1425,7 @@ void Backend::emitRawFunctionCall(uint32_t const fncIndex, bool const linkRegist
         as_.INSTR(LDR_xT_deref_xN_xM_t).setT(callReg).setN(WasmABI::REGS::jobMem).setM(callScrRegs[1])();
       }
     }
+
     // Execute the actual call
     as_.INSTR(linkRegister ? BLR_xN_t : BR_xN_t).setN(callReg)();
   } else {

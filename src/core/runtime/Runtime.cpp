@@ -25,6 +25,10 @@
 #include "TrapException.hpp"
 
 #include "src/config.hpp"
+
+#if ENABLE_EXTENSIONS
+#include "extensions/MemoryDumpAPI.hpp"
+#endif
 #include "src/core/common/BinaryModule.hpp"
 #include "src/core/common/ExtendableMemory.hpp"
 #include "src/core/common/FunctionRef.hpp"
@@ -36,6 +40,7 @@
 #include "src/core/common/VbExceptions.hpp"
 #include "src/core/common/WasmConstants.hpp"
 #include "src/core/common/basedataoffsets.hpp"
+#include "src/core/common/function_traits.hpp"
 #include "src/core/common/implementationlimits.hpp"
 #include "src/core/common/util.hpp"
 #include "src/core/compiler/common/MachineType.hpp"
@@ -110,13 +115,43 @@ void Runtime::checkIsReady(bool const mustHaveStarted) const {
   }
 }
 
-void Runtime::init(Span<NativeSymbol const> const &dynamicallyLinkedSymbols, void *const ctx) {
+void Runtime::init(Span<NativeSymbol const> const &dynamicallyLinkedSymbols, void *const ctx,
+                   Span<NativeSymbol const> const &defaultDynamicallyLinkedSymbols) {
   if ((pToNum(getMemoryBase()) % 8U) != 0U) {
     throw RuntimeError(ErrorCode::Base_of_job_memory_not_8_byte_aligned);
   }
 
   updateBinaryModule(binaryModule_);
-  queuedStartFncOffset_ = initializeModule(dynamicallyLinkedSymbols, ctx);
+  queuedStartFncOffset_ = initializeModule(dynamicallyLinkedSymbols, ctx, defaultDynamicallyLinkedSymbols);
+}
+
+bool Runtime::linkDynamicImportFromSymbolList(Span<NativeSymbol const> const &symbols, char const *const moduleName, uint32_t const moduleNameLength,
+                                              char const *const importName, uint32_t const importNameLength, char const *const signature,
+                                              uint32_t const signatureLength, uint32_t const linkDataOffset, uint32_t const linkDataLength) noexcept {
+  for (size_t symbolIndex{0U}; symbolIndex < symbols.size(); symbolIndex++) {
+    NativeSymbol const symbol{symbols[symbolIndex]};
+    bool const moduleNameMatches{
+        (static_cast<uint32_t>(strlen_s(symbol.moduleName, static_cast<size_t>(ImplementationLimits::maxStringLength))) == moduleNameLength) &&
+        (std::strncmp(moduleName, symbol.moduleName, static_cast<size_t>(moduleNameLength)) == 0)};
+    if (moduleNameMatches) {
+      bool const symbolNameMatches{
+          (static_cast<uint32_t>(strlen_s(symbol.symbol, static_cast<size_t>(ImplementationLimits::maxStringLength))) == importNameLength) &&
+          (std::strncmp(importName, symbol.symbol, static_cast<size_t>(importNameLength)) == 0)};
+      if (symbolNameMatches) {
+        bool const signatureMatches{
+            (static_cast<uint32_t>(strlen_s(symbol.signature, static_cast<size_t>(ImplementationLimits::maxStringLength))) == signatureLength) &&
+            (std::strncmp(signature, symbol.signature, static_cast<size_t>(signatureLength)) == 0)};
+        if (signatureMatches) {
+          assert(linkDataOffset + sizeof(symbol.ptr) <= linkDataLength && "Bookkeeping data overflow");
+          static_assert(sizeof(symbol.ptr) <= 8U, "Pointer datatype too big");
+          writeToPtr<void const *>(pAddI(getMemoryBase(), Basedata::FromStart::linkData + linkDataOffset), symbol.ptr);
+          return true;
+        }
+      }
+    }
+  }
+  static_cast<void>(linkDataLength);
+  return false;
 }
 
 void Runtime::start() {
@@ -135,7 +170,8 @@ void Runtime::start() {
 // values of globals to the link data and linking dynamically linked
 // functions by copying their pointers to the corresponding location within the
 // link data
-uint32_t Runtime::initializeModule(Span<NativeSymbol const> const &dynamicallyLinkedSymbols, void *const ctx) {
+uint32_t Runtime::initializeModule(Span<NativeSymbol const> const &dynamicallyLinkedSymbols, void *const ctx,
+                                   Span<NativeSymbol const> const &defaultDynamicallyLinkedSymbols) {
   uint32_t const linkDataLength{binaryModule_.getLinkDataLength()};
 
   uint32_t const basedataLength{Basedata::length(linkDataLength, binaryModule_.getStacktraceEntryCount())};
@@ -161,6 +197,7 @@ uint32_t Runtime::initializeModule(Span<NativeSymbol const> const &dynamicallyLi
 
   uint8_t const *dynamicallyImportedFunctionsSectionCursor{binaryModule_.getDynamicallyImportedFunctionsSectionEnd()};
   uint32_t const numDynamicallyImportedFunctions{readNextValue<uint32_t>(&dynamicallyImportedFunctionsSectionCursor)}; // OPBVIF10
+
   for (uint32_t i{0U}; i < numDynamicallyImportedFunctions; i++) {
     uint32_t const moduleNameLength{readNextValue<uint32_t>(&dynamicallyImportedFunctionsSectionCursor)};                              // OPBVIF9
     dynamicallyImportedFunctionsSectionCursor = pSubI(dynamicallyImportedFunctionsSectionCursor, roundUpToPow2(moduleNameLength, 2U)); // OPBVIF8
@@ -175,29 +212,12 @@ uint32_t Runtime::initializeModule(Span<NativeSymbol const> const &dynamicallyLi
     char const *const signature{pCast<char const *>(dynamicallyImportedFunctionsSectionCursor)};                                      // OPBVIF1
     uint32_t const linkDataOffset{readNextValue<uint32_t>(&dynamicallyImportedFunctionsSectionCursor)};                               // OPBVIF0
 
-    bool found{false};
-    for (size_t symbolIndex{0U}; symbolIndex < dynamicallyLinkedSymbols.size(); symbolIndex++) {
-      NativeSymbol const symbol{dynamicallyLinkedSymbols[symbolIndex]};
-      bool const moduleNameMatches{
-          (static_cast<uint32_t>(strlen_s(symbol.moduleName, static_cast<size_t>(ImplementationLimits::maxStringLength))) == moduleNameLength) &&
-          (std::strncmp(moduleName, symbol.moduleName, static_cast<size_t>(moduleNameLength)) == 0)};
-      if (moduleNameMatches) {
-        bool const symbolNameMatches{
-            (static_cast<uint32_t>(strlen_s(symbol.symbol, static_cast<size_t>(ImplementationLimits::maxStringLength))) == importNameLength) &&
-            (std::strncmp(importName, symbol.symbol, static_cast<size_t>(importNameLength)) == 0)};
-        if (symbolNameMatches) {
-          bool const signatureMatches{
-              (static_cast<uint32_t>(strlen_s(symbol.signature, static_cast<size_t>(ImplementationLimits::maxStringLength))) == signatureLength) &&
-              (std::strncmp(signature, symbol.signature, static_cast<size_t>(signatureLength)) == 0)};
-          if (signatureMatches) {
-            assert(linkDataOffset + sizeof(symbol.ptr) <= linkDataLength && "Bookkeeping data overflow");
-            static_assert(sizeof(symbol.ptr) <= 8U, "Pointer datatype too big");
-            writeToPtr<void const *>(pAddI(getMemoryBase(), Basedata::FromStart::linkData + linkDataOffset), symbol.ptr);
-            found = true;
-            break;
-          }
-        }
-      }
+    bool found{linkDynamicImportFromSymbolList(dynamicallyLinkedSymbols, moduleName, moduleNameLength, importName, importNameLength, signature,
+                                               signatureLength, linkDataOffset, linkDataLength)};
+    // If not found in user-provided symbols, search default import symbols
+    if (!found) {
+      found = linkDynamicImportFromSymbolList(defaultDynamicallyLinkedSymbols, moduleName, moduleNameLength, importName, importNameLength, signature,
+                                              signatureLength, linkDataOffset, linkDataLength);
     }
     if (!found) {
       throw LinkingException(ErrorCode::Dynamic_import_not_resolved);

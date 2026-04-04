@@ -121,12 +121,14 @@ public:
   /// @brief Start compilation
   ///
   /// @param bytecode uint8_t bytecode Span
-  /// @param symbolList NativeSymbol SPan
+  /// @param symbolList NativeSymbol Span
   /// @param globalSymbols GlobalSymbol Span
+  /// @param defaultImportSymbols Default import symbols injected by the runtime
   /// @return ManagedBinary Managed RAII output binary
   /// @throws vb::RuntimeError If compilation failed
   ManagedBinary compile(Span<uint8_t const> const &bytecode, Span<NativeSymbol const> const &symbolList,
-                        Span<GlobalSymbol const> const &globalSymbols);
+                        Span<GlobalSymbol const> const &globalSymbols,
+                        Span<NativeSymbol const> const &defaultImportSymbols = Span<NativeSymbol const>());
 
   ///
   /// @brief Force high register pressure for testing

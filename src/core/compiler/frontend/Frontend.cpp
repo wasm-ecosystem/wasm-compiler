@@ -18,11 +18,16 @@
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <limits>
 
 #include "WasmImportExportType.hpp"
 
 #include "src/config.hpp"
+
+#if ENABLE_EXTENSIONS
+#include "extensions/MemoryDumpAPI.hpp"
+#endif
 #include "src/core/common/BinaryModule.hpp"
 #include "src/core/common/FunctionRef.hpp"
 #include "src/core/common/GlobalSymbol.hpp"
@@ -34,6 +39,7 @@
 #include "src/core/common/VbExceptions.hpp"
 #include "src/core/common/WasmType.hpp"
 #include "src/core/common/basedataoffsets.hpp"
+#include "src/core/common/function_traits.hpp"
 #include "src/core/common/implementationlimits.hpp"
 #include "src/core/common/util.hpp"
 #include "src/core/compiler/Compiler.hpp"
@@ -301,16 +307,53 @@ Stack::iterator Frontend::findTargetBlock(uint32_t const branchDepth) const {
 }
 
 Frontend::Frontend(Span<uint8_t const> const &bytecode, Span<NativeSymbol const> const &symbolList, Span<GlobalSymbol const> const &globalSymbols,
-                   ModuleInfo &moduleInfo, Stack &stack, MemWriter &memory, Common &common, Compiler &compiler,
-                   ValidationStack &validationStack) VB_NOEXCEPT : br_{BytecodeReader(bytecode)},
-                                                                   symbolList_{symbolList},
-                                                                   globalSymbols_{globalSymbols},
-                                                                   moduleInfo_{moduleInfo},
-                                                                   stack_{stack},
-                                                                   memory_{memory},
-                                                                   common_{common},
-                                                                   compiler_{compiler},
-                                                                   validationStack_{validationStack} {
+                   ModuleInfo &moduleInfo, Stack &stack, MemWriter &memory, Common &common, Compiler &compiler, ValidationStack &validationStack,
+                   Span<NativeSymbol const> const &defaultImportSymbols) VB_NOEXCEPT : br_{BytecodeReader(bytecode)},
+                                                                                       symbolList_{symbolList},
+                                                                                       defaultImportSymbols_{defaultImportSymbols},
+                                                                                       globalSymbols_{globalSymbols},
+                                                                                       moduleInfo_{moduleInfo},
+                                                                                       stack_{stack},
+                                                                                       memory_{memory},
+                                                                                       common_{common},
+                                                                                       compiler_{compiler},
+                                                                                       validationStack_{validationStack} {
+}
+
+bool Frontend::resolveImportFromSymbolList(Span<NativeSymbol const> const &symbols, uint32_t const symbolBaseIndex, char const *const moduleName,
+                                           uint32_t const moduleNameLength, char const *const fieldName, uint32_t const fieldNameLength,
+                                           char const *const signature, uint32_t const signatureLength, uint32_t const importSignatureIndex) {
+  for (uint32_t i{0U}; i < symbols.size(); i++) {
+    NativeSymbol const symbol{symbols[i]};
+    size_t const symbolNameLength{strlen_s(symbol.symbol, static_cast<size_t>(ImplementationLimits::maxStringLength))};
+    size_t const symbolModuleNameLength{strlen_s(symbol.moduleName, static_cast<size_t>(ImplementationLimits::maxStringLength))};
+
+    if ((symbolModuleNameLength != moduleNameLength) || (symbolNameLength != fieldNameLength)) {
+      continue;
+    }
+
+    if ((std::strncmp(moduleName, symbol.moduleName, static_cast<size_t>(moduleNameLength)) == 0) &&
+        (std::strncmp(fieldName, symbol.symbol, static_cast<size_t>(fieldNameLength)) == 0)) {
+      if ((signatureLength == strlen_s(symbol.signature, static_cast<size_t>(ImplementationLimits::maxStringLength))) &&
+          (std::strncmp(symbol.signature, signature, static_cast<size_t>(signatureLength)) == 0)) {
+        ModuleInfo::ImpFuncDef impFuncDef{};
+        impFuncDef.symbolIndex = symbolBaseIndex + i;
+        impFuncDef.linkDataOffset = moduleInfo_.linkDataLength;
+        impFuncDef.sigIndex = importSignatureIndex;
+        impFuncDef.linked = true;
+        impFuncDef.importFnVersion = symbol.importVersion;
+        memory_.write<ModuleInfo::ImpFuncDef>(impFuncDef);
+        moduleInfo_.numImportedFunctions++;
+
+        if (symbol.linkage == NativeSymbol::Linkage::DYNAMIC) {
+          moduleInfo_.linkDataLength += static_cast<uint32_t>(sizeof(void (*)(void)));
+        }
+
+        return true;
+      }
+    }
+  }
+  return false;
 }
 
 // Wasm modules have to start with the wasm binary magic (number), make sure it does
@@ -539,47 +582,14 @@ void Frontend::parseImportSection() {
       }
 #endif
 
-      bool foundImport{false};
-      // No builtin function has matched yet, so iterate through the provided
-      // list of importable functions by the embedder
-      for (uint32_t symbolIndex{0U}; symbolIndex < symbolList_.size(); symbolIndex++) {
-        // Retrieve the symbol and length
-        NativeSymbol const symbol{symbolList_[symbolIndex]};
-        size_t const symbolNameLength{strlen_s(symbol.symbol, static_cast<size_t>(ImplementationLimits::maxStringLength))};
-        size_t const symbolModuleNameLength{strlen_s(symbol.moduleName, static_cast<size_t>(ImplementationLimits::maxStringLength))};
+      bool foundImport{resolveImportFromSymbolList(symbolList_, 0U, moduleName, moduleNameLength, fieldName, fieldNameLength, signature,
+                                                   signatureLength, importSignatureIndex)};
 
-        // ... must match
-        if ((symbolModuleNameLength != moduleNameLength) || (symbolNameLength != fieldNameLength)) {
-          continue;
-        }
-
-        // If the module name and symbol name match
-        if ((std::strncmp(moduleName, symbol.moduleName, static_cast<size_t>(moduleNameLength)) == 0) &&
-            (std::strncmp(fieldName, symbol.symbol, static_cast<size_t>(fieldNameLength)) == 0)) {
-          // And also if the signature length matches and the signature string matches, we have found a match
-          if ((signatureLength == strlen_s(symbol.signature, static_cast<size_t>(ImplementationLimits::maxStringLength))) &&
-              (std::strncmp(symbol.signature, signature, static_cast<size_t>(signatureLength)) == 0)) {
-            ModuleInfo::ImpFuncDef impFuncDef{};
-            impFuncDef.symbolIndex = symbolIndex;
-            impFuncDef.linkDataOffset = moduleInfo_.linkDataLength;
-            impFuncDef.sigIndex = importSignatureIndex;
-            impFuncDef.builtinFunction = BuiltinFunction::UNDEFINED;
-            impFuncDef.linked = true;
-            impFuncDef.importFnVersion = symbol.importVersion;
-            memory_.write<ModuleInfo::ImpFuncDef>(impFuncDef);
-            moduleInfo_.numImportedFunctions++;
-
-            // If it's dynamically imported, we increment by funcPtrSize after
-            // allocating since the pointer needs to be stored in the
-            // linkData
-            if (symbol.linkage == NativeSymbol::Linkage::DYNAMIC) {
-              moduleInfo_.linkDataLength += static_cast<uint32_t>(sizeof(void (*)(void)));
-            }
-
-            foundImport = true;
-            break;
-          }
-        }
+      // If not found in user-provided symbols, search default import symbols
+      if (!foundImport) {
+        uint32_t const defaultSymbolBaseIndex{static_cast<uint32_t>(symbolList_.size())};
+        foundImport = resolveImportFromSymbolList(defaultImportSymbols_, defaultSymbolBaseIndex, moduleName, moduleNameLength, fieldName,
+                                                  fieldNameLength, signature, signatureLength, importSignatureIndex);
       }
 
       if (!foundImport) {
@@ -594,7 +604,6 @@ void Frontend::parseImportSection() {
           impFuncDef.symbolIndex = 0U;
           impFuncDef.linkDataOffset = 0U;
           impFuncDef.sigIndex = importSignatureIndex;
-          impFuncDef.builtinFunction = BuiltinFunction::UNDEFINED;
           impFuncDef.linked = false;
           memory_.write<ModuleInfo::ImpFuncDef>(impFuncDef);
           moduleInfo_.numImportedFunctions++;
@@ -2755,7 +2764,7 @@ void Frontend::serializeDynamicFunctionImportBinarySection() {
       continue;
     }
 
-    NativeSymbol const &nativeSymbol{moduleInfo_.importSymbols[impFuncDef.symbolIndex]};
+    NativeSymbol const &nativeSymbol{moduleInfo_.getImportSymbol(impFuncDef.symbolIndex)};
     if (nativeSymbol.linkage == NativeSymbol::Linkage::DYNAMIC) {
       numDynamicImports++;
       compiler_.output_.write<uint32_t>(impFuncDef.linkDataOffset); // OPBVIF0
@@ -3000,8 +3009,8 @@ void Frontend::serializeTableBinarySection() {
 
 void Frontend::serializeTableEntryFunctionWrapperSection() {
   for (uint32_t i{0U}; i < moduleInfo_.tableInitialSize; i++) {
-    uint32_t const functionEnctryOffset{moduleInfo_.tableElements[i].exportWrapperOffset};
-    compiler_.output_.write<uint32_t>(functionEnctryOffset); // OBBTE1
+    uint32_t const functionEntryOffset{moduleInfo_.tableElements[i].exportWrapperOffset};
+    compiler_.output_.write<uint32_t>(functionEntryOffset); // OBBTE1
   }
   compiler_.output_.write<uint32_t>(moduleInfo_.tableInitialSize); // OBBTE0
 }
@@ -3148,6 +3157,9 @@ void Frontend::startCompilation(bool const forceHighRegisterPressureForTesting) 
   moduleInfo_.debugMode = compiler_.getDebugMode();
 
   moduleInfo_.importSymbols = symbolList_.data();
+  moduleInfo_.importSymbolsCount = static_cast<uint32_t>(symbolList_.size());
+  moduleInfo_.defaultImportSymbols = defaultImportSymbols_.data();
+  moduleInfo_.defaultImportSymbolsCount = static_cast<uint32_t>(defaultImportSymbols_.size());
 
   memory_.reserve(0xFFU);
 

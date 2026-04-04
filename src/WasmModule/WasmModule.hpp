@@ -420,6 +420,13 @@ public:
     return runtime_.getLinearMemoryRegion(offset, size);
   }
 
+  ///
+  /// @see Runtime::getLinearMemorySizeInPages
+  ///
+  inline uint32_t getLinearMemorySizeInPages() const VB_NOEXCEPT {
+    return runtime_.getLinearMemorySizeInPages();
+  }
+
   /// @brief Get the context pointer
   /// @return void* user defined context pointer
   inline void *getContext() const VB_NOEXCEPT {

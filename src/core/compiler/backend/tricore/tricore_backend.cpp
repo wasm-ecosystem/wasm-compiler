@@ -681,7 +681,7 @@ void Backend::emitRawFunctionCall(uint32_t const fncIndex) {
     as_.cTRAP(TrapCode::STACKFENCEBREACHED, JumpCondition::bitTrue(callScrRegs[0], SafeInt<4U>::fromConst<0>()));
 #endif
 
-    NativeSymbol const &nativeSymbol{moduleInfo_.importSymbols[impFuncDef.symbolIndex]};
+    NativeSymbol const &nativeSymbol{moduleInfo_.getImportSymbol(impFuncDef.symbolIndex)};
     if (nativeSymbol.linkage == NativeSymbol::Linkage::STATIC) {
       uint32_t const rawAddr{static_cast<uint32_t>(bit_cast<uintptr_t>(nativeSymbol.ptr))};
       if (Instruction::fitsAbsDisp24sx2(rawAddr)) {
@@ -849,7 +849,7 @@ REG Backend::getREGForReturnValue(MachineType const returnValueType, RegStackTra
 void Backend::emitV2ImportAdapterImpl(uint32_t const fncIndex) const {
   static_cast<void>(fncIndex);
   static_cast<void>(this);
-  // Need handle muti return values to wasm style
+  // Need handle multi return values to wasm style
   throw FeatureNotSupportedException(ErrorCode::Not_implemented);
 }
 

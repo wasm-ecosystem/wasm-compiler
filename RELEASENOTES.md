@@ -8,6 +8,7 @@
 
 - Support multi return values import function(not call_indirect)
 - Support immutable import globals
+- Support default import API 'dumpMemoryRegion'
 
 ### Bug Fixes
 

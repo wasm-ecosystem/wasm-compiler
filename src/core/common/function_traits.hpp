@@ -21,6 +21,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <tuple>
+#include <type_traits>
 
 #include "SignatureType.hpp"
 
@@ -33,6 +34,7 @@ namespace vb {
 ///
 /// @tparam T Resulting type
 template <typename T> struct remove_noexcept final {
+  static_assert(std::is_function<T>::value, "remove_noexcept requires a function type");
   using type = T; ///< Type
 };
 
@@ -42,6 +44,7 @@ template <typename T> struct remove_noexcept final {
 /// @tparam R First type
 /// @tparam P Rest of the types
 template <typename R, typename... P> struct remove_noexcept<R(P...) VB_NOEXCEPT> {
+  static_assert(std::is_function<R(P...)>::value, "remove_noexcept requires a function type");
   using type = R(P...); ///< Type
 };
 
@@ -51,10 +54,11 @@ template <typename R, typename... P> struct remove_noexcept<R(P...) VB_NOEXCEPT>
 /// @tparam T Resulting type
 template <typename T> using remove_noexcept_t = typename remove_noexcept<T>::type;
 
-template <typename C> struct TypeToSignature;
+template <typename C> class TypeToSignature;
 
 /// @brief Convert a uint32_t to its corresponding SignatureType
-template <> struct TypeToSignature<uint32_t> {
+template <> class TypeToSignature<uint32_t> {
+public:
   /// @brief Convert a uint32_t to its corresponding SignatureType
   static constexpr char getSignatureChar() VB_NOEXCEPT {
     return static_cast<char>(SignatureType::I32);
@@ -62,7 +66,8 @@ template <> struct TypeToSignature<uint32_t> {
 };
 
 /// @brief Convert an int32_t to its corresponding SignatureType
-template <> struct TypeToSignature<int32_t> {
+template <> class TypeToSignature<int32_t> {
+public:
   /// @brief Convert an int32_t to its corresponding SignatureType
   static constexpr char getSignatureChar() VB_NOEXCEPT {
     return static_cast<char>(SignatureType::I32);
@@ -70,7 +75,8 @@ template <> struct TypeToSignature<int32_t> {
 };
 
 /// @brief Convert a uint64_t to its corresponding SignatureType
-template <> struct TypeToSignature<uint64_t> {
+template <> class TypeToSignature<uint64_t> {
+public:
   /// @brief Convert a uint64_t to its corresponding SignatureType
   static constexpr char getSignatureChar() VB_NOEXCEPT {
     return static_cast<char>(SignatureType::I64);
@@ -78,7 +84,8 @@ template <> struct TypeToSignature<uint64_t> {
 };
 
 /// @brief Convert an int64_t to its corresponding SignatureType
-template <> struct TypeToSignature<int64_t> {
+template <> class TypeToSignature<int64_t> {
+public:
   /// @brief Convert an int64_t to its corresponding SignatureType
   static constexpr char getSignatureChar() VB_NOEXCEPT {
     return static_cast<char>(SignatureType::I64);
@@ -86,7 +93,8 @@ template <> struct TypeToSignature<int64_t> {
 };
 
 /// @brief Convert a float to its corresponding SignatureType
-template <> struct TypeToSignature<float> {
+template <> class TypeToSignature<float> {
+public:
   /// @brief Convert a float to its corresponding SignatureType
   static constexpr char getSignatureChar() VB_NOEXCEPT {
     return static_cast<char>(SignatureType::F32);
@@ -94,7 +102,8 @@ template <> struct TypeToSignature<float> {
 };
 
 /// @brief Convert an double to its corresponding SignatureType
-template <> struct TypeToSignature<double> {
+template <> class TypeToSignature<double> {
+public:
   /// @brief Convert an double to its corresponding SignatureType
   static constexpr char getSignatureChar() VB_NOEXCEPT {
     return static_cast<char>(SignatureType::F64);
@@ -102,21 +111,23 @@ template <> struct TypeToSignature<double> {
 };
 
 /// @brief Convert a double to its corresponding SignatureType (none)
-template <> struct TypeToSignature<void> {
+template <> class TypeToSignature<void> {
+public:
   /// @brief Convert a double to its corresponding SignatureType (none)
   static constexpr char getSignatureChar() VB_NOEXCEPT {
     return static_cast<char>(0);
   }
 };
 
-template <typename> struct function_traits;
+template <typename> class function_traits;
 
 ///
 /// @brief Signature serializer
 ///
 /// @tparam ReturnType Return type of the function signature
 /// @tparam Arguments Arguments of the function signature
-template <typename ReturnType, typename... Arguments> struct function_traits<ReturnType(Arguments...)> {
+template <typename ReturnType, typename... Arguments> class function_traits<ReturnType(Arguments...)> {
+public:
   template <std::size_t Index> using argument = typename std::tuple_element<Index, std::tuple<Arguments...>>::type; ///< Argument type
 
   static constexpr size_t numCppParams{sizeof...(Arguments)}; ///< Number of C++ parameters

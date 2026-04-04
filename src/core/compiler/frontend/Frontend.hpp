@@ -56,8 +56,10 @@ public:
   /// @param common Reference to the common instance
   /// @param compiler Reference to the compiler
   /// @param validationStack Reference to the wasm validation stack
+  /// @param defaultImportSymbols Default import symbols injected by the runtime
   Frontend(Span<uint8_t const> const &bytecode, Span<NativeSymbol const> const &symbolList, Span<GlobalSymbol const> const &globalSymbols,
-           ModuleInfo &moduleInfo, Stack &stack, MemWriter &memory, Common &common, Compiler &compiler, ValidationStack &validationStack) VB_NOEXCEPT;
+           ModuleInfo &moduleInfo, Stack &stack, MemWriter &memory, Common &common, Compiler &compiler, ValidationStack &validationStack,
+           Span<NativeSymbol const> const &defaultImportSymbols = Span<NativeSymbol const>()) VB_NOEXCEPT;
 
   ///
   /// @brief Start the compilation of the WebAssembly module
@@ -315,14 +317,30 @@ private:
   /// @return StackElement Valid StackElement with computed constant result if propagation succeeds, invalid StackElement otherwise
   StackElement tryConstantPropagation(OPCode const op) VB_NOEXCEPT;
 
-  BytecodeReader br_;                             ///< Bytecode reader
-  Span<NativeSymbol const> const &symbolList_;    ///< NativeSymbols that can be imported
-  Span<GlobalSymbol const> const &globalSymbols_; ///< GlobalSymbols that can be imported
-  ModuleInfo &moduleInfo_;                        ///< Reference to the ModuleInfo
-  Stack &stack_;                                  ///< Reference to the stack
-  MemWriter &memory_;                             ///< Reference to the compiler memory
-  Common &common_;                                ///< Reference to the common instance
-  Compiler &compiler_;                            ///< Reference to the compiler
+  /// @brief Resolve a wasm import by searching a symbol list for a matching entry and linking it
+  /// @param symbols The symbol list to search
+  /// @param symbolBaseIndex Base index offset for symbolIndex in ImpFuncDef
+  /// @param moduleName Module name from the wasm import
+  /// @param moduleNameLength Length of the module name
+  /// @param fieldName Field name from the wasm import
+  /// @param fieldNameLength Length of the field name
+  /// @param signature Signature string from the wasm import
+  /// @param signatureLength Length of the signature
+  /// @param importSignatureIndex Type index of the import
+  /// @return true if a matching symbol was found and linked
+  bool resolveImportFromSymbolList(Span<NativeSymbol const> const &symbols, uint32_t const symbolBaseIndex, char const *const moduleName,
+                                   uint32_t const moduleNameLength, char const *const fieldName, uint32_t const fieldNameLength,
+                                   char const *const signature, uint32_t const signatureLength, uint32_t const importSignatureIndex);
+
+  BytecodeReader br_;                                   ///< Bytecode reader
+  Span<NativeSymbol const> const &symbolList_;          ///< NativeSymbols that can be imported
+  Span<NativeSymbol const> const defaultImportSymbols_; ///< Default import symbols injected by runtime
+  Span<GlobalSymbol const> const &globalSymbols_;       ///< GlobalSymbols that can be imported
+  ModuleInfo &moduleInfo_;                              ///< Reference to the ModuleInfo
+  Stack &stack_;                                        ///< Reference to the stack
+  MemWriter &memory_;                                   ///< Reference to the compiler memory
+  Common &common_;                                      ///< Reference to the common instance
+  Compiler &compiler_;                                  ///< Reference to the compiler
 
   ValidationStack &validationStack_; ///< Reference to the validation stack
 };
