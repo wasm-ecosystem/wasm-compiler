@@ -1524,30 +1524,24 @@ void Frontend::parseCodeSection() {
         } else {
           uint32_t const numBlockParams{moduleInfo_.getNumParamsForSignature(sigIndex)};
           Stack::iterator paramsBase{stack_.end()};
-          Stack::iterator conditionElem{};
           common_.condenseSideEffectInstructionBlewValentBlock(numBlockParams);
-
           if (numBlockParams > 0U) {
             paramsBase = common_.condenseMultipleValentBlocksBelow(common_.findBaseOfValentBlockBelow(stack_.end()), numBlockParams);
           }
 
-          conditionElem = common_.condenseValentBlockBelow(stack_.end());
-          branchCond = BC::NEQZ;
-
-          conditionCanBeEvaluatedAtCompileTime = moduleInfo_.getStorage(*conditionElem).type == StorageType::CONSTANT;
-          if (conditionCanBeEvaluatedAtCompileTime) {
-            conditionIsAlwaysTrue = conditionElem->data.constUnion.u32 != 0U;
-            stack_.pop();
-          }
-
-          compiler_.backend_.spillAllVariables(paramsBase);
-
+          conditionCanBeEvaluatedAtCompileTime = stack_.back().getBaseType() == StackType::CONSTANT;
+          Stack::iterator const conditionBase{common_.findBaseOfValentBlockBelow(stack_.end())};
+          compiler_.backend_.spillAllVariables(conditionBase);
           uint32_t const returnValueStackWidth{common_.getStackReturnValueWidth(sigIndex)};
+          // reserveStackFrame must be before condenseComparisonBelow, otherwise the conditionBase might be invalidated by reserveStackFrame's call to
+          // stack check
           uint32_t const blockResultsStackOffset{(returnValueStackWidth == 0U) ? common_.getCurrentMaximumUsedStackFramePosition()
                                                                                : compiler_.backend_.reserveStackFrame(returnValueStackWidth)};
-          if (!(originalFrameUnreachable || conditionCanBeEvaluatedAtCompileTime)) {
-            static_cast<void>(compiler_.backend_.emitComparison(OPCode::I32_EQZ, conditionElem.unwrap(), nullptr));
-            common_.popAndUpdateReference();
+          if (conditionCanBeEvaluatedAtCompileTime) {
+            conditionIsAlwaysTrue = conditionBase->data.constUnion.u32 != 0U;
+            static_cast<void>(stack_.erase(conditionBase));
+          } else {
+            branchCond = common_.condenseComparisonBelow(stack_.end());
           }
 
           Stack::iterator const prevBlockReference{moduleInfo_.fnc.lastBlockReference};
