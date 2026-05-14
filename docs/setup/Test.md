@@ -8,7 +8,7 @@
 ### Install Dependencies
 
 - python3
-- wabt@1.0.36: https://github.com/WebAssembly/wabt.git, add build_target_dir to PATH
+- wabt@1.0.41: https://github.com/WebAssembly/wabt/releases/download/1.0.41/, add build_target_dir to PATH
 - binaryen@122: https://github.com/WebAssembly/binaryen/releases/download/version_122, add build_target_dir to PATH
 
 ### Build Spectest

@@ -10,12 +10,22 @@ concurrency:
 jobs:
   run-bench:
     runs-on: [ubuntu-latest]
+    container:
+      image: ubuntu:24.04
+      options: --user root
     steps:
-      - uses: actions/checkout@v4
-      - name: install deps
+      - name: Install dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install wabt -y --no-install-recommends
+          set -ex
+          apt-get update
+          apt-get install -y --no-install-recommends wget cmake make tar git ca-certificates g++
+      - uses: actions/checkout@v4
+      - name: Install wabt
+        shell: bash
+        run: |
+          wget https://github.com/WebAssembly/wabt/releases/download/1.0.41/wabt-1.0.41-linux-x64.tar.gz
+          tar -xzf wabt-1.0.41-linux-x64.tar.gz
+          echo "$PWD/wabt-1.0.41/bin" >> $GITHUB_PATH
 
       - name: run benchmark for merge commit
         id: merge-bench

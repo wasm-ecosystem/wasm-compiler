@@ -33,9 +33,9 @@ runs:
     - name: Install wabt
       shell: bash
       run: |
-        wget https://github.com/WebAssembly/wabt/releases/download/1.0.36/wabt-1.0.36-ubuntu-20.04.tar.gz
-        tar -xzf wabt-1.0.36-ubuntu-20.04.tar.gz
-        echo "$PWD/wabt-1.0.36/bin" >> $GITHUB_PATH
+        wget https://github.com/WebAssembly/wabt/releases/download/1.0.41/wabt-1.0.41-linux-x64.tar.gz
+        tar -xzf wabt-1.0.41-linux-x64.tar.gz
+        echo "$PWD/wabt-1.0.41/bin" >> $GITHUB_PATH
 
     - name: Install tricore gcc
       shell: bash

@@ -294,10 +294,10 @@ jobs:
           submodules: true
       - name: Install wabt
         run: |
-          aria2c https://github.com/WebAssembly/wabt/releases/download/1.0.36/wabt-1.0.36-windows.tar.gz
-          tar -xzf wabt-1.0.36-windows.tar.gz
-          mv wabt-1.0.36 C:\wabt-1.0.36
-          echo "C:\wabt-1.0.36\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          aria2c https://github.com/WebAssembly/wabt/releases/download/1.0.41/wabt-1.0.41-windows-x64.tar.gz
+          tar -xzf wabt-1.0.41-windows-x64.tar.gz
+          mv wabt-1.0.41 C:\wabt-1.0.41
+          echo "C:\wabt-1.0.41\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
       - name: Install Google Test
         run: |
           vcpkg install gtest:x64-windows
@@ -329,10 +329,10 @@ jobs:
           submodules: true
       - name: Install wabt
         run: |
-          aria2c https://github.com/WebAssembly/wabt/releases/download/1.0.36/wabt-1.0.36-windows.tar.gz
-          tar -xzf wabt-1.0.36-windows.tar.gz
-          mv wabt-1.0.36 C:\wabt-1.0.36
-          echo "C:\wabt-1.0.36\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          aria2c https://github.com/WebAssembly/wabt/releases/download/1.0.41/wabt-1.0.41-windows-x64.tar.gz
+          tar -xzf wabt-1.0.41-windows-x64.tar.gz
+          mv wabt-1.0.41 C:\wabt-1.0.41
+          echo "C:\wabt-1.0.41\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
       - name: Install Google Test ARM64
         run: |
           vcpkg install gtest:arm64-windows
@@ -365,9 +365,9 @@ jobs:
       - name: install wabt
         run: |
           set -ex
-          wget https://github.com/WebAssembly/wabt/releases/download/1.0.36/wabt-1.0.36-ubuntu-20.04.tar.gz
-          tar -xzf wabt-1.0.36-ubuntu-20.04.tar.gz
-          echo "$PWD/wabt-1.0.36/bin" >> $GITHUB_PATH
+          wget -q https://github.com/WebAssembly/wabt/releases/download/1.0.41/wabt-1.0.41-linux-x64.tar.gz
+          tar -xzf wabt-1.0.41-linux-x64.tar.gz
+          echo "$PWD/wabt-1.0.41/bin" >> $GITHUB_PATH
 
       - name: Setup Android NDK
         run: |

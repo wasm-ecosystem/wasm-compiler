@@ -149,9 +149,9 @@ jobs:
         shell: powershell
         run: |
           $ErrorActionPreference = 'Stop'
-          Invoke-WebRequest -Uri "https://github.com/WebAssembly/wabt/releases/download/1.0.36/wabt-1.0.36-windows.tar.gz" -OutFile "wabt.tar.gz"
+          Invoke-WebRequest -Uri "https://github.com/WebAssembly/wabt/releases/download/1.0.41/wabt-1.0.41-windows-x64.tar.gz" -OutFile "wabt.tar.gz"
           tar -xzf wabt.tar.gz
-          echo "${{ github.workspace }}\wabt-1.0.36\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          echo "${{ github.workspace }}\wabt-1.0.41\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
       - name: Install Bazel
         shell: powershell
