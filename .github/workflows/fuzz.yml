@@ -26,12 +26,46 @@ env:
     });
 
 jobs:
+  resolve-branches:
+    runs-on: ubuntu-latest
+    outputs:
+      branch_matrix: ${{ steps.resolve.outputs.branch_matrix }}
+    steps:
+      - uses: actions/github-script@v7
+        id: resolve
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const branches = await github.paginate(github.rest.repos.listBranches, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              per_page: 100,
+            });
+
+            const releaseBranches = branches
+              .map(({ name }) => name)
+              .map((name) => {
+                const match = /^release\/(\d+)\.x$/.exec(name);
+                return match ? { name, major: Number.parseInt(match[1], 10) } : null;
+              })
+              .filter(Boolean)
+              .sort((left, right) => right.major - left.major);
+
+            if (releaseBranches.length === 0) {
+              core.setFailed("No release branches matching release/n.x were found.");
+              return;
+            }
+
+            const branchMatrix = JSON.stringify(["develop", releaseBranches[0].name]);
+            core.setOutput("branch_matrix", branchMatrix);
+
   unix-fuzz:
+    needs: resolve-branches
     strategy:
       fail-fast: false
       max-parallel: 16
       matrix:
-        branch: ["", "release/3.x"]
+        branch: ${{ fromJSON(needs.resolve-branches.outputs.branch_matrix) }}
         build_type: ["-DCMAKE_BUILD_TYPE=Debug", "-DCMAKE_BUILD_TYPE=Release"]
         reg_mode: ["-DVB_FORCE_HIGH_REGISTER_PRESSURE", ""]
         active_mode:
@@ -73,11 +107,12 @@ jobs:
           OUT_FILE: ${{ steps.fuzz.outputs.log_file }}
 
   qemu-fuzz:
+    needs: resolve-branches
     strategy:
       fail-fast: false
       max-parallel: 2
       matrix:
-        branch: ["", "release/3.x"]
+        branch: ${{ fromJSON(needs.resolve-branches.outputs.branch_matrix) }}
         reg_mode: ["", "-DVB_FORCE_HIGH_REGISTER_PRESSURE"]
     runs-on: ubuntu-latest
     container:
