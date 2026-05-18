@@ -1316,11 +1316,111 @@ void Backend::emitV1ImportAdapterImpl(uint32_t const fncIndex) {
   as_.INSTR(RET_t)();
 }
 
-void Backend::emitV2ImportAdapterImpl(uint32_t const fncIndex) const {
-  static_cast<void>(fncIndex);
-  static_cast<void>(this);
-  // Need handle multi return values to wasm style
-  throw FeatureNotSupportedException(ErrorCode::Not_implemented);
+void Backend::emitV2ImportAdapterImpl(uint32_t const fncIndex) {
+  uint32_t const sigIndex{moduleInfo_.getFncSigIndex(fncIndex)};
+  uint32_t const paramSlotWidth{moduleInfo_.getNumParamsForSignature(sigIndex) * 8U};
+  uint32_t const retSlotWidth{moduleInfo_.getNumReturnValuesForSignature(sigIndex) * 8U};
+  uint32_t const oldStackParamWidth{getStackParamWidth(sigIndex, false)};
+
+  constexpr uint32_t of_params{NABI::shadowSpaceSize};
+  uint32_t const of_returnValues{of_params + paramSlotWidth};
+  uint32_t const of_jobMemoryPtrPtr{of_returnValues + retSlotWidth};
+  uint32_t const of_post{of_jobMemoryPtrPtr + Widths::jobMemoryPtrPtr};
+  uint32_t const totalReserved{roundUpToPow2(of_post + 8U, 4U) - 8U};
+  uint32_t const of_oldStackParams{totalReserved + 8U};
+  uint32_t const of_oldStackReturnValues{of_oldStackParams + oldStackParamWidth};
+
+  as_.subRm64Imm(REG::SP, totalReserved);
+#if ACTIVE_STACK_OVERFLOW_CHECK
+  as_.checkStackFence();
+#endif
+
+  RegStackTracker sourceTracker{};
+  uint32_t offsetInOldStackParams{oldStackParamWidth};
+  StackSlotCursor paramSlotCursor{of_params};
+  moduleInfo_.iterateParamsForSignature(
+      sigIndex, FunctionRef<void(MachineType)>(
+                    [this, &sourceTracker, &offsetInOldStackParams, &paramSlotCursor, of_oldStackParams](MachineType const paramType) {
+                      bool const is64{MachineTypeUtil::is64(paramType)};
+                      bool const isInt{MachineTypeUtil::isInt(paramType)};
+                      REG const sourceReg{getREGForArg(paramType, false, sourceTracker)};
+                      int32_t const targetOffset{static_cast<int32_t>(paramSlotCursor.next())};
+
+                      if (sourceReg != REG::NONE) {
+                        if (isInt) {
+                          as_.INSTR(is64 ? MOV_rm64_r64 : MOV_rm32_r32).setM4RM(REG::SP, targetOffset).setR(sourceReg)();
+                        } else {
+                          as_.INSTR(is64 ? MOVSD_rmf_rf : MOVSS_rmf_rf).setM4RM(REG::SP, targetOffset).setR(sourceReg)();
+                        }
+                      } else {
+                        offsetInOldStackParams -= 8U;
+                        int32_t const sourceOffset{static_cast<int32_t>(of_oldStackParams) + static_cast<int32_t>(offsetInOldStackParams)};
+                        if (isInt) {
+                          as_.INSTR(is64 ? MOV_r64_rm64 : MOV_r32_rm32).setR(callScrRegs[0]).setM4RM(REG::SP, sourceOffset)();
+                          as_.INSTR(is64 ? MOV_rm64_r64 : MOV_rm32_r32).setM4RM(REG::SP, targetOffset).setR(callScrRegs[0])();
+                        } else {
+                          as_.INSTR(is64 ? MOVSD_rf_rmf : MOVSS_rf_rmf).setR(WasmABI::REGS::moveHelper).setM4RM(REG::SP, sourceOffset)();
+                          as_.INSTR(is64 ? MOVSD_rmf_rf : MOVSS_rmf_rf).setM4RM(REG::SP, targetOffset).setR(WasmABI::REGS::moveHelper)();
+                        }
+                      }
+                    }));
+
+  RegStackTracker targetTracker{};
+  REG const paramsPtrReg{getREGForArg(MachineType::I64, true, targetTracker)};
+  REG const retsPtrReg{getREGForArg(MachineType::I64, true, targetTracker)};
+  REG const ctxReg{getREGForArg(MachineType::I64, true, targetTracker)};
+  assert(paramsPtrReg != REG::NONE && retsPtrReg != REG::NONE && ctxReg != REG::NONE && "Need three native registers for V2 import adapter");
+  as_.INSTR(LEA_r64_m_t).setR(paramsPtrReg).setM4RM(REG::SP, static_cast<int32_t>(of_params))();
+  as_.INSTR(LEA_r64_m_t).setR(retsPtrReg).setM4RM(REG::SP, static_cast<int32_t>(of_returnValues))();
+  as_.INSTR(MOV_r64_rm64).setR(ctxReg).setM4RM(WasmABI::REGS::linMem, -BD::FromEnd::customCtxOffset)();
+
+  tryPatchFncIndexOfLastStacktraceEntry(fncIndex, callScrRegs[0]);
+
+#if LINEAR_MEMORY_BOUNDS_CHECKS
+  cacheJobMemoryPtrPtr(of_jobMemoryPtrPtr, callScrRegs[0]);
+#endif
+  emitRawFunctionCall(fncIndex);
+#if LINEAR_MEMORY_BOUNDS_CHECKS
+  restoreFromJobMemoryPtrPtr(of_jobMemoryPtrPtr);
+#endif
+
+#if INTERRUPTION_REQUEST
+  checkForInterruptionRequest();
+#endif
+  common_.recoverGlobalsToRegs();
+
+  RegStackTracker returnValueTracker{};
+  uint32_t offsetInReturnSlots{of_returnValues};
+  moduleInfo_.iterateResultsForSignature(
+      sigIndex,
+      FunctionRef<void(MachineType)>([this, &returnValueTracker, &offsetInReturnSlots, of_oldStackReturnValues](MachineType const machineType) {
+        bool const is64{MachineTypeUtil::is64(machineType)};
+        bool const isInt{MachineTypeUtil::isInt(machineType)};
+        int32_t const sourceOffset{static_cast<int32_t>(offsetInReturnSlots)};
+        offsetInReturnSlots += 8U;
+
+        REG const targetReg{getREGForReturnValue(machineType, returnValueTracker)};
+        if (targetReg != REG::NONE) {
+          if (isInt) {
+            as_.INSTR(is64 ? MOV_r64_rm64 : MOV_r32_rm32).setR(targetReg).setM4RM(REG::SP, sourceOffset)();
+          } else {
+            as_.INSTR(is64 ? MOVSD_rf_rmf : MOVSS_rf_rmf).setR(targetReg).setM4RM(REG::SP, sourceOffset)();
+          }
+        } else {
+          int32_t const targetOffset{static_cast<int32_t>(of_oldStackReturnValues) +
+                                     static_cast<int32_t>(offsetInStackReturnValues(returnValueTracker, machineType))};
+          if (isInt) {
+            as_.INSTR(is64 ? MOV_r64_rm64 : MOV_r32_rm32).setR(callScrRegs[0]).setM4RM(REG::SP, sourceOffset)();
+            as_.INSTR(is64 ? MOV_rm64_r64 : MOV_rm32_r32).setM4RM(REG::SP, targetOffset).setR(callScrRegs[0])();
+          } else {
+            as_.INSTR(is64 ? MOVSD_rf_rmf : MOVSS_rf_rmf).setR(WasmABI::REGS::moveHelper).setM4RM(REG::SP, sourceOffset)();
+            as_.INSTR(is64 ? MOVSD_rmf_rf : MOVSS_rmf_rf).setM4RM(REG::SP, targetOffset).setR(WasmABI::REGS::moveHelper)();
+          }
+        }
+      }));
+
+  as_.INSTR(ADD_rm64_imm32sx).setR4RM(REG::SP).setImm32(totalReserved)();
+  as_.INSTR(RET_t)();
 }
 
 // For calling imported functions via an indirect call

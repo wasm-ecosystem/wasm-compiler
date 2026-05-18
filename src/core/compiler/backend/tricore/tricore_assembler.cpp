@@ -612,6 +612,26 @@ void Assembler::MOVimm64(REG const reg, uint64_t const imm) const {
   MOVimm(RegUtil::getOtherExtReg(reg), higher32);
 }
 
+void Assembler::loadDwordERegDerefARegDisp16sx(REG const extReg, REG const addrReg, SafeInt<16U> const disp) const {
+  SignedInRangeCheck<10U> const rangeCheck{SignedInRangeCheck<10U>::check(disp.value())};
+  if (rangeCheck.inRange()) {
+    INSTR(LDD_Ea_deref_Ab_off10sx).setEa(extReg).setAb(addrReg).setOff10sx(rangeCheck.safeInt())();
+  } else {
+    loadWordDRegDerefARegDisp16sx(extReg, addrReg, disp);
+    loadWordDRegDerefARegDisp16sx(RegUtil::getOtherExtReg(extReg), addrReg, SafeInt<16U>::fromUnsafe(disp.value() + 4));
+  }
+}
+
+void Assembler::storeDwordDerefARegDisp16sxEReg(REG const extReg, REG const addrReg, SafeInt<16U> const disp) const {
+  SignedInRangeCheck<10U> const rangeCheck{SignedInRangeCheck<10U>::check(disp.value())};
+  if (rangeCheck.inRange()) {
+    INSTR(STD_deref_Ab_off10sx_Ea).setAb(addrReg).setOff10sx(rangeCheck.safeInt()).setEa(extReg)();
+  } else {
+    storeWordDerefARegDisp16sxDReg(extReg, addrReg, disp);
+    storeWordDerefARegDisp16sxDReg(RegUtil::getOtherExtReg(extReg), addrReg, SafeInt<16U>::fromUnsafe(disp.value() + 4));
+  }
+}
+
 void Assembler::loadWordDRegDerefARegDisp16sx(REG const dataReg, REG const addrReg, SafeInt<16U> const disp) const {
   bool const dispGreaterEqualThan0{disp.value() >= 0};
   bool const dispMod4Equal0{dispGreaterEqualThan0 && ((disp.value() % 4) == 0)};

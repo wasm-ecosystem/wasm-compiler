@@ -846,11 +846,110 @@ REG Backend::getREGForReturnValue(MachineType const returnValueType, RegStackTra
   return reg;
 }
 
-void Backend::emitV2ImportAdapterImpl(uint32_t const fncIndex) const {
-  static_cast<void>(fncIndex);
-  static_cast<void>(this);
-  // Need handle multi return values to wasm style
-  throw FeatureNotSupportedException(ErrorCode::Not_implemented);
+void Backend::emitV2ImportAdapterImpl(uint32_t const fncIndex) {
+  assert(moduleInfo_.functionIsImported(fncIndex) && "Function is not imported");
+
+  uint32_t const sigIndex{moduleInfo_.getFncSigIndex(fncIndex)};
+  uint32_t const paramSlotWidth{moduleInfo_.getNumParamsForSignature(sigIndex) * 8U};
+  uint32_t const retSlotWidth{moduleInfo_.getNumReturnValuesForSignature(sigIndex) * 8U};
+  uint32_t const oldStackParamWidth{getStackParamWidth(sigIndex, false)};
+
+  uint32_t const of_returnValues{paramSlotWidth};
+  uint32_t const of_jobMemoryPtrPtr{of_returnValues + retSlotWidth};
+  uint32_t const of_post{of_jobMemoryPtrPtr + Widths::jobMemoryPtrPtr};
+  uint32_t const totalReserved{roundUpToPow2(of_post, 3U) + stackAdjustAfterCall};
+
+  as_.INSTR(LEA_Aa_deref_Ab_off16sx).setAa(WasmABI::REGS::addrScrReg[0]).setAb(REG::SP).setOff16sx(SafeInt<16U>::fromConst<stackAdjustAfterCall>())();
+  as_.subSp(totalReserved);
+  as_.checkStackFence(callScrRegs[0], WasmABI::REGS::addrScrReg[1]);
+
+  RegStackTracker sourceTracker{};
+  StackSlotCursor paramSlotCursor{};
+  moduleInfo_.iterateParamsForSignature(
+      sigIndex, FunctionRef<void(MachineType)>([this, &sourceTracker, &paramSlotCursor, oldStackParamWidth](MachineType const paramType) {
+        bool const is64{MachineTypeUtil::is64(paramType)};
+        REG const sourceReg{getREGForArg(paramType, false, sourceTracker)};
+        int32_t const targetOffset{static_cast<int32_t>(paramSlotCursor.next())};
+
+        if (sourceReg != REG::NONE) {
+          if (is64) {
+            as_.storeDwordDerefARegDisp16sxEReg(sourceReg, REG::SP, SafeInt<16U>::fromUnsafe(targetOffset));
+          } else {
+            as_.storeWordDerefARegDisp16sxDReg(sourceReg, REG::SP, SafeInt<16U>::fromUnsafe(targetOffset));
+          }
+        } else {
+          uint32_t const sourceOffset{offsetInStackArgs(false, oldStackParamWidth, sourceTracker, paramType)};
+          if (is64) {
+            int32_t const signedSourceOffset{static_cast<int32_t>(sourceOffset)};
+            as_.loadDwordERegDerefARegDisp16sx(callScrRegs[0], WasmABI::REGS::addrScrReg[0], SafeInt<16U>::fromUnsafe(signedSourceOffset));
+            as_.storeDwordDerefARegDisp16sxEReg(callScrRegs[0], REG::SP, SafeInt<16U>::fromUnsafe(targetOffset));
+          } else {
+            as_.loadWordDRegDerefARegDisp16sx(callScrRegs[0], WasmABI::REGS::addrScrReg[0],
+                                              SafeInt<16U>::fromUnsafe(static_cast<int32_t>(sourceOffset)));
+            as_.storeWordDerefARegDisp16sxDReg(callScrRegs[0], REG::SP, SafeInt<16U>::fromUnsafe(targetOffset));
+          }
+        }
+      }));
+
+  as_.INSTR(MOVAA_Aa_Ab).setAa(NativeABI::addrParamRegs[0]).setAb(REG::SP)();
+  as_.INSTR(LEA_Aa_deref_Ab_off16sx)
+      .setAa(NativeABI::addrParamRegs[1])
+      .setAb(REG::SP)
+      .setOff16sx(SafeInt<16U>::fromUnsafe(static_cast<int32_t>(of_returnValues)))();
+  as_.emitLoadDerefOff16sx(NativeABI::addrParamRegs[2], WasmABI::REGS::linMem, SafeInt<16U>::fromConst<-BD::FromEnd::customCtxOffset>());
+
+  tryPatchFncIndexOfLastStacktraceEntry(fncIndex, WasmABI::REGS::addrScrReg[1], callScrRegs[0]);
+
+  cacheJobMemoryPtrPtr(of_jobMemoryPtrPtr, PreferredCallScrReg);
+  emitRawFunctionCall(fncIndex);
+  restoreFromJobMemoryPtrPtr(of_jobMemoryPtrPtr);
+#if INTERRUPTION_REQUEST
+  checkForInterruptionRequest(callScrRegs[0]);
+#endif
+
+  as_.INSTR(LDA_Aa_deref_Ab_off16sx)
+      .setAa(WasmABI::REGS::memSize)
+      .setAb(WasmABI::REGS::linMem)
+      .setOff16sx(SafeInt<16U>::fromConst<-BD::FromEnd::actualLinMemByteSize>())();
+
+  common_.recoverGlobalsToRegs();
+
+  as_.INSTR(LEA_Aa_deref_Ab_off16sx)
+      .setAa(WasmABI::REGS::addrScrReg[0])
+      .setAb(REG::SP)
+      .setOff16sx(SafeInt<16U>::fromUnsafe(static_cast<int32_t>(totalReserved) + static_cast<int32_t>(stackAdjustAfterCall)))();
+
+  RegStackTracker returnValueTracker{};
+  uint32_t offsetInReturnSlots{of_returnValues};
+  moduleInfo_.iterateResultsForSignature(
+      sigIndex, FunctionRef<void(MachineType)>([this, &returnValueTracker, &offsetInReturnSlots, oldStackParamWidth](MachineType const machineType) {
+        bool const is64{MachineTypeUtil::is64(machineType)};
+        uint32_t const sourceOffset{offsetInReturnSlots};
+        offsetInReturnSlots += 8U;
+
+        REG const targetReg{getREGForReturnValue(machineType, returnValueTracker)};
+        if (targetReg != REG::NONE) {
+          if (is64) {
+            as_.loadDwordERegDerefARegDisp16sx(targetReg, REG::SP, SafeInt<16U>::fromUnsafe(static_cast<int32_t>(sourceOffset)));
+          } else {
+            as_.loadWordDRegDerefARegDisp16sx(targetReg, REG::SP, SafeInt<16U>::fromUnsafe(static_cast<int32_t>(sourceOffset)));
+          }
+        } else {
+          uint32_t const targetOffset{oldStackParamWidth + offsetInStackReturnValues(returnValueTracker, machineType)};
+          if (is64) {
+            as_.loadDwordERegDerefARegDisp16sx(callScrRegs[0], REG::SP, SafeInt<16U>::fromUnsafe(static_cast<int32_t>(sourceOffset)));
+            as_.storeDwordDerefARegDisp16sxEReg(callScrRegs[0], WasmABI::REGS::addrScrReg[0],
+                                                SafeInt<16U>::fromUnsafe(static_cast<int32_t>(targetOffset)));
+          } else {
+            as_.loadWordDRegDerefARegDisp16sx(callScrRegs[0], REG::SP, SafeInt<16U>::fromUnsafe(static_cast<int32_t>(sourceOffset)));
+            as_.storeWordDerefARegDisp16sxDReg(callScrRegs[0], WasmABI::REGS::addrScrReg[0],
+                                               SafeInt<16U>::fromUnsafe(static_cast<int32_t>(targetOffset)));
+          }
+        }
+      }));
+
+  as_.addImmToReg(REG::SP, totalReserved);
+  as_.INSTR(FRET)();
 }
 
 void Backend::emitV1ImportAdapterImpl(uint32_t const fncIndex) {
@@ -867,9 +966,17 @@ void Backend::emitV1ImportAdapterImpl(uint32_t const fncIndex) {
   uint32_t const oldStackParamWidth{getStackParamWidth(sigIndex, false)};
 
   // We are dealing with the following memory layout
-  // RSP <--- Stack growth direction (downwards)            addrScrReg[0] --> v
-  // v <------------------------------ totalReserved -----------------------> |
-  // | Stack Params | (jobMemoryPtrPtr) | Old Reg Params (32B) | Padding | Old Stack Params |
+  // High address
+  // | ... previous caller stack data ... |
+  // | Old Stack Params                   |  <- stack parameters from the Wasm caller
+  // |------------------------------------|
+  // | Return Address (4B)                |
+  // |------------------------------------|  <- old SP at adapter entry
+  // | Padding                            |
+  // | jobMemoryPtrPtr                    |
+  // | Stack Params                       |  <- native-call stack arguments built by the adapter
+  // |------------------------------------|  <- SP after subSp(totalReserved)
+  // Low address
   uint32_t const of_jobMemoryPtrPtr{newStackParamWidth};
   uint32_t const of_post{of_jobMemoryPtrPtr + Widths::jobMemoryPtrPtr};
   uint32_t const totalReserved{roundUpToPow2(of_post, 3U) + stackAdjustAfterCall}; // Need to adjust the stack pushed by fcall

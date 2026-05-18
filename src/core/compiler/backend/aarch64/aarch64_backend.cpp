@@ -1203,11 +1203,190 @@ void Backend::spillRestoreRegsRaw(Span<REG const> const &regs, bool const restor
   }
 }
 
-void Backend::emitV2ImportAdapterImpl(uint32_t const fncIndex) const {
-  static_cast<void>(fncIndex);
-  static_cast<void>(this);
-  // Need handle multi return values to wasm style
-  throw FeatureNotSupportedException(ErrorCode::Not_implemented);
+void Backend::emitV2ImportAdapterImpl(uint32_t const fncIndex) {
+  uint32_t const sigIndex{moduleInfo_.getFncSigIndex(fncIndex)};
+  uint32_t const paramSlotWidth{moduleInfo_.getNumParamsForSignature(sigIndex) * 8U};
+  uint32_t const retSlotWidth{moduleInfo_.getNumReturnValuesForSignature(sigIndex) * 8U};
+  uint32_t const oldStackParamWidth{getStackParamWidth(sigIndex, false)};
+
+  // We are dealing with the following memory layout
+  // High address
+  // | ... previous caller stack data ... |
+  // | Old Stack Return Values            |  <- stack return slots from the Wasm caller
+  // | Old Stack Params                   |  <- stack parameters from the Wasm caller
+  // |------------------------------------|  <- old SP at adapter entry
+  // | Padding                            |
+  // | jobMemoryPtrPtr                    |
+  // | LR spill (8B)                      |
+  // | Stack Return Values                |  <- native-call return slots built by the adapter
+  // | Stack Params                       |  <- native-call stack arguments built by the adapter
+  // |------------------------------------|  <- SP after reserving totalReserved
+  // Low address
+  uint32_t const of_returnValues{paramSlotWidth};
+  uint32_t const of_lr{of_returnValues + retSlotWidth};
+  uint32_t const of_jobMemoryPtrPtr{of_lr + 8U};
+  uint32_t const of_post{of_jobMemoryPtrPtr + Widths::jobMemoryPtrPtr};
+  uint32_t const totalReserved{roundUpToPow2(of_post, 4U)};
+  uint32_t const of_oldStackParams{totalReserved};
+  uint32_t const of_oldStackReturnValues{of_oldStackParams + oldStackParamWidth};
+
+  as_.addImm24ToReg(REG::SP, -static_cast<int32_t>(totalReserved), true);
+#if ACTIVE_STACK_OVERFLOW_CHECK
+  as_.checkStackFence(callScrRegs[1]);
+#endif
+
+  as_.INSTR(STR_xT_deref_xN_imm12zxls3_t).setT(REG::LR).setN(REG::SP).setImm12zxls3(SafeUInt<15U>::fromUnsafe(of_lr))();
+
+  RegStackTracker sourceTracker{};
+  StackSlotCursor paramSlotCursor{};
+  moduleInfo_.iterateParamsForSignature(
+      sigIndex,
+      FunctionRef<void(MachineType)>([this, &sourceTracker, &paramSlotCursor, of_oldStackParams, oldStackParamWidth](MachineType const paramType) {
+        bool const is64{MachineTypeUtil::is64(paramType)};
+        bool const isInt{MachineTypeUtil::isInt(paramType)};
+        REG const sourceReg{getREGForArg(paramType, false, sourceTracker)};
+        uint32_t const targetOffset{paramSlotCursor.next()};
+
+        if (sourceReg != REG::NONE) {
+          if (isInt) {
+            if (is64) {
+              as_.INSTR(STR_xT_deref_xN_imm12zxls3_t).setT(sourceReg).setN(REG::SP).setImm12zxls3(SafeUInt<15U>::fromUnsafe(targetOffset))();
+            } else {
+              as_.INSTR(STR_wT_deref_xN_imm12zxls2_t).setT(sourceReg).setN(REG::SP).setImm12zxls2(SafeUInt<14U>::fromUnsafe(targetOffset))();
+            }
+          } else {
+            if (is64) {
+              as_.INSTR(STR_dT_deref_xN_imm12zxls3_t).setT(sourceReg).setN(REG::SP).setImm12zxls3(SafeUInt<15U>::fromUnsafe(targetOffset))();
+            } else {
+              as_.INSTR(STR_sT_deref_xN_imm12zxls2_t).setT(sourceReg).setN(REG::SP).setImm12zxls2(SafeUInt<14U>::fromUnsafe(targetOffset))();
+            }
+          }
+        } else {
+          uint32_t const sourceOffset{of_oldStackParams + offsetInStackArgs(false, oldStackParamWidth, sourceTracker, paramType)};
+          if (isInt) {
+            if (is64) {
+              as_.INSTR(LDR_xT_deref_xN_imm12zxls3_t).setT(callScrRegs[0]).setN(REG::SP).setImm12zxls3(SafeUInt<15U>::fromUnsafe(sourceOffset))();
+              as_.INSTR(STR_xT_deref_xN_imm12zxls3_t).setT(callScrRegs[0]).setN(REG::SP).setImm12zxls3(SafeUInt<15U>::fromUnsafe(targetOffset))();
+            } else {
+              as_.INSTR(LDR_wT_deref_xN_imm12zxls2_t).setT(callScrRegs[0]).setN(REG::SP).setImm12zxls2(SafeUInt<14U>::fromUnsafe(sourceOffset))();
+              as_.INSTR(STR_wT_deref_xN_imm12zxls2_t).setT(callScrRegs[0]).setN(REG::SP).setImm12zxls2(SafeUInt<14U>::fromUnsafe(targetOffset))();
+            }
+          } else {
+            if (is64) {
+              as_.INSTR(LDR_dT_deref_xN_imm12zxls3_t)
+                  .setT(WasmABI::REGS::moveHelper)
+                  .setN(REG::SP)
+                  .setImm12zxls3(SafeUInt<15U>::fromUnsafe(sourceOffset))();
+              as_.INSTR(STR_dT_deref_xN_imm12zxls3_t)
+                  .setT(WasmABI::REGS::moveHelper)
+                  .setN(REG::SP)
+                  .setImm12zxls3(SafeUInt<15U>::fromUnsafe(targetOffset))();
+            } else {
+              as_.INSTR(LDR_sT_deref_xN_imm12zxls2_t)
+                  .setT(WasmABI::REGS::moveHelper)
+                  .setN(REG::SP)
+                  .setImm12zxls2(SafeUInt<14U>::fromUnsafe(sourceOffset))();
+              as_.INSTR(STR_sT_deref_xN_imm12zxls2_t)
+                  .setT(WasmABI::REGS::moveHelper)
+                  .setN(REG::SP)
+                  .setImm12zxls2(SafeUInt<14U>::fromUnsafe(targetOffset))();
+            }
+          }
+        }
+      }));
+
+  RegStackTracker targetTracker{};
+  REG const paramsPtrReg{getREGForArg(MachineType::I64, true, targetTracker)};
+  REG const retsPtrReg{getREGForArg(MachineType::I64, true, targetTracker)};
+  REG const ctxReg{getREGForArg(MachineType::I64, true, targetTracker)};
+  assert(paramsPtrReg != REG::NONE && retsPtrReg != REG::NONE && ctxReg != REG::NONE && "Need three native registers for V2 import adapter");
+  as_.INSTR(ADD_xD_xN_imm12zxols12).setD(paramsPtrReg).setN(REG::SP).setImm12zx(SafeUInt<12U>::fromConst<0U>())();
+  as_.INSTR(ADD_xD_xN_imm12zxols12).setD(retsPtrReg).setN(REG::SP).setImm12zx(SafeUInt<12U>::fromUnsafe(of_returnValues))();
+  as_.INSTR(LDUR_xT_deref_xN_unscSImm9_t)
+      .setT(ctxReg)
+      .setN(WasmABI::REGS::linMem)
+      .setUnscSImm9(SafeInt<9U>::fromConst<-static_cast<int32_t>(Basedata::FromEnd::customCtxOffset)>())();
+
+  tryPatchFncIndexOfLastStacktraceEntry(fncIndex, callScrRegs[0], callScrRegs[1]);
+
+#if LINEAR_MEMORY_BOUNDS_CHECKS
+  cacheJobMemoryPtrPtr(of_jobMemoryPtrPtr, callScrRegs[0]);
+#endif
+  emitRawFunctionCall(fncIndex, true);
+#if LINEAR_MEMORY_BOUNDS_CHECKS
+  restoreFromJobMemoryPtrPtr(of_jobMemoryPtrPtr);
+#endif
+#if INTERRUPTION_REQUEST
+  checkForInterruptionRequest(callScrRegs[0]);
+#endif
+
+  common_.recoverGlobalsToRegs();
+
+  RegStackTracker returnValueTracker{};
+  StackSlotCursor returnSlotCursor{of_returnValues};
+  moduleInfo_.iterateResultsForSignature(
+      sigIndex,
+      FunctionRef<void(MachineType)>([this, &returnValueTracker, &returnSlotCursor, of_oldStackReturnValues](MachineType const machineType) {
+        bool const is64{MachineTypeUtil::is64(machineType)};
+        bool const isInt{MachineTypeUtil::isInt(machineType)};
+        uint32_t const sourceOffset{returnSlotCursor.next()};
+
+        REG const targetReg{getREGForReturnValue(machineType, returnValueTracker)};
+        if (targetReg != REG::NONE) {
+          if (isInt) {
+            if (is64) {
+              as_.INSTR(LDR_xT_deref_xN_imm12zxls3_t).setT(targetReg).setN(REG::SP).setImm12zxls3(SafeUInt<15U>::fromUnsafe(sourceOffset))();
+            } else {
+              as_.INSTR(LDR_wT_deref_xN_imm12zxls2_t).setT(targetReg).setN(REG::SP).setImm12zxls2(SafeUInt<14U>::fromUnsafe(sourceOffset))();
+            }
+          } else {
+            if (is64) {
+              as_.INSTR(LDR_dT_deref_xN_imm12zxls3_t).setT(targetReg).setN(REG::SP).setImm12zxls3(SafeUInt<15U>::fromUnsafe(sourceOffset))();
+            } else {
+              as_.INSTR(LDR_sT_deref_xN_imm12zxls2_t).setT(targetReg).setN(REG::SP).setImm12zxls2(SafeUInt<14U>::fromUnsafe(sourceOffset))();
+            }
+          }
+        } else {
+          uint32_t const targetOffset{of_oldStackReturnValues + offsetInStackReturnValues(returnValueTracker, machineType)};
+          if (isInt) {
+            if (is64) {
+              as_.INSTR(LDR_xT_deref_xN_imm12zxls3_t).setT(callScrRegs[0]).setN(REG::SP).setImm12zxls3(SafeUInt<15U>::fromUnsafe(sourceOffset))();
+              as_.INSTR(STR_xT_deref_xN_imm12zxls3_t).setT(callScrRegs[0]).setN(REG::SP).setImm12zxls3(SafeUInt<15U>::fromUnsafe(targetOffset))();
+            } else {
+              as_.INSTR(LDR_wT_deref_xN_imm12zxls2_t).setT(callScrRegs[0]).setN(REG::SP).setImm12zxls2(SafeUInt<14U>::fromUnsafe(sourceOffset))();
+              as_.INSTR(STR_wT_deref_xN_imm12zxls2_t).setT(callScrRegs[0]).setN(REG::SP).setImm12zxls2(SafeUInt<14U>::fromUnsafe(targetOffset))();
+            }
+          } else {
+            if (is64) {
+              as_.INSTR(LDR_dT_deref_xN_imm12zxls3_t)
+                  .setT(WasmABI::REGS::moveHelper)
+                  .setN(REG::SP)
+                  .setImm12zxls3(SafeUInt<15U>::fromUnsafe(sourceOffset))();
+              as_.INSTR(STR_dT_deref_xN_imm12zxls3_t)
+                  .setT(WasmABI::REGS::moveHelper)
+                  .setN(REG::SP)
+                  .setImm12zxls3(SafeUInt<15U>::fromUnsafe(targetOffset))();
+            } else {
+              as_.INSTR(LDR_sT_deref_xN_imm12zxls2_t)
+                  .setT(WasmABI::REGS::moveHelper)
+                  .setN(REG::SP)
+                  .setImm12zxls2(SafeUInt<14U>::fromUnsafe(sourceOffset))();
+              as_.INSTR(STR_sT_deref_xN_imm12zxls2_t)
+                  .setT(WasmABI::REGS::moveHelper)
+                  .setN(REG::SP)
+                  .setImm12zxls2(SafeUInt<14U>::fromUnsafe(targetOffset))();
+            }
+          }
+        }
+      }));
+
+#if LINEAR_MEMORY_BOUNDS_CHECKS
+  setupMemSizeReg();
+#endif
+
+  as_.INSTR(LDR_xT_deref_xN_imm12zxls3_t).setT(REG::LR).setN(REG::SP).setImm12zxls3(SafeUInt<15U>::fromUnsafe(of_lr))();
+  as_.addImm24ToReg(REG::SP, static_cast<int32_t>(totalReserved), true);
+  as_.INSTR(RET_xN_t).setN(REG::LR)();
 }
 
 void Backend::emitV1ImportAdapterImpl(uint32_t const fncIndex) {

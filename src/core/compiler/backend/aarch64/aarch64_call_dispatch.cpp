@@ -69,13 +69,12 @@ void CallBase::prepareStackFrame() {
 
 void DirectV2Import::iterateParams(Stack::iterator const paramsBase) {
   Stack::iterator currentParam{paramsBase};
-  uint32_t offsetInArgs{0U};
+  StackSlotCursor argSlotCursor{};
   backend_.moduleInfo_.iterateParamsForSignature(
-      sigIndex_, FunctionRef<void(MachineType)>([this, &offsetInArgs, &currentParam](MachineType const paramType) {
+      sigIndex_, FunctionRef<void(MachineType)>([this, &argSlotCursor, &currentParam](MachineType const paramType) {
         VariableStorage targetStorage{};
         VariableStorage const sourceStorage{backend_.moduleInfo_.getStorage(*currentParam)};
-        uint32_t const offsetFromSP{offsetInArgs};
-        offsetInArgs += 8U; // Align to 8
+        uint32_t const offsetFromSP{argSlotCursor.next()};
         targetStorage = VariableStorage::stackMemory(paramType, backend_.moduleInfo_.fnc.stackFrameSize - offsetFromSP);
         // (reg|stack)->stack
         backend_.emitMoveImpl(targetStorage, sourceStorage, false);
@@ -102,11 +101,10 @@ void DirectV2Import::iterateParams(Stack::iterator const paramsBase) {
 
 void DirectV2Import::iterateResults() {
   if (numReturnValues_ > 0U) {
-    uint32_t offsetInRets{0U + stackParamWidth_};
+    StackSlotCursor retSlotCursor{stackParamWidth_};
     backend_.moduleInfo_.iterateResultsForSignature(
-        sigIndex_, FunctionRef<void(MachineType)>([this, &offsetInRets](MachineType const machineType) {
-          uint32_t const offsetFromSP{offsetInRets};
-          offsetInRets += 8U; // Align to 8
+        sigIndex_, FunctionRef<void(MachineType)>([this, &retSlotCursor](MachineType const machineType) {
+          uint32_t const offsetFromSP{retSlotCursor.next()};
           StackElement const returnValueElement{
               StackElement::tempResult(machineType, VariableStorage::stackMemory(machineType, backend_.moduleInfo_.fnc.stackFrameSize - offsetFromSP),
                                        backend_.moduleInfo_.getStackMemoryReferencePosition())};

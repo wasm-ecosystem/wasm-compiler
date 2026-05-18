@@ -131,6 +131,29 @@ public:
   TReg reg = TReg::NONE;                       ///< Underlying register
 };
 
+/// @brief Tracks consecutive 8-byte stack slots used by call adapters
+class StackSlotCursor final {
+public:
+  ///
+  /// @brief Constructor
+  ///
+  /// @param startOffset Starting offset for the cursor, defaults to 0
+  inline explicit constexpr StackSlotCursor(uint32_t const startOffset = 0U) VB_NOEXCEPT : nextOffset_{startOffset} {
+  }
+  ///
+  /// @brief Get the next available stack slot offset and advance the cursor
+  ///
+  /// @return uint32_t The offset of the next available stack slot before advancing the cursor
+  inline uint32_t next() VB_NOEXCEPT {
+    uint32_t const currentOffset{nextOffset_};
+    nextOffset_ += 8U;
+    return currentOffset;
+  }
+
+private:
+  uint32_t nextOffset_; ///< Next available stack slot offset
+};
+
 ///
 /// @brief Common utility functions both the frontend and backend can use
 ///

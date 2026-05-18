@@ -1142,10 +1142,6 @@ void Frontend::parseElementSection() {
       // the function and align the next section to 4 bytes again
       if (moduleInfo_.functionIsImported(elementFunctionIndex)) {
         ModuleInfo::ImpFuncDef const impFuncDef{moduleInfo_.getImpFuncDef(elementFunctionIndex)};
-        if (impFuncDef.importFnVersion == NativeSymbol::ImportFnVersion::V2) {
-          // V2 import functions are not supported to indirect call yet
-          throw FeatureNotSupportedException(ErrorCode::Not_implemented);
-        }
         // Check if the imported function is linked. If not, we do not generate a wrapper for it.
         if (impFuncDef.linked && (moduleInfo_.wasmFncBodyBinaryPositions[elementFunctionIndex] == 0xFFFFFFFFU)) {
           moduleInfo_.wasmFncBodyBinaryPositions[elementFunctionIndex] = compiler_.output_.size();

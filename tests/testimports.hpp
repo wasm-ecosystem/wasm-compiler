@@ -657,7 +657,8 @@ public:
   }
 
   class MultiReturn final
-      : public ImportFunctionV2<std::tuple<uint32_t, uint64_t, uint32_t, double, float>, std::tuple<uint32_t, uint64_t, uint32_t, double, float>> {
+      : public ImportFunctionV2<std::tuple<uint32_t, uint64_t, uint32_t, double, float, uint64_t, double, uint32_t, uint32_t, uint64_t>,
+                                std::tuple<uint32_t, uint64_t, uint32_t, double, float, uint64_t, double, uint32_t, uint32_t, uint64_t>> {
   public:
     using ImportFunctionV2::ImportFunctionV2;
     static void call(void *params, void *results, void *ctx) {
@@ -666,12 +667,22 @@ public:
       uint32_t const p2 = getParam<2>(params);
       double const p3 = getParam<3>(params);
       float const p4 = getParam<4>(params);
+      uint64_t const p5 = getParam<5>(params);
+      double const p6 = getParam<6>(params);
+      uint32_t const p7 = getParam<7>(params);
+      uint32_t const p8 = getParam<8>(params);
+      uint64_t const p9 = getParam<9>(params);
       static_cast<void>(ctx);
       setRet<0>(results, p0 + 1);
       setRet<1>(results, p1 + 2);
       setRet<2>(results, p2 + 3);
       setRet<3>(results, p3 + 4.4);
       setRet<4>(results, p4 + 5.5F);
+      setRet<5>(results, p5 + 6);
+      setRet<6>(results, p6 + 7.5);
+      setRet<7>(results, p7 + 8);
+      setRet<8>(results, p8 + 9);
+      setRet<9>(results, p9 + 10);
     }
   };
 

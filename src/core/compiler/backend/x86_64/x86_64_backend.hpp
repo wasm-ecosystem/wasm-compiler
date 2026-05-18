@@ -586,7 +586,7 @@ private:
   /// calling convention and calls the imported function at the given function index
   ///
   /// @param fncIndex Index of the imported function to call (NOTE: Must be an imported function)
-  void emitV2ImportAdapterImpl(uint32_t const fncIndex) const;
+  void emitV2ImportAdapterImpl(uint32_t const fncIndex);
 
   ///
   /// @brief Emits a memcpy without a bounds check from an arbitrary absolute address to another absolute address

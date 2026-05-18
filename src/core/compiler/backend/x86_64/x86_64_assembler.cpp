@@ -80,6 +80,18 @@ void Assembler::MOVimm64(REG const reg, uint64_t const imm) const {
   INSTR(MOV_r64_imm64_t).setR(reg).setImm64(imm)();
 }
 
+void Assembler::subRm64Imm(REG const reg, uint32_t const imm) const {
+  if (imm == 0U) {
+    return;
+  }
+
+  if (in_range<int8_t>(static_cast<int64_t>(imm))) {
+    INSTR(SUB_rm64_imm8sx).setR4RM(reg).setImm8(static_cast<uint8_t>(imm))();
+  } else {
+    INSTR(SUB_rm64_imm32sx).setR4RM(reg).setImm32(imm)();
+  }
+}
+
 // Generate machine code for a WebAssembly TRAP with the given trapCode as hint
 void Assembler::TRAP(TrapCode const trapCode, bool const loadTrapCode) const {
   if (backend_.compiler_.getDebugMode()) {

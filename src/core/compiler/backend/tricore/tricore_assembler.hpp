@@ -398,6 +398,13 @@ public:
   /// @param imm Immediate value to move to the register
   void MOVimm64(REG const reg, uint64_t const imm) const;
 
+  /// @brief EReg = M(AReg + disp, dword)
+  /// Uses LDD if disp fits in off10sx, otherwise falls back to two word loads.
+  /// @param extReg Even register of the extended register pair
+  /// @param addrReg AReg in formula
+  /// @param disp disp in formula, max off16sx
+  void loadDwordERegDerefARegDisp16sx(REG const extReg, REG const addrReg, SafeInt<16U> const disp) const;
+
   /// @brief DReg = M(AReg + disp, word)
   /// @param dataReg DReg in formula
   /// @param addrReg AReg in formula
@@ -433,6 +440,13 @@ public:
   /// @param addrReg AReg in formula
   /// @param disp disp in formula, max off16sx
   void storeWordDerefARegDisp16sxDReg(REG const dataReg, REG const addrReg, SafeInt<16U> const disp) const;
+
+  /// @brief M(AReg + disp, dword) = EReg
+  /// Uses STD if disp fits in off10sx, otherwise falls back to two word stores.
+  /// @param extReg Even register of the extended register pair
+  /// @param addrReg AReg in formula
+  /// @param disp disp in formula, max off16sx
+  void storeDwordDerefARegDisp16sxEReg(REG const extReg, REG const addrReg, SafeInt<16U> const disp) const;
 
   ///
   /// @brief Adds a constant value to a data register

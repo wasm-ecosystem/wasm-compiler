@@ -6,7 +6,7 @@
 
 - Fix SPDX format
 
-- Support multi return values import function(not call_indirect)
+- Support multi return values import function
 - Support immutable import globals
 - Support default import API 'dumpMemoryRegion'
 - Performance improvements:

@@ -180,6 +180,11 @@ public:
   /// @throws std::range_error If not enough memory is available
   void MOVimm64(REG const reg, uint64_t const imm) const;
 
+  /// @brief Emit SUB rm64, imm using the smallest immediate encoding
+  /// @param reg Register to update
+  /// @param imm Immediate to subtract
+  void subRm64Imm(REG const reg, uint32_t const imm) const;
+
 #if ACTIVE_STACK_OVERFLOW_CHECK
   ///
   /// @brief Check whether the stack pointer is below the stack fence; if so, trap with TrapCode::STACKFENCEBREACHED
