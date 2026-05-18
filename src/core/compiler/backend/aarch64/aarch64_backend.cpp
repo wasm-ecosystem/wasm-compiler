@@ -1209,6 +1209,8 @@ void Backend::emitV2ImportAdapterImpl(uint32_t const fncIndex) {
   uint32_t const retSlotWidth{moduleInfo_.getNumReturnValuesForSignature(sigIndex) * 8U};
   uint32_t const oldStackParamWidth{getStackParamWidth(sigIndex, false)};
 
+  common_.moveGlobalsToLinkData();
+
   // We are dealing with the following memory layout
   // High address
   // | ... previous caller stack data ... |
@@ -1402,9 +1404,17 @@ void Backend::emitV1ImportAdapterImpl(uint32_t const fncIndex) {
 
   common_.moveGlobalsToLinkData();
 
-  // RSP <------------ Stack growth direction (downwards)
-  //                      v <-- callScrRegs[1]                             reserve -->
-  // | New Stack Params  | LR | JobMemoryPtrPtr | Padding | Old Stack Params |
+  // We are dealing with the following memory layout
+  // High address
+  // | ... previous caller stack data ... |
+  // | Old Stack Params                   |  <- stack parameters from the Wasm caller
+  // |------------------------------------|  <- old SP at adapter entry
+  // | Padding                            |
+  // | jobMemoryPtrPtr                    |
+  // | LR spill (8B)                      |
+  // | New Stack Params                   |  <- native-call stack arguments built by the adapter
+  // |------------------------------------|  <- SP after addImm24ToReg(SP, -totalReserved)
+  // Low address
   uint32_t const of_lr{newStackParamWidth};
   uint32_t const of_jobMemoryPtrPtr{of_lr + 8U};
   uint32_t const of_post{of_jobMemoryPtrPtr + Widths::jobMemoryPtrPtr};
@@ -1556,8 +1566,6 @@ void Backend::emitWasmToNativeAdapter(uint32_t const fncIndex) {
   if (moduleInfo_.functionIsBuiltin(fncIndex)) {
     throw FeatureNotSupportedException(ErrorCode::Cannot_indirectly_call_builtin_functions);
   }
-
-  common_.moveGlobalsToLinkData();
 
   bool const isV2Import{moduleInfo_.functionIsV2Import(fncIndex)};
   if (isV2Import) {

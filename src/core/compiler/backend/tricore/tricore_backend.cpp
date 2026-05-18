@@ -854,6 +854,22 @@ void Backend::emitV2ImportAdapterImpl(uint32_t const fncIndex) {
   uint32_t const retSlotWidth{moduleInfo_.getNumReturnValuesForSignature(sigIndex) * 8U};
   uint32_t const oldStackParamWidth{getStackParamWidth(sigIndex, false)};
 
+  common_.moveGlobalsToLinkData();
+
+  // We are dealing with the following memory layout
+  // High address
+  // | ... previous caller stack data ... |
+  // | Old Stack Return Values            |  <- stack return slots of the Wasm caller
+  // | Old Stack Params                   |  <- stack parameters from the Wasm caller
+  // |------------------------------------|
+  // | Return Address (4B)                |
+  // |------------------------------------|  <- old SP at adapter entry
+  // | Padding                            |
+  // | jobMemoryPtrPtr                    |
+  // | Stack Return Values                |  <- native-call return slots built by the adapter
+  // | Stack Params                       |  <- native-call stack arguments built by the adapter
+  // |------------------------------------|  <- SP after subSp(totalReserved)
+  // Low address
   uint32_t const of_returnValues{paramSlotWidth};
   uint32_t const of_jobMemoryPtrPtr{of_returnValues + retSlotWidth};
   uint32_t const of_post{of_jobMemoryPtrPtr + Widths::jobMemoryPtrPtr};
@@ -960,10 +976,10 @@ void Backend::emitV1ImportAdapterImpl(uint32_t const fncIndex) {
     throw FeatureNotSupportedException(ErrorCode::Cannot_indirectly_call_builtin_functions);
   }
 
-  common_.moveGlobalsToLinkData();
-
   uint32_t const newStackParamWidth{getStackParamWidth(sigIndex, true)};
   uint32_t const oldStackParamWidth{getStackParamWidth(sigIndex, false)};
+
+  common_.moveGlobalsToLinkData();
 
   // We are dealing with the following memory layout
   // High address
@@ -1097,8 +1113,6 @@ void Backend::emitWasmToNativeAdapter(uint32_t const fncIndex) {
   if (moduleInfo_.functionIsBuiltin(fncIndex)) {
     throw FeatureNotSupportedException(ErrorCode::Cannot_indirectly_call_builtin_functions);
   }
-
-  common_.moveGlobalsToLinkData();
 
   bool const isV2Import{moduleInfo_.functionIsV2Import(fncIndex)};
   if (isV2Import) {

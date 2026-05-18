@@ -1197,10 +1197,21 @@ void Backend::emitV1ImportAdapterImpl(uint32_t const fncIndex) {
   uint32_t const newStackParamWidth{getStackParamWidth(sigIndex, true)};
   uint32_t const oldStackParamWidth{getStackParamWidth(sigIndex, false)};
 
-  // RSP <------------ Stack growth direction (downwards)
-  // v <------------------------------------- totalReserved ----------------------------------> v
-  // | Shadow Space | New Stack Params | (jobMemoryPtrPtr) | Padding | RET address (8B) | Old
-  // Stack Args
+  common_.moveGlobalsToLinkData();
+
+  // We are dealing with the following memory layout
+  // High address
+  // | ... previous caller stack data ... |
+  // | Old Stack Params                   |  <- stack parameters from the Wasm caller
+  // |------------------------------------|
+  // | Return Address (8B)                |
+  // |------------------------------------|  <- old RSP at adapter entry
+  // | Padding                            |
+  // | jobMemoryPtrPtr                    |
+  // | New Stack Params                   |  <- native-call stack arguments built by the adapter
+  // | Shadow Space                       |  <- Win64 home space reserved before the call
+  // |------------------------------------|  <- RSP after sub(totalReserved)
+  // Low address
   static constexpr uint32_t of_newStackParams{NABI::shadowSpaceSize};
   uint32_t const of_jobMemoryPtrPtr{of_newStackParams + newStackParamWidth};
   uint32_t const of_post{of_jobMemoryPtrPtr + Widths::jobMemoryPtrPtr};
@@ -1322,6 +1333,23 @@ void Backend::emitV2ImportAdapterImpl(uint32_t const fncIndex) {
   uint32_t const retSlotWidth{moduleInfo_.getNumReturnValuesForSignature(sigIndex) * 8U};
   uint32_t const oldStackParamWidth{getStackParamWidth(sigIndex, false)};
 
+  common_.moveGlobalsToLinkData();
+
+  // We are dealing with the following memory layout
+  // High address
+  // | ... previous caller stack data ... |
+  // | Old Stack Return Values            |  <- stack return slots of the Wasm caller
+  // | Old Stack Params                   |  <- stack parameters from the Wasm caller
+  // |------------------------------------|
+  // | Return Address (8B)                |
+  // |------------------------------------|  <- old RSP at adapter entry
+  // | Padding                            |
+  // | jobMemoryPtrPtr                    |
+  // | Stack Return Values                |  <- native-call return slots built by the adapter
+  // | Stack Params                       |  <- native-call stack arguments built by the adapter
+  // | Shadow Space                       |  <- Win64 home space reserved before the call
+  // |------------------------------------|  <- RSP after sub(totalReserved)
+  // Low address
   constexpr uint32_t of_params{NABI::shadowSpaceSize};
   uint32_t const of_returnValues{of_params + paramSlotWidth};
   uint32_t const of_jobMemoryPtrPtr{of_returnValues + retSlotWidth};
@@ -1430,8 +1458,6 @@ void Backend::emitWasmToNativeAdapter(uint32_t const fncIndex) {
   if (moduleInfo_.functionIsBuiltin(fncIndex)) {
     throw FeatureNotSupportedException(ErrorCode::Cannot_indirectly_call_builtin_functions);
   }
-
-  common_.moveGlobalsToLinkData();
 
   bool const isV2Import{moduleInfo_.functionIsV2Import(fncIndex)};
   if (isV2Import) {
