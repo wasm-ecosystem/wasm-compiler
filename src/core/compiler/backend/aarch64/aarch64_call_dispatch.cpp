@@ -85,7 +85,7 @@ void DirectV2Import::iterateParams(Stack::iterator const paramsBase) {
   RegStackTracker tracker{};
   REG const regForParamsPtr{backend_.getREGForArg(MachineType::I64, true, tracker)};
   assert(regForParamsPtr != REG::NONE && "Should have three regs for params, rets and ctx");
-  backend_.as_.INSTR(ADD_xD_xN_imm12zxols12).setD(regForParamsPtr).setN(REG::SP).setImm12zx(SafeUInt<12U>::fromConst<0U>())();
+  backend_.as_.movSPToReg(regForParamsPtr);
 
   REG const regForRetsPtr{backend_.getREGForArg(MachineType::I64, true, tracker)};
   assert(regForParamsPtr != REG::NONE && "Should have three regs for params, rets and ctx");

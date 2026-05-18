@@ -238,6 +238,25 @@ public:
   void addImmToReg(REG const dstReg, REG const srcReg, int64_t const delta, bool const is64) const;
 
   ///
+  /// @brief Moves the value of the stack pointer to a general purpose register
+  ///
+  /// @param reg Register to move the stack pointer to
+  inline void movSPToReg(REG const reg) const {
+    // Encoding of MOV reg, SP is ADD reg, SP, #0
+    // Wrapper it to use move for more straightforward meaning
+    INSTR(ADD_xD_xN_imm12zxols12).setD(reg).setN(REG::SP).setImm12zx(SafeUInt<12U>::fromConst<0>())();
+  }
+  ///
+  /// @brief Moves a general purpose register value to the stack pointer
+  ///
+  /// @param reg Register to move to the stack pointer
+  inline void movRegToSP(REG const reg) const {
+    // Encoding of MOV SP, reg is ADD SP, reg, #0
+    // Wrapper it to use move for more straightforward meaning
+    INSTR(ADD_xD_xN_imm12zxols12).setD(REG::SP).setN(reg).setImm12zx(SafeUInt<12U>::fromConst<0>())();
+  }
+
+  ///
   /// @brief Adds a constant value up to 2^24-1 (which can be encoded in 24 bits) to a general purpose register
   ///
   /// @param dstReg Which register to add the value to (or destination register if srcReg is explicitly given)

@@ -260,7 +260,7 @@ void Assembler::probeStack(uint32_t const delta, REG const scratchReg1, REG cons
   }
 
   // Move SP to scratchReg1
-  INSTR(ADD_xD_xN_imm12zxols12).setD(scratchReg1).setN(REG::SP).setImm12zx(SafeUInt<12U>::fromConst<0U>())();
+  movSPToReg(scratchReg1);
   MOVimm64(scratchReg2, static_cast<uint64_t>(delta));
 
 #ifdef VB_WIN32
@@ -283,7 +283,7 @@ void Assembler::probeStack(uint32_t const delta, REG const scratchReg1, REG cons
   prepareJMP(CC::GT).linkToBinaryPos(branchTargetOffset);
 
   // Restore the stack pointer
-  INSTR(ADD_xD_xN_imm12zxols12).setD(REG::SP).setN(scratchReg1).setImm12zx(SafeUInt<12U>::fromConst<0U>())();
+  movRegToSP(scratchReg1);
 #endif
 }
 

@@ -221,7 +221,7 @@ void Backend::emitTrapHandler() const {
       .setT(callScrRegs[0])
       .setN(WasmABI::REGS::linMem)
       .setUnscSImm9(SafeInt<9U>::fromConst<-Basedata::FromEnd::trapStackReentry>())();
-  as_.INSTR(ADD_xD_xN_imm12zxols12).setD(REG::SP).setN(callScrRegs[0]).setImm12zx(SafeUInt<12U>::fromConst<0>())();
+  as_.movRegToSP(callScrRegs[0]);
 
   // Load trapCodePtr into a register and store the trapCode there
   as_.INSTR(LDR_xT_deref_xN_imm12zxls3_t)
@@ -346,7 +346,7 @@ void Backend::emitFunctionEntryPoint(uint32_t const fncIndex) {
   //
 
   // Store unwind target to link data if this is the first frame
-  as_.INSTR(ADD_xD_xN_imm12zxols12).setD(callScrRegs[0]).setN(REG::SP).setImm12zx(SafeUInt<12U>::fromConst<0U>())(); // mov x2, sp
+  as_.movSPToReg(callScrRegs[0]);
   as_.INSTR(STUR_xT_deref_xN_unscSImm9_t)
       .setT(callScrRegs[0])
       .setN(WasmABI::REGS::linMem)
@@ -1300,7 +1300,7 @@ void Backend::emitV2ImportAdapterImpl(uint32_t const fncIndex) {
   REG const retsPtrReg{getREGForArg(MachineType::I64, true, targetTracker)};
   REG const ctxReg{getREGForArg(MachineType::I64, true, targetTracker)};
   assert(paramsPtrReg != REG::NONE && retsPtrReg != REG::NONE && ctxReg != REG::NONE && "Need three native registers for V2 import adapter");
-  as_.INSTR(ADD_xD_xN_imm12zxols12).setD(paramsPtrReg).setN(REG::SP).setImm12zx(SafeUInt<12U>::fromConst<0U>())();
+  as_.movSPToReg(paramsPtrReg);
   as_.INSTR(ADD_xD_xN_imm12zxols12).setD(retsPtrReg).setN(REG::SP).setImm12zx(SafeUInt<12U>::fromUnsafe(of_returnValues))();
   as_.INSTR(LDUR_xT_deref_xN_unscSImm9_t)
       .setT(ctxReg)
