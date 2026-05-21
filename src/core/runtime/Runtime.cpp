@@ -81,7 +81,6 @@ static ActiveMemoryManager const *asActiveMemoryManager(IMemoryManager const *co
 }
 #endif
 
-#if LINEAR_MEMORY_BOUNDS_CHECKS
 Runtime::Runtime(Runtime &&other) VB_NOEXCEPT : disabled_(other.disabled_),
                                                 queuedStartFncOffset_(other.queuedStartFncOffset_),
                                                 memoryManager_(other.memoryManager_),
@@ -90,16 +89,6 @@ Runtime::Runtime(Runtime &&other) VB_NOEXCEPT : disabled_(other.disabled_),
                                                 binaryModule_(other.binaryModule_) {
   other.disabled_ = true;
 }
-#else
-Runtime::Runtime(Runtime &&other) VB_NOEXCEPT : disabled_(other.disabled_),
-                                                queuedStartFncOffset_(other.queuedStartFncOffset_),
-                                                memoryManager_(other.memoryManager_),
-                                                // coverity[autosar_cpp14_a8_4_5_violation]
-                                                // coverity[autosar_cpp14_a12_8_4_violation]
-                                                binaryModule_(other.binaryModule_) {
-  other.disabled_ = true;
-}
-#endif
 
 Runtime &Runtime::operator=(Runtime &&other) & VB_NOEXCEPT {
   swap(*this, std::move(other));

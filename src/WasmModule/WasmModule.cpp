@@ -316,10 +316,13 @@ void WasmModule::setupRuntime(Span<uint8_t const> const &compiledBinary, Span<Na
   machineCode = compiledBinary;
 #endif
 #if LINEAR_MEMORY_BOUNDS_CHECKS
+  runtime_.~Runtime();
+  // coverity[autosar_cpp14_a15_0_2_violation]
   new (&runtime_) vb::Runtime(machineCode, runtimeMemoryManager_, linkedFunctions, this, defaultImportSymbols);
 #else
   // coverity[autosar_cpp14_a15_0_2_violation]
   linearMemoryAllocator_.setMemoryLimit(maxRam_);
+  runtime_.~Runtime();
   // coverity[autosar_cpp14_a15_0_2_violation]
   new (&runtime_) Runtime(machineCode, linearMemoryAllocator_, linkedFunctions, this, defaultImportSymbols);
 #endif

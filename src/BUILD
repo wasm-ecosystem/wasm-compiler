@@ -44,6 +44,7 @@ cc_library(
     include_prefix = "wasm-compiler/src",
     visibility = ["//visibility:private"],
     deps = [
+        "//extensions",
         "//thirdparty:berkeley-softfloat-3-headers",
     ],
 )
