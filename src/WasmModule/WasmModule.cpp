@@ -20,6 +20,7 @@
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
+#include <new>
 
 #include "src/core/compiler/Compiler.hpp"
 //
@@ -315,11 +316,12 @@ void WasmModule::setupRuntime(Span<uint8_t const> const &compiledBinary, Span<Na
   machineCode = compiledBinary;
 #endif
 #if LINEAR_MEMORY_BOUNDS_CHECKS
-  runtime_ = vb::Runtime(machineCode, runtimeMemoryManager_, linkedFunctions, this, defaultImportSymbols);
+  new (&runtime_) vb::Runtime(machineCode, runtimeMemoryManager_, linkedFunctions, this, defaultImportSymbols);
 #else
+  // coverity[autosar_cpp14_a15_0_2_violation]
   linearMemoryAllocator_.setMemoryLimit(maxRam_);
   // coverity[autosar_cpp14_a15_0_2_violation]
-  runtime_ = Runtime(machineCode, linearMemoryAllocator_, linkedFunctions, this, defaultImportSymbols);
+  new (&runtime_) Runtime(machineCode, linearMemoryAllocator_, linkedFunctions, this, defaultImportSymbols);
 #endif
 
 #if ENABLE_EXTENSIONS

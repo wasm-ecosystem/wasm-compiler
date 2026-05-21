@@ -505,7 +505,11 @@ uint32_t Runtime::getAllocationSize() const VB_NOEXCEPT {
   if (activeManager != nullptr) {
     return activeManager->getAllocationSize();
   }
-  return memoryManager_->getLinearMemorySize();
+  if (memoryManager_ != nullptr) {
+    return memoryManager_->getLinearMemorySize();
+  } else {
+    return 0U;
+  }
 }
 
 void Runtime::reallocShrinkToBasedataSize() {

@@ -1,5 +1,11 @@
 # Wasm Compiler Release Notes
 
+## 4.0.1
+
+### Bug Fixes
+
+- increased robustness of WasmModule::setupRuntime to avoid null pointer
+
 ## 4.0.0
 
 ### Feature
