@@ -1,11 +1,5 @@
 # Wasm Compiler Release Notes
 
-## 4.0.2
-
-### Bug Fixes
-
-- export extension in core lib
-
 ## 4.0.1
 
 ### Bug Fixes
