@@ -332,6 +332,12 @@ private:
                                    uint32_t const moduleNameLength, char const *const fieldName, uint32_t const fieldNameLength,
                                    char const *const signature, uint32_t const signatureLength, uint32_t const importSignatureIndex);
 
+  /// @brief  compile a BR instruction
+  /// @param branchDepth the branch depth of the BR instruction
+  /// @details implement the br semantics of Wasm.
+  /// It condense return value of a block and unconditionally jump to the target block by depth.
+  void compileBR(uint32_t const branchDepth);
+
   BytecodeReader br_;                                   ///< Bytecode reader
   Span<NativeSymbol const> const &symbolList_;          ///< NativeSymbols that can be imported
   Span<NativeSymbol const> const defaultImportSymbols_; ///< Default import symbols injected by runtime

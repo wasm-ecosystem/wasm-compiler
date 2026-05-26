@@ -40,6 +40,8 @@
     (local i32 i32 i32 i32 i32)
     i32.const 0x111
     local.set $arg0
+    i32.const 0
+    local.set 1
     ;; AARCH64:         mov [[LOCAL_REG:w[0-9]+]], #0x111
     call $callee/0
     ;; AARCH64:         str [[LOCAL_REG]],  [sp, #0x[[#%x,OFFSET2:]]]

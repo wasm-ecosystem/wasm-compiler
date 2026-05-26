@@ -1758,38 +1758,7 @@ void Frontend::parseCodeSection() {
       case OPCode::BR: {
         uint32_t const branchDepth{br_.readLEB128<uint32_t>()};
         validationStack_.validateBranch(instruction, branchDepth);
-
-        Stack::iterator const targetBlockElem{findTargetBlock(branchDepth)};
-        bool isLoop{};
-        uint32_t sigIndex{};
-        if (targetBlockElem.isEmpty()) {
-          isLoop = false;
-          sigIndex = moduleInfo_.getFuncDef(moduleInfo_.fnc.index).sigIndex;
-        } else {
-          isLoop = targetBlockElem->type == StackType::LOOP;
-          sigIndex = targetBlockElem->data.blockInfo.sigIndex;
-        }
-        if (!currentFrameIsUnreachable()) {
-          uint32_t const numReturnValues{isLoop ? moduleInfo_.getNumParamsForSignature(sigIndex)
-                                                : moduleInfo_.getNumReturnValuesForSignature(sigIndex)};
-
-          // If we have an open block, targetBlockElem will point to that block element,
-          // otherwise it will be nullptr and the target is thus the function frame itself
-          common_.condenseSideEffectInstructionBlewValentBlock(numReturnValues);
-          if (numReturnValues > 0U) {
-            Stack::iterator const returnValuesBase{common_.condenseMultipleValentBlocksWithTargetHintBelow(stack_.end(), sigIndex, isLoop)};
-            common_.loadReturnValues(returnValuesBase, numReturnValues, targetBlockElem.raw());
-            common_.popReturnValueElems(returnValuesBase, numReturnValues);
-          }
-
-          common_.emitBranchDivergePoint(true, targetBlockElem);
-          // Emit an unconditional branch
-          compiler_.backend_.emitBranch(targetBlockElem.raw(), BC::UNCONDITIONAL);
-        }
-
-        // The code after a BR instruction (which is unconditional!) can never be reached, so set the current frame
-        // unreachable
-        setCurrentFrameFormallyUnreachable();
+        compileBR(branchDepth);
         break;
       }
       case OPCode::BR_IF: {
@@ -1797,6 +1766,18 @@ void Frontend::parseCodeSection() {
         validationStack_.validateBranch(instruction, branchDepth);
 
         if (!currentFrameIsUnreachable()) {
+          StackElement const &conditionBase{stack_.back()};
+          bool const conditionCanBeEvaluatedAtCompileTime{conditionBase.getBaseType() == StackType::CONSTANT};
+          if (conditionCanBeEvaluatedAtCompileTime) {
+            bool const conditionIsAlwaysTrue{conditionBase.data.constUnion.u32 != 0U};
+            static_cast<void>(stack_.pop());
+            if (conditionIsAlwaysTrue) {
+              compileBR(branchDepth);
+            }
+
+            break;
+          }
+
           Stack::iterator const targetBlockElem{findTargetBlock(branchDepth)};
           /// @brief target branch kind
           // coverity[autosar_cpp14_a7_2_2_violation]
@@ -3324,6 +3305,39 @@ void Frontend::popBlockAndPushReturnValues(Stack::iterator const blockIt) VB_NOE
   } else {
     stack_.pop();
   }
+}
+
+void Frontend::compileBR(uint32_t const branchDepth) {
+  Stack::iterator const targetBlockElem{findTargetBlock(branchDepth)};
+  bool isLoop{};
+  uint32_t sigIndex{};
+  if (targetBlockElem.isEmpty()) {
+    isLoop = false;
+    sigIndex = moduleInfo_.getFuncDef(moduleInfo_.fnc.index).sigIndex;
+  } else {
+    isLoop = targetBlockElem->type == StackType::LOOP;
+    sigIndex = targetBlockElem->data.blockInfo.sigIndex;
+  }
+  if (!currentFrameIsUnreachable()) {
+    uint32_t const numReturnValues{isLoop ? moduleInfo_.getNumParamsForSignature(sigIndex) : moduleInfo_.getNumReturnValuesForSignature(sigIndex)};
+
+    // If we have an open block, targetBlockElem will point to that block element,
+    // otherwise it will be nullptr and the target is thus the function frame itself
+    common_.condenseSideEffectInstructionBlewValentBlock(numReturnValues);
+    if (numReturnValues > 0U) {
+      Stack::iterator const returnValuesBase{common_.condenseMultipleValentBlocksWithTargetHintBelow(stack_.end(), sigIndex, isLoop)};
+      common_.loadReturnValues(returnValuesBase, numReturnValues, targetBlockElem.raw());
+      common_.popReturnValueElems(returnValuesBase, numReturnValues);
+    }
+
+    common_.emitBranchDivergePoint(true, targetBlockElem);
+    // Emit an unconditional branch
+    compiler_.backend_.emitBranch(targetBlockElem.raw(), BC::UNCONDITIONAL);
+  }
+
+  // The code after a BR instruction (which is unconditional!) can never be reached, so set the current frame
+  // unreachable
+  setCurrentFrameFormallyUnreachable();
 }
 
 StackElement Frontend::tryConstantPropagation(OPCode const op) VB_NOEXCEPT {

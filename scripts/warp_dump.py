@@ -91,6 +91,7 @@ if imports:
         compiler.register_api(module_name, func_name, signature)
 
 compiler.enable_dwarf(True)
+compiler.register_global("test", "global_i32", vb_warp.WasmType.I32, "666")
 module = compiler.compile(wasm_utils.load_wasm_or_wat(args.module))
 print(compiler.disassemble_module(module))
 

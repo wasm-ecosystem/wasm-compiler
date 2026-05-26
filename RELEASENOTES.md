@@ -1,5 +1,12 @@
 # Wasm Compiler Release Notes
 
+## 4.1.0
+
+### Feature
+
+- Performance improvements:
+  - resolve constant `br_if` conditions at compile time to avoid emitting unnecessary branch handling
+
 ## 4.0.1
 
 ### Bug Fixes

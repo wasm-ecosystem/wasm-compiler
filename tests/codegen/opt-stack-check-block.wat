@@ -56,7 +56,8 @@
 
   ;; CHECK-LABEL: Function[4] Body
   (func $after-block-cannot-inherit-block-after-br/4
-    (local i32)
+    (param i32)
+  
     ;; AARCH64_ACTIVE_STACK_OVERFLOW_CHECK:     sub  sp, sp, #[[#]]
     block
       local.get 0
