@@ -57,6 +57,10 @@ TEST(TestMemoryDump, DumpMemoryRegionCreatesFile) {
   (global (export "__heap_base") i32 (i32.const 2048))
   (global (export "__stack_pointer") (mut i32) (i32.const 4096))
 
+  (global i32 (i32.const 1))
+  (global (mut i32) (i32.const 2))
+  (global (mut f32) (f32.const 3.140000104904175))
+
   (data (i32.const 0) "/tmp/wasm_mem_dump_test.bin")
 
   (func (export "_start")
@@ -79,8 +83,10 @@ TEST(TestMemoryDump, DumpMemoryRegionCreatesFile) {
   ASSERT_TRUE(inFile.is_open());
 
   // The WAT module declares (memory 1) = 1 page = 65536 bytes
-  // Header is 24 bytes: magic(4) + version(4) + dataEnd(4) + heapBase(4) + stackPointer(4) + reserved(4)
-  constexpr uint32_t headerSize{24U};
+  // Header is magic(4) + version(4) + dataEnd(4) + heapBase(4) + stackPointer(4)
+  // + numMutableI32Globals(4) + mutableI32Globals(2 * 4)
+  constexpr uint32_t numMutableI32GlobalsExpected{2U};
+  constexpr uint32_t headerSize{24U + (numMutableI32GlobalsExpected * sizeof(uint32_t))};
   constexpr uint32_t expectedLinearMemorySize{1U * vb::WasmConstants::wasmPageSize};
   constexpr uint32_t expectedFileSize{headerSize + expectedLinearMemorySize};
 
@@ -100,7 +106,7 @@ TEST(TestMemoryDump, DumpMemoryRegionCreatesFile) {
   // Read and verify version
   uint32_t version{0U};
   inFile.read(vb::pCast<char *>(&version), sizeof(version));
-  EXPECT_EQ(version, 1U);
+  EXPECT_EQ(version, 2U);
 
   // Read and verify dataEnd (WAT: i32.const 1024)
   uint32_t dataEnd{0U};
@@ -117,11 +123,15 @@ TEST(TestMemoryDump, DumpMemoryRegionCreatesFile) {
   inFile.read(vb::pCast<char *>(&stackPointer), sizeof(stackPointer));
   EXPECT_EQ(stackPointer, 4096U);
 
-  // Read and verify reserved bytes are zero
-  std::array<char, 4> reserved{};
-  inFile.read(reserved.data(), reserved.size());
-  constexpr std::array<char, 4> expectedReserved{{}};
-  EXPECT_EQ(reserved, expectedReserved);
+  // Read and verify mutableI32Globals metadata
+  uint32_t numMutableI32Globals{0U};
+  inFile.read(vb::pCast<char *>(&numMutableI32Globals), sizeof(numMutableI32Globals));
+  EXPECT_EQ(numMutableI32Globals, numMutableI32GlobalsExpected);
+
+  std::vector<uint32_t> mutableI32Globals(static_cast<size_t>(numMutableI32Globals), 0U);
+  inFile.read(vb::pCast<char *>(mutableI32Globals.data()), static_cast<std::streamsize>(mutableI32Globals.size() * sizeof(uint32_t)));
+  std::vector<uint32_t> const expectedMutableI32Globals{4096U, 2U};
+  EXPECT_EQ(mutableI32Globals, expectedMutableI32Globals);
 
   // Verify raw linear memory starts with the file path string written by (data (i32.const 0) ...)
   constexpr std::string_view expectedDataStr{"/tmp/wasm_mem_dump_test.bin"};

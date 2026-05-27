@@ -61,6 +61,32 @@ namespace vb {
 
 static_assert(sizeof(WasmValue) == 8U, "WasmValue size mismatch");
 
+/// @brief Read a WasmValue of the given machine type from raw storage.
+/// @param type MachineType describing the stored value.
+/// @param valuePtr Pointer to the stored bytes.
+/// @return Decoded WasmValue.
+static WasmValue readWasmValue(MachineType const type, uint8_t const *const valuePtr) VB_NOEXCEPT {
+  WasmValue value{};
+  switch (type) {
+  case MachineType::I32:
+    value = WasmValue(readFromPtr<int32_t>(valuePtr));
+    break;
+  case MachineType::I64:
+    value = WasmValue(readFromPtr<int64_t>(valuePtr));
+    break;
+  case MachineType::F32:
+    value = WasmValue(readFromPtr<float>(valuePtr));
+    break;
+  case MachineType::F64:
+    value = WasmValue(readFromPtr<double>(valuePtr));
+    break;
+  case MachineType::INVALID:
+  default:
+    UNREACHABLE(, "Invalid machine type for WasmValue decoding");
+  }
+  return value;
+}
+
 /// @brief Map linear-memory probe results to runtime error codes.
 /// @param probeResult Result returned by IMemoryManager::probe.
 /// @return Matching runtime ErrorCode for trap/reporting paths.
@@ -770,6 +796,24 @@ uint32_t Runtime::findExportedGlobalByName(char const *const name, size_t nameLe
   }
 
   throw RuntimeError(ErrorCode::Global_not_found);
+}
+
+void Runtime::iterateMutableGlobals(FunctionRef<void(uint8_t typeCode, WasmValue value)> const &callback) const {
+  uint8_t const *cursor{binaryModule_.getMutableGlobalsSectionEnd()};
+  uint32_t const numMutableGlobals{readNextValue<uint32_t>(&cursor)}; // OPBVNG4
+  uint8_t const *const mutableGlobalStart{pAddI(getMemoryBase(), Basedata::FromStart::linkData)};
+
+  for (uint32_t i{0U}; i < numMutableGlobals; i++) {
+    cursor = pSubI(cursor, 3U);                                                             // Padding (OPBVNG3)
+    MachineType const type{readNextValue<MachineType>(&cursor)};                            // OPBVNG2
+    uint16_t const linkDataOffset{static_cast<uint16_t>(readNextValue<uint32_t>(&cursor))}; // OPBVNG1
+
+    uint32_t const variableSize{MachineTypeUtil::getSize(type)};
+    cursor = pSubI(cursor, variableSize); // skip initial value in binary (OPBVNG0)
+
+    uint8_t const *const valuePtr{pAddI(mutableGlobalStart, linkDataOffset)};
+    callback(static_cast<uint8_t>(type), readWasmValue(type, valuePtr));
+  }
 }
 
 FunctionInfo::FunctionInfo(uint8_t const *const binaryModulePtr, uint32_t const binaryOffset) VB_NOEXCEPT : signature_{nullptr, 0U},

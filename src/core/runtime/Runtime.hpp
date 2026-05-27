@@ -48,6 +48,66 @@ class RawModuleFunction;
 template <size_t NumReturnValue, typename... T> class ModuleFunction;
 template <typename T> class ModuleGlobal;
 
+/// @brief union of all possible WASMTYPE
+// coverity[autosar_cpp14_a11_0_1_violation]
+union WasmValue {
+  int32_t i32;  ///< i32
+  uint32_t u32; ///< u32
+  int64_t i64;  ///< i64
+  uint64_t u64; ///< u64
+  float f32;    ///< f32
+  double f64;   ///< f64
+
+  // coverity[autosar_cpp14_a12_1_5_violation]
+  WasmValue() VB_NOEXCEPT : i32(0) {
+  }
+  ///
+  /// @brief construct a WasmValue
+  /// @param v int32_t value
+  ///
+  explicit WasmValue(int32_t const v) VB_NOEXCEPT : i32(v) {
+  }
+  ///
+  /// @brief construct a WasmValue
+  /// @param v uint32_t value
+  ///
+  explicit WasmValue(uint32_t const v) VB_NOEXCEPT : u32(v) {
+  }
+  ///
+  /// @brief construct a WasmValue
+  /// @param v int64_t value
+  ///
+  explicit WasmValue(int64_t const v) VB_NOEXCEPT : i64(v) {
+  }
+  ///
+  /// @brief construct a WasmValue
+  /// @param v uint64_t value
+  ///
+  explicit WasmValue(uint64_t const v) VB_NOEXCEPT : u64(v) {
+  }
+  ///
+  /// @brief construct a WasmValue
+  /// @param v float value
+  ///
+  explicit WasmValue(float const v) VB_NOEXCEPT : f32(v) {
+  }
+  ///
+  /// @brief construct a WasmValue
+  /// @param v double value
+  ///
+  explicit WasmValue(double const v) VB_NOEXCEPT : f64(v) {
+  }
+
+  ///
+  /// @brief construct a WasmValue with enum underlying type
+  /// @param v enum value
+  ///
+  template <class T, class = std::enable_if_t<std::is_enum<T>::value>>
+  // coverity[autosar_cpp14_a7_1_8_violation]
+  explicit WasmValue(T const v) VB_NOEXCEPT : WasmValue(static_cast<std::underlying_type_t<T>>(v)) {
+  }
+};
+
 ///
 /// @brief Runtime class to execute the executable that has been produced by the compiler
 ///
@@ -509,6 +569,13 @@ public:
   }
 
   ///
+  /// @brief Iterate all mutable globals stored in link data and invoke a callback for each one
+  ///
+  /// @param callback Callback invoked for each mutable global with (typeCode, currentValue)
+  ///        typeCode: 2=I32, 3=I64, 4=F32, 5=F64 (MachineType enum values)
+  void iterateMutableGlobals(FunctionRef<void(uint8_t typeCode, WasmValue value)> const &callback) const;
+
+  ///
   /// @brief Iterate all recorded stacktrace entries, starting from the most recent one
   ///
   /// @param lambda Lambda which should be executed for every recorded stacktrace entry with the function index as
@@ -848,66 +915,6 @@ private:
   }
 
   friend Runtime; ///< So that only runtime can create ModuleGlobal instances
-};
-
-/// @brief union of all possible WASMTYPE
-// coverity[autosar_cpp14_a11_0_1_violation]
-union WasmValue {
-  int32_t i32;  ///< i32
-  uint32_t u32; ///< u32
-  int64_t i64;  ///< i64
-  uint64_t u64; ///< u64
-  float f32;    ///< f32
-  double f64;   ///< f64
-
-  // coverity[autosar_cpp14_a12_1_5_violation]
-  WasmValue() VB_NOEXCEPT : i32(0) {
-  }
-  ///
-  /// @brief construct a WasmValue
-  /// @param v int32_t value
-  ///
-  explicit WasmValue(int32_t const v) VB_NOEXCEPT : i32(v) {
-  }
-  ///
-  /// @brief construct a WasmValue
-  /// @param v uint32_t value
-  ///
-  explicit WasmValue(uint32_t const v) VB_NOEXCEPT : u32(v) {
-  }
-  ///
-  /// @brief construct a WasmValue
-  /// @param v int64_t value
-  ///
-  explicit WasmValue(int64_t const v) VB_NOEXCEPT : i64(v) {
-  }
-  ///
-  /// @brief construct a WasmValue
-  /// @param v uint64_t value
-  ///
-  explicit WasmValue(uint64_t const v) VB_NOEXCEPT : u64(v) {
-  }
-  ///
-  /// @brief construct a WasmValue
-  /// @param v float value
-  ///
-  explicit WasmValue(float const v) VB_NOEXCEPT : f32(v) {
-  }
-  ///
-  /// @brief construct a WasmValue
-  /// @param v double value
-  ///
-  explicit WasmValue(double const v) VB_NOEXCEPT : f64(v) {
-  }
-
-  ///
-  /// @brief construct a WasmValue with enum underlying type
-  /// @param v enum value
-  ///
-  template <class T, class = std::enable_if_t<std::is_enum<T>::value>>
-  // coverity[autosar_cpp14_a7_1_8_violation]
-  explicit WasmValue(T const v) VB_NOEXCEPT : WasmValue(static_cast<std::underlying_type_t<T>>(v)) {
-  }
 };
 
 /// @brief function information in module

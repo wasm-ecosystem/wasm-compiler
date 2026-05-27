@@ -6,6 +6,7 @@
 
 - Performance improvements:
   - resolve constant `br_if` conditions at compile time to avoid emitting unnecessary branch handling
+- Dump mutable i32 globals in 'dumpMemoryRegion'
 
 ## 4.0.1
 

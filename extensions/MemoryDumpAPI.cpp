@@ -17,6 +17,7 @@
 #ifndef EXTENSIONS_MEMORYDUMPAPI_CPP
 #define EXTENSIONS_MEMORYDUMPAPI_CPP
 
+#include <algorithm>
 #include <array>
 #include <cassert>
 #include <cstdint>
@@ -25,6 +26,7 @@
 #include <fstream>
 #include <ios>
 #include <string>
+#include <vector>
 
 #include "extensions/MemoryDumpAPI.hpp"
 
@@ -49,37 +51,52 @@ void MemoryDumpExtension::dumpMemoryRegion(uint32_t const memoryPtrOffset, uint3
   uint32_t const linearMemorySizeInPages = pWasmModule->getLinearMemorySizeInPages();
   uint32_t const linearMemorySize = linearMemorySizeInPages * WasmConstants::wasmPageSize;
   uint8_t *const buf = pWasmModule->getLinearMemoryRegion(0, linearMemorySize);
+  std::vector<uint32_t> mutableI32Globals{};
+
+  pWasmModule->iterateMutableGlobals(FunctionRef<void(uint8_t, WasmValue)>{
+      [&mutableI32Globals](uint8_t const typeCode, WasmValue const value) {
+        if (typeCode == 1U) {
+          mutableI32Globals.push_back(value.u32);
+        }
+      }});
 
   std::ofstream outFile(filePath.c_str(), std::ios::out | std::ios::binary | std::ios::trunc);
   if (!outFile.is_open()) {
     return;
   }
 
+  std::reverse(mutableI32Globals.begin(), mutableI32Globals.end());
+
 /*
 Dump file format:
 ┌──────────────────────────────────────────────────────────┐
 │  Magic: "ASHD" (4 bytes, 0x41 0x53 0x48 0x44)            │
-│  Version: u32 (1)                                        │
+│  Version: u32 (2)                                        │
 │  dataEnd: u32                                            │
 │  heapBase: u32                                           │
 │  stackPointer: u32                                       │
-│  Reserved: 4 bytes (zero-filled, future use)             │
+│  numMutableI32Globals: u32                               │
+│  mutableI32Globals: u32[]                                │
 ├──────────────────────────────────────────────────────────┤
-│  Raw linear memory (file_size - 24 bytes)                │
+│  Raw linear memory                                       │
 */
 
   constexpr std::array<char, 4> magic{{'A', 'S', 'H', 'D'}};
   outFile.write(magic.data(), magic.size());
 
-  constexpr uint32_t version{1U};
+  constexpr uint32_t version{2U};
   outFile.write(pCast<char const *>(&version), sizeof(version));
 
   outFile.write(pCast<char const *>(&dataEnd), sizeof(dataEnd));
   outFile.write(pCast<char const *>(&heapBase), sizeof(heapBase));
   outFile.write(pCast<char const *>(&stackPointer), sizeof(stackPointer));
 
-  constexpr std::array<char, 4> reserved{{}};
-  outFile.write(reserved.data(), reserved.size());
+  uint32_t const numMutableI32Globals{static_cast<uint32_t>(mutableI32Globals.size())};
+  outFile.write(pCast<char const *>(&numMutableI32Globals), sizeof(numMutableI32Globals));
+  if (!mutableI32Globals.empty()) {
+    outFile.write(pCast<char const *>(mutableI32Globals.data()),
+                  static_cast<std::streamsize>(mutableI32Globals.size() * sizeof(uint32_t)));
+  }
 
   // Raw linear memory
   outFile.write(static_cast<char *>(static_cast<void *>(buf)), linearMemorySize);

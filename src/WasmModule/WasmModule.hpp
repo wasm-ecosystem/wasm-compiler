@@ -409,6 +409,14 @@ public:
     return runtime_.getExportedGlobalByName<T>(name);
   }
 
+  /// @brief Iterate all mutable globals
+  /// @param callback Callback invoked for each mutable global with (typeCode, currentValue)
+  ///        typeCode: 2=I32, 3=I64, 4=F32, 5=F64 (MachineType enum values)
+  inline void iterateMutableGlobals(FunctionRef<void(uint8_t typeCode, WasmValue value)> const &callback) const {
+    assert(runtime_.hasBinaryModule() && "WasmModule must be initialized before calling this function");
+    runtime_.iterateMutableGlobals(callback);
+  }
+
   ///
   /// @brief Get the Linear Memory Region
   ///
