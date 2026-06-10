@@ -707,9 +707,10 @@ private:
   ///
   /// @param regs Array of registers
   /// @param restore Whether it should be spilled or restored (restore = false means spill to stack)
-  /// @param stackOffset At which offset from the stack pointer to spill the registers, will spill each register as 8
-  /// bytes
-  void spillRestoreRegsRaw(Span<REG const> const &regs, bool const restore = false, uint32_t const stackOffset = 0U) const;
+  /// @param stackOffset At which offset from the stack pointer to spill the registers
+  /// @param spillWidth Size of the floating point spill slots in bytes, can be 8 or 16
+  void spillRestoreRegsRaw(Span<REG const> const &regs, bool const restore = false, uint32_t const stackOffset = 0U,
+                           uint32_t const spillWidth = NativeABI::gprSpillWidth) const;
 
 #if LINEAR_MEMORY_BOUNDS_CHECKS
   ///

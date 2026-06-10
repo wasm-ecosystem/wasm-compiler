@@ -1,5 +1,11 @@
 # Wasm Compiler Release Notes
 
+## 4.1.1
+
+- x86_64 backend:
+  - Fix windows x86_64 native ABI didn't save 128bit xmm registers correctly
+  - Fix Native to Wasm Function entry compared stack pointer by wrong size
+
 ## 4.1.0
 
 ### Feature
@@ -44,6 +50,10 @@
 ### Internal changes
 
 - Condense order changed to top->end
+
+## Release v3 known issues
+
+- [Bug fixed by 4.1.1](#411)
 
 ## 3.0.3
 
@@ -99,6 +109,7 @@ Add u32 and u64 type to WasmValue
 
 ## Release v2 known issues
 
+- [Bug fixed by 4.1.1](#411)
 - [Bug fixed by 3.0.10](#3010)
 - [Bug fixed by 3.0.9](#309)
 - [Bug fixed by 3.0.4](#304)

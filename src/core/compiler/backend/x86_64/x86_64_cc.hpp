@@ -160,6 +160,10 @@ enum class RegArgAllocation : uint8_t { SEPARATE, MUTUAL };
 ///
 enum class StackOrder : uint8_t { LTR, RTL };
 
+constexpr uint32_t gprSpillWidth{8U}; ///< Stack space in bytes used to spill a native GPR.
+// coverity[autosar_cpp14_m3_4_1_violation]
+constexpr uint32_t fprSpillWidth{16U}; ///< Stack space in bytes used to spill a native FPR.
+
 #ifdef VB_POSIX
 ///
 /// @brief General purpose registers for passing params in the native ABI
@@ -172,11 +176,14 @@ constexpr auto gpParams = make_array(REG::DI, REG::SI, REG::D, REG::C, REG::R8, 
 // coverity[autosar_cpp14_a8_5_2_violation]
 constexpr auto flParams = make_array(REG::XMM0, REG::XMM1, REG::XMM2, REG::XMM3, REG::XMM4, REG::XMM5, REG::XMM6, REG::XMM7);
 ///
-/// @brief Nonvolatile registers in the native ABI
+/// @brief Nonvolatile GPR registers in the native ABI
 ///
 // coverity[autosar_cpp14_a8_5_2_violation]
 // coverity[autosar_cpp14_m3_4_1_violation]
-constexpr auto nonvolRegs = make_array(REG::B, REG::BP, REG::R12, REG::R13, REG::R14, REG::R15);
+constexpr auto nonvolGPRs = make_array(REG::B, REG::BP, REG::R12, REG::R13, REG::R14, REG::R15);
+/// @brief Nonvolatile FPR registers in the native ABI
+// coverity[autosar_cpp14_m3_4_1_violation]
+constexpr std::array<REG, 0U> nonvolFPRs{};
 ///
 /// @brief Volatile registers in the native ABI
 ///
@@ -207,8 +214,9 @@ constexpr auto flParams = make_array(REG::XMM0, REG::XMM1, REG::XMM2, REG::XMM3)
 ///
 /// @brief Nonvolatile registers in the native ABI
 ///
-constexpr auto nonvolRegs = make_array(REG::B, REG::BP, REG::DI, REG::SI, REG::R12, REG::R13, REG::R14, REG::R15, REG::XMM6, REG::XMM7, REG::XMM8,
-                                       REG::XMM9, REG::XMM10, REG::XMM11, REG::XMM12, REG::XMM13, REG::XMM14, REG::XMM15);
+constexpr auto nonvolGPRs = make_array(REG::B, REG::BP, REG::DI, REG::SI, REG::R12, REG::R13, REG::R14, REG::R15);
+constexpr auto nonvolFPRs =
+    make_array(REG::XMM6, REG::XMM7, REG::XMM8, REG::XMM9, REG::XMM10, REG::XMM11, REG::XMM12, REG::XMM13, REG::XMM14, REG::XMM15);
 ///
 /// @brief Volatile registers in the native ABI
 ///

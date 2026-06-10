@@ -861,24 +861,28 @@ static constexpr uint32_t of_trapCodePtr_trapReentryPoint{0U};
 void Backend::emitFunctionEntryPoint(uint32_t const fncIndex) {
   assert(fncIndex < moduleInfo_.numTotalFunctions && "Function out of range");
   bool const imported{fncIndex < moduleInfo_.numImportedFunctions};
+  constexpr uint32_t nonvolGPRSpillBytes{static_cast<uint32_t>(NABI::nonvolGPRs.size()) * NABI::gprSpillWidth};
+  constexpr uint32_t nonvolFPRSpillBytes{static_cast<uint32_t>(NABI::nonvolFPRs.size()) * NABI::fprSpillWidth};
+  constexpr uint32_t nonvolSpillBytes{nonvolGPRSpillBytes + nonvolFPRSpillBytes};
 
   // 8B for return address
   uint32_t currentFrameOffset{8U};
 
   // Reserve space on stack and spill non volatile registers
-  as_.INSTR(SUB_rm64_imm32sx).setR4RM(REG::SP).setImm32(static_cast<uint32_t>(NABI::nonvolRegs.size()) * 8U)();
+  as_.INSTR(SUB_rm64_imm32sx).setR4RM(REG::SP).setImm32(nonvolSpillBytes)();
 #if ACTIVE_STACK_OVERFLOW_CHECK
   // Manual implementation because neither base pointer nor trap support is set up at this point
   as_.INSTR(CMP_r64_rm64).setR(REG::SP).setM4RM(NABI::gpParams[1], -Basedata::FromEnd::stackFence)();
   RelPatchObj const inRange = as_.prepareJMP(true, CC::AE);
   // gpParams[2] contains the pointer to a variable where the TrapCode will be stored
   as_.INSTR(MOV_rm32_imm32).setM4RM(NABI::gpParams[2], 0).setImm32(static_cast<uint32_t>(TrapCode::STACKFENCEBREACHED))();
-  as_.INSTR(ADD_rm64_imm32sx).setR4RM(REG::SP).setImm32(static_cast<uint32_t>(NABI::nonvolRegs.size()) * 8U)();
+  as_.INSTR(ADD_rm64_imm32sx).setR4RM(REG::SP).setImm32(nonvolSpillBytes)();
   as_.INSTR(RET_t)();
   inRange.linkToHere();
 #endif
-  currentFrameOffset += (static_cast<uint32_t>(NABI::nonvolRegs.size()) * 8U);
-  spillRestoreRegsRaw({NABI::nonvolRegs.data(), NABI::nonvolRegs.size()});
+  currentFrameOffset += nonvolSpillBytes;
+  spillRestoreRegsRaw({NABI::nonvolGPRs.data(), NABI::nonvolGPRs.size()});
+  spillRestoreRegsRaw({NABI::nonvolFPRs.data(), NABI::nonvolFPRs.size()}, false, nonvolGPRSpillBytes, NABI::fprSpillWidth);
 
   // Nove pointer to serialized arguments from first argument and linMem register from second function argument to the
   // register where all the code will expect it to be
@@ -935,7 +939,7 @@ void Backend::emitFunctionEntryPoint(uint32_t const fncIndex) {
   as_.INSTR(MOV_rm64_r64).setM4RM(REG::SP, static_cast<int32_t>(of_returnValuesPtr)).setR(NABI::gpParams[3])();
 
   // If saved stack pointer is not zero, this runtime already has an active frame and is already executing
-  as_.INSTR(CMP_rm32_imm8sx).setM4RM(WasmABI::REGS::linMem, -BD::FromEnd::trapStackReentry).setImm8(0_U8)();
+  as_.INSTR(CMP_rm64_imm8sx).setM4RM(WasmABI::REGS::linMem, -BD::FromEnd::trapStackReentry).setImm8(0_U8)();
   RelPatchObj const alreadyExecuting{as_.prepareJMP(true, CC::NE)};
 
   //
@@ -1086,28 +1090,55 @@ void Backend::emitFunctionEntryPoint(uint32_t const fncIndex) {
   //
 
   // Restore spilled registers
-  spillRestoreRegsRaw({NABI::nonvolRegs.data(), NABI::nonvolRegs.size()}, true);
+  spillRestoreRegsRaw({NABI::nonvolFPRs.data(), NABI::nonvolFPRs.size()}, true, nonvolGPRSpillBytes, NABI::fprSpillWidth);
+  spillRestoreRegsRaw({NABI::nonvolGPRs.data(), NABI::nonvolGPRs.size()}, true);
 
-  as_.INSTR(ADD_rm64_imm32sx).setR4RM(REG::SP).setImm32(static_cast<uint32_t>(NABI::nonvolRegs.size()) * 8U)();
-  currentFrameOffset -= static_cast<uint32_t>(NABI::nonvolRegs.size()) * 8U;
+  as_.INSTR(ADD_rm64_imm32sx).setR4RM(REG::SP).setImm32(nonvolSpillBytes)();
+  currentFrameOffset -= nonvolSpillBytes;
   static_cast<void>(currentFrameOffset);
   assert(currentFrameOffset == 8 && "Unaligned stack at end of wrapper call");
   as_.INSTR(RET_t)();
 }
 
-void Backend::spillRestoreRegsRaw(Span<REG const> const &regs, bool const restore, uint32_t const stackOffset) const {
+void Backend::spillRestoreRegsRaw(Span<REG const> const &regs, bool const restore, uint32_t const stackOffset, uint32_t const spillWidth) const {
   assert(regs.size() < INT32_MAX && "Count too high");
+  uint32_t currentOffset{stackOffset};
   for (size_t i{0U}; i < regs.size(); i++) {
     REG const reg{regs[i]};
+    bool const isGPR{RegUtil::isGPR(reg)};
     AbstrInstr instr{};
     if (restore) {
-      instr = RegUtil::isGPR(reg) ? MOV_r64_rm64 : MOVSD_rf_rmf;
+      if (isGPR) {
+        instr = MOV_r64_rm64;
+      } else {
+        if (spillWidth == NABI::gprSpillWidth) {
+          instr = MOVSD_rf_rmf;
+        } else {
+          // GCOVR_EXCL_START
+          assert(spillWidth == NABI::fprSpillWidth);
+          // GCOVR_EXCL_STOP
+          instr = MOVUPD_rf_rmf128;
+        }
+      }
     } else {
-      instr = RegUtil::isGPR(reg) ? MOV_rm64_r64 : MOVSD_rmf_rf;
+      if (isGPR) {
+        instr = MOV_rm64_r64;
+      } else {
+        if (spillWidth == NABI::gprSpillWidth) {
+          instr = MOVSD_rmf_rf;
+        } else {
+          // GCOVR_EXCL_START
+          assert(spillWidth == NABI::fprSpillWidth);
+          // GCOVR_EXCL_STOP
+          instr = MOVUPD_rmf128_rf;
+        }
+      }
     }
 
-    assert(static_cast<uint64_t>(stackOffset) + static_cast<uint32_t>(i) * 8U < INT32_MAX && "Offset too large");
-    as_.INSTR(instr).setM4RM(REG::SP, static_cast<int32_t>(stackOffset) + (static_cast<int32_t>(i) * 8)).setR(reg)();
+    assert(currentOffset < INT32_MAX && "Offset too large");
+    as_.INSTR(instr).setM4RM(REG::SP, static_cast<int32_t>(currentOffset)).setR(reg)();
+    assert(static_cast<uint64_t>(currentOffset) + spillWidth < static_cast<uint64_t>(INT32_MAX) + 1U && "Offset too large");
+    currentOffset += spillWidth;
   }
 }
 

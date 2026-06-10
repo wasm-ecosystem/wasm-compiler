@@ -774,6 +774,12 @@ constexpr OPCodeTemplate PUSH_r64_t{0U, REX::NONE, B8F::NONE, OPCodeExt::RADD, 0
 // coverity[autosar_cpp14_m3_4_1_violation]
 constexpr OPCodeTemplate POP_r64_t{0U, REX::NONE, B8F::NONE, OPCodeExt::RADD, 0x58U};
 
+/// @brief MOVUPD xmm1, xmm2/m128: Move unaligned packed double-precision values from xmm2/mem to xmm1.
+// coverity[autosar_cpp14_m3_4_1_violation]
+constexpr AbstrInstr MOVUPD_rf_rmf128{{0x66U, REX::NONE, B8F::NONE, OPCodeExt::R, 0x0F10U}, ArgType::r64f, ArgType::rm64f_128_restrictm, true, false};
+/// @brief MOVUPD xmm1/m128, xmm2: Move unaligned packed double-precision values from xmm2 to xmm1/mem.
+// coverity[autosar_cpp14_m3_4_1_violation]
+constexpr AbstrInstr MOVUPD_rmf128_rf{{0x66U, REX::NONE, B8F::NONE, OPCodeExt::R, 0x0F11U}, ArgType::r64f, ArgType::rm64f_128_restrictm, true, false};
 /// @brief MOVAPD xmm1, xmm2/m128: Move aligned packed double-precision floating-point values from xmm2/mem to xmm1.
 constexpr OPCodeTemplate MOVAPD_rf_rmf128_t{0x66U, REX::NONE, B8F::NONE, OPCodeExt::R, 0x0F28U};
 /// @brief PUNPCKLDQ xmm1, xmm2/m128: Interleave low-order doublewords from xmm1 and xmm2/m128 into xmm1.

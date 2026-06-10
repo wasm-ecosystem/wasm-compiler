@@ -103,6 +103,7 @@ jobs:
           run: |
             set -ex
             python3 tests/spectest.py
+            export QNXLM_LICENSE_FILE=${{ vars.INTERNAL_QNX_LICENSE_SERVER }}
             mkdir -p build_qnx
             cd  build_qnx && cmake .. -DCMAKE_TOOLCHAIN_FILE=../cmake/QNXArm64Toolchain.cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=qcc -DCMAKE_C_COMPILER=qcc -DVB_ENABLE_DEV_FEATURE=OFF -DENABLE_WERROR=1 -DENABLE_SPECTEST=1 -DENABLE_DEMO=1 -DTEST_VARIANTS=0 -DDISABLE_SPECTEST_WAST=1 -DENABLE_FUZZ=1 && \
             cmake --build . --parallel
