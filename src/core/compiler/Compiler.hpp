@@ -58,8 +58,9 @@ public:
   /// @param binaryMemoryReallocFnc ReallocFnc for output memory
   /// @param allowUnknownImports Whether unknown imports are allowed. If this is true, any imports that are not
   /// explicitly linked will lead to a trap, otherwise compilation will fail.
+  /// @throw vb::RuntimeError Memory allocation failed
   Compiler(ReallocFnc const compilerMemoryReallocFnc, AllocFnc const compilerMemoryAllocFnc, FreeFnc const compilerMemoryFreeFnc, void *const ctx,
-           ReallocFnc const binaryMemoryReallocFnc, bool const allowUnknownImports = false);
+           ReallocFnc const binaryMemoryReallocFnc, bool const allowUnknownImports = false) VB_THROW;
 
   ///
   /// @brief Construct a new Compiler instance
@@ -71,6 +72,7 @@ public:
   /// @param binaryMemory output binary memory
   /// @param allowUnknownImports Whether unknown imports are allowed. If this is true, any imports that are not
   /// explicitly linked will lead to a trap, otherwise compilation will fail.
+  /// @throw vb::RuntimeError Memory allocation failed
   Compiler(ReallocFnc const compilerMemoryReallocFnc, AllocFnc const compilerMemoryAllocFnc, FreeFnc const compilerMemoryFreeFnc, void *const ctx,
            ExtendableMemory &&binaryMemory, bool const allowUnknownImports = false);
 

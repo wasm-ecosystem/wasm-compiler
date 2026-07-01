@@ -51,7 +51,7 @@ template <uint32_t ElementSize, uint32_t SlabSize = 64> class FixedBumpAllocator
 public:
   /// @brief constructor
   // coverity[autosar_cpp14_a12_1_5_violation]
-  FixedBumpAllocator() VB_NOEXCEPT : current_(nullptr), head_(nullptr), allocPtr_(nullptr), freePtr_(nullptr), ctx_(nullptr) {
+  FixedBumpAllocator() VB_NOEXCEPT : FixedBumpAllocator(nullptr, nullptr, nullptr) {
   }
 
   /// @brief constructor

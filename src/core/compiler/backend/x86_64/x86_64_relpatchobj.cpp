@@ -40,14 +40,20 @@ namespace x86_64 {
 // ShortJmp should only be used when it is guaranteed (by the programmer's
 // logic) that only offsets within 8-bit signed offsets will be patched,
 // otherwise use a "long" jmp
-// coverity[autosar_cpp14_a12_1_5_violation] initial binary_ with nullptr
-RelPatchObj::RelPatchObj() VB_NOEXCEPT : positionAfterInstruction_(0U), binary_(nullptr), initialized_(false), short_(false) {
-}
-RelPatchObj::RelPatchObj(bool const isShort, uint32_t const positionAfterInstruction, MemWriter &binary) VB_NOEXCEPT
+// Primary constructor used by delegating constructors
+RelPatchObj::RelPatchObj(uint32_t const positionAfterInstruction, MemWriter *const binary, bool const initialized, bool const isShort) VB_NOEXCEPT
     : positionAfterInstruction_(positionAfterInstruction),
-      binary_(&binary),
-      initialized_(true),
+      binary_(binary),
+      initialized_(initialized),
       short_(isShort) {
+}
+
+// coverity[autosar_cpp14_a12_1_5_violation] default/dummy RelPatchObj delegates to primary ctor
+RelPatchObj::RelPatchObj() VB_NOEXCEPT : RelPatchObj(0U, nullptr, false, false) {
+}
+
+RelPatchObj::RelPatchObj(bool const isShort, uint32_t const positionAfterInstruction, MemWriter &binary) VB_NOEXCEPT
+    : RelPatchObj(positionAfterInstruction, &binary, true, isShort) {
 }
 
 // Sets the target to the current end of the binary

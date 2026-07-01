@@ -85,6 +85,13 @@ public:
   }
 
 private:
+  /// @brief Primary (private) constructor used to centralize initialization.
+  ///
+  /// @param position Position of the start of the referenced instruction in the output binary
+  /// @param binary Pointer to the output binary or nullptr for dummy instances
+  /// @param initialized Whether the RelPatchObj is initialized
+  /// @param isBranch Whether this RelPatchObj represents a branch instruction
+  RelPatchObj(uint32_t const position, MemWriter *const binary, bool const initialized, bool const isBranch) VB_NOEXCEPT;
   ///
   /// @brief Position of the start of the referenced instruction in the output binary
   uint32_t position_;

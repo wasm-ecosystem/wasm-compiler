@@ -87,6 +87,14 @@ public:
   }
 
 private:
+  // Primary constructor for centralized initialization (used by delegating ctors)
+  /// @brief Primary (private) constructor used to centralize initialization.
+  ///
+  /// @param positionAfterInstruction Position of the end of the referenced instruction in the binary
+  /// @param binary Pointer to the output binary or nullptr for dummy instances
+  /// @param initialized Whether the RelPatchObj is initialized
+  /// @param isShort Whether this is a short (8-bit) relative jump
+  RelPatchObj(uint32_t const positionAfterInstruction, MemWriter *const binary, bool const initialized, bool const isShort) VB_NOEXCEPT;
   ///
   /// @brief Position of the end of the referenced instruction in the output binary
   ///

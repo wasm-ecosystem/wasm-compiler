@@ -37,13 +37,19 @@ namespace vb {
 namespace tc {
 using Assembler = Tricore_Assembler;
 
-// coverity[autosar_cpp14_a12_1_5_violation] initial binary_ with nullptr
-RelPatchObj::RelPatchObj() VB_NOEXCEPT : position_{0U}, binary_{nullptr}, initialized_{false}, isBranch_(true) {
+// Primary constructor used by delegating constructors
+RelPatchObj::RelPatchObj(uint32_t const position, MemWriter *const binary, bool const initialized, bool const isBranch) VB_NOEXCEPT
+    : position_{position},
+      binary_{binary},
+      initialized_{initialized},
+      isBranch_(isBranch) {
 }
-RelPatchObj::RelPatchObj(uint32_t const position, MemWriter &binary, bool const isBranch) VB_NOEXCEPT : position_{position},
-                                                                                                        binary_{&binary},
-                                                                                                        initialized_{true},
-                                                                                                        isBranch_(isBranch) {
+
+RelPatchObj::RelPatchObj() VB_NOEXCEPT : RelPatchObj(0U, nullptr, false, true) {
+}
+
+RelPatchObj::RelPatchObj(uint32_t const position, MemWriter &binary, bool const isBranch) VB_NOEXCEPT
+    : RelPatchObj(position, &binary, true, isBranch) {
 }
 
 void RelPatchObj::linkToHere() const {

@@ -39,17 +39,9 @@
 namespace vb {
 
 Compiler::Compiler(ReallocFnc const compilerMemoryReallocFnc, AllocFnc const compilerMemoryAllocFnc, FreeFnc const compilerMemoryFreeFnc,
-                   void *const ctx, ReallocFnc const binaryMemoryReallocFnc, bool const allowUnknownImports)
-    : stack_(Stack(compilerMemoryAllocFnc, compilerMemoryFreeFnc, ctx)),
-      validationStack_(ValidationStack(moduleInfo_, compilerMemoryAllocFnc, compilerMemoryFreeFnc, ctx)),
-      memory_(ExtendableMemory(compilerMemoryReallocFnc)), output_(ExtendableMemory(binaryMemoryReallocFnc)),
-      backend_(stack_, moduleInfo_, memory_, output_, common_, *this), logger_(nullptr), debugMode_(false),
-      forceHighRegisterPressureForTesting_(false), stacktraceRecordCount_(0U), allowUnknownImports_(allowUnknownImports), common_(Common(*this))
-#if ENABLE_EXTENSIONS
-      ,
-      dwarfGenerator_(nullptr), analytics_(nullptr)
-#endif
-{
+                   void *const ctx, ReallocFnc const binaryMemoryReallocFnc, bool const allowUnknownImports) VB_THROW
+    : Compiler(compilerMemoryReallocFnc, compilerMemoryAllocFnc, compilerMemoryFreeFnc, ctx, ExtendableMemory(binaryMemoryReallocFnc),
+               allowUnknownImports) {
 }
 
 Compiler::Compiler(ReallocFnc const compilerMemoryReallocFnc, AllocFnc const compilerMemoryAllocFnc, FreeFnc const compilerMemoryFreeFnc,

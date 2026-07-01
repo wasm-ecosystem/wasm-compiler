@@ -10,7 +10,7 @@ concurrency:
 
 jobs:
   tricore_coverity:
-    uses: CDCFW/wasm-common-ci/.github/workflows/coverityCheck.yml@main
+    uses: ./.github/workflows/coverityCheck.yml
     secrets: inherit
     with:
       build-parameters: "-DVB_ENABLE_DEV_FEATURE=OFF -DENABLE_ADVANCED_APIS=ON -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DCMAKE_BUILD_TYPE=Release -DBACKEND=tricore"
@@ -18,7 +18,7 @@ jobs:
       coding-standard-config: "../autosarcpp14-wasm.config"
 
   x86_64_coverity:
-    uses: CDCFW/wasm-common-ci/.github/workflows/coverityCheck.yml@main
+    uses: ./.github/workflows/coverityCheck.yml
     secrets: inherit
     with:
       build-parameters: "-DVB_ENABLE_DEV_FEATURE=OFF -DENABLE_ADVANCED_APIS=ON -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DCMAKE_BUILD_TYPE=Release -DBACKEND=x86_64"
@@ -26,7 +26,7 @@ jobs:
       coding-standard-config: "../autosarcpp14-wasm.config"
 
   aarch64_coverity:
-    uses: CDCFW/wasm-common-ci/.github/workflows/coverityCheck.yml@main
+    uses: ./.github/workflows/coverityCheck.yml
     secrets: inherit
     with:
       build-parameters: "-DVB_ENABLE_DEV_FEATURE=OFF -DENABLE_ADVANCED_APIS=ON -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DCMAKE_BUILD_TYPE=Release -DBACKEND=aarch64"

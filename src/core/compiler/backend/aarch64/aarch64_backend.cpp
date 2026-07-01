@@ -3149,6 +3149,7 @@ void Backend::executeLinearMemoryStore(OPCode const opcode, uint32_t const offse
 
   Aarch64MemoryAddrImmChecker addrImmChecker{};
   // coverity[autosar_cpp14_m0_1_2_violation]
+  // coverity[autosar_cpp14_m0_1_9_violation] addrReg value depends on build variant
   if ((addrReg == REG::NONE) && addrImmChecker.addressCanBeImmEncoded(immType, addrElem, offset)) {
     emitMemoryLoadProbe(opcode, immType, addrImmChecker);
 

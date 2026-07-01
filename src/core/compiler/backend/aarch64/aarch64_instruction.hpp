@@ -49,7 +49,7 @@ public:
   ///
   /// @param abstrInstr Abstract instruction representation
   /// @param binary Output binary
-  inline Instruction(AbstrInstr const abstrInstr, MemWriter &binary) VB_NOEXCEPT : opcode_{abstrInstr.opcode}, binary_(binary), emitted_(false) {
+  inline Instruction(AbstrInstr const abstrInstr, MemWriter &binary) VB_NOEXCEPT : Instruction(abstrInstr.opcode, binary) {
   }
 
   ///

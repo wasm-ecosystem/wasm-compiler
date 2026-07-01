@@ -1,0 +1,69 @@
+name: Coverity Check
+
+on:
+  workflow_call:
+    inputs:
+      build-parameters:
+        required: true
+        type: string
+      exclude-files:
+        required: false
+        type: string
+      coding-standard-config:
+        required: true
+        description: "Path of coding-standard-config"
+        type: string
+
+jobs:
+  run_coverity:
+    runs-on: cawe-linux-x64-compute-large
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Install prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake unzip wget
+
+      - name: Configure Artifactory access
+        run: |
+          set -ex
+          umask 077
+          cat > ~/.netrc <<EOF
+          machine ${{ vars.INTERNAL_ARTIFACTORY_URL }}
+          login ${{ secrets.TECH_USER_CODECRAFT_ACCOUNT }}
+          password ${{ secrets.TECH_USER_COMMON_ARTIFACTORY_TOKEN }}
+          EOF
+
+      - name: Install Coverity (download and extract)
+        run: |
+          set -ex
+          mkdir -p /tmp/coverity
+          cd /tmp/coverity
+          wget --netrc -O coverity.tar.gz "${{ vars.COVERITY_URL }}"
+          tar -xzf coverity.tar.gz --strip-components=1
+          ls -la
+          echo "$(pwd)/bin" >> "$GITHUB_PATH"
+          echo "Coverity installed to $(pwd)"
+
+      - name: check
+        run: |
+          set -ex
+          cov-configure --gcc
+          mkdir -p build_coverity
+          cd build_coverity
+          cmake .. ${{ inputs.build-parameters }}
+          cov-build --dir=./coverity_out cmake --build . --parallel
+          cov-analyze --coding-standard-config=${{ inputs.coding-standard-config || '' }} --strip-path=$(pwd)/../src --dir=./coverity_out --disable-default
+          if [ -z "${{ inputs.exclude-files }}" ]; then
+            output=$(cov-format-errors --dir ./coverity_out --emacs-style)
+          else
+            output=$(cov-format-errors --dir ./coverity_out --emacs-style --exclude-files='${{ inputs.exclude-files}}')
+          fi
+          if [ -n "$output" ] && ! printf '%s\n' "$output" | grep -qx 'Detected 0 defect occurrences that pass the filter criteria.'; then
+            echo -e "\n$output"
+            false
+          fi

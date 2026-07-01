@@ -58,18 +58,7 @@ public:
   ///
   /// @param abstrInstr Abstract instruction
   /// @param binary Reference to the output binary
-  inline Instruction(AbstrInstr const &abstrInstr, MemWriter &binary) VB_NOEXCEPT : opcode_{abstrInstr.opTemplate},
-                                                                                    cc_(CC::NONE),
-                                                                                    rmType_(RMType::NONE),
-                                                                                    immType_(ImmType::NONE),
-                                                                                    immediate_(0U),
-                                                                                    rReg_(REG::NONE),
-                                                                                    rmBaseReg_(REG::NONE),
-                                                                                    rmIndexReg_(REG::NONE),
-                                                                                    rmIndexScalePow2_(0U),
-                                                                                    rmDisplacement_(0),
-                                                                                    binary_(binary),
-                                                                                    emitted_(false) {
+  inline Instruction(AbstrInstr const &abstrInstr, MemWriter &binary) VB_NOEXCEPT : Instruction(abstrInstr.opTemplate, binary) {
   }
   Instruction(Instruction &) = delete;
 
