@@ -83,7 +83,7 @@ jobs:
         run: python3 ssh_to_qemu.py --arch x64
 
   aarch64_qnx_cmake_build_test:
-    runs-on: [cawe-linux-x64-compute-large]
+    runs-on: [atc-ubuntu-latest]
     steps:
       - uses: actions/checkout@v4
         with:
