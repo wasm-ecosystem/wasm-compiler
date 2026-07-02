@@ -3792,9 +3792,21 @@ StackElement Backend::emitInstrsDivRem(StackElement const *const arg0Ptr, StackE
     static_cast<void>(common_.liftToRegInPlaceProt(*arg1Ptr, false, regAllocTracker));
   }
 
+  // coverity[autosar_cpp14_a8_5_2_violation]
+  auto const emitCheckArg1WithImm8 = [this, cmp_rm_imm8sx, arg1Ptr](uint8_t const imm) {
+    VariableStorage const arg1Storage{moduleInfo_.getStorage(*arg1Ptr)};
+    // Don't use selectInstr here because the arg1Prt maybe in 64bit ram
+    if (arg1Storage.type == StorageType::REGISTER) {
+      as_.INSTR(cmp_rm_imm8sx).setR4RM(arg1Storage.location.reg).setImm8(imm)();
+    } else {
+      RegDisp const arg1RegDisp{getMemRegDisp(arg1Storage)};
+      as_.INSTR(cmp_rm_imm8sx).setM4RM(arg1RegDisp.reg, arg1RegDisp.disp).setImm8(imm)();
+    }
+  };
+
 #if ACTIVE_DIV_CHECK
   if (!analysisResult.mustNotBeDivZero) {
-    static_cast<void>(as_.selectInstr(make_array(cmp_rm_imm8sx), arg1Ptr, &zeroConst, nullptr, RegMask::all(), true));
+    emitCheckArg1WithImm8(0U);
     as_.cTRAP(TrapCode::DIV_ZERO, CC::E);
   }
 #endif
@@ -3821,7 +3833,9 @@ StackElement Backend::emitInstrsDivRem(StackElement const *const arg0Ptr, StackE
       static_cast<void>(as_.selectInstr(make_array(CMP_rm32_imm32), &regA, &highestBitSetConst, nullptr, RegMask::all(), true));
     }
     RelPatchObj const noOverflow1{as_.prepareJMP(true, CC::NE)};
-    static_cast<void>(as_.selectInstr(make_array(cmp_rm_imm8sx), arg1Ptr, &allOnesConst, nullptr, RegMask::all(), true));
+
+    emitCheckArg1WithImm8(0xFFU);
+
     RelPatchObj const noOverflow2{as_.prepareJMP(true, CC::NE)};
 
     if (isSigned && isDiv) {

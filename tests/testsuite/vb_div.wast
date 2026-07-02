@@ -54,6 +54,21 @@
     i64.extend_i32_u
     local.tee $l2
    )
+
+   (func  (export "test-div-with-arg1-in-ram") (param i64 i64 i64 i32 i64 i64 i64 i64 i64 i64) (result i64)
+    
+    
+    local.get 3
+    local.get 0
+    i32.wrap_i64
+    i32.div_s
+    
+    i64.extend_i32_s
+    local.tee 9
+    return
+    )
 )
 
 (assert_return (invoke "div-targetHint-mem") (i64.const 2))
+
+(assert_return (invoke "test-div-with-arg1-in-ram" (i64.const 5) (i64.const 1) (i64.const 1) (i32.const 10) (i64.const 1) (i64.const 1) (i64.const 1) (i64.const 1) (i64.const 1) (i64.const 1)) (i64.const 2))

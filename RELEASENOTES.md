@@ -1,5 +1,10 @@
 # Wasm Compiler Release Notes
 
+## 4.1.2
+
+- x86_64 backend:
+  - Fix i32.div compile crash when arg1 is 64 bit memory storage
+
 ## 4.1.1
 
 - x86_64 backend:
@@ -53,6 +58,7 @@
 
 ## Release v3 known issues
 
+- [Bug fixed by 4.1.2](#412)
 - [Bug fixed by 4.1.1](#411)
 
 ## 3.0.3
