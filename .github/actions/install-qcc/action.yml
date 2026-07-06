@@ -1,0 +1,53 @@
+name: "Install QCC Compiler"
+description: "Install the QNX qcc compiler toolchain"
+
+inputs:
+  artifactory-url:
+    description: "Artifactory host"
+    required: true
+  qcc-url:
+    description: "QNX qcc compiler archive URL"
+    required: true
+  qnx-license-server:
+    description: "QNX license server"
+    required: true
+  artifactory-user:
+    description: "Artifactory username"
+    required: true
+  artifactory-token:
+    description: "Artifactory token"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: apt install
+      shell: bash
+      run: |
+        sudo apt-get update
+        sudo apt-get install wget cmake -y --no-install-recommends
+    - name: Configure Artifactory access
+      shell: bash
+      run: |
+        set -e
+        umask 077
+        echo "machine ${{ inputs.artifactory-url }} login ${{ inputs.artifactory-user }} password ${{ inputs.artifactory-token }}" > ~/.netrc
+    - name: Install wabt
+      shell: bash
+      run: |
+        wget https://github.com/WebAssembly/wabt/releases/download/1.0.41/wabt-1.0.41-linux-x64.tar.gz
+        tar -xzf wabt-1.0.41-linux-x64.tar.gz
+        echo "$PWD/wabt-1.0.41/bin" >> $GITHUB_PATH
+
+    - name: Install qcc compiler
+      shell: bash
+      run: |
+        set -e
+        wget --netrc -O qnx_base_with_so_r801_with_license.tar.gz "${{ inputs.qcc-url }}"
+        tar -zxf qnx_base_with_so_r801_with_license.tar.gz
+        rm qnx_base_with_so_r801_with_license.tar.gz
+        chmod -R 755 qnx_base_r801
+        echo "QNXLM_LICENSE_FILE=${{ inputs.qnx-license-server }}" >> "$GITHUB_ENV"
+        echo "QNX_HOST=${{ github.workspace }}/qnx_base_r801/host/linux/x86_64" >> "$GITHUB_ENV"
+        echo "QNX_TARGET=${{ github.workspace }}/qnx_base_r801/target/qnx7" >> "$GITHUB_ENV"
+        echo "${{ github.workspace }}/qnx_base_r801/host/linux/x86_64/usr/bin" >> "$GITHUB_PATH"
