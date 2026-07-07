@@ -1,5 +1,9 @@
 # Wasm Compiler Release Notes
 
+## 4.2.0
+
+- Fix BAZEL integration dependency issue
+
 ## 4.1.2
 
 - x86_64 backend:

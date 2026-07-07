@@ -44,23 +44,25 @@ jobs:
       - name: install packages
         run: |
           sudo apt-get update
-          sudo apt-get install qemu-system-x86-64 python3-pip python3-scp python3-paramiko python-is-python3 -y --no-install-recommends
-
-      - name: qcc build
-        uses: CDCFW/wasm-common-ci@main
+          sudo apt-get install wget qemu-system-x86-64 python3-pip python3-scp python3-paramiko python-is-python3 -y --no-install-recommends
+      - name: install qcc compiler
+        uses: ./.github/actions/install-qcc
         with:
-          docker_username: ${{ secrets.TECH_USER_QNUMBER }}
-          docker_password: ${{ secrets.TECH_USER_ATC_GITHUB_TOKEN }}
-          run: |
-            set -ex
-            python3 tests/spectest.py
-            mkdir -p build_qnx
-            cd build_qnx
-            export QNXLM_LICENSE_FILE=${{ vars.INTERNAL_QNX_LICENSE_SERVER }}
-            cmake .. -DCMAKE_TOOLCHAIN_FILE=../cmake/QNXx86_64Toolchain.cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=qcc -DCMAKE_C_COMPILER=qcc -DVB_ENABLE_DEV_FEATURE=OFF -DENABLE_WERROR=1 -DENABLE_SPECTEST=1 -DENABLE_DEMO=1 -DTEST_VARIANTS=1 -DDISABLE_SPECTEST_WAST=1 -DENABLE_FUZZ=1
-            cmake --build . --parallel
-            cd ..
-            cat ./build_qnx/compile_commands.json | jq -r '.[].file' | xargs -P $(nproc) -I{} clang-tidy -p $(pwd)/build_qnx {}
+          artifactory-url: ${{ vars.DDAD_ARTIFACTORY_URL }}
+          qcc-url: ${{ vars.QCC_URL }}
+          qnx-license-server: ${{ vars.INTERNAL_QNX_LICENSE_SERVER }}
+          artifactory-user: ${{ secrets.TECH_USER_CODECRAFT_ACCOUNT }}
+          artifactory-token: ${{ secrets.TECH_USER_DDAD_ARTIFACTORY_TOKEN }}
+      - name: qcc build
+        run: |
+          set -ex
+          python3 tests/spectest.py
+          mkdir -p build_qnx
+          cd build_qnx
+          cmake .. -DCMAKE_TOOLCHAIN_FILE=../cmake/QNXx86_64Toolchain.cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=qcc -DCMAKE_C_COMPILER=qcc -DVB_ENABLE_DEV_FEATURE=OFF -DENABLE_WERROR=1 -DENABLE_SPECTEST=1 -DENABLE_DEMO=1 -DTEST_VARIANTS=1 -DDISABLE_SPECTEST_WAST=1 -DENABLE_FUZZ=1
+          cmake --build . --parallel
+          cd ..
+          cat ./build_qnx/compile_commands.json | jq -r '.[].file' | xargs -P $(nproc) -I{} clang-tidy -p $(pwd)/build_qnx {}
 
       - name: setup network
         run: ${{github.workspace}}/scripts/qnx_sh/manage_tap_network.sh
@@ -83,30 +85,31 @@ jobs:
         run: python3 ssh_to_qemu.py --arch x64
 
   aarch64_qnx_cmake_build_test:
-    runs-on: [cawe-linux-x64-compute-large]
+    runs-on: [atc-ubuntu-latest]
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: true
-          token: ${{ secrets.TECH_USER_ATC_GITHUB_TOKEN }}
 
       - name: install packages
         run: |
           sudo apt-get update
-          sudo apt-get install libsdl2-2.0-0  libvirglrenderer1 libpixman-1-0 libgtk-3-0 python3-pip python3-scp python3-paramiko python-is-python3 -y --no-install-recommends
-
-      - name: qcc build
-        uses: CDCFW/wasm-common-ci@main
+          sudo apt-get install libsdl2-2.0-0 wget libvirglrenderer1 libpixman-1-0 libgtk-3-0 python3-pip python3-scp python3-paramiko python-is-python3 -y --no-install-recommends
+      - name: install qcc compiler
+        uses: ./.github/actions/install-qcc
         with:
-          docker_username: ${{ secrets.TECH_USER_QNUMBER }}
-          docker_password: ${{ secrets.TECH_USER_ATC_GITHUB_TOKEN }}
-          run: |
-            set -ex
-            python3 tests/spectest.py
-            export QNXLM_LICENSE_FILE=${{ vars.INTERNAL_QNX_LICENSE_SERVER }}
-            mkdir -p build_qnx
-            cd  build_qnx && cmake .. -DCMAKE_TOOLCHAIN_FILE=../cmake/QNXArm64Toolchain.cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=qcc -DCMAKE_C_COMPILER=qcc -DVB_ENABLE_DEV_FEATURE=OFF -DENABLE_WERROR=1 -DENABLE_SPECTEST=1 -DENABLE_DEMO=1 -DTEST_VARIANTS=0 -DDISABLE_SPECTEST_WAST=1 -DENABLE_FUZZ=1 && \
-            cmake --build . --parallel
+          artifactory-url: ${{ vars.DDAD_ARTIFACTORY_URL }}
+          qcc-url: ${{ vars.QCC_URL }}
+          qnx-license-server: ${{ vars.INTERNAL_QNX_LICENSE_SERVER }}
+          artifactory-user: ${{ secrets.TECH_USER_CODECRAFT_ACCOUNT }}
+          artifactory-token: ${{ secrets.TECH_USER_DDAD_ARTIFACTORY_TOKEN }}
+      - name: qcc build
+        run: |
+          set -ex
+          python3 tests/spectest.py
+          mkdir -p build_qnx
+          cd  build_qnx && cmake .. -DCMAKE_TOOLCHAIN_FILE=../cmake/QNXArm64Toolchain.cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=qcc -DCMAKE_C_COMPILER=qcc -DVB_ENABLE_DEV_FEATURE=OFF -DENABLE_WERROR=1 -DENABLE_SPECTEST=1 -DENABLE_DEMO=1 -DTEST_VARIANTS=0 -DDISABLE_SPECTEST_WAST=1 -DENABLE_FUZZ=1 && \
+          cmake --build . --parallel
 
       - name: download qemu image
         run: |

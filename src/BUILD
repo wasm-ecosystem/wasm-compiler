@@ -1,6 +1,23 @@
 load("@rules_cc//cc:defs.bzl", "cc_library")
 load("//src:config.bzl", "compile_defines", "compile_features", "compile_options")
 
+config_setting(
+    name = "enable_extensions",
+    define_values = {
+        "ENABLE_EXTENSIONS": "1",
+    },
+)
+
+extension_defines = select({
+    ":enable_extensions": ["ENABLE_EXTENSIONS=1"],
+    "//conditions:default": [],
+})
+
+extension_deps = select({
+    ":enable_extensions": ["//extensions:extensions"],
+    "//conditions:default": [],
+})
+
 filegroup(
     name = "headers",
     srcs = glob([
@@ -54,17 +71,17 @@ cc_library(
     srcs = [],
     hdrs = [":headers"],
     copts = compile_options,
-    defines = compile_defines,
+    defines = compile_defines + extension_defines,
     features = compile_features,
     include_prefix = "wasm-compiler/src",
     visibility = ["//visibility:public"],
-    deps = [
+    deps = extension_deps + [
         ":core",
         ":utils",
     ],
 )
 
-# core lib for embedded devices
+# core lib for embedded devices without extension
 cc_library(
     name = "wasm_module_embedded",
     srcs = [],

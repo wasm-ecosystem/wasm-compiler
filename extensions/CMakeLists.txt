@@ -6,4 +6,6 @@ file(GLOB SRC_FILES
 
 add_library(vb_extensions ${SRC_FILES})
 
+target_link_libraries(vb_extensions PUBLIC vb_libWasmModule)
+
 EnableClangTidyMSVS(vb_extensions)
