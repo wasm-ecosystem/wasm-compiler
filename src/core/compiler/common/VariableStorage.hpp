@@ -254,6 +254,52 @@ public:
   bool inMemory() const VB_NOEXCEPT {
     return (type == StorageType::STACKMEMORY) || (type == StorageType::LINKDATA);
   }
+
+  /// @brief Checks whether this location kind is supported by the generic parallel move resolver
+  bool isParallelMoveLocation() const VB_NOEXCEPT {
+    switch (type) {
+    case StorageType::REGISTER:
+    case StorageType::STACKMEMORY:
+    case StorageType::LINKDATA:
+      return true;
+    default:
+      return false;
+    }
+  }
+
+  /// @brief Returns true when two storages partially or fully overlap.
+  /// @param other Storage location to compare against.
+  /// @return True if both storages denote overlapping bytes in the same location class.
+  bool overlapsWith(VariableStorage const &other) const VB_NOEXCEPT {
+    if (!isParallelMoveLocation() || !other.isParallelMoveLocation()) {
+      return false;
+    }
+
+    if (type != other.type) {
+      return false;
+    }
+
+    switch (type) {
+    case StorageType::REGISTER:
+      return location.reg == other.location.reg;
+    case StorageType::STACKMEMORY: {
+      uint32_t const thisBegin{location.stackFramePosition};
+      uint32_t const thisEnd{(thisBegin + MachineTypeUtil::getSize(machineType)) - 1U};
+      uint32_t const otherBegin{other.location.stackFramePosition};
+      uint32_t const otherEnd{(otherBegin + MachineTypeUtil::getSize(other.machineType)) - 1U};
+      return (thisBegin <= otherEnd) && (otherBegin <= thisEnd);
+    }
+    case StorageType::LINKDATA: {
+      uint32_t const thisBegin{location.linkDataOffset};
+      uint32_t const thisEnd{(thisBegin + MachineTypeUtil::getSize(machineType)) - 1U};
+      uint32_t const otherBegin{other.location.linkDataOffset};
+      uint32_t const otherEnd{(otherBegin + MachineTypeUtil::getSize(other.machineType)) - 1U};
+      return (thisBegin <= otherEnd) && (otherBegin <= thisEnd);
+    }
+    default:
+      return false;
+    }
+  }
 };
 
 } // namespace vb

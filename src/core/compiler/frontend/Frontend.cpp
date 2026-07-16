@@ -1959,7 +1959,31 @@ void Frontend::parseCodeSection() {
         }
         break;
       }
+      case OPCode::RETURN_CALL: {
+        // The called function index (not the table index) is given as an immediate to this instruction
+        uint32_t const calledFunctionIndex{br_.readLEB128<uint32_t>()};
 
+        if (calledFunctionIndex >= moduleInfo_.numTotalFunctions) {
+          throw ValidationException(ErrorCode::Function_index_out_of_range);
+        }
+        uint32_t const sigIndex{moduleInfo_.getFncSigIndex(calledFunctionIndex)};
+        validationStack_.validateReturnCall(sigIndex);
+
+#if BUILTIN_FUNCTIONS
+        if (moduleInfo_.functionIsBuiltin(calledFunctionIndex)) {
+          // Not support tail call for builtin function yet
+          throw ValidationException(ErrorCode::Cannot_indirectly_call_builtin_functions);
+        }
+#endif
+
+        if (!currentFrameIsUnreachable()) {
+          uint32_t const numParamsCallee{moduleInfo_.getNumParamsForSignature(sigIndex)};
+          common_.condenseSideEffectInstructionBlewValentBlock(numParamsCallee);
+          compiler_.backend_.execReturnCall(calledFunctionIndex);
+          setCurrentFrameFormallyUnreachable();
+        }
+        break;
+      }
       case OPCode::DROP: {
         validationStack_.drop();
 

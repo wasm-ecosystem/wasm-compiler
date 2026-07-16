@@ -51,7 +51,7 @@ target_link_libraries(libName ${VB_WASM_LIBRARIES})
 
 ```shell
 mkdir build_linux_arm
-cd build
+cd build_linux_arm
 cmake -DCMAKE_BUILD_TYPE:STRING=Debug -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++ -DCMAKE_C_COMPILER=aarch64-linux-gnu-gcc -DCMAKE_SYSTEM_NAME=Linux -DCMAKE_SYSTEM_PROCESSOR=aarch64 ..
 cmake --build . --parallel
 ```

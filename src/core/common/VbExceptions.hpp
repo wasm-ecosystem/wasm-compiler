@@ -161,6 +161,7 @@ public:
     Passive_mode_data_segments_not_implemented,
     Non_trapping_float_to_int_conversions_not_implemented,
     Simd_feature_not_implemented,
+    Tail_call_to_builtin_function_not_implemented,
 
     Not_implemented,
 

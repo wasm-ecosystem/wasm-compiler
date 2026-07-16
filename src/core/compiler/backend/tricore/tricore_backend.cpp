@@ -1225,6 +1225,13 @@ void Backend::execDirectFncCall(uint32_t const fncIndex) {
     directWasmCallImpl.iterateResults();
   }
 }
+// coverity[autosar_cpp14_m9_3_3_violation]
+void Backend::execReturnCall(uint32_t const fncIndex) {
+  // Only support tail call optimization for aarch64 yet
+  static_cast<void>(fncIndex);
+  static_cast<void>(this);
+  throw FeatureNotSupportedException{ErrorCode::Not_implemented};
+}
 
 void Backend::execIndirectWasmCall(uint32_t const sigIndex, uint32_t const tableIndex) {
   static_cast<void>(tableIndex);

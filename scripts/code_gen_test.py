@@ -65,7 +65,13 @@ def run(case_path: str, args) -> bool:
         compiler.register_global("test", "global_f32", module.WasmType.F32, "666.6")
         compiler.register_global("test", "global_f64", module.WasmType.F64, "666.6")
         wasm_binary = wasm_utils.wat_to_wasm(path=case_path)
-        dis_lines = compiler.disassemble_wasm(wasm_binary)
+        try:
+            dis_lines = compiler.disassemble_wasm(wasm_binary)
+        except RuntimeError as err:
+            if str(err) == "Not implemented":
+                print(f"skip {case_path} [{target_name}]: {err}")
+                continue
+            raise
         config = dis.parse_config_str(module.get_configuration())
         file_check_prefix = file_check.convert_config_to_file_check_prefix(config)
         dis_output, _ = dis.process_dis_output(

@@ -50,7 +50,8 @@ Compiler::Compiler(ReallocFnc const compilerMemoryReallocFnc, AllocFnc const com
       validationStack_(ValidationStack(moduleInfo_, compilerMemoryAllocFnc, compilerMemoryFreeFnc, ctx)),
       memory_(ExtendableMemory(compilerMemoryReallocFnc)), output_(std::move(binaryMemory)),
       backend_(stack_, moduleInfo_, memory_, output_, common_, *this), logger_(nullptr), debugMode_(false),
-      forceHighRegisterPressureForTesting_(false), stacktraceRecordCount_(0U), allowUnknownImports_(allowUnknownImports), common_(Common(*this))
+      forceHighRegisterPressureForTesting_(false), stacktraceRecordCount_(0U), allowUnknownImports_(allowUnknownImports),
+      compilerMemoryAllocFnc_(compilerMemoryAllocFnc), compilerMemoryFreeFnc_(compilerMemoryFreeFnc), compilerMemoryCtx_(ctx), common_(Common(*this))
 #if ENABLE_EXTENSIONS
       ,
       dwarfGenerator_(nullptr), analytics_(nullptr)

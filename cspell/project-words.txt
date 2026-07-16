@@ -74,6 +74,7 @@ COULDNOTEXTEND
 cout
 coverity
 CPTC
+CROSSCOMPILING
 CSEL
 cset
 CSINC
@@ -119,6 +120,7 @@ DIVSD
 DIVSS
 DIVU
 DLINEAR
+DTEST
 doubleword
 doublewords
 Doxyfile
@@ -129,6 +131,7 @@ DVINITU
 dvstep
 DVSTEPU
 DYNAMICALLYIMPORTEDFUNCTIONS
+Elems
 embedder
 endl
 eventloop
@@ -395,6 +398,7 @@ REGARGALLOCATION
 REGMASK
 REGPOS
 REGPOSARR
+Regs
 relpatchobj
 repr
 resetstkoflw

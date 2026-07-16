@@ -138,6 +138,10 @@ public:
   /// @param sigIndex Index of the function signature/type
   /// @throws throw validation exception if validate failed
   void validateCall(uint32_t const sigIndex);
+  /// @brief Validates a `return_call` instruction.
+  /// @param sigIndex Index of the callee function signature/type.
+  /// @throws throw validation exception if validate failed
+  void validateReturnCall(uint32_t const sigIndex);
   /// @brief validate for opcode select
   /// @throws throw validation exception if validate failed
   void validateSelect();

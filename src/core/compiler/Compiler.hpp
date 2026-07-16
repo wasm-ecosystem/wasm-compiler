@@ -230,6 +230,21 @@ public:
     return stacktraceRecordCount_ > 0U;
   }
 
+  /// @brief Get allocator for internal compiler memory.
+  inline AllocFnc getCompilerMemoryAllocFnc() const VB_NOEXCEPT {
+    return compilerMemoryAllocFnc_;
+  }
+
+  /// @brief Get deallocator for internal compiler memory.
+  inline FreeFnc getCompilerMemoryFreeFnc() const VB_NOEXCEPT {
+    return compilerMemoryFreeFnc_;
+  }
+
+  /// @brief Get user context for internal compiler memory allocation.
+  inline void *getCompilerMemoryCtx() const VB_NOEXCEPT {
+    return compilerMemoryCtx_;
+  }
+
   ///
   /// @brief Set an abstract logger for logging output with descriptions why compilation failed
   ///
@@ -267,6 +282,10 @@ private:
 
   bool allowUnknownImports_; ///< Whether unknown imports are allowed. If this is true, unknown imports lead to a trap
                              ///< when called
+
+  AllocFnc compilerMemoryAllocFnc_; ///< Allocator for compiler-internal memory.
+  FreeFnc compilerMemoryFreeFnc_;   ///< Deallocator for compiler-internal memory.
+  void *compilerMemoryCtx_;         ///< User context for compiler-internal memory allocation.
 
   Common common_; ///< Instance of common utility library
 #if ENABLE_EXTENSIONS

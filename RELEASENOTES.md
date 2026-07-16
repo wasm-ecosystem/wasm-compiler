@@ -1,5 +1,11 @@
 # Wasm Compiler Release Notes
 
+## 5.0.0
+
+### Feature
+
+- Support `return_call` on AArch64 backend
+
 ## 4.2.0
 
 - Fix BAZEL integration dependency issue

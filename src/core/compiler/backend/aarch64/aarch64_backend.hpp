@@ -207,6 +207,20 @@ public:
   void execDirectFncCall(uint32_t const fncIndex);
 
   ///
+  /// @brief Produces machine code for a function call without saving the locals
+  ///
+  /// Can call either imported or non-imported WebAssembly functions
+  ///
+  /// @param fncIndex WebAssembly function index to call
+  void execDirectFncCallWithoutSaveLocals(uint32_t const fncIndex);
+
+  ///
+  /// @brief Produces machine code for a tail call (return_call)
+  ///
+  /// @param fncIndex WebAssembly function index to tail-call
+  void execReturnCall(uint32_t const fncIndex);
+
+  ///
   /// @brief Produces machine code for an indirect function call, consuming an I32 index from the compiler stack
   /// indexing onto a given table Consumes all arguments for the function from the compiler stack and loads them
   /// according to the calling convention

@@ -63,7 +63,7 @@ TestResult processWast(std::filesystem::path const &base, std::filesystem::path 
   testJsonPath += ".json";
 
   std::ostringstream shellCommand;
-  shellCommand << "wast2json -o " << testJsonPath.string() << " " << wastPath.string();
+  shellCommand << "wast2json --enable-tail-call -o " << testJsonPath.string() << " " << wastPath.string();
 
   int const res = system(shellCommand.str().c_str());
   if (res != 0) {

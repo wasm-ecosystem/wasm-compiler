@@ -31,6 +31,14 @@
   ./build/bin/vb_spectest_json tests/testcases.json
   ```
 
+- on an x86_64 host targeting AArch64 Linux via qemu
+
+  ```bash
+  cmake -S . -B build_linux_arm -DCMAKE_BUILD_TYPE:STRING=Debug -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++ -DCMAKE_C_COMPILER=aarch64-linux-gnu-gcc -DCMAKE_SYSTEM_NAME=Linux -DCMAKE_SYSTEM_PROCESSOR=aarch64 -DBACKEND=aarch64 -DENABLE_SPECTEST=1 -DTEST_VARIANTS=1 -DCMAKE_CROSSCOMPILING_EMULATOR=qemu-aarch64
+  cmake --build build_linux_arm --target vb_spectest -j4
+  ctest --test-dir build_linux_arm -R spectest --output-on-failure
+  ```
+
 - in embedded device, need to generate json or binary in host machine and run test
 
   ```bash

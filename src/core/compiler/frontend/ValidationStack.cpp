@@ -218,6 +218,10 @@ void ValidationStack::validateCall(uint32_t const sigIndex) {
                                          }),
                                          false);
 }
+void ValidationStack::validateReturnCall(uint32_t const sigIndex) {
+  validateCall(sigIndex);
+  validateReturn();
+}
 void ValidationStack::validateSelect() {
   validateLastNumberType(MachineType::I32, true);
   if (currentBlock_->blockInfo.formallyUnreachable) {

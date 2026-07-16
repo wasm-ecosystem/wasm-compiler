@@ -50,6 +50,7 @@ enum class OPCode : uint16_t {
   // CALL OPERATORS
   CALL = 0x10,
   CALL_INDIRECT = 0x11,
+  RETURN_CALL = 0x12,
 
   // REFERENCE OPERATORS
   REF_NULL = 0xD0,

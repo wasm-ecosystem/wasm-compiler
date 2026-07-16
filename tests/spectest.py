@@ -29,7 +29,7 @@ testsuite_path = None
 
 BLACK_LIST = ["spectest_linking"]
 
-wast2json_command = "wast2json -o %s %s"
+wast2json_command = "wast2json --enable-tail-call -o %s %s"
 
 
 def collect_proposals_testcases(root: str) -> list:
