@@ -4,7 +4,7 @@
 
 ### Feature
 
-- Support `return_call` on AArch64 backend
+- Support `return_call` on AArch64 and Tricore backend
 
 ## 4.2.0
 

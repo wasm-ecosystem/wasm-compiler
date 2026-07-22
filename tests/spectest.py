@@ -292,7 +292,9 @@ def assembly_binary(binary_filepaths: list[str]):
         with open(binary_filePath, "rb") as f:
             payload = f.read()
             payloads[-1] += list(payload)
-            if len(payloads[-1]) > 1.4 * 1024 * 1024:  # keep one file less than 1.4MB
+            if (
+                len(payloads[-1]) > 0.95 * 1024 * 1024
+            ):  # keep standalone TriCore binaries within flash limits
                 payloads.append([])
 
     for i in range(len(payloads)):
@@ -313,7 +315,7 @@ def assembly_binary(binary_filepaths: list[str]):
             )
         )
         print(f"generate file in total_{i}.cpp")
-    assert len(payloads) <= 2  # we only have 2 standalone test case in cmake and bazel
+    assert len(payloads) <= 3  # keep in sync with CI standalone spectest execution
 
 
 def generate_testcases(force: bool):

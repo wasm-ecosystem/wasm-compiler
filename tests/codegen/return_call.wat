@@ -22,6 +22,12 @@
     ;; AARCH64-NEXT:  b  {{0x[0-9a-f]+}}
     ;; AARCH64-NOT:  bl
     ;; AARCH64-NOT:  ret
+    ;; TRICORE-NOT:  fcall
+    ;; TRICORE-NOT:  fret
+    ;; TRICORE: lea  sp, [sp]#
+    ;; TRICORE-NEXT: j  {{#0x[0-9a-f]+}}
+    ;; TRICORE-NOT:  fcall
+    ;; TRICORE-NOT:  fret
     return_call $callee_same
   )
 
@@ -39,6 +45,12 @@
     ;; AARCH64-NEXT:  b  {{0x[0-9a-f]+}}
     ;; AARCH64-NOT:  bl
     ;; AARCH64-NOT:  ret
+    ;; TRICORE-NOT:  fcall
+    ;; TRICORE-NOT:  fret
+    ;; TRICORE: lea  sp, [sp]#
+    ;; TRICORE-NEXT: j  {{#0x[0-9a-f]+}}
+    ;; TRICORE-NOT:  fcall
+    ;; TRICORE-NOT:  fret
     return_call $callee_many
   )
 
@@ -55,6 +67,12 @@
     ;; AARCH64-NEXT:  b  {{0x[0-9a-f]+}}
     ;; AARCH64-NOT:  bl
     ;; AARCH64-NOT:  ret
+    ;; TRICORE-NOT:  fcall
+    ;; TRICORE-NOT:  fret
+    ;; TRICORE: lea  sp, [sp]#
+    ;; TRICORE-NEXT: j  {{#0x[0-9a-f]+}}
+    ;; TRICORE-NOT:  fcall
+    ;; TRICORE-NOT:  fret
     return_call $callee10
   )
 
@@ -78,6 +96,9 @@
     ;; AARCH64:  bl
     ;; AARCH64:  ldr  x30,
     ;; AARCH64:  ret
+    ;; TRICORE: fcall
+    ;; TRICORE-NEXT: lea  sp, [sp]#
+    ;; TRICORE-NEXT: fret
     return_call $callee10
   )
 
@@ -95,7 +116,35 @@
     ;; AARCH64-NOT:  ret
     ;; AARCH64: add  sp, sp,
     ;; AARCH64-NEXT:  b  {{0x[0-9a-f]+}}
+    ;; TRICORE: ld.a{{.*}}[sp]#
+    ;; TRICORE-NEXT: st.a{{.*}}[sp]#
+    ;; TRICORE: ld.a{{.*}}[sp]#
+    ;; TRICORE-NEXT: st.a{{.*}}[sp]#
+    ;; TRICORE-NOT:  fcall
+    ;; TRICORE-NOT:  fret
+    ;; TRICORE: lea  sp, [sp]#
+    ;; TRICORE-NEXT: j  {{#0x[0-9a-f]+}}
     ;; CHECK: Size of the function body
     return_call $callee10
+  )
+
+  ;; CHECK-LABEL: Function[8] Body
+  (func $callee64 (param i64 i64) (result i64)
+    local.get 0)
+
+  ;; CHECK-LABEL: Function[9] Body
+  ;; TriCore placeholder accuracy: 64-bit swap must preserve the low/high half pairing order.
+  (func $tail_call_64_swap (param i64 i64) (result i64)
+    local.get 1
+    local.get 0
+    ;; TRICORE: ld.d{{.*}}[sp]#0x88
+    ;; TRICORE-NEXT: ld.da{{.*}}[sp]#0x90
+    ;; TRICORE-NEXT: st.da{{.*}}[sp]#0x88
+    ;; TRICORE-NEXT: st.d{{.*}}[sp]#0x90
+    ;; TRICORE-NOT:  fcall
+    ;; TRICORE-NOT:  fret
+    ;; TRICORE: lea  sp, [sp]#
+    ;; TRICORE-NEXT: j  {{#0x[0-9a-f]+}}
+    return_call $callee64
   )
 )

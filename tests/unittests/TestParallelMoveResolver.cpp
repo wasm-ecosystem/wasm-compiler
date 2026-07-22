@@ -166,13 +166,36 @@ TEST(ParallelMoveResolverTest, ResolvesTwoCyclesSequentially) {
                    }));
 
   std::vector<MoveOperation> const expected{
-      MoveOperation(tempReg, firstCycleSecondReg),
-      MoveOperation(firstCycleSecondReg, firstCycleFirstReg),
-      MoveOperation(firstCycleFirstReg, tempReg),
-      MoveOperation(tempReg, secondCycleLowSlot),
-      MoveOperation(secondCycleLowSlot, secondCycleHighSlot),
-      MoveOperation(secondCycleHighSlot, tempReg),
+      MoveOperation(tempReg, firstCycleSecondReg), MoveOperation(firstCycleSecondReg, firstCycleFirstReg), MoveOperation(firstCycleFirstReg, tempReg),
+      MoveOperation(tempReg, secondCycleHighSlot), MoveOperation(secondCycleHighSlot, secondCycleLowSlot), MoveOperation(secondCycleLowSlot, tempReg),
   };
+  ASSERT_EQ(result, expected);
+}
+
+TEST(ParallelMoveResolverTest, ExtendPlaceholderSourceIsReleasedWithExtendRecord) {
+  // Extend placeholders are tracking-only records and must stop blocking later moves once the paired Extend move is emitted.
+  ParallelMoveResolver resolver{&testCompilerAlloc, &testCompilerFree, nullptr, 3U};
+  VariableStorage const extendTargetLow{VariableStorage::reg(MachineType::I64, parallelMoveRegs[0])};
+  VariableStorage const extendTargetHigh{VariableStorage::reg(MachineType::I64, parallelMoveRegs[1])};
+  VariableStorage const extendSourceLow{VariableStorage::reg(MachineType::I64, parallelMoveRegs[2])};
+  VariableStorage const extendSourceHigh{VariableStorage::reg(MachineType::I64, parallelMoveRegs[3])};
+  VariableStorage const blockedTarget{VariableStorage::reg(MachineType::I32, parallelMoveRegs[3])};
+  VariableStorage const constantSource{VariableStorage::i32Const(11U)};
+  VariableStorage const tempReg{VariableStorage::reg(MachineType::I64, parallelMoveRegs[5])};
+
+  resolver.push(extendTargetLow, ParallelMoveTargetType::Extend, extendSourceLow);
+  resolver.push(extendTargetHigh, ParallelMoveTargetType::Extend_Placeholder, extendSourceHigh);
+  resolver.push(blockedTarget, constantSource);
+
+  std::vector<MoveOperation> result;
+  resolver.resolve(ParallelMoveEmitter([&result](VariableStorage const &targetStorage, VariableStorage const &sourceStorage) {
+                     result.emplace_back(targetStorage, sourceStorage);
+                   }),
+                   ParallelMoveTempProvider([tempReg](VariableStorage const &sourceStorage) {
+                     return VariableStorage::reg(sourceStorage.machineType, tempReg.location.reg);
+                   }));
+
+  std::vector<MoveOperation> const expected{MoveOperation(extendTargetLow, extendSourceLow), MoveOperation(blockedTarget, constantSource)};
   ASSERT_EQ(result, expected);
 }
 

@@ -41,6 +41,7 @@
 #include "src/core/common/util.hpp"
 #include "src/core/compiler/Compiler.hpp"
 #include "src/core/compiler/backend/BackendBase.hpp"
+#include "src/core/compiler/backend/RegAdapter.hpp"
 #include "src/core/compiler/backend/tricore/tricore_call_dispatch.hpp"
 #include "src/core/compiler/common/BranchCondition.hpp"
 #include "src/core/compiler/common/BuiltinFunction.hpp"
@@ -51,6 +52,7 @@
 #include "src/core/compiler/common/MemWriter.hpp"
 #include "src/core/compiler/common/ModuleInfo.hpp"
 #include "src/core/compiler/common/OPCode.hpp"
+#include "src/core/compiler/common/ParallelMoveResolver.hpp"
 #include "src/core/compiler/common/ParamPos.hpp"
 #include "src/core/compiler/common/RegMask.hpp"
 #include "src/core/compiler/common/RegisterCopyResolver.hpp"
@@ -662,7 +664,6 @@ void Backend::emitFunctionEntryPoint(uint32_t const fncIndex) {
 
 void Backend::emitRawFunctionCall(uint32_t const fncIndex) {
   if (moduleInfo_.functionIsImported(fncIndex)) {
-    // Calling an imported function
     ModuleInfo::ImpFuncDef const impFuncDef{moduleInfo_.getImpFuncDef(fncIndex)};
     assert(impFuncDef.builtinFunction == BuiltinFunction::UNDEFINED && "Builtin functions cannot be emitted this way, do it explicitly");
 
@@ -707,27 +708,31 @@ void Backend::emitRawFunctionCall(uint32_t const fncIndex) {
     }
   } else {
     // Calling a Wasm-internal function
-    // Check if the function body we are targeting has already been emitted
-    if (fncIndex <= moduleInfo_.fnc.index) {
-      // Check at which offset in the binary the function body is present
-      uint32_t const binaryFncBodyOffset{moduleInfo_.wasmFncBodyBinaryPositions[fncIndex]};
-      // If the index is smaller then the current index, it's already defined
-      assert(binaryFncBodyOffset != 0xFF'FF'FF'FF && "Function needs to be defined already");
+    emitRawWasmInternalCall(fncIndex);
+  }
+}
 
-      // Produce a dummy call instruction, synthesize a corresponding RelPatchObj and link it to the start of the body
-      RelPatchObj const branchObj{as_.INSTR(FCALL_disp24sx2).prepJmp()};
-      branchObj.linkToBinaryPos(binaryFncBodyOffset);
-    } else {
-      // Body of the target function has not been emitted yet so we link it to either an unknown target or the last
-      // branch that targets this still-unknown function body. This way we are essentially creating a linked-list of
-      // branches inside the output binary that we are going to fully patch later
+void Backend::emitRawWasmInternalCall(uint32_t const fncIndex, bool const linkRegister) {
+  // Check if the function body we are targeting has already been emitted
+  if (fncIndex <= moduleInfo_.fnc.index) {
+    // Check at which offset in the binary the function body is present
+    uint32_t const binaryFncBodyOffset{moduleInfo_.wasmFncBodyBinaryPositions[fncIndex]};
+    // If the index is smaller then the current index, it's already defined
+    assert(binaryFncBodyOffset != 0xFF'FF'FF'FF && "Function needs to be defined already");
 
-      // We correspondingly produce a call instruction
-      RelPatchObj const branchObj{as_.INSTR(FCALL_disp24sx2).prepJmp()};
+    // Produce a dummy call instruction, synthesize a corresponding RelPatchObj and link it to the start of the body
+    RelPatchObj const branchObj{linkRegister ? as_.INSTR(FCALL_disp24sx2).prepJmp() : as_.INSTR(J_disp24sx2).prepJmp()};
+    branchObj.linkToBinaryPos(binaryFncBodyOffset);
+  } else {
+    // Body of the target function has not been emitted yet so we link it to either an unknown target or the last
+    // branch that targets this still-unknown function body. This way we are essentially creating a linked-list of
+    // branches inside the output binary that we are going to fully patch later
 
-      // Register the branch
-      registerPendingBranch(branchObj, moduleInfo_.wasmFncBodyBinaryPositions[fncIndex]);
-    }
+    // We correspondingly produce a call instruction
+    RelPatchObj const branchObj{linkRegister ? as_.INSTR(FCALL_disp24sx2).prepJmp() : as_.INSTR(J_disp24sx2).prepJmp()};
+
+    // Register the branch
+    registerPendingBranch(branchObj, moduleInfo_.wasmFncBodyBinaryPositions[fncIndex]);
   }
 }
 
@@ -1137,6 +1142,7 @@ void Backend::execDirectFncCall(uint32_t const fncIndex) {
     constexpr uint32_t of_stackParams{0U};
     uint32_t paramOffset{of_stackParams};
     // coverity[autosar_cpp14_a8_5_2_violation]
+    // coverity[autosar_cpp14_a5_1_9_violation]
     auto const paramPosFunction = [this, &paramOffset](MachineType const type) VB_NOEXCEPT -> ParamPos {
       static_cast<void>(type);
       ParamPos pos{};
@@ -1169,6 +1175,7 @@ void Backend::execDirectFncCall(uint32_t const fncIndex) {
     RegStackTracker tracker{};
     uint32_t const stackParamWidth{importCallV1Impl.getStackParamWidth()};
     // coverity[autosar_cpp14_a8_5_2_violation]
+    // coverity[autosar_cpp14_a5_1_9_violation]
     auto const paramPosFunction = [this, &tracker, stackParamWidth](MachineType const type) VB_NOEXCEPT -> ParamPos {
       ParamPos pos{};
       pos.reg = getREGForArg(type, true, tracker);
@@ -1227,12 +1234,218 @@ void Backend::execDirectFncCall(uint32_t const fncIndex) {
 }
 // coverity[autosar_cpp14_m9_3_3_violation]
 void Backend::execReturnCall(uint32_t const fncIndex) {
-  // Only support tail call optimization for aarch64 yet
-  static_cast<void>(fncIndex);
-  static_cast<void>(this);
-  throw FeatureNotSupportedException{ErrorCode::Not_implemented};
+  bool const imported{moduleInfo_.functionIsImported(fncIndex)};
+  uint32_t const calleeSigIndex{moduleInfo_.getFncSigIndex(fncIndex)};
+  uint32_t const callerSigIndex{moduleInfo_.getFuncDef(moduleInfo_.fnc.index).sigIndex};
+  uint32_t const calleeStackParamWidth{getStackParamWidth(calleeSigIndex, imported)};
+  uint32_t const callerStackParamWidth{moduleInfo_.fnc.paramWidth};
+
+  if ((!imported) && (calleeStackParamWidth <= callerStackParamWidth)) {
+    // Path A: TailJump. No need to save locals/params, only retain stack for callee params
+    RegStackTracker hintTracker{};
+    // coverity[autosar_cpp14_a8_5_2_violation]
+    // coverity[autosar_cpp14_a5_1_9_violation]
+    auto const paramPosFunction = [this, &hintTracker, calleeStackParamWidth](MachineType const type) VB_NOEXCEPT -> ParamPos {
+      ParamPos pos{};
+      pos.reg = getREGForArg(type, false, hintTracker);
+      if (pos.reg == REG::NONE) {
+        pos.offsetToStackBase = moduleInfo_.fnc.getPreservedStackSize() - offsetInStackArgs(false, calleeStackParamWidth, hintTracker, type);
+      }
+      return pos;
+    };
+    // coverity[autosar_cpp14_a5_1_4_violation]
+    Stack::iterator const paramsBase{common_.prepareCallParams(calleeSigIndex, false, Common::ParamPosFunction(paramPosFunction))};
+
+    // Set up params in their final positions for the tail jump
+    uint32_t const numParams{moduleInfo_.getNumParamsForSignature(calleeSigIndex)};
+    // Get the max number of moves that can be needed for ParallelMoveResolver including Extend_Placeholder
+    uint32_t const parallelMoveCapacity{std::min(numParams * 2U, numParams + static_cast<uint32_t>(TReg::NUMREGS))};
+    ParallelMoveResolver moveResolver{compiler_.getCompilerMemoryAllocFnc(), compiler_.getCompilerMemoryFreeFnc(), compiler_.getCompilerMemoryCtx(),
+                                      parallelMoveCapacity};
+    // coverity[autosar_cpp14_a8_5_2_violation]
+    auto const selectParallelMoveTemp = [&moveResolver](VariableStorage const &sourceStorage) VB_THROW -> VariableStorage {
+      MachineType const machineType{sourceStorage.machineType};
+      // free scratch regs may be reused as move temps that not yet emitted but the stackRef is cleaned and thus won't cause conflicts
+      Span<REG const> const staticScratchRegs{
+          vb::Span<REG const>(WasmABI::dr.data(), WasmABI::dr.size()).subspan(static_cast<size_t>(WasmABI::scratchRegStart))};
+      // Only registers related to parameter preparation are considered, since other registers are no longer valuable in the return_call.
+      for (REG const currentReg : staticScratchRegs) {
+        // scratch registers can only be used as source in cycles that are still pending.
+        if (!moveResolver.regUsedAsSource(currentReg)) {
+          if (!RegUtil::canBeExtReg(currentReg) || !moveResolver.regUsedAsSource(RegUtil::getOtherExtReg(currentReg))) {
+            return VariableStorage::reg(machineType, currentReg);
+          }
+        }
+      }
+
+      UNREACHABLE(return VariableStorage{}, "Always expected a free same-type temp register for return_call parallel moves");
+    };
+    RegStackTracker iterTracker{};
+
+    Stack::iterator currentParam{paramsBase};
+    moduleInfo_.iterateParamsForSignature(
+        calleeSigIndex,
+        // coverity[autosar_cpp14_a5_1_4_violation]
+        // coverity[autosar_cpp14_a5_1_9_violation]
+        FunctionRef<void(MachineType)>(
+            [this, &currentParam, &moveResolver, &iterTracker, calleeStackParamWidth](MachineType const paramType) VB_NOEXCEPT {
+              VariableStorage const sourceStorage{moduleInfo_.getStorage(*currentParam)};
+              REG const targetReg{getREGForArg(paramType, false, iterTracker)};
+
+              VariableStorage targetStorage{};
+              if (targetReg != REG::NONE) {
+                targetStorage = VariableStorage::reg(paramType, targetReg);
+              } else {
+                // Stack param: place at entry-frame position so it survives unwind to paramWidth
+                uint32_t const offsetFromEntryFP{offsetInStackArgs(false, calleeStackParamWidth, iterTracker, paramType)};
+                uint32_t const targetStackFramePosition{moduleInfo_.fnc.paramWidth - offsetFromEntryFP};
+                targetStorage = VariableStorage::stackMemory(paramType, targetStackFramePosition);
+              }
+
+              if ((targetReg != REG::NONE) && MachineTypeUtil::is64(paramType)) {
+                moveResolver.push(targetStorage, ParallelMoveTargetType::Extend, sourceStorage);
+                VariableStorage const placeholderSource{(sourceStorage.type == StorageType::REGISTER)
+                                                            ? VariableStorage::reg(paramType, RegUtil::getOtherExtReg(sourceStorage.location.reg))
+                                                            : sourceStorage};
+                moveResolver.push(VariableStorage::reg(paramType, RegUtil::getOtherExtReg(targetReg)), ParallelMoveTargetType::Extend_Placeholder,
+                                  placeholderSource);
+              } else {
+                moveResolver.push(targetStorage, sourceStorage);
+              }
+
+              common_.removeReference(currentParam);
+              currentParam = stack_.erase(currentParam);
+            }));
+
+    // Resolve register copies
+    // coverity[autosar_cpp14_a8_5_2_violation]
+    auto const moveEmitter = [this](VariableStorage const &targetStorage, VariableStorage const &sourceStorage) VB_THROW {
+      // Temps are always same-type registers, so source and target machine types always match and a plain move suffices.
+      emitMoveImpl(targetStorage, sourceStorage, false);
+    };
+    // coverity[autosar_cpp14_a5_1_4_violation]
+    moveResolver.resolve(ParallelMoveEmitter(moveEmitter), ParallelMoveTempProvider(selectParallelMoveTemp));
+
+    // Unwind stack to the caller-visible return frame and jump without creating a new return link.
+    as_.setStackFrameSize(moduleInfo_.getStackFrameSizeBeforeReturn(), true, true);
+    emitRawWasmInternalCall(fncIndex, false);
+  } else {
+    // Path B: Import or callee needs more stack param space
+    // Skip saving locals/params since we return immediately after back
+    execDirectFncCallWithoutSaveLocals(fncIndex);
+
+    uint32_t const numReturnValues{moduleInfo_.getNumReturnValuesForSignature(callerSigIndex)};
+    if (numReturnValues > 0U) {
+      common_.condenseSideEffectInstructionBlewValentBlock(numReturnValues);
+      Stack::iterator const returnValuesBase{common_.condenseMultipleValentBlocksWithTargetHintBelow(stack_.end(), callerSigIndex)};
+      common_.loadReturnValues(returnValuesBase, numReturnValues);
+      common_.popReturnValueElems(returnValuesBase, numReturnValues);
+    }
+    emitReturnAndUnwindStack(true);
+  }
 }
 
+void Backend::execDirectFncCallWithoutSaveLocals(uint32_t const fncIndex) {
+  bool const imported{moduleInfo_.functionIsImported(fncIndex)};
+  assert((!imported || (!moduleInfo_.functionIsBuiltin(fncIndex))) && "Builtin functions can only be executed by execBuiltinFncCall");
+  assert((!imported || fncIndex != UnknownIndex) && "Need to provide fncIndex for imports");
+
+  uint32_t const sigIndex{moduleInfo_.getFncSigIndex(fncIndex)};
+  common_.spillScratchRegsOutOfCallParams(sigIndex, false);
+
+  // Load the parameters etc., set up everything then emit the actual call
+  if (moduleInfo_.functionIsV2Import(fncIndex)) {
+    DirectV2Import v2ImportCall{*this, sigIndex};
+    constexpr uint32_t of_stackParams{0U};
+    uint32_t paramOffset{of_stackParams};
+    // coverity[autosar_cpp14_a8_5_2_violation]
+    // coverity[autosar_cpp14_a5_1_9_violation]
+    auto const paramPosFunction = [this, &paramOffset](MachineType const type) VB_NOEXCEPT -> ParamPos {
+      static_cast<void>(type);
+      ParamPos pos{};
+      pos.reg = REG::NONE;
+      pos.offsetToStackBase = moduleInfo_.fnc.getPreservedStackSize() - paramOffset;
+      paramOffset += 8U;
+      return pos;
+    };
+    // coverity[autosar_cpp14_a5_1_4_violation]
+    Stack::iterator const paramsBase{common_.prepareCallParams(sigIndex, false, Common::ParamPosFunction(paramPosFunction))};
+    common_.moveGlobalsToLinkData();
+    v2ImportCall.iterateParams(paramsBase);
+    uint32_t const jobMemoryPtrPtrOffset{v2ImportCall.getJobMemoryPtrPtrOffset()};
+    // coverity[autosar_cpp14_a5_1_9_violation]
+    v2ImportCall.emitFncCallWrapper(fncIndex, FunctionRef<void()>([this, fncIndex, jobMemoryPtrPtrOffset]() {
+                                      cacheJobMemoryPtrPtr(jobMemoryPtrPtrOffset, PreferredCallScrReg);
+                                      emitRawFunctionCall(fncIndex);
+                                      restoreFromJobMemoryPtrPtr(jobMemoryPtrPtrOffset);
+#if INTERRUPTION_REQUEST
+                                      checkForInterruptionRequest(callScrRegs[0]);
+#endif
+                                    }));
+    setupMemSizeReg();
+    common_.recoverGlobalsToRegs();
+    v2ImportCall.iterateResults();
+  } else if (imported) {
+    // Direct call to V1 import native function
+    ImportCallV1 importCallV1Impl{*this, sigIndex};
+    RegStackTracker tracker{};
+    uint32_t const stackParamWidth{importCallV1Impl.getStackParamWidth()};
+    // coverity[autosar_cpp14_a8_5_2_violation]
+    // coverity[autosar_cpp14_a5_1_9_violation]
+    auto const paramPosFunction = [this, &tracker, stackParamWidth](MachineType const type) VB_NOEXCEPT -> ParamPos {
+      ParamPos pos{};
+      pos.reg = getREGForArg(type, true, tracker);
+      if (pos.reg == REG::NONE) {
+        pos.offsetToStackBase = moduleInfo_.fnc.getPreservedStackSize() - offsetInStackArgs(true, stackParamWidth, tracker, type);
+      }
+      return pos;
+    };
+    // coverity[autosar_cpp14_a5_1_4_violation]
+    Stack::iterator const paramsBase{common_.prepareCallParams(sigIndex, false, Common::ParamPosFunction(paramPosFunction))};
+    common_.moveGlobalsToLinkData();
+    static_cast<void>(importCallV1Impl.iterateParams(paramsBase));
+    importCallV1Impl.prepareCtx();
+    importCallV1Impl.resolveRegisterCopies();
+    uint32_t const jobMemoryPtrPtrOffset{importCallV1Impl.getJobMemoryPtrPtrOffset()};
+    // coverity[autosar_cpp14_a5_1_9_violation]
+    importCallV1Impl.emitFncCallWrapper(fncIndex, FunctionRef<void()>([this, fncIndex, jobMemoryPtrPtrOffset]() {
+                                          cacheJobMemoryPtrPtr(jobMemoryPtrPtrOffset, PreferredCallScrReg);
+                                          emitRawFunctionCall(fncIndex);
+                                          restoreFromJobMemoryPtrPtr(jobMemoryPtrPtrOffset);
+#if INTERRUPTION_REQUEST
+                                          checkForInterruptionRequest(callScrRegs[0]);
+#endif
+                                        }));
+
+    setupMemSizeReg();
+    common_.recoverGlobalsToRegs();
+    importCallV1Impl.iterateResults();
+  } else {
+    // Direct call to a Wasm function
+    InternalCall directWasmCallImpl{*this, sigIndex};
+    RegStackTracker tracker{};
+    uint32_t const stackParamWidth{directWasmCallImpl.getStackParamWidth()};
+    // coverity[autosar_cpp14_a8_5_2_violation]
+    // coverity[autosar_cpp14_a5_1_9_violation]
+    auto const paramPosFunction = [this, &tracker, stackParamWidth](MachineType const type) VB_NOEXCEPT -> ParamPos {
+      ParamPos pos{};
+      pos.reg = getREGForArg(type, false, tracker);
+      if (pos.reg == REG::NONE) {
+        pos.offsetToStackBase = moduleInfo_.fnc.getPreservedStackSize() - offsetInStackArgs(false, stackParamWidth, tracker, type);
+      }
+      return pos;
+    };
+    // coverity[autosar_cpp14_a5_1_4_violation]
+    Stack::iterator const paramsBase{common_.prepareCallParams(sigIndex, false, Common::ParamPosFunction(paramPosFunction))};
+    static_cast<void>(directWasmCallImpl.iterateParams(paramsBase));
+    directWasmCallImpl.resolveRegisterCopies();
+    // coverity[autosar_cpp14_a5_1_9_violation]
+    directWasmCallImpl.emitFncCallWrapper(fncIndex, FunctionRef<void()>([this, fncIndex]() {
+                                            emitRawFunctionCall(fncIndex);
+                                          }));
+    directWasmCallImpl.iterateResults();
+  }
+}
 void Backend::execIndirectWasmCall(uint32_t const sigIndex, uint32_t const tableIndex) {
   static_cast<void>(tableIndex);
   assert(moduleInfo_.hasTable && tableIndex == 0 && "Table not defined");

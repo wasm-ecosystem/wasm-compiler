@@ -245,8 +245,9 @@ jobs:
 
           cmake . -B build_tricore -DCMAKE_BUILD_TYPE=Debug -DENABLE_WERROR=1 -DCMAKE_C_COMPILER=/usr/bin/tricore-elf-gcc -DVB_ENABLE_DEV_FEATURE=OFF -DCMAKE_CXX_COMPILER=/usr/bin/tricore-elf-g++ -DENABLE_SPECTEST=1 -DENABLE_DEMO=1 -DTEST_VARIANTS=1 -DDISABLE_SPECTEST_WAST=1 -DDISABLE_SPECTEST_JSON=1 -DENABLE_STANDALONE_TEST=1
           cmake --build build_tricore --parallel
-          python3 scripts/tricore_qemu_execute.py qemu-system-tricore -semihosting -display none -M tricore_tsim162 -kernel build_tricore/bin/vb_spectest_binary_standalone_0
-          python3 scripts/tricore_qemu_execute.py qemu-system-tricore -semihosting -display none -M tricore_tsim162 -kernel build_tricore/bin/vb_spectest_binary_standalone_1
+          for spectest_binary in build_tricore/bin/vb_spectest_binary_standalone_*; do
+            python3 scripts/tricore_qemu_execute.py qemu-system-tricore -semihosting -display none -M tricore_tsim162 -kernel "$spectest_binary"
+          done
           qemu-system-tricore -semihosting -display none -M tricore_tsim162 -kernel build_tricore/bin/vb_demo
 
   tricore_linux_cmake_build_unittest:

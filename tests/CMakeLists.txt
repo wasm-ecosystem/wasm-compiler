@@ -89,30 +89,25 @@ add_library(BinaryTestCaseLib
 )
 
 if(ENABLE_STANDALONE_TEST)
-	add_executable(${PROJECT_NAME}_binary_standalone_0
-		execute/test_with_binary_standalone.cpp
-		${CMAKE_CURRENT_SOURCE_DIR}/testcases/bin/total_0.cpp
-	)
-	add_executable(${PROJECT_NAME}_binary_standalone_1
-		execute/test_with_binary_standalone.cpp
-		${CMAKE_CURRENT_SOURCE_DIR}/testcases/bin/total_1.cpp
-	)
-	target_link_libraries(${PROJECT_NAME}_binary_standalone_0
-		${PROJECT_NAME}_core
-		BinaryTestCaseLib
-	)
-	target_link_libraries(${PROJECT_NAME}_binary_standalone_1
-		${PROJECT_NAME}_core
-		BinaryTestCaseLib
-	)
+	file(GLOB SPECTEST_BINARY_STANDALONE_SOURCES CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/testcases/bin/total_*.cpp)
+	list(SORT SPECTEST_BINARY_STANDALONE_SOURCES)
+	foreach(SPECTEST_BINARY_STANDALONE_SOURCE IN LISTS SPECTEST_BINARY_STANDALONE_SOURCES)
+		get_filename_component(SPECTEST_BINARY_STANDALONE_NAME ${SPECTEST_BINARY_STANDALONE_SOURCE} NAME_WE)
+		string(REPLACE "total_" "" SPECTEST_BINARY_STANDALONE_INDEX ${SPECTEST_BINARY_STANDALONE_NAME})
+		set(SPECTEST_BINARY_STANDALONE_TARGET ${PROJECT_NAME}_binary_standalone_${SPECTEST_BINARY_STANDALONE_INDEX})
+		add_executable(${SPECTEST_BINARY_STANDALONE_TARGET}
+			execute/test_with_binary_standalone.cpp
+			${SPECTEST_BINARY_STANDALONE_SOURCE}
+		)
+		target_link_libraries(${SPECTEST_BINARY_STANDALONE_TARGET}
+			${PROJECT_NAME}_core
+			BinaryTestCaseLib
+		)
 
-	if(DEFINED Linker_Files)
-		AddLinkDependencies(${PROJECT_NAME}_binary_standalone_0 Linker_Files)
-	endif()
-
-	if(DEFINED Linker_Files)
-		AddLinkDependencies(${PROJECT_NAME}_binary_standalone_1 Linker_Files)
-	endif()
+		if(DEFINED Linker_Files)
+			AddLinkDependencies(${SPECTEST_BINARY_STANDALONE_TARGET} Linker_Files)
+		endif()
+	endforeach()
 endif()
 
 if(NOT DEFINED CMAKE_CROSSCOMPILING_EMULATOR)

@@ -66,9 +66,9 @@
     ;; AARCH64:       mov  [[T1:w0]], w8
     ;; AARCH64-NEXT:  mov  w8, w19
     ;; AARCH64-NEXT:  mov  w19, [[T1]]
-    ;; AARCH64-NEXT:  mov  [[T2:w0]], w1
-    ;; AARCH64-NEXT:  mov  w1, w2
-    ;; AARCH64-NEXT:  mov  w2, [[T2]]
+    ;; AARCH64-NEXT:  mov  [[T2:w0]], w2
+    ;; AARCH64-NEXT:  mov  w2, w1
+    ;; AARCH64-NEXT:  mov  w1, [[T2]]
     ;; AARCH64-NOT:   str  {{w[0-9]+}}, [sp
     ;; AARCH64:       add  sp, sp,
     ;; AARCH64-NEXT:  b  {{0x[0-9a-f]+}}

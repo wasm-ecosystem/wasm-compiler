@@ -34,20 +34,28 @@ using ParallelMoveEmitter =
 using ParallelMoveTempProvider = FunctionRef<VariableStorage(VariableStorage const &)>; ///< Function type to allocate a temp location for a cycle
                                                                                         ///< header source. Only called once per cycle
 
+/// @brief Target storage types used by ParallelMoveResolver.
+enum class ParallelMoveTargetType : uint8_t {
+  Normal,            ///< normal register or stack-memory target
+  Extend,            ///< TriCore e[x] low half record
+  Extend_Placeholder ///< TriCore e[x] high half placeholder record
+};
+
 /// @brief ParallelMoveResolver is used to do register<->stackMemory move orders to avoid conflicts/overwritten
 class ParallelMoveResolver final {
   /// @brief Stores one pending target-source move pair.
   // coverity[autosar_cpp14_a11_0_1_violation]
   struct ParallelMoveRecord final {
-    VariableStorage target{}; ///< Target location that will receive the move.
-    VariableStorage source{}; ///< Source location that still needs to be moved.
+    VariableStorage target{};                                          ///< Target location that will receive the move.
+    VariableStorage source{};                                          ///< Source location that still needs to be moved.
+    ParallelMoveTargetType targetType{ParallelMoveTargetType::Normal}; ///< Type of the target location.
   };
 
-  /// @brief One stack-source usage count keyed by its 8-byte-aligned stack offset.
+  /// @brief One stack-source usage count keyed by its 8-byte stack slot offset.
   // coverity[autosar_cpp14_a11_0_1_violation]
   struct MemorySourceEntry final {
-    uint32_t offset; ///< 8-byte-aligned stack offset that is still used as a source.
-    uint32_t count;  ///< Number of unresolved moves that still read from this offset.
+    uint32_t offset; ///< Stack slot offset that is still used as a source.
+    uint32_t count;  ///< Number of unresolved moves that still read from this stack slot.
   };
 
 public:
@@ -66,7 +74,7 @@ public:
                                                                            records_(nullptr),
                                                                            memorySourceMap_(nullptr),
                                                                            regSourceMap_() {
-    assert(recordsCapacity_ <= ImplementationLimits::numParams && "ParallelMoveResolver storage overflow");
+    assert(recordsCapacity_ <= (ImplementationLimits::numParams * 2U) && "ParallelMoveResolver storage overflow");
 
     records_ = pCast<ParallelMoveRecord *>(compilerMemoryAllocFnc(static_cast<uint32_t>(sizeof(ParallelMoveRecord)) * recordsCapacity_, ctx_));
     if (records_ == nullptr) {
@@ -126,13 +134,18 @@ public:
   /// @param target Target register or memory to copy to
   /// @param source Source register or memory to copy from
   inline void push(VariableStorage const &target, VariableStorage const &source) VB_NOEXCEPT {
+    push(target, ParallelMoveTargetType::Normal, source);
+  }
+
+  /// @brief Push a new copy operation onto the resolver.
+  /// @param target Target register or memory to copy to
+  /// @param targetType Type of the target location
+  /// @param source Source register or memory to copy from
+  void push(VariableStorage const &target, ParallelMoveTargetType const targetType, VariableStorage const &source) VB_NOEXCEPT {
     assert((target.type != StorageType::LINKDATA && source.type != StorageType::LINKDATA) && "Not support linkData yet");
     if (target.inSameLocation(source)) {
       return;
     }
-
-    assert((target.type != StorageType::STACKMEMORY) || ((target.location.stackFramePosition % 8U) == 0U));
-    assert((source.type != StorageType::STACKMEMORY) || ((source.location.stackFramePosition % 8U) == 0U));
 
     // GCOVR_EXCL_START
     assert(recordsCount_ < recordsCapacity_ && "ParallelMoveResolver overflow");
@@ -140,7 +153,7 @@ public:
       UNREACHABLE(return, "ParallelMoveResolver push overflow");
     }
     // GCOVR_EXCL_STOP
-    records_[recordsCount_] = ParallelMoveRecord{target, source};
+    records_[recordsCount_] = ParallelMoveRecord{target, source, targetType};
     recordsCount_++;
   }
 
@@ -148,9 +161,9 @@ public:
   /// @param tempReg Candidate temp reg
   /// @return True if the temp conflict with pending source
   bool regUsedAsSource(TReg const tempReg) const VB_NOEXCEPT {
-    for (size_t i{0U}; i < recordsCount_; i++) {
+    for (size_t i{0U}; i < recordsCapacity_; i++) {
       ParallelMoveRecord const &record{records_[i]};
-      if (record.source.location.reg == tempReg) {
+      if ((record.source.type == StorageType::REGISTER) && (record.source.location.reg == tempReg)) {
         return true;
       }
     }
@@ -181,15 +194,14 @@ private:
   /// @brief Iterate over all records and try to move them if there is no conflict.
   /// @param moveEmitter Function to emit a move operation from source to target
   bool tryMove(ParallelMoveEmitter const &moveEmitter) VB_THROW {
-    size_t const count{recordsCount_};
-    for (size_t i{0U}; i < count; i++) {
+    for (size_t i{0U}; i < recordsCapacity_; i++) {
       ParallelMoveRecord const &record{records_[i]};
       // A move is safe once no other unresolved record still needs the target's current value.
-      if (!targetIsUsedAsSourceByOtherRecords(record)) {
+      if (isOperationalRecord(record) && (!targetIsUsedAsSource(record.target))) {
         VariableStorage const resolvedSource{record.source};
         moveEmitter(record.target, record.source);
         unmarkSourceAsUsed(resolvedSource);
-        eraseRecord(i);
+        eraseRecordWithExtendPlaceholder(i);
         return true; // must return, because the counts has been modified
       }
     }
@@ -200,14 +212,21 @@ private:
   /// @param moveEmitter Function to emit a move operation from source to target
   /// @param tempProvider Function to provide the temp location for the cycle header source
   void resolveCycle(ParallelMoveEmitter const &moveEmitter, ParallelMoveTempProvider const &tempProvider) VB_THROW {
-    ParallelMoveRecord const cycleHeadCopy{records_[0U]};
+    size_t const cycleHeadIndex{getFirstOperationalRecord()};
+    // GCOVR_EXCL_START
+    assert(cycleHeadIndex != notFound && "Remaining moves must contain an operational record");
+    if (cycleHeadIndex == notFound) {
+      return;
+    }
+    // GCOVR_EXCL_STOP
+    ParallelMoveRecord const cycleHeadCopy{records_[cycleHeadIndex]};
     VariableStorage const tempStorage{tempProvider(cycleHeadCopy.source)};
 
     // Preserve the cycle head source first so its location becomes the initial writable hole.
     assert(tempStorage.type == StorageType::REGISTER && "Must get register for now");
     moveEmitter(tempStorage, cycleHeadCopy.source);
     unmarkSourceAsUsed(cycleHeadCopy.source);
-    eraseRecord(0U); // erase the cycle header record
+    eraseRecordWithExtendPlaceholder(cycleHeadIndex); // erase the cycle header record
 
     size_t nextIndex{findRecordTargetingFreedLocation(cycleHeadCopy.source)};
     assert(nextIndex != notFound && "Remaining moves must contain a cycle");
@@ -217,7 +236,7 @@ private:
       // Each step writes into the location freed by the previous step and creates the next hole at record.source.
       moveEmitter(record.target, record.source);
       unmarkSourceAsUsed(record.source);
-      eraseRecord(nextIndex);
+      eraseRecordWithExtendPlaceholder(nextIndex);
       nextIndex = findRecordTargetingFreedLocation(record.source);
     }
 
@@ -228,24 +247,44 @@ private:
   /// @param freedLocation Location whose old value has already been preserved and can now be overwritten
   /// @return The index of the matching record, or notFound if there is no pending match
   size_t findRecordTargetingFreedLocation(VariableStorage const &freedLocation) const VB_NOEXCEPT {
-    for (size_t i{0U}; i < recordsCount_; i++) {
+    for (size_t i{0U}; i < recordsCapacity_; i++) {
       ParallelMoveRecord const &record{records_[i]};
-      if (record.target.overlapsWith(freedLocation)) {
-        // Stack align to 8 bytes, so partial overlap should not happen
+      if (isOperationalRecord(record) && inSameParallelMoveSlot(record.target, freedLocation)) {
         return i;
       }
     }
     return notFound;
   }
 
-  /// @brief Erase one resolved record from the active move list by shifting the tail down.
+  /// @brief Erase one resolved record from the active move list by invalidating its slot.
   /// @param index Index of the record to erase
   inline void eraseRecord(size_t const index) VB_NOEXCEPT {
     // GCOVR_EXCL_START
-    assert(index < recordsCount_);
+    assert(index < recordsCapacity_);
+    assert(records_[index].target.type != StorageType::INVALID);
     // GCOVR_EXCL_STOP
-    records_[index] = records_[(recordsCount_ - 1U)]; // Move the last record into the erased slot
+    records_[index] = ParallelMoveRecord{};
     recordsCount_--;
+  }
+
+  /// @brief Erase a resolved operational record and its optional Extend placeholder.
+  /// @param index Index of the operational record to erase
+  void eraseRecordWithExtendPlaceholder(size_t const index) VB_NOEXCEPT {
+    if (records_[index].targetType != ParallelMoveTargetType::Extend) {
+      eraseRecord(index);
+      return;
+    }
+
+    // Extend_Placeholder is always at index+1 when paired with Extend
+    size_t const placeholderIndex{index + 1U};
+    // GCOVR_EXCL_START
+    assert(placeholderIndex < recordsCapacity_ && "Extend target must have a placeholder");
+    assert(records_[placeholderIndex].targetType == ParallelMoveTargetType::Extend_Placeholder);
+    assert(records_[placeholderIndex].target.type != StorageType::INVALID);
+    // GCOVR_EXCL_STOP
+    unmarkSourceAsUsed(records_[placeholderIndex].source);
+    eraseRecord(placeholderIndex);
+    eraseRecord(index);
   }
 
   /// @brief Record one pending source in the fast usage maps.
@@ -255,16 +294,12 @@ private:
       return;
     }
     if (sourceStorage.type == StorageType::REGISTER) {
-      size_t const regIndex{static_cast<size_t>(sourceStorage.location.reg)};
-      // GCOVR_EXCL_START
-      assert(regIndex < static_cast<size_t>(TReg::NUMREGS));
-      // GCOVR_EXCL_STOP
-      regSourceMap_[regIndex] += 1U;
+      incrementRegisterSource(sourceStorage.location.reg);
       return;
     }
 
     assert(sourceStorage.type == StorageType::STACKMEMORY);
-    incrementMemorySource(sourceStorage.location.stackFramePosition);
+    incrementMemorySource(sourceStorage);
   }
 
   /// @brief Remove one resolved source from the usage maps.
@@ -274,38 +309,93 @@ private:
       return;
     }
     if (sourceStorage.type == StorageType::REGISTER) {
-      size_t const regIndex{static_cast<size_t>(sourceStorage.location.reg)};
-      // GCOVR_EXCL_START
-      assert(regIndex < static_cast<size_t>(TReg::NUMREGS));
-      assert(regSourceMap_[regIndex] > 0U);
-      // GCOVR_EXCL_STOP
-      regSourceMap_[regIndex] -= 1U;
+      decrementRegisterSource(sourceStorage.location.reg);
       return;
     }
 
     assert(sourceStorage.type == StorageType::STACKMEMORY);
-    decrementMemorySource(sourceStorage.location.stackFramePosition);
+    decrementMemorySource(sourceStorage);
   }
 
-  /// @brief Check whether the target of a record is still used as a source by another pending record.
-  /// @param record Record to inspect
-  /// @return True if another pending source overlaps the record target
-  bool targetIsUsedAsSourceByOtherRecords(ParallelMoveRecord const &record) const VB_NOEXCEPT {
-    VariableStorage const &targetStorage{record.target};
+  /// @brief Check whether the target location is still used as a source by another pending record.
+  /// @param targetStorage Target location to inspect
+  /// @return True if another pending source uses the target location
+  bool targetIsUsedAsSource(VariableStorage const &targetStorage) const VB_NOEXCEPT {
     if (targetStorage.type == StorageType::REGISTER) {
-      size_t const regIndex{static_cast<size_t>(targetStorage.location.reg)};
-      // GCOVR_EXCL_START
-      assert(regIndex < static_cast<size_t>(TReg::NUMREGS));
-      // GCOVR_EXCL_STOP
-      return regSourceMap_[regIndex] > 0U;
+      return registerUsedAsSource(targetStorage.location.reg);
     }
 
     assert(targetStorage.type == StorageType::STACKMEMORY);
-    return findMemorySource(targetStorage.location.stackFramePosition) != notFound;
+    size_t const index{findMemorySource(targetStorage.location.stackFramePosition)};
+    return (index != notFound) && (memorySourceMap_[index].count > 0U);
   }
 
-  /// @brief Find a stack-source usage entry by its offset.
-  /// @param offset 8-byte-aligned stack offset to look up
+  /// @brief Check whether two locations use the same parallel-move slot.
+  /// @param left First storage
+  /// @param right Second storage
+  /// @return True if the two storages are the same register or 8-byte stack slot
+  static bool inSameParallelMoveSlot(VariableStorage const &left, VariableStorage const &right) VB_NOEXCEPT {
+    if (left.type != right.type) {
+      return false;
+    }
+    if (left.type == StorageType::STACKMEMORY) {
+      return left.location.stackFramePosition == right.location.stackFramePosition;
+    }
+    return left.inSameLocation(right);
+  }
+
+  /// @brief Mark one physical register as used by an unresolved source.
+  /// @param reg Register to mark
+  void incrementRegisterSource(TReg const reg) VB_NOEXCEPT {
+    size_t const regIndex{static_cast<size_t>(reg)};
+    // GCOVR_EXCL_START
+    assert(regIndex < static_cast<size_t>(TReg::NUMREGS));
+    // GCOVR_EXCL_STOP
+    regSourceMap_[regIndex] += 1U;
+  }
+
+  /// @brief Remove one physical register source usage.
+  /// @param reg Register to unmark
+  void decrementRegisterSource(TReg const reg) VB_NOEXCEPT {
+    size_t const regIndex{static_cast<size_t>(reg)};
+    // GCOVR_EXCL_START
+    assert(regIndex < static_cast<size_t>(TReg::NUMREGS));
+    assert(regSourceMap_[regIndex] > 0U);
+    // GCOVR_EXCL_STOP
+    regSourceMap_[regIndex] -= 1U;
+  }
+
+  /// @brief Check whether one physical register is used by an unresolved source.
+  /// @param reg Register to check
+  /// @return True if the register is still used as source
+  bool registerUsedAsSource(TReg const reg) const VB_NOEXCEPT {
+    size_t const regIndex{static_cast<size_t>(reg)};
+    // GCOVR_EXCL_START
+    assert(regIndex < static_cast<size_t>(TReg::NUMREGS));
+    // GCOVR_EXCL_STOP
+    return regSourceMap_[regIndex] > 0U;
+  }
+
+  /// @brief Check if a record is operational, i.e. it has a valid target and is not an extend placeholder.
+  /// @param record Record to check
+  /// @return true if the record is operational, false otherwise
+  inline bool isOperationalRecord(ParallelMoveRecord const &record) const VB_NOEXCEPT {
+    return (record.target.type != StorageType::INVALID) && (record.targetType != ParallelMoveTargetType::Extend_Placeholder);
+  }
+
+  /// @brief Get the first operational record.
+  /// @return Index of the first operational record, or notFound if there is none
+  size_t getFirstOperationalRecord() const VB_NOEXCEPT {
+    for (size_t i{0U}; i < recordsCapacity_; i++) {
+      if (isOperationalRecord(records_[i])) {
+        return i;
+      }
+    }
+    return notFound;
+  }
+
+  /// @brief Find a stack-source usage entry by its slot offset.
+  /// @param offset Stack slot offset to look up
   /// @return The index of the matching entry, or notFound if there is none
   size_t findMemorySource(uint32_t const offset) const VB_NOEXCEPT {
     for (size_t i{0U}; i < memorySourceCount_; i++) {
@@ -316,10 +406,10 @@ private:
     return notFound;
   }
 
-  /// @brief Increment the usage count for a stack-source offset, inserting it if new.
-  /// @param offset 8-byte-aligned stack offset
-  void incrementMemorySource(uint32_t const offset) VB_NOEXCEPT {
-    size_t const index{findMemorySource(offset)};
+  /// @brief Increment the usage count for a stack-source location, inserting it if new.
+  /// @param sourceStorage Stack source to track
+  void incrementMemorySource(VariableStorage const &sourceStorage) VB_NOEXCEPT {
+    size_t const index{findMemorySource(sourceStorage.location.stackFramePosition)};
     if (index != notFound) {
       memorySourceMap_[index].count += 1U;
       return;
@@ -329,15 +419,15 @@ private:
     assert(memorySourceCount_ < recordsCapacity_);
     // GCOVR_EXCL_STOP
     if (memorySourceCount_ < recordsCapacity_) {
-      memorySourceMap_[memorySourceCount_] = MemorySourceEntry{offset, 1U};
+      memorySourceMap_[memorySourceCount_] = MemorySourceEntry{sourceStorage.location.stackFramePosition, 1U};
       memorySourceCount_++;
     }
   }
 
-  /// @brief Decrement the usage count for a stack-source offset, removing it when it reaches zero.
-  /// @param offset 8-byte-aligned stack offset
-  void decrementMemorySource(uint32_t const offset) VB_NOEXCEPT {
-    size_t const index{findMemorySource(offset)};
+  /// @brief Decrement the usage count for a stack-source location, removing it when it reaches zero.
+  /// @param sourceStorage Stack source to untrack
+  void decrementMemorySource(VariableStorage const &sourceStorage) VB_NOEXCEPT {
+    size_t const index{findMemorySource(sourceStorage.location.stackFramePosition)};
     if (index != notFound) {
       assert(memorySourceMap_[index].count > 0U);
       memorySourceMap_[index].count -= 1U;
@@ -357,8 +447,8 @@ private:
   size_t recordsCount_;                       ///< Number of active records in @ref records_.
   size_t memorySourceCount_;                  ///< Number of active entries in @ref memorySourceMap_.
 
-  ParallelMoveRecord *records_;                                           ///< Fixed-capacity array of pending move operations to resolve.
-  MemorySourceEntry *memorySourceMap_;                                    ///< Fixed-capacity array of active stack-source usage counts.
+  ParallelMoveRecord *records_;        ///< Fixed-capacity array of pending move operations to resolve. Will not fill in the blank slot with tail.
+  MemorySourceEntry *memorySourceMap_; ///< Fixed-capacity array of active stack-source usage counts. Will fill in the blank slot with tail.
   std::array<uint32_t, static_cast<size_t>(TReg::NUMREGS)> regSourceMap_; ///< Register-source usage counts indexed by register number.
 };
 } // namespace vb
