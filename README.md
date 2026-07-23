@@ -24,7 +24,7 @@ It features a compiler, assembler and runtime that were designed from ground up 
 - Seamless integration into C++ source code with intuitive calling mechanisms and minimal boilerplate code
 - Support for re-instantiating modules that were compiled ahead of time using the WARP Compiler
   - Choice of dynamic or static linking of host functions that are imported into the WebAssembly module
-- Zero internal dynamic memory allocation within the library, can even use statically allocated regions of memory
+- Keep internal dynamic allocations minimal and integrator-controlled through user-provided allocator/free hooks
 - Apart from the input Wasm bytecode, the library utilizes only two contiguous memory regions the integrator has full control over
   - Compiler memory and output memory
 - Choice of explicit bounds checks for memory accesses or delegation to the MMU on Windows and POSIX systems via signal handlers for super fast execution[^1]
