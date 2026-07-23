@@ -11,6 +11,14 @@
     ;; AARCH64:  str  x30,
     ;; AARCH64:  ldr  x30,
     ;; AARCH64:  ret
+    ;; TRICORE:  mov.u  d0, #0xe
+    ;; TRICORE-NEXT:  j  {{#0x[0-9a-f]+}}
+    ;; TRICORE:  lea  sp, [sp]#
+    ;; TRICORE-NEXT:  fret
+    ;; X86_64:  mov  eax, 0xe
+    ;; X86_64-NEXT:  jmp  6
+    ;; X86_64:  lea  rsp, [rsp +
+    ;; X86_64-NEXT:  ret
     ;; CHECK: Size of the function body
     return_call $imp10
   )

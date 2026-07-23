@@ -28,6 +28,10 @@
     ;; TRICORE-NEXT: j  {{#0x[0-9a-f]+}}
     ;; TRICORE-NOT:  fcall
     ;; TRICORE-NOT:  fret
+    ;; X86_64-NOT: call
+    ;; X86_64-NOT: ret
+    ;; X86_64: lea  rsp, [rsp +
+    ;; X86_64-NEXT: jmp  {{0x[0-9a-f]+}}
     return_call $callee_same
   )
 
@@ -51,6 +55,10 @@
     ;; TRICORE-NEXT: j  {{#0x[0-9a-f]+}}
     ;; TRICORE-NOT:  fcall
     ;; TRICORE-NOT:  fret
+    ;; X86_64-NOT: call
+    ;; X86_64-NOT: ret
+    ;; X86_64: lea  rsp, [rsp +
+    ;; X86_64-NEXT: jmp  {{0x[0-9a-f]+}}
     return_call $callee_many
   )
 
@@ -73,6 +81,10 @@
     ;; TRICORE-NEXT: j  {{#0x[0-9a-f]+}}
     ;; TRICORE-NOT:  fcall
     ;; TRICORE-NOT:  fret
+    ;; X86_64-NOT: call
+    ;; X86_64-NOT: ret
+    ;; X86_64: lea  rsp, [rsp +
+    ;; X86_64-NEXT: jmp  {{0x[0-9a-f]+}}
     return_call $callee10
   )
 
@@ -99,6 +111,9 @@
     ;; TRICORE: fcall
     ;; TRICORE-NEXT: lea  sp, [sp]#
     ;; TRICORE-NEXT: fret
+    ;; X86_64: call  {{0x[0-9a-f]+}}
+    ;; X86_64: lea  rsp, [rsp +
+    ;; X86_64-NEXT: ret
     return_call $callee10
   )
 
@@ -124,6 +139,11 @@
     ;; TRICORE-NOT:  fret
     ;; TRICORE: lea  sp, [sp]#
     ;; TRICORE-NEXT: j  {{#0x[0-9a-f]+}}
+    ;; X86_64: movss  [[TMP:xmm[0-9]+]], dword ptr [rsp +
+    ;; X86_64-NEXT: movss  dword ptr [rsp +
+    ;; X86_64-NOT: call
+    ;; X86_64: lea  rsp, [rsp +
+    ;; X86_64-NEXT: jmp  {{0x[0-9a-f]+}}
     ;; CHECK: Size of the function body
     return_call $callee10
   )
@@ -145,6 +165,11 @@
     ;; TRICORE-NOT:  fret
     ;; TRICORE: lea  sp, [sp]#
     ;; TRICORE-NEXT: j  {{#0x[0-9a-f]+}}
+    ;; X86_64: mov  rax, rdi
+    ;; X86_64-NEXT: mov  rdi, rbp
+    ;; X86_64-NEXT: mov  rbp, rax
+    ;; X86_64: lea  rsp, [rsp +
+    ;; X86_64-NEXT: jmp  {{0x[0-9a-f]+}}
     return_call $callee64
   )
 )

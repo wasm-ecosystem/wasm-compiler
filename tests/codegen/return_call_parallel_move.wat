@@ -20,6 +20,18 @@
     ;; AARCH64-NOT:   str  {{w[0-9]+}}, [sp
     ;; AARCH64:       add  sp, sp,
     ;; AARCH64-NEXT:  b  {{0x[0-9a-f]+}}
+    ;; TRICORE:       mov  d0, d9
+    ;; TRICORE-NEXT:  mov  d9, d8
+    ;; TRICORE-NEXT:  mov  d8, d0
+    ;; TRICORE-NOT:   fcall
+    ;; TRICORE:       lea  sp, [sp]#
+    ;; TRICORE-NEXT:  j  {{#0x[0-9a-f]+}}
+    ;; X86_64:        mov  eax, edi
+    ;; X86_64-NEXT:   mov  edi, ebp
+    ;; X86_64-NEXT:   mov  ebp, eax
+    ;; X86_64-NOT:    call
+    ;; X86_64:        lea  rsp, [rsp +
+    ;; X86_64-NEXT:   jmp  {{0x[0-9a-f]+}}
     return_call $callee2)
 
   ;; CHECK-LABEL: Function[5] Body
@@ -34,6 +46,18 @@
     ;; AARCH64-NOT:   str  {{s[0-9]+}}, [sp
     ;; AARCH64:       add  sp, sp,
     ;; AARCH64-NEXT:  b  {{0x[0-9a-f]+}}
+    ;; TRICORE:       mov  d0, d9
+    ;; TRICORE-NEXT:  mov  d9, d8
+    ;; TRICORE-NEXT:  mov  d8, d0
+    ;; TRICORE-NOT:   fcall
+    ;; TRICORE:       lea  sp, [sp]#
+    ;; TRICORE-NEXT:  j  {{#0x[0-9a-f]+}}
+    ;; X86_64:        movss  xmm0, xmm5
+    ;; X86_64-NEXT:   movss  xmm5, xmm4
+    ;; X86_64-NEXT:   movss  xmm4, xmm0
+    ;; X86_64-NOT:    call
+    ;; X86_64:        lea  rsp, [rsp +
+    ;; X86_64-NEXT:   jmp  {{0x[0-9a-f]+}}
     return_call $callee2f)
 
   ;; CHECK-LABEL: Function[6] Body
@@ -52,6 +76,22 @@
     ;; AARCH64-NOT:   str  {{w[0-9]+}}, [sp
     ;; AARCH64:       add  sp, sp,
     ;; AARCH64-NEXT:  b  {{0x[0-9a-f]+}}
+    ;; TRICORE:       add  d15, d8, d9
+    ;; TRICORE-NEXT:  mov  d6, d9
+    ;; TRICORE-NEXT:  mov  d9, d8
+    ;; TRICORE-NEXT:  mov  d8, d15
+    ;; TRICORE-NOT:   fcall
+    ;; TRICORE:       lea  sp, [sp]#
+    ;; TRICORE-NEXT:  j  {{#0x[0-9a-f]+}}
+    ;; X86_64:        mov  [[TMP:(r9d|esi)]], ebp
+    ;; X86_64-NEXT:   add  [[TMP]], edi
+    ;; X86_64-NEXT:   mov  eax, [[TMP]]
+    ;; X86_64-NEXT:   mov  [[TMP]], edi
+    ;; X86_64-NEXT:   mov  edi, ebp
+    ;; X86_64-NEXT:   mov  ebp, eax
+    ;; X86_64-NOT:    call
+    ;; X86_64:        lea  rsp, [rsp +
+    ;; X86_64-NEXT:   jmp  {{0x[0-9a-f]+}}
     return_call $callee3)
 
   ;; CHECK-LABEL: Function[7] Body
@@ -72,6 +112,24 @@
     ;; AARCH64-NOT:   str  {{w[0-9]+}}, [sp
     ;; AARCH64:       add  sp, sp,
     ;; AARCH64-NEXT:  b  {{0x[0-9a-f]+}}
+    ;; TRICORE:       mov  d0, d9
+    ;; TRICORE-NEXT:  mov  d9, d8
+    ;; TRICORE-NEXT:  mov  d8, d0
+    ;; TRICORE-NEXT:  mov  d0, d7
+    ;; TRICORE-NEXT:  mov  d7, d6
+    ;; TRICORE-NEXT:  mov  d6, d0
+    ;; TRICORE-NOT:   fcall
+    ;; TRICORE:       lea  sp, [sp]#
+    ;; TRICORE-NEXT:  j  {{#0x[0-9a-f]+}}
+    ;; X86_64:        mov  eax, edi
+    ;; X86_64-NEXT:   mov  edi, ebp
+    ;; X86_64-NEXT:   mov  ebp, eax
+    ;; X86_64-NEXT:   mov  eax, [[T2SRC:(r10d|r9d)]]
+    ;; X86_64-NEXT:   mov  [[T2SRC]], [[T2DST:(r9d|esi)]]
+    ;; X86_64-NEXT:   mov  [[T2DST]], eax
+    ;; X86_64-NOT:    call
+    ;; X86_64:        lea  rsp, [rsp +
+    ;; X86_64-NEXT:   jmp  {{0x[0-9a-f]+}}
     return_call $callee4)
 
   ;; CHECK-LABEL: Function[8] Body
@@ -90,5 +148,15 @@
     ;; AARCH64-NOT:   str  {{w[0-9]+}}, [sp
     ;; AARCH64:       add  sp, sp,
     ;; AARCH64-NEXT:  b  {{0x[0-9a-f]+}}
+    ;; TRICORE:       mov  d9, d8
+    ;; TRICORE-NEXT:  mov  d6, d8
+    ;; TRICORE-NOT:   fcall
+    ;; TRICORE:       lea  sp, [sp]#
+    ;; TRICORE-NEXT:  j  {{#0x[0-9a-f]+}}
+    ;; X86_64:        mov  edi, ebp
+    ;; X86_64-NEXT:   mov  {{(r9d|esi)}}, ebp
+    ;; X86_64-NOT:    call
+    ;; X86_64:        lea  rsp, [rsp +
+    ;; X86_64-NEXT:   jmp  {{0x[0-9a-f]+}}
     return_call $callee3)
 )

@@ -154,6 +154,23 @@ public:
   ///
   /// @param fncIndex WebAssembly function index to tail-call
   void execReturnCall(uint32_t const fncIndex);
+
+  ///
+  /// @brief Emit the actual function call to a function declared in the WebAssembly module
+  ///
+  /// This will only emit the actual call sequence, while already expecting that the arguments have been loaded into the
+  /// respective storage locations according to the calling convention
+  ///
+  /// @param fncIndex Function index to wasm internal call
+  /// @param linkRegister Whether the call should write a return link; false emits a tail jump for Wasm-internal calls
+  void emitRawWasmInternalCall(uint32_t const fncIndex, bool const linkRegister = true);
+  ///
+  /// @brief Produces machine code for a function call without saving the locals
+  ///
+  /// Can call either imported or non-imported WebAssembly functions
+  ///
+  /// @param fncIndex WebAssembly function index to call
+  void execDirectFncCallWithoutSaveLocals(uint32_t const fncIndex);
   ///
   /// @brief Produces machine code for an indirect function call, consuming an I32 index from the compiler stack
   /// indexing onto a given table Consumes all arguments for the function from the compiler stack and loads them
