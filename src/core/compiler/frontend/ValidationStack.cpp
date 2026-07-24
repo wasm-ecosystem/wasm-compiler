@@ -21,6 +21,7 @@
 
 #include "src/config.hpp"
 #include "src/core/common/FunctionRef.hpp"
+#include "src/core/common/SignatureType.hpp"
 #include "src/core/common/VbExceptions.hpp"
 #include "src/core/common/util.hpp"
 #include "src/core/compiler/common/BumpAllocator.hpp"
@@ -219,6 +220,40 @@ void ValidationStack::validateCall(uint32_t const sigIndex) {
                                          false);
 }
 void ValidationStack::validateReturnCall(uint32_t const sigIndex) {
+  // Results type should match. See specification: https://www.w3.org/TR/wasm-core-2/#-hrefsyntax-instr-controlmathsfreturn_callx
+  // Passed: spectest/proposals/function-references/return_call.wast
+  uint32_t const currentFncSigIndex{begin()->blockInfo.sigIndex};
+  if (currentFncSigIndex != sigIndex) {
+    uint32_t const calleeTypeOffset{moduleInfo_.typeOffsets[sigIndex]};
+    uint32_t const calleeNextTypeOffset{moduleInfo_.typeOffsets[sigIndex + 1U]};
+    uint32_t const currentTypeOffset{moduleInfo_.typeOffsets[currentFncSigIndex]};
+    uint32_t const currentNextTypeOffset{moduleInfo_.typeOffsets[currentFncSigIndex + 1U]};
+
+    uint32_t calleeStepOffset{calleeNextTypeOffset};
+    uint32_t currentStepOffset{currentNextTypeOffset};
+    bool foundParamEnd{false};
+
+    while ((calleeStepOffset > calleeTypeOffset) && (currentStepOffset > currentTypeOffset)) {
+      calleeStepOffset--;
+      currentStepOffset--;
+      uint8_t const *const calleePtr{pAddI(pCast<uint8_t *>(moduleInfo_.types()), calleeStepOffset)};
+      uint8_t const *const currentPtr{pAddI(pCast<uint8_t *>(moduleInfo_.types()), currentStepOffset)};
+
+      SignatureType const calleeType{readFromPtr<SignatureType>(calleePtr)};
+      SignatureType const currentType{readFromPtr<SignatureType>(currentPtr)};
+      if (calleeType != currentType) {
+        throw ValidationException(ErrorCode::Validation_failed);
+      }
+      if (calleeType == SignatureType::PARAMEND) {
+        foundParamEnd = true;
+        break;
+      }
+    }
+
+    if (!foundParamEnd) {
+      throw ValidationException(ErrorCode::Validation_failed);
+    }
+  }
   validateCall(sigIndex);
   validateReturn();
 }

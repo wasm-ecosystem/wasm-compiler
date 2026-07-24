@@ -1,6 +1,3 @@
-;; Test return_call with many parameters (10 params: 8 in regs + 2 on stack for AArch64)
-;; This exercises stack-passed parameter handling in tail calls.
-
 (module
   ;; 10-param identity: returns sum of all params for verification
   (func $sum10 (param i32 i32 i32 i32 i32 i32 i32 i32 i32 i32) (result i32)
@@ -141,13 +138,11 @@
   (i32.const 55))
 
 ;; Deep tail recursion with 10 params: countdown from 100000, sum of params 1..9 = 45
-;; reOpen it after all platform support tail-call
-
-;; (assert_return (invoke "countdown10"
-;;   (i32.const 100000)
-;;   (i32.const 1) (i32.const 2) (i32.const 3) (i32.const 4)
-;;   (i32.const 5) (i32.const 6) (i32.const 7) (i32.const 8) (i32.const 9))
-;;   (i32.const 45))
+(assert_return (invoke "countdown10"
+  (i32.const 100000)
+  (i32.const 1) (i32.const 2) (i32.const 3) (i32.const 4)
+  (i32.const 5) (i32.const 6) (i32.const 7) (i32.const 8) (i32.const 9))
+  (i32.const 45))
 
 ;; Chained tail call: chain adds 2 to first param (1→3), sum = 3+2+3+4+5+6+7+8+9+10 = 57
 (assert_return (invoke "chain"
@@ -165,3 +160,25 @@
 (assert_return (invoke "fewer_to_stack_param"
   (i32.const 10) (i32.const 20))
   (i32.const 80))
+
+;; As the supplement for spectest/proposals/function-references/return_call.wast
+;; caller has more return values than callee is invalid in return_call
+(assert_invalid
+  (module
+    (func $callee)
+    (func $caller (result i32)
+      (return_call $callee  (i32.const 1))
+    )
+  )
+  "type mismatch"
+)
+
+(assert_invalid
+  (module
+    (func $callee (result i32) (i32.const 1))
+    (func $caller (result i32 i32)
+      (return_call $callee  (i32.const 1))
+    )
+  )
+  "type mismatch"
+)
