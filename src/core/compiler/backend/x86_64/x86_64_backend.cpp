@@ -644,130 +644,8 @@ void Backend::execDirectFncCall(uint32_t const fncIndex) {
   assert((!imported || (!moduleInfo_.functionIsBuiltin(fncIndex))) && "Builtin functions can only be executed by execBuiltinFncCall");
   assert((!imported || fncIndex != UnknownIndex) && "Need to provide fncIndex for imports");
 
-  uint32_t const sigIndex{moduleInfo_.getFncSigIndex(fncIndex)};
   RegMask const spilledLocalsRegMask{common_.saveLocalsAndParamsForFuncCall(imported)};
-  common_.spillScratchRegsOutOfCallParams(sigIndex, false);
-
-  // Load the parameters etc., set up everything then emit the actual call
-  if (moduleInfo_.functionIsV2Import(fncIndex)) {
-    common_.moveGlobalsToLinkData();
-    DirectV2Import v2ImportCall{*this, sigIndex};
-    constexpr uint32_t of_stackParams{NativeABI::shadowSpaceSize};
-    uint32_t paramOffset{of_stackParams};
-    // coverity[autosar_cpp14_a8_5_2_violation]
-    // coverity[autosar_cpp14_a5_1_9_violation]
-    auto const paramPosFunction = [this, &paramOffset](MachineType const type) VB_NOEXCEPT -> ParamPos {
-      static_cast<void>(type);
-      ParamPos pos{};
-      pos.reg = REG::NONE;
-      pos.offsetToStackBase = moduleInfo_.fnc.getPreservedStackSize() - paramOffset;
-      paramOffset += 8U;
-      return pos;
-    };
-    // coverity[autosar_cpp14_a5_1_4_violation]
-    Stack::iterator const paramsBase{common_.prepareCallParams(sigIndex, false, Common::ParamPosFunction(paramPosFunction))};
-
-    v2ImportCall.iterateParams(paramsBase);
-    common_.markLocalsAsSpilled(spilledLocalsRegMask);
-    uint32_t const jobMemPtrPtrOffset{v2ImportCall.getJobMemoryPtrPtrOffset()};
-    // coverity[autosar_cpp14_a5_1_9_violation]
-    v2ImportCall.emitFncCallWrapper(fncIndex, FunctionRef<void()>([this, fncIndex, jobMemPtrPtrOffset]() {
-                                      static_cast<void>(jobMemPtrPtrOffset);
-#if LINEAR_MEMORY_BOUNDS_CHECKS
-                                      cacheJobMemoryPtrPtr(jobMemPtrPtrOffset, callScrRegs[0]);
-#endif
-                                      emitRawFunctionCall(fncIndex);
-#if LINEAR_MEMORY_BOUNDS_CHECKS
-                                      restoreFromJobMemoryPtrPtr(jobMemPtrPtrOffset);
-#endif
-#if INTERRUPTION_REQUEST
-                                      checkForInterruptionRequest();
-#endif
-                                    }));
-
-#if LINEAR_MEMORY_BOUNDS_CHECKS
-    as_.INSTR(MOV_r32_rm32).setR(WasmABI::REGS::memSize).setM4RM(WasmABI::REGS::linMem, -BD::FromEnd::actualLinMemByteSize)();
-    as_.INSTR(SUB_rm64_imm8sx).setR4RM(WasmABI::REGS::memSize).setImm8(8_U8)();
-#endif
-    common_.recoverGlobalsToRegs();
-    v2ImportCall.iterateResults();
-  } else if (imported) {
-    // Direct call to V1 import native function
-    common_.moveGlobalsToLinkData();
-    ImportCallV1 importCallV1Impl{*this, sigIndex};
-    RegStackTracker tracker{};
-    uint32_t const stackParamWidth{importCallV1Impl.getStackParamWidth()};
-    // coverity[autosar_cpp14_a8_5_2_violation]
-    // coverity[autosar_cpp14_a5_1_9_violation]
-    auto const paramPosFunction = [this, &tracker, stackParamWidth, &importCallV1Impl](MachineType const type) VB_NOEXCEPT -> ParamPos {
-      ParamPos pos{};
-      pos.reg = getREGForArg(type, true, tracker);
-      if (pos.reg == REG::NONE) {
-        pos.offsetToStackBase =
-            moduleInfo_.fnc.getPreservedStackSize() - importCallV1Impl.adjustNativeABIOffset(offsetInStackArgs(true, stackParamWidth, tracker));
-      }
-      return pos;
-    };
-    // coverity[autosar_cpp14_a5_1_4_violation]
-    Stack::iterator const paramsBase{common_.prepareCallParams(sigIndex, false, Common::ParamPosFunction(paramPosFunction))};
-
-    static_cast<void>(importCallV1Impl.iterateParams(paramsBase));
-    importCallV1Impl.prepareCtx();
-    importCallV1Impl.resolveRegisterCopies();
-    common_.markLocalsAsSpilled(spilledLocalsRegMask);
-    uint32_t const jobMemPtrPtrOffset{importCallV1Impl.getJobMemoryPtrPtrOffset()};
-    // coverity[autosar_cpp14_a5_1_9_violation]
-    importCallV1Impl.emitFncCallWrapper(fncIndex, FunctionRef<void()>([this, fncIndex, jobMemPtrPtrOffset]() {
-                                          static_cast<void>(jobMemPtrPtrOffset);
-#if LINEAR_MEMORY_BOUNDS_CHECKS
-                                          cacheJobMemoryPtrPtr(jobMemPtrPtrOffset, callScrRegs[0]);
-#endif
-                                          emitRawFunctionCall(fncIndex);
-#if LINEAR_MEMORY_BOUNDS_CHECKS
-                                          restoreFromJobMemoryPtrPtr(jobMemPtrPtrOffset);
-#endif
-#if INTERRUPTION_REQUEST
-                                          checkForInterruptionRequest();
-#endif
-                                        }));
-
-#if LINEAR_MEMORY_BOUNDS_CHECKS
-    as_.INSTR(MOV_r32_rm32).setR(WasmABI::REGS::memSize).setM4RM(WasmABI::REGS::linMem, -BD::FromEnd::actualLinMemByteSize)();
-    as_.INSTR(SUB_rm64_imm8sx).setR4RM(WasmABI::REGS::memSize).setImm8(8_U8)();
-#endif
-
-    common_.recoverGlobalsToRegs();
-    importCallV1Impl.iterateResults();
-  } else {
-    // Direct call to a Wasm function
-    InternalCall directWasmCallImpl{*this, sigIndex};
-    RegStackTracker tracker{};
-    uint32_t const stackParamWidth{directWasmCallImpl.getStackParamWidth()};
-    // coverity[autosar_cpp14_a8_5_2_violation]
-    // coverity[autosar_cpp14_a5_1_9_violation]
-    auto const paramPosFunction = [this, &tracker, stackParamWidth](MachineType const type) VB_NOEXCEPT -> ParamPos {
-      ParamPos pos{};
-      pos.reg = getREGForArg(type, false, tracker);
-      if (pos.reg == REG::NONE) {
-        pos.offsetToStackBase = moduleInfo_.fnc.getPreservedStackSize() - offsetInStackArgs(false, stackParamWidth, tracker);
-      }
-      return pos;
-    };
-    // coverity[autosar_cpp14_a5_1_4_violation]
-    Stack::iterator const paramsBase{common_.prepareCallParams(sigIndex, false, Common::ParamPosFunction(paramPosFunction))};
-    static_cast<void>(directWasmCallImpl.iterateParams(paramsBase));
-    directWasmCallImpl.resolveRegisterCopies();
-    common_.markLocalsAsSpilled(spilledLocalsRegMask);
-    // coverity[autosar_cpp14_a5_1_9_violation]
-    directWasmCallImpl.emitFncCallWrapper(fncIndex, FunctionRef<void()>([this, fncIndex]() {
-                                            emitRawFunctionCall(fncIndex);
-                                          }));
-#if LINEAR_MEMORY_BOUNDS_CHECKS
-    as_.INSTR(MOV_r32_rm32).setR(WasmABI::REGS::memSize).setM4RM(WasmABI::REGS::linMem, -BD::FromEnd::actualLinMemByteSize)();
-    as_.INSTR(SUB_rm64_imm8sx).setR4RM(WasmABI::REGS::memSize).setImm8(8_U8)();
-#endif
-    directWasmCallImpl.iterateResults();
-  }
+  execDirectFncCallWithoutSaveLocals(fncIndex, imported, spilledLocalsRegMask);
 }
 
 void Backend::execReturnCall(uint32_t const fncIndex) {
@@ -858,8 +736,9 @@ void Backend::execReturnCall(uint32_t const fncIndex) {
   } else {
     // Path B: Import or callee needs more stack param space
     // Skip saving locals/params since we return immediately after back
-    execDirectFncCallWithoutSaveLocals(fncIndex);
+    execDirectFncCallWithoutSaveLocals(fncIndex, imported, RegMask{});
 
+    // Move results from the frame of return_callee's caller to the frame of return_caller's caller
     uint32_t const numReturnValues{moduleInfo_.getNumReturnValuesForSignature(callerSigIndex)};
     if (numReturnValues > 0U) {
       common_.condenseSideEffectInstructionBlewValentBlock(numReturnValues);
@@ -871,11 +750,7 @@ void Backend::execReturnCall(uint32_t const fncIndex) {
   }
 }
 
-void Backend::execDirectFncCallWithoutSaveLocals(uint32_t const fncIndex) {
-  bool const imported{moduleInfo_.functionIsImported(fncIndex)};
-  assert((!imported || (!moduleInfo_.functionIsBuiltin(fncIndex))) && "Builtin functions can only be executed by execBuiltinFncCall");
-  assert((!imported || fncIndex != UnknownIndex) && "Need to provide fncIndex for imports");
-
+void Backend::execDirectFncCallWithoutSaveLocals(uint32_t const fncIndex, bool const imported, RegMask const spilledLocalsRegMask) {
   uint32_t const sigIndex{moduleInfo_.getFncSigIndex(fncIndex)};
   common_.spillScratchRegsOutOfCallParams(sigIndex, false);
 
@@ -886,6 +761,7 @@ void Backend::execDirectFncCallWithoutSaveLocals(uint32_t const fncIndex) {
     constexpr uint32_t of_stackParams{NativeABI::shadowSpaceSize};
     uint32_t paramOffset{of_stackParams};
     // coverity[autosar_cpp14_a8_5_2_violation]
+    // coverity[autosar_cpp14_a5_1_9_violation]
     auto const paramPosFunction = [this, &paramOffset](MachineType const type) VB_NOEXCEPT -> ParamPos {
       static_cast<void>(type);
       ParamPos pos{};
@@ -898,6 +774,7 @@ void Backend::execDirectFncCallWithoutSaveLocals(uint32_t const fncIndex) {
     Stack::iterator const paramsBase{common_.prepareCallParams(sigIndex, false, Common::ParamPosFunction(paramPosFunction))};
 
     v2ImportCall.iterateParams(paramsBase);
+    common_.markLocalsAsSpilled(spilledLocalsRegMask);
     uint32_t const jobMemPtrPtrOffset{v2ImportCall.getJobMemoryPtrPtrOffset()};
     // coverity[autosar_cpp14_a5_1_9_violation]
     v2ImportCall.emitFncCallWrapper(fncIndex, FunctionRef<void()>([this, fncIndex, jobMemPtrPtrOffset]() {
@@ -943,6 +820,7 @@ void Backend::execDirectFncCallWithoutSaveLocals(uint32_t const fncIndex) {
     static_cast<void>(importCallV1Impl.iterateParams(paramsBase));
     importCallV1Impl.prepareCtx();
     importCallV1Impl.resolveRegisterCopies();
+    common_.markLocalsAsSpilled(spilledLocalsRegMask);
     uint32_t const jobMemPtrPtrOffset{importCallV1Impl.getJobMemoryPtrPtrOffset()};
     // coverity[autosar_cpp14_a5_1_9_violation]
     importCallV1Impl.emitFncCallWrapper(fncIndex, FunctionRef<void()>([this, fncIndex, jobMemPtrPtrOffset]() {
@@ -985,6 +863,7 @@ void Backend::execDirectFncCallWithoutSaveLocals(uint32_t const fncIndex) {
     Stack::iterator const paramsBase{common_.prepareCallParams(sigIndex, false, Common::ParamPosFunction(paramPosFunction))};
     static_cast<void>(directWasmCallImpl.iterateParams(paramsBase));
     directWasmCallImpl.resolveRegisterCopies();
+    common_.markLocalsAsSpilled(spilledLocalsRegMask);
     // coverity[autosar_cpp14_a5_1_9_violation]
     directWasmCallImpl.emitFncCallWrapper(fncIndex, FunctionRef<void()>([this, fncIndex]() {
                                             emitRawFunctionCall(fncIndex);

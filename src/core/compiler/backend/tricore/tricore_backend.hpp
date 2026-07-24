@@ -207,7 +207,9 @@ public:
   /// Can call either imported or non-imported WebAssembly functions
   ///
   /// @param fncIndex WebAssembly function index to call
-  void execDirectFncCallWithoutSaveLocals(uint32_t const fncIndex);
+  /// @param imported Whether this function is an imported function or a function defined in the Wasm module
+  /// @param spilledLocalsRegMask Spilled locals reg mask
+  void execDirectFncCallWithoutSaveLocals(uint32_t const fncIndex, bool const imported, RegMask const spilledLocalsRegMask);
   ///
   /// @brief Produces machine code for a tail call (return_call)
   ///
