@@ -46,6 +46,7 @@ class CompilerWrapper {
     std::string moduleName;
     std::string symbolName;
     std::string signature;
+    NativeSymbol::ImportFnVersion importVersion;
   };
 
   struct DynGlobalSymbolStorage final {
@@ -133,6 +134,16 @@ public:
         moduleName,
         symbolName,
         signature,
+        NativeSymbol::ImportFnVersion::V1,
+    });
+  }
+
+  void registerApiV2(std::string const &moduleName, std::string const &symbolName, std::string const &signature) {
+    nativeSymbolStorage_.emplace_back(DynNativeSymbolStorage{
+        moduleName,
+        symbolName,
+        signature,
+        NativeSymbol::ImportFnVersion::V2,
     });
   }
 
@@ -177,6 +188,7 @@ public:
           symbolStorage.symbolName.c_str(),
           symbolStorage.signature.c_str(),
           nullptr,
+          symbolStorage.importVersion,
       });
     }
     std::vector<vb::GlobalSymbol> globalSymbols{};
@@ -251,6 +263,7 @@ void binding::bindingCompiler(pybind11::module_ &m) {
       .def("set_stacktrace_record_count", &CompilerWrapper::setStacktraceRecordCount)
       .def("enable_debug_mode", &CompilerWrapper::setDebugMode)
       .def("register_api", &CompilerWrapper::registerApi)
+      .def("register_api_v2", &CompilerWrapper::registerApiV2)
       .def("register_global", &CompilerWrapper::registerGlobal)
       .def("disassemble_wasm", &CompilerWrapper::disassembleWasm)
       .def("disassemble_module", &CompilerWrapper::disassembleModule)
