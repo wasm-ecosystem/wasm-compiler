@@ -1,6 +1,6 @@
 # Wasm Compiler Release Notes
 
-## 5.0.0-rc
+## 5.0.0-rc0
 
 ### Feature
 

@@ -108,6 +108,20 @@ public:
     freeFnc_(memorySourceMap_, ctx_);
   }
 
+  /// @brief Check whether a `return_call` can be lowered to an internal tail jump.
+  /// @param calleeStackParamWidth Total stack-parameter width required by the callee
+  /// @param callerStackParamWidth Total stack-parameter width reserved by the current caller frame
+  /// @param stackReturnValuesWidth Total stack-return width produced by the callee
+  /// @param imported True if the callee is an imported function using the external-call ABI
+  /// @return True if the callee can reuse the current frame and the backend may emit a tail jump
+  inline static bool canTailJump(uint32_t const calleeStackParamWidth, uint32_t const callerStackParamWidth, uint32_t const stackReturnValuesWidth,
+                                 bool const imported) VB_NOEXCEPT {
+    bool const stackParamsSafe{(calleeStackParamWidth == callerStackParamWidth) ||                                   // [RC-Case A-1]
+                               ((stackReturnValuesWidth == 0U) && (calleeStackParamWidth < callerStackParamWidth))}; // [RC-Case A-2]
+    return !imported                                                                                                 // [RC-Case B]
+           && stackParamsSafe;
+  }
+
   /// @brief Resolve the pending parallel moves.
   /// @param moveEmitter Function to emit a move operation from source to target
   /// @param tempProvider Function to provide a temp location for the source of the current cycle header

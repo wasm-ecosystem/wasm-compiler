@@ -654,8 +654,9 @@ void Backend::execReturnCall(uint32_t const fncIndex) {
   uint32_t const callerSigIndex{moduleInfo_.getFuncDef(moduleInfo_.fnc.index).sigIndex};
   uint32_t const calleeStackParamWidth{getStackParamWidth(calleeSigIndex, imported)};
   uint32_t const callerStackParamWidth{moduleInfo_.fnc.paramWidth};
+  uint32_t const stackReturnValuesWidth{common_.getStackReturnValueWidth(calleeSigIndex)};
 
-  if ((!imported) && (calleeStackParamWidth <= callerStackParamWidth)) {
+  if (ParallelMoveResolver::canTailJump(calleeStackParamWidth, callerStackParamWidth, stackReturnValuesWidth, imported)) {
     // Path A: TailJump. No need to save locals/params, only retain stack for callee params
     RegStackTracker hintTracker{};
     // coverity[autosar_cpp14_a8_5_2_violation]
@@ -741,8 +742,8 @@ void Backend::execReturnCall(uint32_t const fncIndex) {
     // Move results from the frame of return_callee's caller to the frame of return_caller's caller
     uint32_t const numReturnValues{moduleInfo_.getNumReturnValuesForSignature(callerSigIndex)};
     if (numReturnValues > 0U) {
-      common_.condenseSideEffectInstructionBlewValentBlock(numReturnValues);
-      Stack::iterator const returnValuesBase{common_.condenseMultipleValentBlocksWithTargetHintBelow(stack_.end(), callerSigIndex)};
+      // No need to condense return values
+      Stack::iterator const returnValuesBase{common_.skipValentBlock(numReturnValues)};
       common_.loadReturnValues(returnValuesBase, numReturnValues);
       common_.popReturnValueElems(returnValuesBase, numReturnValues);
     }

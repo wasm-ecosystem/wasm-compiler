@@ -182,3 +182,85 @@
   )
   "type mismatch"
 )
+
+(module
+  (func $callee (param i32 i32 i32 i32 i32 i32 i32) (result i32 i32 i32)
+    i32.const 1
+    i32.const 2
+    i32.const 3
+    return
+  )
+
+  (func $caller1 (param i32 i32 i32 i32 i32 i32 i32 i32) (result i32 i32 i32)
+    i32.const 1
+    i32.const 2
+    i32.const 3
+    i32.const 4
+    i32.const 5
+    i32.const 6
+    i32.const 7
+    return_call  $callee
+    
+  )
+
+  (func $caller0  (result i32)
+    i32.const 1
+    i32.const 2
+    i32.const 3
+    i32.const 4
+    i32.const 5
+    i32.const 6
+    i32.const 7
+    i32.const 8
+    call $caller1
+    i32.add
+    i32.add
+    return
+    )
+
+  (export "case_a2" (func $caller0))
+
+  ;; Case A-1: callee has stack return values and the stack-parameter width is equal
+  (func $case_a1_callee (param i32 i32 i32 i32 i32 i32 i32 i32 i32 i32)
+    (result i32 i32 i32 i32 i32 i32 i32 i32 i32 i32)
+    local.get 0 local.get 1 local.get 2 local.get 3 local.get 4
+    local.get 5 local.get 6 local.get 7 local.get 8 local.get 9
+  )
+
+  (func (export "case_a1_stack_returns_equal_width")
+    (param i32 i32 i32 i32 i32 i32 i32 i32 i32 i32)
+    (result i32 i32 i32 i32 i32 i32 i32 i32 i32 i32)
+    local.get 9 local.get 8 local.get 7 local.get 6 local.get 5
+    local.get 4 local.get 3 local.get 2 local.get 1 local.get 0
+    return_call $case_a1_callee
+  )
+
+  ;; Case A-2: callee has no stack return values, so stack-parameter width may differ
+  (func $case_a2_callee (param i32 i32 i32 i32 i32 i32 i32 i32 i32 i32) (result i32)
+    local.get 8
+  )
+
+  (func (export "case_a2_no_stack_returns_different_width")
+    (param i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32) (result i32)
+    local.get 0 local.get 1 local.get 2 local.get 3 local.get 4
+    local.get 5 local.get 6 local.get 7 local.get 8 local.get 9
+    return_call $case_a2_callee
+  )
+)
+
+;; Case A-1: stack return values are present, and stack-parameter width is equal
+(assert_return (invoke "case_a1_stack_returns_equal_width"
+  (i32.const 1) (i32.const 2) (i32.const 3) (i32.const 4) (i32.const 5)
+  (i32.const 6) (i32.const 7) (i32.const 8) (i32.const 9) (i32.const 10))
+  (i32.const 10) (i32.const 9) (i32.const 8) (i32.const 7) (i32.const 6)
+  (i32.const 5) (i32.const 4) (i32.const 3) (i32.const 2) (i32.const 1))
+
+;; ;; Case A-1: stack return values are present, caller have more stack parameters than callee
+(assert_return (invoke "case_a2") (i32.const 6))
+
+;; Case A-2: no stack return values, so different stack-parameter width is safe
+(assert_return (invoke "case_a2_no_stack_returns_different_width"
+  (i32.const 10) (i32.const 20) (i32.const 30) (i32.const 40) (i32.const 50)
+  (i32.const 60) (i32.const 70) (i32.const 80) (i32.const 88) (i32.const 99)
+  (i32.const 110) (i32.const 120))
+  (i32.const 88))
