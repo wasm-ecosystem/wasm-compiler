@@ -41,6 +41,7 @@
 #include "src/core/common/util.hpp"
 #include "src/core/compiler/Compiler.hpp"
 #include "src/core/compiler/backend/BackendBase.hpp"
+#include "src/core/compiler/backend/PlatformAdapter.hpp"
 #include "src/core/compiler/backend/RegAdapter.hpp"
 #include "src/core/compiler/backend/tricore/tricore_call_dispatch.hpp"
 #include "src/core/compiler/common/BranchCondition.hpp"
@@ -55,7 +56,6 @@
 #include "src/core/compiler/common/ParallelMoveResolver.hpp"
 #include "src/core/compiler/common/ParamPos.hpp"
 #include "src/core/compiler/common/RegMask.hpp"
-#include "src/core/compiler/common/RegisterCopyResolver.hpp"
 #include "src/core/compiler/common/SafeInt.hpp"
 #include "src/core/compiler/common/Stack.hpp"
 #include "src/core/compiler/common/StackElement.hpp"
@@ -1012,7 +1012,9 @@ void Backend::emitV1ImportAdapterImpl(uint32_t const fncIndex) {
   RegStackTracker targetTracker{};
   RegStackTracker oldTracker{};
 
-  RegisterCopyResolver<NativeABI::paramRegs.size()> registerCopyResolver{};
+  constexpr uint32_t registerCopyResolverCapacity{static_cast<uint32_t>(NativeABI::paramRegs.size())};
+  ParallelMoveResolver registerCopyResolver{compiler_.getCompilerMemoryAllocFnc(), compiler_.getCompilerMemoryFreeFnc(),
+                                            compiler_.getCompilerMemoryCtx(), registerCopyResolverCapacity};
 
   moduleInfo_.iterateParamsForSignature(
       sigIndex, FunctionRef<void(MachineType)>([this, &registerCopyResolver, &targetTracker, &oldTracker, oldStackParamWidth,
@@ -1037,11 +1039,10 @@ void Backend::emitV1ImportAdapterImpl(uint32_t const fncIndex) {
           } else {
             // Stack -> REG
             if (is64) {
-              registerCopyResolver.push(VariableStorage::reg(paramType, targetReg), ResolverRecord::TargetType::Extend,
+              registerCopyResolver.push(VariableStorage::reg(paramType, targetReg), ParallelMoveTargetType::Extend,
                                         VariableStorage::stackMemory(paramType, sourceStackOffset));
               registerCopyResolver.push(VariableStorage::reg(paramType, RegUtil::getOtherExtReg(targetReg)),
-                                        ResolverRecord::TargetType::Extend_Placeholder,
-                                        VariableStorage::stackMemory(paramType, sourceStackOffset + 4U));
+                                        ParallelMoveTargetType::Extend_Placeholder, VariableStorage::stackMemory(paramType, sourceStackOffset + 4U));
             } else {
               registerCopyResolver.push(VariableStorage::reg(paramType, targetReg), VariableStorage::stackMemory(paramType, sourceStackOffset));
             }
@@ -1067,25 +1068,24 @@ void Backend::emitV1ImportAdapterImpl(uint32_t const fncIndex) {
         }
       }));
 
-  registerCopyResolver.resolve(MoveEmitter([this](VariableStorage const &target, VariableStorage const &source) {
-                                 bool const is64{MachineTypeUtil::is64(source.machineType)};
-                                 // Can't use emitMoveIntImpl because it handles stack frame offset calculation differently
-                                 if (source.type == StorageType::REGISTER) {
-                                   as_.INSTR(MOV_Da_Db).setDa(target.location.reg).setDb(source.location.reg)();
-                                 } else {
-                                   if (is64) {
-                                     as_.INSTR(LDD_Ea_deref_Ab_off10sx)
-                                         .setEa(target.location.reg)
-                                         .setAb(WasmABI::REGS::addrScrReg[0])
-                                         .setOff10sx(SafeInt<10U>::fromUnsafe(static_cast<int32_t>(source.location.stackFramePosition)))();
-                                   } else {
-                                     as_.loadWordDRegDerefARegDisp16sx(
-                                         target.location.reg, WasmABI::REGS::addrScrReg[0],
-                                         SafeInt<16U>::fromUnsafe(static_cast<int32_t>(source.location.stackFramePosition)));
-                                   }
-                                 }
-                               }),
-                               SwapEmitter(nullptr));
+  registerCopyResolver.resolveLinear(ParallelMoveEmitter([this](VariableStorage const &target, VariableStorage const &source) {
+    bool const is64{MachineTypeUtil::is64(source.machineType)};
+    // Can't use emitMoveIntImpl because it handles stack frame offset calculation differently
+    if (source.type == StorageType::REGISTER) {
+      as_.INSTR(MOV_Da_Db).setDa(target.location.reg).setDb(source.location.reg)();
+    } else {
+      if (is64) {
+        as_.INSTR(LDD_Ea_deref_Ab_off10sx)
+            .setEa(target.location.reg)
+            .setAb(WasmABI::REGS::addrScrReg[0])
+            .setOff10sx(SafeInt<10U>::fromUnsafe(static_cast<int32_t>(source.location.stackFramePosition)))();
+      } else {
+        as_.loadWordDRegDerefARegDisp16sx(target.location.reg, WasmABI::REGS::addrScrReg[0],
+                                          SafeInt<16U>::fromUnsafe(static_cast<int32_t>(source.location.stackFramePosition)));
+      }
+    }
+  }));
+  assert(registerCopyResolver.getRecordsCount() == 0U && "no cycle in this case");
 
   as_.emitLoadDerefOff16sx(NativeABI::addrParamRegs[0], WasmABI::REGS::linMem, SafeInt<16U>::fromConst<-BD::FromEnd::customCtxOffset>());
 
@@ -1144,7 +1144,7 @@ void Backend::execReturnCall(uint32_t const fncIndex) {
   uint32_t const callerStackParamWidth{moduleInfo_.fnc.paramWidth};
   uint32_t const stackReturnValuesWidth{common_.getStackReturnValueWidth(calleeSigIndex)};
 
-  if (ParallelMoveResolver::canTailJump(calleeStackParamWidth, callerStackParamWidth, stackReturnValuesWidth, imported)) {
+  if (Common::canTailJump(calleeStackParamWidth, callerStackParamWidth, stackReturnValuesWidth, imported)) {
     // Path A: TailJump. No need to save locals/params, only retain stack for callee params
     RegStackTracker hintTracker{};
     // coverity[autosar_cpp14_a8_5_2_violation]
@@ -1166,24 +1166,7 @@ void Backend::execReturnCall(uint32_t const fncIndex) {
     uint32_t const parallelMoveCapacity{std::min(numParams * 2U, numParams + static_cast<uint32_t>(TReg::NUMREGS))};
     ParallelMoveResolver moveResolver{compiler_.getCompilerMemoryAllocFnc(), compiler_.getCompilerMemoryFreeFnc(), compiler_.getCompilerMemoryCtx(),
                                       parallelMoveCapacity};
-    // coverity[autosar_cpp14_a8_5_2_violation]
-    auto const selectParallelMoveTemp = [&moveResolver](VariableStorage const &sourceStorage) VB_THROW -> VariableStorage {
-      MachineType const machineType{sourceStorage.machineType};
-      // free scratch regs may be reused as move temps that not yet emitted but the stackRef is cleaned and thus won't cause conflicts
-      Span<REG const> const staticScratchRegs{
-          vb::Span<REG const>(WasmABI::dr.data(), WasmABI::dr.size()).subspan(static_cast<size_t>(WasmABI::scratchRegStart))};
-      // Only registers related to parameter preparation are considered, since other registers are no longer valuable in the return_call.
-      for (REG const currentReg : staticScratchRegs) {
-        // scratch registers can only be used as source in cycles that are still pending.
-        if (!moveResolver.regUsedAsSource(currentReg)) {
-          if (!RegUtil::canBeExtReg(currentReg) || !moveResolver.regUsedAsSource(RegUtil::getOtherExtReg(currentReg))) {
-            return VariableStorage::reg(machineType, currentReg);
-          }
-        }
-      }
 
-      UNREACHABLE(return VariableStorage{}, "Always expected a free same-type temp register for return_call parallel moves");
-    };
     RegStackTracker iterTracker{};
 
     Stack::iterator currentParam{paramsBase};
@@ -1227,8 +1210,16 @@ void Backend::execReturnCall(uint32_t const fncIndex) {
       // Temps are always same-type registers, so source and target machine types always match and a plain move suffices.
       emitMoveImpl(targetStorage, sourceStorage, false);
     };
+
+    // Resolve register copies
     // coverity[autosar_cpp14_a5_1_4_violation]
-    moveResolver.resolve(ParallelMoveEmitter(moveEmitter), ParallelMoveTempProvider(selectParallelMoveTemp));
+    moveResolver.resolveLinear(ParallelMoveEmitter(moveEmitter));
+    if (moveResolver.getRecordsCount() != 0U) {
+      moveResolver.resolveCycle(ParallelMoveEmitter(moveEmitter),
+                                ParallelMoveTempProvider{[&moveResolver](VariableStorage const &sourceStorage) VB_THROW -> VariableStorage {
+                                  return selectDefaultParallelMoveTemp(moveResolver, sourceStorage);
+                                }});
+    }
 
     // Unwind stack to the caller-visible return frame and jump without creating a new return link.
     as_.setStackFrameSize(moduleInfo_.getStackFrameSizeBeforeReturn(), true, true);
@@ -5331,6 +5322,23 @@ bool Backend::stackElementConflictsWithParamReg(StackElement const &element, REG
   }
 
   return false;
+}
+
+VariableStorage Backend::selectDefaultParallelMoveTemp(ParallelMoveResolver const &moveResolver, VariableStorage const &sourceStorage) VB_NOEXCEPT {
+  MachineType const machineType{sourceStorage.machineType};
+  // Free scratch regs may be reused as move temps once they are not part of the unresolved cycle sources.
+  Span<REG const> const staticScratchRegs{
+      vb::Span<REG const>(WasmABI::dr.data(), WasmABI::dr.size()).subspan(static_cast<size_t>(WasmABI::scratchRegStart))};
+  for (REG const currentReg : staticScratchRegs) {
+    // scratch registers can only be used as source in cycles that are still pending.
+    if (!moveResolver.regUsedAsSource(currentReg)) {
+      if (!RegUtil::canBeExtReg(currentReg) || !moveResolver.regUsedAsSource(RegUtil::getOtherExtReg(currentReg))) {
+        return VariableStorage::reg(machineType, currentReg);
+      }
+    }
+  }
+
+  UNREACHABLE(return VariableStorage{}, "Always expected a free same-type temp register for TriCore parallel moves");
 }
 
 } // namespace tc

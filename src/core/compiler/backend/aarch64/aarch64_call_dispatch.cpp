@@ -24,8 +24,11 @@
 
 #include "src/config.hpp"
 #include "src/core/common/FunctionRef.hpp"
+#include "src/core/common/Span.hpp"
 #include "src/core/common/basedataoffsets.hpp"
+#include "src/core/common/util.hpp"
 #include "src/core/compiler/Compiler.hpp"
+#include "src/core/compiler/backend/PlatformAdapter.hpp"
 #include "src/core/compiler/backend/aarch64/aarch64_assembler.hpp"
 #include "src/core/compiler/backend/aarch64/aarch64_backend.hpp"
 #include "src/core/compiler/backend/aarch64/aarch64_call_dispatch.hpp"
@@ -36,8 +39,8 @@
 #include "src/core/compiler/common/ListIterator.hpp"
 #include "src/core/compiler/common/MachineType.hpp"
 #include "src/core/compiler/common/ModuleInfo.hpp"
+#include "src/core/compiler/common/ParallelMoveResolver.hpp"
 #include "src/core/compiler/common/RegMask.hpp"
-#include "src/core/compiler/common/RegisterCopyResolver.hpp"
 #include "src/core/compiler/common/SafeInt.hpp"
 #include "src/core/compiler/common/Stack.hpp"
 #include "src/core/compiler/common/StackElement.hpp"
@@ -125,12 +128,7 @@ Stack::iterator V1CallBase::iterateParamsBase(Stack::iterator const paramsBase, 
           bool const sameReg{(sourceStorage.type == StorageType::REGISTER) && (sourceStorage.location.reg == targetReg)};
           if (!sameReg) {
             targetStorage = VariableStorage::reg(paramType, targetReg);
-
-            if (RegUtil::isGPR(targetReg)) {
-              gprCopyResolver.push(targetStorage, sourceStorage);
-            } else {
-              fprCopyResolver.push(targetStorage, sourceStorage);
-            }
+            copyResolver.push(targetStorage, sourceStorage);
           }
         } else {
           uint32_t const offsetFromSP{backend_.offsetInStackArgs(isImported, stackParamWidth_, tracker, paramType)};
@@ -179,7 +177,7 @@ void ImportCallV1::prepareCtx() {
   VariableStorage const ctxStorage{
       VariableStorage::linkData(MachineType::I64, backend_.moduleInfo_.getBasedataLength() - static_cast<uint32_t>(BD::FromEnd::customCtxOffset))};
   if (targetReg != REG::NONE) {
-    gprCopyResolver.push(VariableStorage::reg(MachineType::I64, targetReg), ctxStorage);
+    copyResolver.push(VariableStorage::reg(MachineType::I64, targetReg), ctxStorage);
   } else {
     uint32_t const offsetFromSP{backend_.offsetInStackArgs(true, stackParamWidth_, tracker, MachineType::I64)};
     VariableStorage const targetStorage{VariableStorage::stackMemory(MachineType::I64, backend_.moduleInfo_.fnc.stackFrameSize - offsetFromSP)};
@@ -193,7 +191,7 @@ void InternalCall::handleIndirectCallReg(Stack::iterator const indirectCallIndex
   VariableStorage const sourceStorage{backend_.moduleInfo_.getStorage(*indirectCallIndex)};
 
   if (!sourceStorage.inSameLocation(indexTargetStorage)) {
-    gprCopyResolver.push(indexTargetStorage, sourceStorage);
+    copyResolver.push(indexTargetStorage, sourceStorage);
   }
 
   backend_.common_.removeReference(indirectCallIndex);
@@ -201,43 +199,24 @@ void InternalCall::handleIndirectCallReg(Stack::iterator const indirectCallIndex
 }
 
 void V1CallBase::resolveRegisterCopies() VB_THROW {
-  // coverity[autosar_cpp14_a8_5_2_violation]
-  auto moveEmitter = [this](VariableStorage const &targetStorage, VariableStorage const &sourceStorage) VB_THROW {
-    backend_.emitMoveImpl(targetStorage, sourceStorage, false);
-  };
-
-  // Resolve GPR copies with XOR-based register swap
-  gprCopyResolver.resolve(
+  copyResolver.resolveLinear(
       // coverity[autosar_cpp14_a5_1_4_violation]
-      MoveEmitter(moveEmitter),
-      SwapEmitter([this](VariableStorage const &targetStorage, VariableStorage const &sourceStorage, bool const swapContains64) VB_THROW {
-        // GCOVR_EXCL_START
-        assert(targetStorage.type == StorageType::REGISTER && sourceStorage.type == StorageType::REGISTER &&
-               "SwapEmitter only supports register to register moves");
-        // GCOVR_EXCL_STOP
-        AbstrInstr const eor{swapContains64 ? EOR_xD_xN_xM : EOR_wD_wN_wM};
-        REG const targetReg{targetStorage.location.reg};
-        REG const sourceReg{sourceStorage.location.reg};
-        backend_.as_.INSTR(eor).setD(targetReg).setN(targetReg).setM(sourceReg)();
-        backend_.as_.INSTR(eor).setD(sourceReg).setN(targetReg).setM(sourceReg)();
-        backend_.as_.INSTR(eor).setD(targetReg).setN(targetReg).setM(sourceReg)();
-      }));
+      // coverity[autosar_cpp14_a5_1_9_violation]
+      ParallelMoveEmitter{[this](VariableStorage const &targetStorage, VariableStorage const &sourceStorage) VB_THROW {
+        backend_.emitMoveImpl(targetStorage, sourceStorage, false);
+      }});
 
-  // Resolve FPR copies with temp register swap
-  fprCopyResolver.resolve(
-      // coverity[autosar_cpp14_a5_1_4_violation]
-      MoveEmitter(moveEmitter),
-      SwapEmitter([this](VariableStorage const &targetStorage, VariableStorage const &sourceStorage, bool const swapContains64) VB_THROW {
-        // GCOVR_EXCL_START
-        assert(targetStorage.type == StorageType::REGISTER && sourceStorage.type == StorageType::REGISTER &&
-               "SwapEmitter only supports register to register moves");
-        // GCOVR_EXCL_STOP
-        // Here all values in GPR are passed to callee, callScrReg can be used
-        constexpr REG moveHelper{callScrRegs[0]};
-        backend_.as_.INSTR(swapContains64 ? FMOV_xD_dN : FMOV_wD_sN).setD(moveHelper).setN(sourceStorage.location.reg)();
-        backend_.as_.INSTR(swapContains64 ? FMOV_dD_dN : FMOV_sD_sN).setD(sourceStorage.location.reg).setN(targetStorage.location.reg)();
-        backend_.as_.INSTR(swapContains64 ? FMOV_dD_xN : FMOV_sD_wN).setD(targetStorage.location.reg).setN(moveHelper)();
-      }));
+  if (copyResolver.getRecordsCount() != 0U) {
+    copyResolver.resolveCycle(
+        // coverity[autosar_cpp14_a5_1_4_violation]
+        // coverity[autosar_cpp14_a5_1_9_violation]
+        ParallelMoveEmitter{[this](VariableStorage const &targetStorage, VariableStorage const &sourceStorage) VB_THROW {
+          backend_.emitMoveImpl(targetStorage, sourceStorage, false);
+        }},
+        ParallelMoveTempProvider{[this](VariableStorage const &sourceStorage) VB_THROW -> VariableStorage {
+          return TBackend::selectDefaultParallelMoveTemp(copyResolver, sourceStorage);
+        }});
+  }
 }
 
 } // namespace aarch64

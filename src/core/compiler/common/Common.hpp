@@ -668,6 +668,21 @@ public:
   /// @return ConditionResult Base of the valent block and an optional BranchCondition if this was a comparison
   ConditionResult condenseWithTargetHint(bool const comparison, Stack::iterator const belowIt, StackElement const *const recommendedTargetHint) const;
 
+  /// @brief Resolve the pending parallel moves with cycles through an explicit temp location.
+  /// @brief Check whether a `return_call` can be lowered to an internal tail jump.
+  /// @param calleeStackParamWidth Total stack-parameter width required by the callee
+  /// @param callerStackParamWidth Total stack-parameter width reserved by the current caller frame
+  /// @param stackReturnValuesWidth Total stack-return width produced by the callee
+  /// @param imported True if the callee is an imported function using the external-call ABI
+  /// @return True if the callee can reuse the current frame and the backend may emit a tail jump
+  inline static bool canTailJump(uint32_t const calleeStackParamWidth, uint32_t const callerStackParamWidth, uint32_t const stackReturnValuesWidth,
+                                 bool const imported) VB_NOEXCEPT {
+    bool const stackParamsSafe{(calleeStackParamWidth == callerStackParamWidth) ||                                   // [RC-Case A-1]
+                               ((stackReturnValuesWidth == 0U) && (calleeStackParamWidth < callerStackParamWidth))}; // [RC-Case A-2]
+    return !imported                                                                                                 // [RC-Case B]
+           && stackParamsSafe;
+  }
+
 private:
   Compiler &compiler_; ///< Reference to the compiler instance
 

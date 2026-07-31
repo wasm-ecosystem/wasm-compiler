@@ -48,13 +48,13 @@
     ;; X86_64-NEXT: movss xmm5, xmm4
     ;; X86_64-NEXT: movd xmm4, [[REG]]
 
-    ;; AARCH64: fmov  [[REG:w[0-9]+]], s1
+    ;; AARCH64: fmov  [[REG:s[0-9]+]], s1
     ;; AARCH64-NEXT: fmov  s1, s8
     ;; AARCH64-NEXT: fmov  s8, [[REG]]
 
-    ;; TRICORE: xor [[REG1:d[0-9]+]], [[REG2:d[0-9]+]]
-    ;; TRICORE-NEXT: xor [[REG2]], [[REG1]]
-    ;; TRICORE-NEXT: xor [[REG1]], [[REG2]]
+    ;; TRICORE: mov  [[REG:d[0-9]+]], d9
+    ;; TRICORE-NEXT: mov  d9, d8
+    ;; TRICORE-NEXT: mov  d8, [[REG]]
     local.get $arg1
     local.get $arg0
     f32.const 1
@@ -95,18 +95,18 @@
     local.set 3
     ;; X86_64_NO_ACTIVE_STACK_OVERFLOW_CHECK: xchg ebp, r9d
     ;; X86_64_NO_ACTIVE_STACK_OVERFLOW_CHECK-NEXT: xchg edi, esi
-    ;; AARCH64_NO_ACTIVE_STACK_OVERFLOW_CHECK:  eor  w19, w19, w2
-    ;; AARCH64_NO_ACTIVE_STACK_OVERFLOW_CHECK-NEXT:  eor  w2, w19, w2
-    ;; AARCH64_NO_ACTIVE_STACK_OVERFLOW_CHECK-NEXT:  eor  w19, w19, w2
-    ;; AARCH64_NO_ACTIVE_STACK_OVERFLOW_CHECK-NEXT:  eor  w8, w8, w1
-    ;; AARCH64_NO_ACTIVE_STACK_OVERFLOW_CHECK-NEXT:  eor  w1, w8, w1
-    ;; AARCH64_NO_ACTIVE_STACK_OVERFLOW_CHECK-NEXT:  eor  w8, w8, w1
-    ;; TRICORE:       xor d8, d7
-    ;; TRICORE-NEXT:  xor d7, d8
-    ;; TRICORE-NEXT:  xor d8, d7
-    ;; TRICORE-NEXT:  xor d9, d6
-    ;; TRICORE-NEXT:  xor d6, d9
-    ;; TRICORE-NEXT:  xor d9, d6
+    ;; AARCH64_NO_ACTIVE_STACK_OVERFLOW_CHECK:  mov  [[REG:w[0-9]+]], w2
+    ;; AARCH64_NO_ACTIVE_STACK_OVERFLOW_CHECK-NEXT:  mov  w2, w19
+    ;; AARCH64_NO_ACTIVE_STACK_OVERFLOW_CHECK-NEXT:  mov  w19, [[REG]]
+    ;; AARCH64_NO_ACTIVE_STACK_OVERFLOW_CHECK-NEXT:  mov  [[REG]], w1
+    ;; AARCH64_NO_ACTIVE_STACK_OVERFLOW_CHECK-NEXT:  mov  w1, w8
+    ;; AARCH64_NO_ACTIVE_STACK_OVERFLOW_CHECK-NEXT:  mov  w8, [[REG]]
+    ;; TRICORE:       mov  d0, d7
+    ;; TRICORE-NEXT:  mov  d7, d8
+    ;; TRICORE-NEXT:  mov  d8, d0
+    ;; TRICORE-NEXT:  mov  d0, d6
+    ;; TRICORE-NEXT:  mov  d6, d9
+    ;; TRICORE-NEXT:  mov  d9, d0
     local.get 3
     local.get 2
     local.get 1
@@ -132,31 +132,23 @@
     local.set 4
     i32.const 5
     local.set 5
-    ;; AARCH64_NO_ACTIVE_STACK_OVERFLOW_CHECK:  eor  w19, w19, w8
-    ;; AARCH64_NO_ACTIVE_STACK_OVERFLOW_CHECK-NEXT:  eor  w8, w19, w8
-    ;; AARCH64_NO_ACTIVE_STACK_OVERFLOW_CHECK-NEXT:  eor  w19, w19, w8
-    ;; AARCH64_NO_ACTIVE_STACK_OVERFLOW_CHECK-NEXT:  eor  w8, w8, w1
-    ;; AARCH64_NO_ACTIVE_STACK_OVERFLOW_CHECK-NEXT:  eor  w1, w8, w1
-    ;; AARCH64_NO_ACTIVE_STACK_OVERFLOW_CHECK-NEXT:  eor  w8, w8, w1
-    ;; TRICORE: xor d8, d9
-    ;; TRICORE-NEXT: xor d9, d8
-    ;; TRICORE-NEXT: xor d8, d9
-    ;; TRICORE-NEXT: xor d9, d6
-    ;; TRICORE-NEXT: xor d6, d9
-    ;; TRICORE-NEXT: xor d9, d6
+    ;; AARCH64_NO_ACTIVE_STACK_OVERFLOW_CHECK:  mov  [[REG:w[0-9]+]], w8
+    ;; AARCH64_NO_ACTIVE_STACK_OVERFLOW_CHECK-NEXT:  mov  w8, w1
+    ;; AARCH64_NO_ACTIVE_STACK_OVERFLOW_CHECK-NEXT:  mov  w1, w19
+    ;; AARCH64_NO_ACTIVE_STACK_OVERFLOW_CHECK-NEXT:  mov  w19, [[REG]]
+    ;; TRICORE: mov  d0, d9
+    ;; TRICORE-NEXT: mov  d9, d6
+    ;; TRICORE-NEXT: mov  d6, d8
+    ;; TRICORE-NEXT: mov  d8, d0
 
-    ;; AARCH64_NO_ACTIVE_STACK_OVERFLOW_CHECK-NEXT:  eor  w2, w2, w4
-    ;; AARCH64_NO_ACTIVE_STACK_OVERFLOW_CHECK-NEXT:  eor  w4, w2, w4
-    ;; AARCH64_NO_ACTIVE_STACK_OVERFLOW_CHECK-NEXT:  eor  w2, w2, w4
-    ;; AARCH64_NO_ACTIVE_STACK_OVERFLOW_CHECK-NEXT:  eor  w4, w4, w3
-    ;; AARCH64_NO_ACTIVE_STACK_OVERFLOW_CHECK-NEXT:  eor  w3, w4, w3
-    ;; AARCH64_NO_ACTIVE_STACK_OVERFLOW_CHECK-NEXT:  eor  w4, w4, w3
-    ;; TRICORE: xor d7, d11
-    ;; TRICORE-NEXT: xor d11, d7
-    ;; TRICORE-NEXT: xor d7, d11
-    ;; TRICORE-NEXT: xor d11, d10
-    ;; TRICORE-NEXT: xor d10, d11
-    ;; TRICORE-NEXT: xor d11, d10
+    ;; AARCH64_NO_ACTIVE_STACK_OVERFLOW_CHECK-NEXT:  mov  [[REG]], w4
+    ;; AARCH64_NO_ACTIVE_STACK_OVERFLOW_CHECK-NEXT:  mov  w4, w3
+    ;; AARCH64_NO_ACTIVE_STACK_OVERFLOW_CHECK-NEXT:  mov  w3, w2
+    ;; AARCH64_NO_ACTIVE_STACK_OVERFLOW_CHECK-NEXT:  mov  w2, [[REG]]
+    ;; TRICORE: mov  d0, d11
+    ;; TRICORE-NEXT: mov  d11, d10
+    ;; TRICORE-NEXT: mov  d10, d7
+    ;; TRICORE-NEXT: mov  d7, d0
     local.get 1
     local.get 2
     local.get 0

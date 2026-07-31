@@ -32,6 +32,7 @@
 #include "src/core/compiler/backend/tricore/tricore_encoding.hpp"
 #include "src/core/compiler/common/Common.hpp"
 #include "src/core/compiler/common/MemWriter.hpp"
+#include "src/core/compiler/common/ParallelMoveResolver.hpp"
 #include "src/core/compiler/common/Stack.hpp"
 #include "src/core/compiler/common/StackElement.hpp"
 #include "src/core/compiler/common/StackType.hpp"
@@ -560,6 +561,12 @@ public:
   /// @return true if there is conflict, false otherwise
   bool stackElementConflictsWithParamReg(StackElement const &element, REG const paramReg, MachineType const machineType,
                                          StackType const paramTypeInCaller) const VB_NOEXCEPT;
+
+  /// @brief Select a default data register for breaking a pending parallel-move cycle.
+  /// @param moveResolver Resolver whose remaining records describe the still-pending cycle sources
+  /// @param sourceStorage Source storage at the cycle head; its machine type is preserved in the returned storage
+  /// @return Data-register storage with the same machine type as @p sourceStorage that does not conflict with unresolved sources
+  static VariableStorage selectDefaultParallelMoveTemp(ParallelMoveResolver const &moveResolver, VariableStorage const &sourceStorage) VB_NOEXCEPT;
 
 private:
   /// @brief Widths of certain entries on the stack

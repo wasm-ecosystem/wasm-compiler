@@ -19,6 +19,7 @@
 
 #include "src/core/compiler/backend/x86_64/x86_64_encoding.hpp"
 #include "src/core/compiler/common/MachineType.hpp"
+#include "src/core/compiler/common/ParallelMoveResolver.hpp"
 #include "src/core/compiler/common/RegMask.hpp"
 #ifdef JIT_TARGET_X86_64
 
@@ -28,7 +29,6 @@
 #include "src/core/common/util.hpp"
 #include "src/core/compiler/common/Common.hpp"
 #include "src/core/compiler/common/MemWriter.hpp"
-#include "src/core/compiler/common/RegisterCopyResolver.hpp"
 #include "src/core/compiler/common/Stack.hpp"
 
 namespace vb {
@@ -545,6 +545,12 @@ public:
   /// @return true if there is conflict, false otherwise
   bool stackElementConflictsWithParamReg(StackElement const &element, REG const paramReg, MachineType const machineType,
                                          StackType const paramTypeInCaller) const VB_NOEXCEPT;
+
+  /// @brief Select a default scratch register for breaking a pending parallel-move cycle.
+  /// @param moveResolver Resolver whose remaining records describe the still-pending cycle sources
+  /// @param sourceStorage Source storage at the cycle head; its machine type selects the GPR or FPR scratch set
+  /// @return Register storage with the same machine type as @p sourceStorage that is not still used as an unresolved source
+  static VariableStorage selectDefaultParallelMoveTemp(ParallelMoveResolver const &moveResolver, VariableStorage const &sourceStorage) VB_NOEXCEPT;
 
 private:
   /// @brief Widths of certain entries on the stack

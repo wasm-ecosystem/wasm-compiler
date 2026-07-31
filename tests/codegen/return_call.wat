@@ -165,9 +165,7 @@
     ;; TRICORE-NOT:  fret
     ;; TRICORE: lea  sp, [sp]#
     ;; TRICORE-NEXT: j  {{#0x[0-9a-f]+}}
-    ;; X86_64: mov  rax, rdi
-    ;; X86_64-NEXT: mov  rdi, rbp
-    ;; X86_64-NEXT: mov  rbp, rax
+    ;; X86_64: xchg  rbp, rdi
     ;; X86_64: lea  rsp, [rsp +
     ;; X86_64-NEXT: jmp  {{0x[0-9a-f]+}}
     return_call $callee64

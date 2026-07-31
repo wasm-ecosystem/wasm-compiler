@@ -26,9 +26,7 @@
     ;; TRICORE-NOT:   fcall
     ;; TRICORE:       lea  sp, [sp]#
     ;; TRICORE-NEXT:  j  {{#0x[0-9a-f]+}}
-    ;; X86_64:        mov  eax, edi
-    ;; X86_64-NEXT:   mov  edi, ebp
-    ;; X86_64-NEXT:   mov  ebp, eax
+    ;; X86_64:        xchg  ebp, edi
     ;; X86_64-NOT:    call
     ;; X86_64:        lea  rsp, [rsp +
     ;; X86_64-NEXT:   jmp  {{0x[0-9a-f]+}}
@@ -52,9 +50,9 @@
     ;; TRICORE-NOT:   fcall
     ;; TRICORE:       lea  sp, [sp]#
     ;; TRICORE-NEXT:  j  {{#0x[0-9a-f]+}}
-    ;; X86_64:        movss  xmm0, xmm5
+    ;; X86_64:        movd  [[TMP:(r[0-9]+d?|[re](ax|cx|dx|bx|bp|si|di))]], xmm5
     ;; X86_64-NEXT:   movss  xmm5, xmm4
-    ;; X86_64-NEXT:   movss  xmm4, xmm0
+    ;; X86_64-NEXT:   movd  xmm4, [[TMP]]
     ;; X86_64-NOT:    call
     ;; X86_64:        lea  rsp, [rsp +
     ;; X86_64-NEXT:   jmp  {{0x[0-9a-f]+}}
@@ -85,10 +83,8 @@
     ;; TRICORE-NEXT:  j  {{#0x[0-9a-f]+}}
     ;; X86_64:        mov  [[TMP:(r9d|esi)]], ebp
     ;; X86_64-NEXT:   add  [[TMP]], edi
-    ;; X86_64-NEXT:   mov  eax, [[TMP]]
-    ;; X86_64-NEXT:   mov  [[TMP]], edi
-    ;; X86_64-NEXT:   mov  edi, ebp
-    ;; X86_64-NEXT:   mov  ebp, eax
+    ;; X86_64-NEXT:   xchg  ebp, [[TMP]]
+    ;; X86_64-NEXT:   xchg  [[TMP]], edi
     ;; X86_64-NOT:    call
     ;; X86_64:        lea  rsp, [rsp +
     ;; X86_64-NEXT:   jmp  {{0x[0-9a-f]+}}
@@ -121,12 +117,8 @@
     ;; TRICORE-NOT:   fcall
     ;; TRICORE:       lea  sp, [sp]#
     ;; TRICORE-NEXT:  j  {{#0x[0-9a-f]+}}
-    ;; X86_64:        mov  eax, edi
-    ;; X86_64-NEXT:   mov  edi, ebp
-    ;; X86_64-NEXT:   mov  ebp, eax
-    ;; X86_64-NEXT:   mov  eax, [[T2SRC:(r10d|r9d)]]
-    ;; X86_64-NEXT:   mov  [[T2SRC]], [[T2DST:(r9d|esi)]]
-    ;; X86_64-NEXT:   mov  [[T2DST]], eax
+    ;; X86_64:        xchg  ebp, edi
+    ;; X86_64-NEXT:   xchg  [[T2DST:(r9d|esi)]], [[T2SRC:(r10d|r9d)]]
     ;; X86_64-NOT:    call
     ;; X86_64:        lea  rsp, [rsp +
     ;; X86_64-NEXT:   jmp  {{0x[0-9a-f]+}}

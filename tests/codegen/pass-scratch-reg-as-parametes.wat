@@ -8,13 +8,13 @@
     i32.ctz
     local.get 0
     ;; X86_64:        xchg  [[REG:(r[0-9]+d?|[re](ax|cx|dx|bx|bp|si|di))]], [[REG:(r[0-9]+d?|[re](ax|cx|dx|bx|bp|si|di))]]
-    ;; AARCH64:  eor  [[REG1:w[0-9]+]], [[REG1]], [[REG2:w[0-9]+]]
-    ;; AARCH64-NEXT:  eor [[REG2]], [[REG1]], [[REG2]]
-    ;; AARCH64-NEXT:  eor  [[REG1]], [[REG1]], [[REG2]]
+    ;; AARCH64:  mov  [[REG:w[0-9]+]], w8
+    ;; AARCH64-NEXT:  mov  w8, w19
+    ;; AARCH64-NEXT:  mov  w19, [[REG]]
 
-    ;; TRICORE: xor [[REG1:d[0-9]+]], [[REG2:d[0-9]+]]
-    ;; TRICORE-NEXT: xor [[REG2]], [[REG1]]
-    ;; TRICORE-NEXT: xor [[REG1]], [[REG2]]
+    ;; TRICORE: mov [[REG:d[0-9]+]], d9
+    ;; TRICORE-NEXT: mov d9, d8
+    ;; TRICORE-NEXT: mov d8, [[REG]]
     call $callee-ii/0
   )
 )

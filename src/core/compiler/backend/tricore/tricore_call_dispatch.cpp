@@ -20,11 +20,13 @@
 #ifdef JIT_TARGET_TRICORE
 
 #include <array>
-#include <cassert>
 #include <cstdint>
 
 #include "src/core/common/FunctionRef.hpp"
 #include "src/core/common/basedataoffsets.hpp"
+#include "src/core/common/util.hpp"
+#include "src/core/compiler/Compiler.hpp"
+#include "src/core/compiler/backend/PlatformAdapter.hpp"
 #include "src/core/compiler/backend/tricore/tricore_assembler.hpp"
 #include "src/core/compiler/backend/tricore/tricore_backend.hpp"
 #include "src/core/compiler/backend/tricore/tricore_call_dispatch.hpp"
@@ -35,8 +37,8 @@
 #include "src/core/compiler/common/ListIterator.hpp"
 #include "src/core/compiler/common/MachineType.hpp"
 #include "src/core/compiler/common/ModuleInfo.hpp"
+#include "src/core/compiler/common/ParallelMoveResolver.hpp"
 #include "src/core/compiler/common/RegMask.hpp"
-#include "src/core/compiler/common/RegisterCopyResolver.hpp"
 #include "src/core/compiler/common/SafeInt.hpp"
 #include "src/core/compiler/common/Stack.hpp"
 #include "src/core/compiler/common/StackElement.hpp"
@@ -132,9 +134,8 @@ Stack::iterator V1CallBase::iterateParamsBase(Stack::iterator const paramsBase, 
             REG const sourceReg{sourceStorage.location.reg};
             if (sourceReg != targetReg) {
               if (is64) {
-                gprCopyResolver.push(targetStorage, ResolverRecord::TargetType::Extend, sourceStorage);
-                gprCopyResolver.push(VariableStorage::reg(paramType, RegUtil::getOtherExtReg(targetReg)),
-                                     ResolverRecord::TargetType::Extend_Placeholder,
+                gprCopyResolver.push(targetStorage, ParallelMoveTargetType::Extend, sourceStorage);
+                gprCopyResolver.push(VariableStorage::reg(paramType, RegUtil::getOtherExtReg(targetReg)), ParallelMoveTargetType::Extend_Placeholder,
                                      VariableStorage::reg(paramType, RegUtil::getOtherExtReg(sourceReg)));
               } else {
                 gprCopyResolver.push(targetStorage, sourceStorage);
@@ -142,9 +143,9 @@ Stack::iterator V1CallBase::iterateParamsBase(Stack::iterator const paramsBase, 
             }
           } else {
             if (is64) {
-              gprCopyResolver.push(targetStorage, ResolverRecord::TargetType::Extend, sourceStorage);
-              gprCopyResolver.push(VariableStorage::reg(paramType, RegUtil::getOtherExtReg(targetReg)),
-                                   ResolverRecord::TargetType::Extend_Placeholder, sourceStorage);
+              gprCopyResolver.push(targetStorage, ParallelMoveTargetType::Extend, sourceStorage);
+              gprCopyResolver.push(VariableStorage::reg(paramType, RegUtil::getOtherExtReg(targetReg)), ParallelMoveTargetType::Extend_Placeholder,
+                                   sourceStorage);
             } else {
               gprCopyResolver.push(targetStorage, sourceStorage);
             }
@@ -187,34 +188,23 @@ void V1CallBase::iterateResults() {
 }
 
 void V1CallBase::resolveRegisterCopies() VB_THROW {
-  // coverity[autosar_cpp14_a8_5_2_violation]
-  auto moveEmitter = [this](VariableStorage const &targetStorage, VariableStorage const &sourceStorage) VB_THROW {
-    backend_.emitMoveImpl(targetStorage, sourceStorage, false);
-  };
-
-  // Resolve GPR copies with custom swap implementation for TriCore
-  gprCopyResolver.resolve(
-      // coverity[autosar_cpp14_a5_1_4_violation]
-      MoveEmitter(moveEmitter),
-      SwapEmitter([this](VariableStorage const &targetStorage, VariableStorage const &sourceStorage, bool const swapContains64) VB_THROW {
-        static_cast<void>(swapContains64);
-        // GCOVR_EXCL_START
-        assert(targetStorage.type == StorageType::REGISTER && sourceStorage.type == StorageType::REGISTER &&
-               "SwapEmitter only supports register to register moves");
-        // GCOVR_EXCL_STOP
-        bool const targetIs64{MachineTypeUtil::is64(targetStorage.machineType)};
-
-        REG const targetReg{targetStorage.location.reg};
-        REG const sourceReg{sourceStorage.location.reg};
-
-        backend_.swapReg(targetReg, sourceReg);
-        if (targetIs64) {
-          REG const otherTargetReg{RegUtil::getOtherExtReg(targetReg)};
-          REG const otherSourceReg{RegUtil::getOtherExtReg(sourceReg)};
-          backend_.swapReg(otherTargetReg, otherSourceReg);
-        }
-      }));
+  gprCopyResolver.resolveLinear(
+      // coverity[autosar_cpp14_a5_1_9_violation]
+      ParallelMoveEmitter{[this](VariableStorage const &targetStorage, VariableStorage const &sourceStorage) VB_THROW {
+        backend_.emitMoveImpl(targetStorage, sourceStorage, false);
+      }});
+  if (gprCopyResolver.getRecordsCount() != 0U) {
+    gprCopyResolver.resolveCycle(
+        // coverity[autosar_cpp14_a5_1_4_violation]
+        ParallelMoveEmitter{[this](VariableStorage const &targetStorage, VariableStorage const &sourceStorage) VB_THROW {
+          backend_.emitMoveImpl(targetStorage, sourceStorage, false);
+        }},
+        ParallelMoveTempProvider{[this](VariableStorage const &sourceStorage) VB_THROW -> VariableStorage {
+          return TBackend::selectDefaultParallelMoveTemp(gprCopyResolver, sourceStorage);
+        }});
+  }
 }
+
 // coverity[autosar_cpp14_a8_4_7_violation]
 void InternalCall::handleIndirectCallReg(Stack::iterator const indirectCallIndex) VB_NOEXCEPT {
   constexpr VariableStorage indexTargetStorage{VariableStorage::reg(MachineType::I32, WasmABI::REGS::indirectCallReg)};

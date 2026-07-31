@@ -29,8 +29,8 @@
 #include "aarch64_cc.hpp"
 
 #include "src/core/compiler/backend/aarch64/aarch64_backend.hpp"
+#include "src/core/compiler/common/ParallelMoveResolver.hpp"
 #include "src/core/compiler/common/RegMask.hpp"
-#include "src/core/compiler/common/RegisterCopyResolver.hpp"
 #include "src/core/compiler/common/Stack.hpp"
 namespace vb {
 namespace aarch64 {
@@ -125,7 +125,10 @@ protected:
   /// @param sigIndex Function signature index
   /// @param stackParamWidth Width of stack parameters
   V1CallBase(AArch64_Backend &backend, uint32_t const sigIndex, uint32_t const stackParamWidth) VB_THROW
-      : CallBase(backend, sigIndex, stackParamWidth, backend.common_.getStackReturnValueWidth(sigIndex)) {
+      : CallBase(backend, sigIndex, stackParamWidth, backend.common_.getStackReturnValueWidth(sigIndex)),
+        copyResolver(backend.compiler_.getCompilerMemoryAllocFnc(), backend.compiler_.getCompilerMemoryFreeFnc(),
+                     backend.compiler_.getCompilerMemoryCtx(), resolverCapacity),
+        tracker{} {
   }
 
   V1CallBase(V1CallBase const &) = delete;
@@ -146,15 +149,18 @@ public:
   void resolveRegisterCopies() VB_THROW;
 
 private:
-  /// @brief Size for GPR copy resolver
+  /// @brief GPR capacity for the merged register parallel-move resolver.
   static constexpr uint32_t gprResolverSize{
       static_cast<uint32_t>(std::max(NativeABI::gpParams.size(), static_cast<size_t>(WasmABI::regsForParams) + 1U))}; // +1 for the call indirect reg
+  /// @brief FPR capacity for the merged register parallel-move resolver.
+  static constexpr uint32_t fprResolverSize{static_cast<uint32_t>(std::max(NativeABI::fpParams.size(), static_cast<size_t>(WasmABI::regsForParams)))};
+  /// @brief Total capacity for both GPR and FPR moves.
+  static constexpr uint32_t resolverCapacity{gprResolverSize + fprResolverSize};
+
 protected:
-  /// @param gprCopyResolver GPR register copy resolver
-  RegisterCopyResolver<gprResolverSize> gprCopyResolver;
-  /// @param fprCopyResolver FPR register copy resolver
-  RegisterCopyResolver<std::max(NativeABI::fpParams.size(), static_cast<size_t>(WasmABI::regsForParams))> fprCopyResolver;
-  RegStackTracker tracker{}; ///< Register stack tracker
+  /// @brief Merged register parallel-move resolver for both GPR and FPR parameters.
+  ParallelMoveResolver copyResolver;
+  RegStackTracker tracker; ///< Register stack tracker
 };
 
 /// @brief Import call V1 handler for AArch64
