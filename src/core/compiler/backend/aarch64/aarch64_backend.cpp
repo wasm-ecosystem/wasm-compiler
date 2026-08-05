@@ -1810,7 +1810,7 @@ void Backend::execReturnCall(uint32_t const fncIndex) {
     // coverity[autosar_cpp14_a8_5_2_violation]
     // coverity[autosar_cpp14_a5_1_9_violation]
     auto const selectParallelMoveTemp = [&moveResolver](VariableStorage const &sourceStorage) VB_THROW -> VariableStorage {
-      return selectDefaultParallelMoveTemp(moveResolver, sourceStorage, false);
+      return selectDefaultParallelMoveTemp(moveResolver, sourceStorage);
     };
     RegStackTracker iterTracker{};
 
@@ -1931,7 +1931,7 @@ void Backend::execReturnCallIndirect(uint32_t const sigIndex, uint32_t const tab
                                   emitMoveImpl(targetStorage, sourceStorage, false);
                                 }},
                                 ParallelMoveTempProvider{[&moveResolver](VariableStorage const &sourceStorage) VB_THROW -> VariableStorage {
-                                  return selectDefaultParallelMoveTemp(moveResolver, sourceStorage, true);
+                                  return selectDefaultParallelMoveTemp(moveResolver, sourceStorage);
                                 }});
     }
 
@@ -4470,8 +4470,7 @@ bool Backend::stackElementConflictsWithParamReg(StackElement const &element, REG
   return false;
 }
 
-VariableStorage Backend::selectDefaultParallelMoveTemp(ParallelMoveResolver const &moveResolver, VariableStorage const &sourceStorage,
-                                                       bool const indirectCall) VB_NOEXCEPT {
+VariableStorage Backend::selectDefaultParallelMoveTemp(ParallelMoveResolver const &moveResolver, VariableStorage const &sourceStorage) VB_NOEXCEPT {
   MachineType const machineType{sourceStorage.machineType};
   bool const isInt{MachineTypeUtil::isInt(machineType)};
   uint32_t const offsetStaticScratchRegs{(isInt ? NBackend::WasmABI::numGPR : NBackend::WasmABI::numFPR) - NBackend::WasmABI::resScratchRegsGPR};
@@ -4479,7 +4478,7 @@ VariableStorage Backend::selectDefaultParallelMoveTemp(ParallelMoveResolver cons
       isInt ? vb::Span<REG const>(WasmABI::gpr.data(), WasmABI::gpr.size()).subspan(static_cast<size_t>(offsetStaticScratchRegs))
             : vb::Span<REG const>(WasmABI::fpr.data(), WasmABI::fpr.size()).subspan(static_cast<size_t>(offsetStaticScratchRegs))};
   for (REG const currentReg : staticScratchRegs) {
-    if (indirectCall && (currentReg == WasmABI::REGS::indirectCallReg)) {
+    if (currentReg == WasmABI::REGS::indirectCallReg) {
       continue;
     }
     if (!moveResolver.regUsedAsSource(currentReg)) {

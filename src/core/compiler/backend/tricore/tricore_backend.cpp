@@ -1219,7 +1219,7 @@ void Backend::execReturnCall(uint32_t const fncIndex) {
       moveResolver.resolveCycle(ParallelMoveEmitter(moveEmitter),
                                 // coverity[autosar_cpp14_a5_1_9_violation]
                                 ParallelMoveTempProvider{[&moveResolver](VariableStorage const &sourceStorage) VB_THROW -> VariableStorage {
-                                  return selectDefaultParallelMoveTemp(moveResolver, sourceStorage, false);
+                                  return selectDefaultParallelMoveTemp(moveResolver, sourceStorage);
                                 }});
     }
 
@@ -1415,7 +1415,7 @@ void Backend::execReturnCallIndirect(uint32_t const sigIndex, uint32_t const tab
       // coverity[autosar_cpp14_a5_1_4_violation]
       moveResolver.resolveCycle(ParallelMoveEmitter(moveEmitter),
                                 ParallelMoveTempProvider{[&moveResolver](VariableStorage const &sourceStorage) VB_THROW -> VariableStorage {
-                                  return selectDefaultParallelMoveTemp(moveResolver, sourceStorage, true);
+                                  return selectDefaultParallelMoveTemp(moveResolver, sourceStorage);
                                 }});
     }
 
@@ -5424,14 +5424,13 @@ bool Backend::stackElementConflictsWithParamReg(StackElement const &element, REG
   return false;
 }
 
-VariableStorage Backend::selectDefaultParallelMoveTemp(ParallelMoveResolver const &moveResolver, VariableStorage const &sourceStorage,
-                                                       bool const indirectCall) VB_NOEXCEPT {
+VariableStorage Backend::selectDefaultParallelMoveTemp(ParallelMoveResolver const &moveResolver, VariableStorage const &sourceStorage) VB_NOEXCEPT {
   MachineType const machineType{sourceStorage.machineType};
   // Free scratch regs may be reused as move temps once they are not part of the unresolved cycle sources.
   Span<REG const> const staticScratchRegs{
       vb::Span<REG const>(WasmABI::dr.data(), WasmABI::dr.size()).subspan(static_cast<size_t>(WasmABI::scratchRegStart))};
   for (REG const currentReg : staticScratchRegs) {
-    if (indirectCall && (currentReg == WasmABI::REGS::indirectCallReg)) {
+    if (currentReg == WasmABI::REGS::indirectCallReg) {
       continue;
     }
     // scratch registers can only be used as source in cycles that are still pending.

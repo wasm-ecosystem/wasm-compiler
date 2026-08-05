@@ -8,21 +8,21 @@
   (func $callee4 (param i32 i32 i32 i32) (result i32) local.get 0)
 
   ;; CHECK-LABEL: Function[4] Body
-  ;; Case 1: a single 2-element cycle (swap of the two params). The first free
-  ;; GPR candidate does not alias the cycle, so it is used directly as the temp.
+  ;; Case 1: a single 2-element cycle (swap of the two params). The indirect
+  ;; call register is reserved, so the next free GPR is used as the temp.
   (func $case1_first_scratch_reg (param i32 i32) (result i32)
     local.get 1
     local.get 0
     ;; AARCH64:       cbz
-    ;; AARCH64:       mov  [[TMP:w0]], w8
+    ;; AARCH64:       mov  [[TMP:w26]], w8
     ;; AARCH64-NEXT:  mov  w8, w19
     ;; AARCH64-NEXT:  mov  w19, [[TMP]]
     ;; AARCH64-NOT:   str  {{w[0-9]+}}, [sp
     ;; AARCH64:       add  sp, sp,
     ;; AARCH64-NEXT:  b  {{0x[0-9a-f]+}}
-    ;; TRICORE:       mov  d0, d9
+    ;; TRICORE:       mov  d1, d9
     ;; TRICORE-NEXT:  mov  d9, d8
-    ;; TRICORE-NEXT:  mov  d8, d0
+    ;; TRICORE-NEXT:  mov  d8, d1
     ;; TRICORE-NOT:   fcall
     ;; TRICORE:       lea  sp, [sp]#
     ;; TRICORE-NEXT:  j  {{#0x[0-9a-f]+}}
@@ -44,9 +44,9 @@
     ;; AARCH64-NOT:   str  {{s[0-9]+}}, [sp
     ;; AARCH64:       add  sp, sp,
     ;; AARCH64-NEXT:  b  {{0x[0-9a-f]+}}
-    ;; TRICORE:       mov  d0, d9
+    ;; TRICORE:       mov  d1, d9
     ;; TRICORE-NEXT:  mov  d9, d8
-    ;; TRICORE-NEXT:  mov  d8, d0
+    ;; TRICORE-NEXT:  mov  d8, d1
     ;; TRICORE-NOT:   fcall
     ;; TRICORE:       lea  sp, [sp]#
     ;; TRICORE-NEXT:  j  {{#0x[0-9a-f]+}}
@@ -59,15 +59,14 @@
     return_call $callee2f)
 
   ;; CHECK-LABEL: Function[6] Body
-  ;; Case 3 (GPR, "second candidate"): 3-element cycle where the expression result
-  ;; occupies the first free GPR candidate register, so `canUseAsTemp` rejects it.
-  ;; The resolver skips it and uses the *next* free GPR as temp ([[TMP]] ≠ [[V]]).
+  ;; Case 3: the indirect call register is reserved, and the resolver uses the
+  ;; next free GPR as a temp without aliasing the expression result.
   (func $case3_first_scratch_reg_not_free (param i32 i32) (result i32)
     (i32.add (local.get 0) (local.get 1))
     (local.get 0)
     (local.get 1)
     ;; AARCH64:       add  [[V:w[0-9]+]], w19, w8
-    ;; AARCH64-NEXT:  mov  [[TMP:w0]], [[V]]
+    ;; AARCH64-NEXT:  mov  [[TMP:w26]], [[V]]
     ;; AARCH64-NEXT:  mov  [[V]], w8
     ;; AARCH64-NEXT:  mov  w8, w19
     ;; AARCH64-NEXT:  mov  w19, [[TMP]]
@@ -99,21 +98,21 @@
     local.get 0
     local.get 3
     local.get 2
-    ;; AARCH64:       mov  [[T1:w0]], w8
+    ;; AARCH64:       mov  [[T1:w26]], w8
     ;; AARCH64-NEXT:  mov  w8, w19
     ;; AARCH64-NEXT:  mov  w19, [[T1]]
-    ;; AARCH64-NEXT:  mov  [[T2:w0]], w2
+    ;; AARCH64-NEXT:  mov  [[T2:w26]], w2
     ;; AARCH64-NEXT:  mov  w2, w1
     ;; AARCH64-NEXT:  mov  w1, [[T2]]
     ;; AARCH64-NOT:   str  {{w[0-9]+}}, [sp
     ;; AARCH64:       add  sp, sp,
     ;; AARCH64-NEXT:  b  {{0x[0-9a-f]+}}
-    ;; TRICORE:       mov  d0, d9
+    ;; TRICORE:       mov  d1, d9
     ;; TRICORE-NEXT:  mov  d9, d8
-    ;; TRICORE-NEXT:  mov  d8, d0
-    ;; TRICORE-NEXT:  mov  d0, d7
+    ;; TRICORE-NEXT:  mov  d8, d1
+    ;; TRICORE-NEXT:  mov  d1, d7
     ;; TRICORE-NEXT:  mov  d7, d6
-    ;; TRICORE-NEXT:  mov  d6, d0
+    ;; TRICORE-NEXT:  mov  d6, d1
     ;; TRICORE-NOT:   fcall
     ;; TRICORE:       lea  sp, [sp]#
     ;; TRICORE-NEXT:  j  {{#0x[0-9a-f]+}}

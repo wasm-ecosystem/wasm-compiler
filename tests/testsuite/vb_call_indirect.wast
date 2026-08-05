@@ -198,3 +198,18 @@
 )
 (assert_return (invoke "test_large_both") (i64.const 77))
 
+;; Regression: the indirect-call index register must not be used as a parallel-move temporary.
+(module
+  (type $callee (func (param i32 i32)))
+
+  (func $target (type $callee))
+
+  (func (export "test_indirect_call_parallel_move") (param i32 i32)
+    local.get 1
+    local.get 0
+    local.get 0
+    call_indirect (type $callee))
+
+  (table 1 funcref)
+  (elem (i32.const 0) $target))
+(assert_trap (invoke "test_indirect_call_parallel_move" (i32.const 100) (i32.const 0)) "Indirect call out of bounds")

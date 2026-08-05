@@ -740,7 +740,7 @@ void Backend::execReturnCall(uint32_t const fncIndex) {
               .setR(targetStorage.location.reg)();
         } else {
           if (moveHelper == REG::NONE) {
-            moveHelper = selectDefaultParallelMoveTemp(moveResolver, sourceStorage, false).location.reg;
+            moveHelper = selectDefaultParallelMoveTemp(moveResolver, sourceStorage).location.reg;
           }
           RegDisp const sourceRegDisp{getMemRegDisp(sourceStorage)};
           RegDisp const targetRegDisp{getMemRegDisp(targetStorage)};
@@ -750,7 +750,7 @@ void Backend::execReturnCall(uint32_t const fncIndex) {
         }
       } else {
         if (moveHelper == REG::NONE) {
-          moveHelper = selectDefaultParallelMoveTemp(moveResolver, sourceStorage, false).location.reg;
+          moveHelper = selectDefaultParallelMoveTemp(moveResolver, sourceStorage).location.reg;
         }
         if (sourceStorage.type == StorageType::REGISTER) {
           as_.INSTR(swapContains64 ? MOVQ_rm64_rf : MOVD_rm32_rf).setR4RM(moveHelper).setR(sourceStorage.location.reg)();
@@ -780,7 +780,7 @@ void Backend::execReturnCall(uint32_t const fncIndex) {
         // coverity[autosar_cpp14_a8_5_2_violation]
         // coverity[autosar_cpp14_a5_1_9_violation]
         auto const selectParallelMoveTemp = [&moveResolver](VariableStorage const &sourceStorage) VB_THROW -> VariableStorage {
-          return selectDefaultParallelMoveTemp(moveResolver, sourceStorage, false);
+          return selectDefaultParallelMoveTemp(moveResolver, sourceStorage);
         };
         moveResolver.resolveCycle(ParallelMoveEmitter(moveEmitter), ParallelMoveTempProvider{selectParallelMoveTemp});
       }
@@ -864,7 +864,7 @@ void Backend::execReturnCallIndirect(uint32_t const sigIndex, uint32_t const tab
     if (moveResolver.getRecordsCount() != 0U) {
       // coverity[autosar_cpp14_a8_5_2_violation]
       auto const tempProvider = [&moveResolver](VariableStorage const &sourceStorage) VB_THROW -> VariableStorage {
-        return selectDefaultParallelMoveTemp(moveResolver, sourceStorage, true);
+        return selectDefaultParallelMoveTemp(moveResolver, sourceStorage);
       };
       // coverity[autosar_cpp14_a5_1_4_violation]
       moveResolver.resolveCycle(ParallelMoveEmitter(moveEmitter), ParallelMoveTempProvider(tempProvider));
@@ -4284,8 +4284,7 @@ bool Backend::stackElementConflictsWithParamReg(StackElement const &element, REG
   return false;
 }
 
-VariableStorage Backend::selectDefaultParallelMoveTemp(ParallelMoveResolver const &moveResolver, VariableStorage const &sourceStorage,
-                                                       bool const indirectCall) VB_NOEXCEPT {
+VariableStorage Backend::selectDefaultParallelMoveTemp(ParallelMoveResolver const &moveResolver, VariableStorage const &sourceStorage) VB_NOEXCEPT {
   MachineType const machineType{sourceStorage.machineType};
   // free scratch regs may be reused as move temps that not yet emitted but the stackRef is cleaned and thus won't cause conflicts
   bool const isInt{MachineTypeUtil::isInt(machineType)};
@@ -4295,7 +4294,7 @@ VariableStorage Backend::selectDefaultParallelMoveTemp(ParallelMoveResolver cons
             : vb::Span<REG const>(WasmABI::fpr.data(), WasmABI::fpr.size()).subspan(static_cast<size_t>(offsetStaticScratchRegs))};
   // Only registers related to parameter preparation are considered, since other registers are no longer valuable in the return_call.
   for (REG const currentReg : staticScratchRegs) {
-    if (indirectCall && (currentReg == WasmABI::REGS::indirectCallReg)) {
+    if (currentReg == WasmABI::REGS::indirectCallReg) {
       continue;
     }
     // scratch registers can only used as source in cycle

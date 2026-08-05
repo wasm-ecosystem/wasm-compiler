@@ -564,10 +564,8 @@ public:
   /// @brief Select a default scratch register for breaking a pending parallel-move cycle.
   /// @param moveResolver Resolver whose remaining records describe the still-pending cycle sources
   /// @param sourceStorage Source storage at the cycle head; its machine type selects the GPR or FPR scratch set
-  /// @param indirectCall Whether is indirect call that should keep indirectCallReg
   /// @return Register storage with the same machine type as @p sourceStorage that is not still used as an unresolved source
-  static VariableStorage selectDefaultParallelMoveTemp(ParallelMoveResolver const &moveResolver, VariableStorage const &sourceStorage,
-                                                       bool const indirectCall) VB_NOEXCEPT;
+  static VariableStorage selectDefaultParallelMoveTemp(ParallelMoveResolver const &moveResolver, VariableStorage const &sourceStorage) VB_NOEXCEPT;
 
 private:
   /// @brief Widths of certain entries on the stack

@@ -101,12 +101,12 @@
     ;; AARCH64_NO_ACTIVE_STACK_OVERFLOW_CHECK-NEXT:  mov  [[REG]], w1
     ;; AARCH64_NO_ACTIVE_STACK_OVERFLOW_CHECK-NEXT:  mov  w1, w8
     ;; AARCH64_NO_ACTIVE_STACK_OVERFLOW_CHECK-NEXT:  mov  w8, [[REG]]
-    ;; TRICORE:       mov  d0, d7
+    ;; TRICORE:       mov  d1, d7
     ;; TRICORE-NEXT:  mov  d7, d8
-    ;; TRICORE-NEXT:  mov  d8, d0
-    ;; TRICORE-NEXT:  mov  d0, d6
+    ;; TRICORE-NEXT:  mov  d8, d1
+    ;; TRICORE-NEXT:  mov  d1, d6
     ;; TRICORE-NEXT:  mov  d6, d9
-    ;; TRICORE-NEXT:  mov  d9, d0
+    ;; TRICORE-NEXT:  mov  d9, d1
     local.get 3
     local.get 2
     local.get 1
@@ -136,19 +136,19 @@
     ;; AARCH64_NO_ACTIVE_STACK_OVERFLOW_CHECK-NEXT:  mov  w8, w1
     ;; AARCH64_NO_ACTIVE_STACK_OVERFLOW_CHECK-NEXT:  mov  w1, w19
     ;; AARCH64_NO_ACTIVE_STACK_OVERFLOW_CHECK-NEXT:  mov  w19, [[REG]]
-    ;; TRICORE: mov  d0, d9
+    ;; TRICORE: mov  d1, d9
     ;; TRICORE-NEXT: mov  d9, d6
     ;; TRICORE-NEXT: mov  d6, d8
-    ;; TRICORE-NEXT: mov  d8, d0
+    ;; TRICORE-NEXT: mov  d8, d1
 
     ;; AARCH64_NO_ACTIVE_STACK_OVERFLOW_CHECK-NEXT:  mov  [[REG]], w4
     ;; AARCH64_NO_ACTIVE_STACK_OVERFLOW_CHECK-NEXT:  mov  w4, w3
     ;; AARCH64_NO_ACTIVE_STACK_OVERFLOW_CHECK-NEXT:  mov  w3, w2
     ;; AARCH64_NO_ACTIVE_STACK_OVERFLOW_CHECK-NEXT:  mov  w2, [[REG]]
-    ;; TRICORE: mov  d0, d11
+    ;; TRICORE: mov  d1, d11
     ;; TRICORE-NEXT: mov  d11, d10
     ;; TRICORE-NEXT: mov  d10, d7
-    ;; TRICORE-NEXT: mov  d7, d0
+    ;; TRICORE-NEXT: mov  d7, d1
     local.get 1
     local.get 2
     local.get 0
