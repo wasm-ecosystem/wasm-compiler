@@ -111,6 +111,27 @@
     i32.const 80 i32.const 90
     return_call $get_param8
   )
+
+  ;; Stack param 8 is produced in a register before the tail call.
+  (func (export "register_to_stack_param") (param i32 i32 i32 i32 i32 i32 i32 i32 i32 i32) (result i32)
+    local.get 0 local.get 1 local.get 2 local.get 3
+    local.get 4 local.get 5 local.get 6 local.get 7
+    local.get 0
+    i32.const 1
+    i32.add
+    local.get 9
+    return_call $sum10
+  )
+
+  ;; p0 reads caller stack param 8 while p8 reads ebp, requiring a register-stack swap.
+  (func (export "register_stack_cycle") (param i32 i32 i32 i32 i32 i32 i32 i32 i32 i32) (result i32)
+    local.get 8
+    local.get 1 local.get 2 local.get 3 local.get 4
+    local.get 5 local.get 6 local.get 7
+    local.get 0
+    local.get 9
+    return_call $sum10
+  )
 )
 
 ;; Path A: same 10 params, sum = 1+2+3+4+5+6+7+8+9+10 = 55
@@ -160,6 +181,18 @@
 (assert_return (invoke "fewer_to_stack_param"
   (i32.const 10) (i32.const 20))
   (i32.const 80))
+
+;; Register result is preserved in stack-passed param8: 1+2+3+4+5+6+7+8+2+10 = 48.
+(assert_return (invoke "register_to_stack_param"
+  (i32.const 1) (i32.const 2) (i32.const 3) (i32.const 4) (i32.const 5)
+  (i32.const 6) (i32.const 7) (i32.const 8) (i32.const 9) (i32.const 10))
+  (i32.const 48))
+
+;; Register-stack cycle preserves both caller param8 and ebp: reordered 1..10 still sums to 55.
+(assert_return (invoke "register_stack_cycle"
+  (i32.const 1) (i32.const 2) (i32.const 3) (i32.const 4) (i32.const 5)
+  (i32.const 6) (i32.const 7) (i32.const 8) (i32.const 9) (i32.const 10))
+  (i32.const 55))
 
 ;; As the supplement for spectest/proposals/function-references/return_call.wast
 ;; caller has more return values than callee is invalid in return_call

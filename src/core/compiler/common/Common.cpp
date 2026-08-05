@@ -1431,9 +1431,10 @@ Stack::iterator Common::condenseParameter(ParamPos const targetPos, vb::MachineT
                                           Stack::iterator const allParamsStart) {
   StackElement targetHint{};
   Stack::iterator const baseIt{skipValentBlock(currentParamCount)};
+  bool targetStackMemoryUsedByOtherParams{false}; // Only happened in return_call that callee reuse caller's param stack memory
+  Stack::iterator const currentParamBegin{findBaseOfValentBlockBelow(baseIt)};
+  Stack::iterator const currentParamEnd{baseIt.prev()};
   if (targetPos.reg != TReg::NONE) {
-    Stack::iterator const currentParamBegin{findBaseOfValentBlockBelow(baseIt)};
-    Stack::iterator const currentParamEnd{baseIt.prev()};
     StackElement const regStackElement{compiler_.moduleInfo_.getStackElementByReg(targetPos.reg, MachineTypeUtil::toStackTypeFlag(paramType))};
     bool targetRegUsedByOtherParams{false};
     for (Stack::iterator it{compiler_.stack_.end()}; it != currentParamEnd; it--) {
@@ -1463,15 +1464,35 @@ Stack::iterator Common::condenseParameter(ParamPos const targetPos, vb::MachineT
         targetHint = StackElement::tempResult(paramType, targetHintStorage, referencePosition);
       }
     }
+  } else {
+    VariableStorage const targetStorage{VariableStorage::stackMemory(paramType, targetPos.offsetToStackBase)};
+    for (Stack::iterator it{compiler_.stack_.end()}; it != currentParamEnd; it--) {
+      VariableStorage const sourceStorage{compiler_.moduleInfo_.getStorage(*it)};
+      if (targetStorage.overlapsWith(sourceStorage)) {
+        targetStackMemoryUsedByOtherParams = true;
+        break;
+      }
+    }
+    if (!targetStackMemoryUsedByOtherParams) {
+      for (Stack::iterator it{allParamsStart}; it != currentParamBegin; it++) {
+        VariableStorage const sourceStorage{compiler_.moduleInfo_.getStorage(*it)};
+        if (targetStorage.overlapsWith(sourceStorage)) {
+          targetStackMemoryUsedByOtherParams = true;
+          break;
+        }
+      }
+    }
   }
 
   Stack::iterator const condenseResult{condenseValentBlockBelow(baseIt, (targetHint.type == StackType::INVALID) ? nullptr : &targetHint)};
-  VariableStorage const sourceStorage{compiler_.moduleInfo_.getStorage(*condenseResult)};
-  // if source storage is not in register, no need to move it now, because condense may increase stack size
-  // then the sp offset for example mov reg, [sp + offset] is a larger value and consumes more code size
-  // After condense, the stack size will be recovered to a smaller size, then the offset is smaller and save code size
-  if (sourceStorage.type == StorageType::REGISTER) {
-    if (targetPos.reg == TReg::NONE) {
+  if ((targetPos.reg == TReg::NONE) && !targetStackMemoryUsedByOtherParams) {
+    VariableStorage const sourceStorage{compiler_.moduleInfo_.getStorage(*condenseResult)};
+    // Move to stack in advance to save regiters for the following condense, if source storage is register and target is unconflict stack memory
+    //
+    // if source storage is not in register, no need to move it now, because condense may increase stack size
+    // then the sp offset for example mov reg, [sp + offset] is a larger value and consumes more code size
+    // After condense, the stack size will be recovered to a smaller size, then the offset is smaller and save code size
+    if (sourceStorage.type == StorageType::REGISTER) {
       // Move to stack if target is stack memory
       VariableStorage const targetStorage{VariableStorage::stackMemory(paramType, targetPos.offsetToStackBase)};
 
@@ -1480,7 +1501,6 @@ Stack::iterator Common::condenseParameter(ParamPos const targetPos, vb::MachineT
                                 StackElement::tempResult(paramType, targetStorage, compiler_.moduleInfo_.getStackMemoryReferencePosition()));
     }
   }
-
   return condenseResult;
 }
 

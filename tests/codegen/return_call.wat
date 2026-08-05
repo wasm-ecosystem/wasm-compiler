@@ -170,4 +170,38 @@
     ;; X86_64-NEXT: jmp  {{0x[0-9a-f]+}}
     return_call $callee64
   )
+
+  ;; CHECK-LABEL: Function[10] Body
+  ;; Parameter 8 is stack-passed, but its source is the register result of i32.add.
+  (func $tail_call_register_to_stack (param i32 i32 i32 i32 i32 i32 i32 i32 i32 i32) (result i32)
+    local.get 0 local.get 1 local.get 2 local.get 3
+    local.get 4 local.get 5 local.get 6 local.get 7
+    local.get 0
+    i32.const 1
+    i32.add
+    local.get 9
+    ;; AARCH64: add  [[AARCH64_TMP:w[0-9]+]], w19, #1
+    ;; AARCH64-NEXT: str  [[AARCH64_TMP]], [sp, #{{0x[0-9a-f]+}}]
+    ;; TRICORE: add  [[TRICORE_TMP:d[0-9]+]], d8, #1
+    ;; TRICORE-NEXT: st.w  [sp]#{{0x[0-9a-f]+}}, [[TRICORE_TMP]]
+    ;; X86_64: mov  [[X86_64_TMP:r[0-9]+d]], ebp
+    ;; X86_64-NEXT: add  [[X86_64_TMP]], 1
+    ;; X86_64-NEXT: mov  dword ptr [rsp + {{0x[0-9a-f]+}}], [[X86_64_TMP]]
+    return_call $callee10
+  )
+
+  ;; CHECK-LABEL: Function[11] Body
+  ;; p0 reads caller stack parameter 8 while p8 reads ebp, forming p0 <- [p8] and [p8] <- ebp.
+  ;; targetStackMemoryUsedByOtherParams must defer p8's stack write to the parallel-move resolver.
+  (func $tail_call_register_stack_cycle (param i32 i32 i32 i32 i32 i32 i32 i32 i32 i32) (result i32)
+    local.get 8
+    local.get 1 local.get 2 local.get 3 local.get 4
+    local.get 5 local.get 6 local.get 7
+    local.get 0
+    local.get 9
+    ;; X86_64: xchg  dword ptr [rsp + {{0x[0-9a-f]+}}], ebp
+    ;; X86_64: lea  rsp, [rsp +
+    ;; X86_64-NEXT: jmp  {{0x[0-9a-f]+}}
+    return_call $callee10
+  )
 )

@@ -1153,7 +1153,7 @@ void Backend::execReturnCall(uint32_t const fncIndex) {
       ParamPos pos{};
       pos.reg = getREGForArg(type, false, hintTracker);
       if (pos.reg == REG::NONE) {
-        pos.offsetToStackBase = moduleInfo_.fnc.getPreservedStackSize() - offsetInStackArgs(false, calleeStackParamWidth, hintTracker, type);
+        pos.offsetToStackBase = moduleInfo_.fnc.paramWidth - offsetInStackArgs(false, calleeStackParamWidth, hintTracker, type);
       }
       return pos;
     };
@@ -1358,7 +1358,7 @@ void Backend::execReturnCallIndirect(uint32_t const sigIndex, uint32_t const tab
       ParamPos pos{};
       pos.reg = getREGForArg(type, false, hintTracker);
       if (pos.reg == REG::NONE) {
-        pos.offsetToStackBase = moduleInfo_.fnc.getPreservedStackSize() - offsetInStackArgs(false, calleeStackParamWidth, hintTracker, type);
+        pos.offsetToStackBase = moduleInfo_.fnc.paramWidth - offsetInStackArgs(false, calleeStackParamWidth, hintTracker, type);
       }
       return pos;
     };
