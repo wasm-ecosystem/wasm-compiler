@@ -25,9 +25,11 @@ namespace fs = std::filesystem;
 #include <random>
 #include <sstream>
 
+#include "fuzz/wasm_feature_profiles.hpp"
+
 void generateBinary(fs::path const seedFilePath, fs::path const fuzzWasmFilePath) {
   std::ostringstream shellCommandGenerate;
-  shellCommandGenerate << "wasm-opt " << seedFilePath.string() << " -ttf --enable-multivalue -O2 -o " << fuzzWasmFilePath.string();
+  shellCommandGenerate << "wasm-opt " << seedFilePath.string() << " -ttf" << wasmFeatureFlags() << " -O2 -o " << fuzzWasmFilePath.string();
   int const res = system(shellCommandGenerate.str().c_str());
 
   if (res == -1) {
@@ -124,7 +126,7 @@ int main(int argc, char *argv[]) {
 
           std::cout << "Generating corpus from " << wastPath.filename() << "... ";
           std::ostringstream shellCommand;
-          shellCommand << "wast2json --disable-bulk-memory -o " << outputJSONPath << " " << wastPath.string();
+          shellCommand << "wast2json --disable-bulk-memory" << wasmFeatureFlags() << " -o " << outputJSONPath << " " << wastPath.string();
           [[maybe_unused]] int const res = system(shellCommand.str().c_str());
           std::cout << "Done\n";
           fs::remove(outputJSONPath);

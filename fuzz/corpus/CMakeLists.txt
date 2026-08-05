@@ -5,6 +5,7 @@ add_executable(${PROJECT_NAME} ${SRC_FILES})
 
 target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC
 	../../thirdparty/cxxopts/include
+	../../thirdparty/json/include
 )
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "QCC")

@@ -56,11 +56,16 @@ jobs:
               return;
             }
 
-            const branchMatrix = JSON.stringify(["develop", releaseBranches[0].name]);
+            const branchMatrix = JSON.stringify([
+              { branch: "develop", wasm_feature_profile: "develop" },
+              { branch: releaseBranches[0].name, wasm_feature_profile: "release" },
+            ]);
             core.setOutput("branch_matrix", branchMatrix);
 
   unix-fuzz:
     needs: resolve-branches
+    env:
+      VB_FUZZ_WASM_FEATURE_PROFILE: ${{ matrix.wasm_feature_profile }}
     strategy:
       fail-fast: false
       max-parallel: 16
@@ -108,6 +113,8 @@ jobs:
 
   qemu-fuzz:
     needs: resolve-branches
+    env:
+      VB_FUZZ_WASM_FEATURE_PROFILE: ${{ matrix.wasm_feature_profile }}
     strategy:
       fail-fast: false
       max-parallel: 2

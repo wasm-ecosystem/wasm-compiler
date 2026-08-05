@@ -10,7 +10,22 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  resolve-feature-profile:
+    runs-on: ubuntu-latest
+    outputs:
+      wasm_feature_profile: ${{ steps.resolve.outputs.wasm_feature_profile }}
+    steps:
+      - uses: actions/github-script@v7
+        id: resolve
+        with:
+          script: |
+            const baseRef = (context.payload.pull_request?.base.ref ?? context.payload.merge_group?.base_ref ?? context.ref).replace("refs/heads/", "");
+            core.setOutput("wasm_feature_profile", baseRef === "develop" ? "develop" : "release");
+
   unix-fuzz:
+    needs: resolve-feature-profile
+    env:
+      VB_FUZZ_WASM_FEATURE_PROFILE: ${{ needs.resolve-feature-profile.outputs.wasm_feature_profile }}
     strategy:
       fail-fast: false
       matrix:
@@ -50,6 +65,9 @@ jobs:
           cpp_flags: ${{ matrix.flags }}
 
   qemu-fuzz:
+    needs: resolve-feature-profile
+    env:
+      VB_FUZZ_WASM_FEATURE_PROFILE: ${{ needs.resolve-feature-profile.outputs.wasm_feature_profile }}
     runs-on: ubuntu-latest
     container:
       image: ubuntu:24.04

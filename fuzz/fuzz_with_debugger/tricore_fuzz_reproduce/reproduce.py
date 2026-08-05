@@ -14,10 +14,15 @@
 
 import os
 import subprocess
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from wasm_feature_profiles import wasm_feature_flags
 
 
 def convert_wat_to_wasm(wat_file, wasm_file):
-    subprocess.run(["wat2wasm", wat_file, "-o", wasm_file], check=True)
+    subprocess.run(["wat2wasm", *wasm_feature_flags(), wat_file, "-o", wasm_file], check=True)
 
 
 def read_wasm_file(wasm_file):
@@ -105,6 +110,7 @@ def main():
     # Run wasm-interp
     wasm_interp_command = [
         "wasm-interp",
+        *wasm_feature_flags(),
         "--dummy-import-func",
         "--run-all-exports",
         wasm_file,

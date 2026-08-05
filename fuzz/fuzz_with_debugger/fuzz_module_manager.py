@@ -17,6 +17,8 @@ import subprocess
 import random
 import os
 
+from wasm_feature_profiles import wasm_feature_flags
+
 
 class FuzzModuleManager:
     def __init__(
@@ -64,7 +66,7 @@ class FuzzModuleManager:
                     self.__execPrefix + "wasm-opt",
                     self.__seed_file_name,
                     "-ttf",
-                    "--enable-multivalue",
+                    *wasm_feature_flags(),
                     "--enable-bulk-memory-opt",
                     "--denan",
                     "-O2",
@@ -104,6 +106,7 @@ class FuzzModuleManager:
         refOutBytes = subprocess.check_output(
             [
                 self.__execPrefix + "wasm-interp",
+                *wasm_feature_flags(),
                 "--run-all-exports",
                 "--dummy-import-func",
                 self.__targetWasmPath,

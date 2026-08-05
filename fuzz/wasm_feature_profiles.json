@@ -1,0 +1,15 @@
+{
+    "profiles": {
+        "release": {
+            "binaryen_flags": [
+                "--enable-multivalue"
+            ]
+        },
+        "develop": {
+            "binaryen_flags": [
+                "--enable-multivalue",
+                "--enable-tail-call"
+            ]
+        }
+    }
+}
