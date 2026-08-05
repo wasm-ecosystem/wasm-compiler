@@ -1984,6 +1984,23 @@ void Frontend::parseCodeSection() {
         }
         break;
       }
+      case OPCode::RETURN_CALL_INDIRECT: {
+        uint32_t const sigIndex{reduceTypeIndex(br_.readLEB128<uint32_t>())};
+        validationStack_.validateLastNumberType(MachineType::I32, true);
+        validationStack_.validateReturnCall(sigIndex);
+        uint32_t const tableIndex{br_.readLEB128<uint32_t>()};
+        if ((!moduleInfo_.hasTable) || (tableIndex != 0U)) {
+          throw ValidationException(ErrorCode::Table_not_found);
+        }
+
+        if (!currentFrameIsUnreachable()) {
+          uint32_t const numParamsCallee{moduleInfo_.getNumParamsForSignature(sigIndex)};
+          common_.condenseSideEffectInstructionBlewValentBlock(numParamsCallee);
+          compiler_.backend_.execReturnCallIndirect(sigIndex, tableIndex);
+          setCurrentFrameFormallyUnreachable();
+        }
+        break;
+      }
       case OPCode::DROP: {
         validationStack_.drop();
 

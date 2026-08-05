@@ -155,6 +155,11 @@ public:
   /// @param fncIndex WebAssembly function index to tail-call
   void execReturnCall(uint32_t const fncIndex);
 
+  /// @brief Produces machine code for an indirect tail call (return_call_indirect)
+  /// @param sigIndex Signature index required for the indirect callee
+  /// @param tableIndex Index of the WebAssembly table where the function is located
+  void execReturnCallIndirect(uint32_t const sigIndex, uint32_t const tableIndex);
+
   ///
   /// @brief Emit the actual function call to a function declared in the WebAssembly module
   ///
@@ -184,6 +189,16 @@ public:
   /// @param sigIndex Signature index of the function that will be called
   /// @param tableIndex Index of the WebAssembly table where the function is located
   void execIndirectWasmCall(uint32_t const sigIndex, uint32_t const tableIndex);
+
+  /// @brief Produces an indirect function call without saving locals or parameters.
+  /// @param sigIndex Signature index of the function that will be called
+  /// @param spilledLocalsRegMask Registers already spilled by the caller
+  void execIndirectWasmCallWithoutSaveLocals(uint32_t const sigIndex, RegMask const spilledLocalsRegMask);
+
+  /// @brief Emits indirect-table validation and resolves the target entry address into callScrRegs[0].
+  /// @param sigIndex Signature index required for the indirect callee
+  /// pre: indirectCallReg contains the table element index
+  void emitIndirectWasmTargetAddress(uint32_t const sigIndex);
 
   ///
   /// @brief Produces machine code for a Wasm table branch instruction, consuming an I32 that indexes onto a vector of
@@ -549,8 +564,10 @@ public:
   /// @brief Select a default scratch register for breaking a pending parallel-move cycle.
   /// @param moveResolver Resolver whose remaining records describe the still-pending cycle sources
   /// @param sourceStorage Source storage at the cycle head; its machine type selects the GPR or FPR scratch set
+  /// @param indirectCall Whether is indirect call that should keep indirectCallReg
   /// @return Register storage with the same machine type as @p sourceStorage that is not still used as an unresolved source
-  static VariableStorage selectDefaultParallelMoveTemp(ParallelMoveResolver const &moveResolver, VariableStorage const &sourceStorage) VB_NOEXCEPT;
+  static VariableStorage selectDefaultParallelMoveTemp(ParallelMoveResolver const &moveResolver, VariableStorage const &sourceStorage,
+                                                       bool const indirectCall) VB_NOEXCEPT;
 
 private:
   /// @brief Widths of certain entries on the stack

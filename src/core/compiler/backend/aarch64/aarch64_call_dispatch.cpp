@@ -214,7 +214,7 @@ void V1CallBase::resolveRegisterCopies() VB_THROW {
           backend_.emitMoveImpl(targetStorage, sourceStorage, false);
         }},
         ParallelMoveTempProvider{[this](VariableStorage const &sourceStorage) VB_THROW -> VariableStorage {
-          return TBackend::selectDefaultParallelMoveTemp(copyResolver, sourceStorage);
+          return TBackend::selectDefaultParallelMoveTemp(copyResolver, sourceStorage, false);
         }});
   }
 }

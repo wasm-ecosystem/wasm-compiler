@@ -5,6 +5,7 @@
 ### Feature
 
 - Support `return_call` instruction
+- Support `return_call_indirect` instruction
 
 ## 4.2.0
 

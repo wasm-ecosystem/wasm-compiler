@@ -264,3 +264,17 @@
   (i32.const 60) (i32.const 70) (i32.const 80) (i32.const 88) (i32.const 99)
   (i32.const 110) (i32.const 120))
   (i32.const 88))
+
+;; Imported functions cannot use the no-link tail-jump path, but the direct
+;; tail call must still forward its result after the normal call.
+(module
+  (type $binary (func (param i32 i32) (result i32)))
+  (import "spectest" "func-i32-i32" (func $imported (type $binary)))
+
+  (func (export "return_call_import") (param i32 i32) (result i32)
+    local.get 0
+    local.get 1
+    return_call $imported)
+)
+
+(assert_return (invoke "return_call_import" (i32.const 1) (i32.const 2)) (i32.const 3))

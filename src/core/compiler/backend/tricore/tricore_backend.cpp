@@ -1206,6 +1206,7 @@ void Backend::execReturnCall(uint32_t const fncIndex) {
 
     // Resolve register copies
     // coverity[autosar_cpp14_a8_5_2_violation]
+    // coverity[autosar_cpp14_a5_1_9_violation]
     auto const moveEmitter = [this](VariableStorage const &targetStorage, VariableStorage const &sourceStorage) VB_THROW {
       // Temps are always same-type registers, so source and target machine types always match and a plain move suffices.
       emitMoveImpl(targetStorage, sourceStorage, false);
@@ -1216,8 +1217,9 @@ void Backend::execReturnCall(uint32_t const fncIndex) {
     moveResolver.resolveLinear(ParallelMoveEmitter(moveEmitter));
     if (moveResolver.getRecordsCount() != 0U) {
       moveResolver.resolveCycle(ParallelMoveEmitter(moveEmitter),
+                                // coverity[autosar_cpp14_a5_1_9_violation]
                                 ParallelMoveTempProvider{[&moveResolver](VariableStorage const &sourceStorage) VB_THROW -> VariableStorage {
-                                  return selectDefaultParallelMoveTemp(moveResolver, sourceStorage);
+                                  return selectDefaultParallelMoveTemp(moveResolver, sourceStorage, false);
                                 }});
     }
 
@@ -1341,10 +1343,107 @@ void Backend::execDirectFncCallWithoutSaveLocals(uint32_t const fncIndex, bool c
     directWasmCallImpl.iterateResults();
   }
 }
+void Backend::execReturnCallIndirect(uint32_t const sigIndex, uint32_t const tableIndex) {
+  static_cast<void>(tableIndex);
+  assert(moduleInfo_.hasTable && tableIndex == 0U && "Table not defined");
+
+  uint32_t const calleeStackParamWidth{getStackParamWidth(sigIndex, false)};
+  uint32_t const callerStackParamWidth{moduleInfo_.fnc.paramWidth};
+  uint32_t const stackReturnValuesWidth{common_.getStackReturnValueWidth(sigIndex)};
+  if (Common::canTailJump(calleeStackParamWidth, callerStackParamWidth, stackReturnValuesWidth, false)) {
+    RegStackTracker hintTracker{};
+    // coverity[autosar_cpp14_a8_5_2_violation]
+    // coverity[autosar_cpp14_a5_1_9_violation]
+    auto const paramPosFunction = [this, &hintTracker, calleeStackParamWidth](MachineType const type) VB_NOEXCEPT -> ParamPos {
+      ParamPos pos{};
+      pos.reg = getREGForArg(type, false, hintTracker);
+      if (pos.reg == REG::NONE) {
+        pos.offsetToStackBase = moduleInfo_.fnc.getPreservedStackSize() - offsetInStackArgs(false, calleeStackParamWidth, hintTracker, type);
+      }
+      return pos;
+    };
+    // coverity[autosar_cpp14_a5_1_4_violation]
+    Stack::iterator const paramsBase{common_.prepareCallParams(sigIndex, true, Common::ParamPosFunction(paramPosFunction))};
+    uint32_t const numParams{moduleInfo_.getNumParamsForSignature(sigIndex)};
+    uint32_t const parallelMoveCapacity{std::min((numParams * 2U) + 1U, numParams + static_cast<uint32_t>(TReg::NUMREGS) + 1U)};
+    ParallelMoveResolver moveResolver{compiler_.getCompilerMemoryAllocFnc(), compiler_.getCompilerMemoryFreeFnc(), compiler_.getCompilerMemoryCtx(),
+                                      parallelMoveCapacity};
+    RegStackTracker iterTracker{};
+    Stack::iterator currentParam{paramsBase};
+    moduleInfo_.iterateParamsForSignature(
+        sigIndex,
+        // coverity[autosar_cpp14_a5_1_4_violation]
+        // coverity[autosar_cpp14_a5_1_9_violation]
+        FunctionRef<void(MachineType)>(
+            [this, &currentParam, &moveResolver, &iterTracker, calleeStackParamWidth](MachineType const paramType) VB_NOEXCEPT {
+              VariableStorage const sourceStorage{moduleInfo_.getStorage(*currentParam)};
+              REG const targetReg{getREGForArg(paramType, false, iterTracker)};
+              VariableStorage targetStorage{};
+              if (targetReg != REG::NONE) {
+                targetStorage = VariableStorage::reg(paramType, targetReg);
+              } else {
+                uint32_t const offsetFromEntryFP{offsetInStackArgs(false, calleeStackParamWidth, iterTracker, paramType)};
+                targetStorage = VariableStorage::stackMemory(paramType, moduleInfo_.fnc.paramWidth - offsetFromEntryFP);
+              }
+
+              if ((targetReg != REG::NONE) && MachineTypeUtil::is64(paramType)) {
+                moveResolver.push(targetStorage, ParallelMoveTargetType::Extend, sourceStorage);
+                VariableStorage const placeholderSource{(sourceStorage.type == StorageType::REGISTER)
+                                                            ? VariableStorage::reg(paramType, RegUtil::getOtherExtReg(sourceStorage.location.reg))
+                                                            : sourceStorage};
+                moveResolver.push(VariableStorage::reg(paramType, RegUtil::getOtherExtReg(targetReg)), ParallelMoveTargetType::Extend_Placeholder,
+                                  placeholderSource);
+              } else {
+                moveResolver.push(targetStorage, sourceStorage);
+              }
+              common_.removeReference(currentParam);
+              currentParam = stack_.erase(currentParam);
+            }));
+
+    constexpr VariableStorage indexTargetStorage{VariableStorage::reg(MachineType::I32, WasmABI::REGS::indirectCallReg)};
+    moveResolver.push(indexTargetStorage, moduleInfo_.getStorage(*currentParam));
+    common_.removeReference(currentParam);
+    static_cast<void>(stack_.erase(currentParam));
+
+    // coverity[autosar_cpp14_a8_5_2_violation]
+    auto const moveEmitter = [this](VariableStorage const &targetStorage, VariableStorage const &sourceStorage) VB_THROW {
+      emitMoveImpl(targetStorage, sourceStorage, false);
+    };
+    // coverity[autosar_cpp14_a5_1_4_violation]
+    moveResolver.resolveLinear(ParallelMoveEmitter(moveEmitter));
+    if (moveResolver.getRecordsCount() != 0U) {
+      // coverity[autosar_cpp14_a5_1_4_violation]
+      moveResolver.resolveCycle(ParallelMoveEmitter(moveEmitter),
+                                ParallelMoveTempProvider{[&moveResolver](VariableStorage const &sourceStorage) VB_THROW -> VariableStorage {
+                                  return selectDefaultParallelMoveTemp(moveResolver, sourceStorage, true);
+                                }});
+    }
+
+    as_.setStackFrameSize(moduleInfo_.getStackFrameSizeBeforeReturn(), true, true);
+    emitIndirectWasmTargetAddress(sigIndex);
+    as_.INSTR(JI_Aa).setAa(WasmABI::REGS::addrScrReg[0])();
+  } else {
+    execIndirectWasmCallWithoutSaveLocals(sigIndex, RegMask{});
+
+    uint32_t const callerSigIndex{moduleInfo_.getFuncDef(moduleInfo_.fnc.index).sigIndex};
+    uint32_t const numReturnValues{moduleInfo_.getNumReturnValuesForSignature(callerSigIndex)};
+    if (numReturnValues > 0U) {
+      Stack::iterator const returnValuesBase{common_.skipValentBlock(numReturnValues)};
+      common_.loadReturnValues(returnValuesBase, numReturnValues);
+      common_.popReturnValueElems(returnValuesBase, numReturnValues);
+    }
+    emitReturnAndUnwindStack(true);
+  }
+}
+
 void Backend::execIndirectWasmCall(uint32_t const sigIndex, uint32_t const tableIndex) {
   static_cast<void>(tableIndex);
   assert(moduleInfo_.hasTable && tableIndex == 0 && "Table not defined");
   RegMask const spilledLocalsRegMask{common_.saveLocalsAndParamsForFuncCall(false)};
+  execIndirectWasmCallWithoutSaveLocals(sigIndex, spilledLocalsRegMask);
+}
+
+void Backend::execIndirectWasmCallWithoutSaveLocals(uint32_t const sigIndex, RegMask const spilledLocalsRegMask) {
   common_.spillScratchRegsOutOfCallParams(sigIndex, true);
 
   InternalCall indirectCallImpl{*this, sigIndex};
@@ -1367,59 +1466,60 @@ void Backend::execIndirectWasmCall(uint32_t const sigIndex, uint32_t const table
   common_.markLocalsAsSpilled(spilledLocalsRegMask);
 
   // coverity[autosar_cpp14_a5_1_9_violation]
-  indirectCallImpl.emitFncCallWrapper(
-      UnknownIndex, FunctionRef<void()>([this, sigIndex]() {
-        // Check if dynamic function index is in range of table
-        // if (indirectCallReg >= tableInitialSize) trap;
-        UnsignedInRangeCheck<4U> const tableIndexInRangeCheck{UnsignedInRangeCheck<4U>::check(moduleInfo_.tableInitialSize)};
-        if (tableIndexInRangeCheck.inRange()) {
-          as_.cTRAP(TrapCode::INDIRECTCALL_OUTOFBOUNDS,
-                    JumpCondition::u32GeConst4zx(WasmABI::REGS::indirectCallReg, tableIndexInRangeCheck.safeInt()));
-        } else {
-          as_.MOVimm(callScrRegs[0], moduleInfo_.tableInitialSize);
-          as_.cTRAP(TrapCode::INDIRECTCALL_OUTOFBOUNDS, JumpCondition::u32GeReg(WasmABI::REGS::indirectCallReg, callScrRegs[0]));
-        }
-
-        // Load pointer to table start to addrScrReg[0]
-        as_.INSTR(LDA_Aa_deref_Ab_off16sx)
-            .setAa(WasmABI::REGS::addrScrReg[0])
-            .setAb(WasmABI::REGS::linMem)
-            .setOff16sx(SafeInt<16U>::fromConst<-Basedata::FromEnd::tableAddressOffset>())();
-
-        // Step to the actual table entry we are targeting
-        as_.INSTR(ADDSCA_Ac_Ab_Da_nSc)
-            .setAc(WasmABI::REGS::addrScrReg[0])
-            .setAb(WasmABI::REGS::addrScrReg[0])
-            .setDa(WasmABI::REGS::indirectCallReg)
-            .setNSc(SafeUInt<2>::fromConst<3U>())();
-
-        // Load function signature index and check if it matches
-        as_.loadWordDRegDerefARegDisp16sx(callScrRegs[0], WasmABI::REGS::addrScrReg[0], SafeInt<16U>::fromConst<4>());
-        SignedInRangeCheck<4U> const indexInRangeCheck{SignedInRangeCheck<4U>::check(static_cast<int32_t>(sigIndex))};
-        if (indexInRangeCheck.inRange()) {
-          as_.cTRAP(TrapCode::INDIRECTCALL_WRONGSIG, JumpCondition::i32NeConst4sx(callScrRegs[0], indexInRangeCheck.safeInt()));
-        } else {
-          as_.MOVimm(callScrRegs[1], sigIndex);
-          as_.cTRAP(TrapCode::INDIRECTCALL_WRONGSIG, JumpCondition::i32NeReg(callScrRegs[0], callScrRegs[1]));
-        }
-
-        // Load the offset
-        as_.INSTR(LDA_Ac_deref_Ab).setAc(WasmABI::REGS::addrScrReg[1]).setAb(WasmABI::REGS::addrScrReg[0])();
-
-        // Check if the offset is zero which means the function is not linked
-        as_.cTRAP(TrapCode::CALLED_FUNCTION_NOT_LINKED, JumpCondition::addrEqZero(WasmABI::REGS::addrScrReg[1]));
-
-        // Otherwise calculate the absolute address and execute the call
-        // addrScrReg[0] = startAddressOfModuleBinary
-        as_.INSTR(LDA_Aa_deref_Ab_off16sx)
-            .setAa(WasmABI::REGS::addrScrReg[0])
-            .setAb(WasmABI::REGS::linMem)
-            .setOff16sx(SafeInt<16U>::fromConst<-Basedata::FromEnd::binaryModuleStartAddressOffset>())();
-        as_.INSTR(ADDA_Aa_Ab).setAa(WasmABI::REGS::addrScrReg[0]).setAb(WasmABI::REGS::addrScrReg[1])();
-        as_.INSTR(FCALLI_Aa).setAa(WasmABI::REGS::addrScrReg[0])();
-      }));
+  indirectCallImpl.emitFncCallWrapper(UnknownIndex, FunctionRef<void()>([this, sigIndex]() {
+                                        emitIndirectWasmTargetAddress(sigIndex);
+                                        as_.INSTR(FCALLI_Aa).setAa(WasmABI::REGS::addrScrReg[0])();
+                                      }));
 
   indirectCallImpl.iterateResults();
+}
+
+void Backend::emitIndirectWasmTargetAddress(uint32_t const sigIndex) {
+  // Check if dynamic function index is in range of table
+  // if (indirectCallReg >= tableInitialSize) trap;
+  UnsignedInRangeCheck<4U> const tableIndexInRangeCheck{UnsignedInRangeCheck<4U>::check(moduleInfo_.tableInitialSize)};
+  if (tableIndexInRangeCheck.inRange()) {
+    as_.cTRAP(TrapCode::INDIRECTCALL_OUTOFBOUNDS, JumpCondition::u32GeConst4zx(WasmABI::REGS::indirectCallReg, tableIndexInRangeCheck.safeInt()));
+  } else {
+    as_.MOVimm(callScrRegs[0], moduleInfo_.tableInitialSize);
+    as_.cTRAP(TrapCode::INDIRECTCALL_OUTOFBOUNDS, JumpCondition::u32GeReg(WasmABI::REGS::indirectCallReg, callScrRegs[0]));
+  }
+
+  // Load pointer to table start to addrScrReg[0]
+  as_.INSTR(LDA_Aa_deref_Ab_off16sx)
+      .setAa(WasmABI::REGS::addrScrReg[0])
+      .setAb(WasmABI::REGS::linMem)
+      .setOff16sx(SafeInt<16U>::fromConst<-Basedata::FromEnd::tableAddressOffset>())();
+  // Step to the actual table entry we are targeting
+  as_.INSTR(ADDSCA_Ac_Ab_Da_nSc)
+      .setAc(WasmABI::REGS::addrScrReg[0])
+      .setAb(WasmABI::REGS::addrScrReg[0])
+      .setDa(WasmABI::REGS::indirectCallReg)
+      .setNSc(SafeUInt<2>::fromConst<3U>())();
+
+  // Load function signature index and check if it matches
+  as_.loadWordDRegDerefARegDisp16sx(callScrRegs[0], WasmABI::REGS::addrScrReg[0], SafeInt<16U>::fromConst<4>());
+  SignedInRangeCheck<4U> const indexInRangeCheck{SignedInRangeCheck<4U>::check(static_cast<int32_t>(sigIndex))};
+  if (indexInRangeCheck.inRange()) {
+    as_.cTRAP(TrapCode::INDIRECTCALL_WRONGSIG, JumpCondition::i32NeConst4sx(callScrRegs[0], indexInRangeCheck.safeInt()));
+  } else {
+    as_.MOVimm(callScrRegs[1], sigIndex);
+    as_.cTRAP(TrapCode::INDIRECTCALL_WRONGSIG, JumpCondition::i32NeReg(callScrRegs[0], callScrRegs[1]));
+  }
+
+  // Load the offset
+  as_.INSTR(LDA_Ac_deref_Ab).setAc(WasmABI::REGS::addrScrReg[1]).setAb(WasmABI::REGS::addrScrReg[0])();
+
+  // Check if the offset is zero which means the function is not linked
+  as_.cTRAP(TrapCode::CALLED_FUNCTION_NOT_LINKED, JumpCondition::addrEqZero(WasmABI::REGS::addrScrReg[1]));
+
+  // Otherwise calculate the absolute address
+  // addrScrReg[0] = startAddressOfModuleBinary
+  as_.INSTR(LDA_Aa_deref_Ab_off16sx)
+      .setAa(WasmABI::REGS::addrScrReg[0])
+      .setAb(WasmABI::REGS::linMem)
+      .setOff16sx(SafeInt<16U>::fromConst<-Basedata::FromEnd::binaryModuleStartAddressOffset>())();
+  as_.INSTR(ADDA_Aa_Ab).setAa(WasmABI::REGS::addrScrReg[0]).setAb(WasmABI::REGS::addrScrReg[1])();
 }
 
 #if BUILTIN_FUNCTIONS
@@ -5324,12 +5424,16 @@ bool Backend::stackElementConflictsWithParamReg(StackElement const &element, REG
   return false;
 }
 
-VariableStorage Backend::selectDefaultParallelMoveTemp(ParallelMoveResolver const &moveResolver, VariableStorage const &sourceStorage) VB_NOEXCEPT {
+VariableStorage Backend::selectDefaultParallelMoveTemp(ParallelMoveResolver const &moveResolver, VariableStorage const &sourceStorage,
+                                                       bool const indirectCall) VB_NOEXCEPT {
   MachineType const machineType{sourceStorage.machineType};
   // Free scratch regs may be reused as move temps once they are not part of the unresolved cycle sources.
   Span<REG const> const staticScratchRegs{
       vb::Span<REG const>(WasmABI::dr.data(), WasmABI::dr.size()).subspan(static_cast<size_t>(WasmABI::scratchRegStart))};
   for (REG const currentReg : staticScratchRegs) {
+    if (indirectCall && (currentReg == WasmABI::REGS::indirectCallReg)) {
+      continue;
+    }
     // scratch registers can only be used as source in cycles that are still pending.
     if (!moveResolver.regUsedAsSource(currentReg)) {
       if (!RegUtil::canBeExtReg(currentReg) || !moveResolver.regUsedAsSource(RegUtil::getOtherExtReg(currentReg))) {
