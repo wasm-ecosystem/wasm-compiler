@@ -83,8 +83,8 @@ struct ExpectedData {
 
 void generateBinary(fs::path const seedFilePath, fs::path const fuzzWasmFilePath) {
   std::ostringstream shellCommandGenerate;
-  shellCommandGenerate << "wasm-opt " << seedFilePath.string() << " -ttf --enable-multivalue  --enable-bulk-memory-opt  -O2 --denan -o "
-                       << fuzzWasmFilePath.string();
+  shellCommandGenerate << "wasm-opt " << seedFilePath.string()
+                       << " -ttf --enable-multivalue --enable-tail-call --enable-bulk-memory-opt  -O2 --denan -o " << fuzzWasmFilePath.string();
   int const res = system(shellCommandGenerate.str().c_str());
 
   if (res == -1) {
@@ -96,7 +96,7 @@ void generateBinary(fs::path const seedFilePath, fs::path const fuzzWasmFilePath
 
 void generateReferenceOutput(fs::path const fuzzWasmFilePath, fs::path const referenceOutputFilePath) {
   std::ostringstream shellCommandReferenceRun;
-  shellCommandReferenceRun << "wasm-interp --run-all-exports --dummy-import-func " << fuzzWasmFilePath.string() << " > "
+  shellCommandReferenceRun << "wasm-interp" << " --enable-tail-call --run-all-exports --dummy-import-func " << fuzzWasmFilePath.string() << " > "
                            << referenceOutputFilePath.string();
   int const res = system(shellCommandReferenceRun.str().c_str());
 
@@ -502,7 +502,7 @@ int main(int argc, char *argv[]) {
       if (fs::path(inputTempPath).extension() == ".wat") {
         wasmFilePath.replace_extension(".wasm");
         std::ostringstream shellCommand;
-        shellCommand << "wat2wasm " << inputTempPath << " -o " << wasmFilePath.string();
+        shellCommand << "wat2wasm" << " --enable-tail-call " << inputTempPath << " -o " << wasmFilePath.string();
         int const res = system(shellCommand.str().c_str());
         if (res != 0) {
           std::cerr << "wat2wasm failed for " << inputTempPath << std::endl;

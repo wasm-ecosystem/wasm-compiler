@@ -65,6 +65,7 @@ class FuzzModuleManager:
                     self.__seed_file_name,
                     "-ttf",
                     "--enable-multivalue",
+                    "--enable-tail-call",
                     "--enable-bulk-memory-opt",
                     "--denan",
                     "-O2",
@@ -104,6 +105,7 @@ class FuzzModuleManager:
         refOutBytes = subprocess.check_output(
             [
                 self.__execPrefix + "wasm-interp",
+                "--enable-tail-call",
                 "--run-all-exports",
                 "--dummy-import-func",
                 self.__targetWasmPath,
