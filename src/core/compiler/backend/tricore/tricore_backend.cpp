@@ -5434,10 +5434,12 @@ VariableStorage Backend::selectDefaultParallelMoveTemp(ParallelMoveResolver cons
       continue;
     }
     // scratch registers can only be used as source in cycles that are still pending.
-    if (!moveResolver.regUsedAsSource(currentReg)) {
-      if (!RegUtil::canBeExtReg(currentReg) || !moveResolver.regUsedAsSource(RegUtil::getOtherExtReg(currentReg))) {
-        return VariableStorage::reg(machineType, currentReg);
-      }
+    bool const pairedRegIsAvailable{RegUtil::canBeExtReg(currentReg) && !moveResolver.regUsedAsSource(RegUtil::getOtherExtReg(currentReg))};
+    bool const requiresExtendedRegister{MachineTypeUtil::is64(machineType)};
+    bool const currentRegIsAvailable{!moveResolver.regUsedAsSource(currentReg)};
+    bool const canUseCurrentReg{currentRegIsAvailable && (!requiresExtendedRegister || pairedRegIsAvailable)};
+    if (canUseCurrentReg) {
+      return VariableStorage::reg(machineType, currentReg);
     }
   }
 

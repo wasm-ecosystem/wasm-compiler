@@ -137,6 +137,7 @@ class FuzzModuleManager:
         for i in range(seed_offset):
             seed = random.random()
 
+        print(f"Starting fuzzer with random seed: {seed} (offset: {seed_offset})")
         random.seed(seed)
 
     def saveLastModule(self, message: str) -> None:

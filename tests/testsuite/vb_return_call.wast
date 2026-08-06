@@ -298,6 +298,21 @@
   (i32.const 110) (i32.const 120))
   (i32.const 88))
 
+;; An i64 parameter swap forms a register-pair parallel-move cycle on TriCore.
+(module
+  (func $callee (param i64 i64) (result i64)
+    local.get 0)
+
+  (func (export "i64_param_swap") (param i64 i64) (result i64)
+    local.get 1
+    local.get 0
+    return_call $callee)
+)
+
+(assert_return (invoke "i64_param_swap"
+  (i64.const 0x1122334455667788) (i64.const 0x8877665544332211))
+  (i64.const 0x8877665544332211))
+
 ;; Imported functions cannot use the no-link tail-jump path, but the direct
 ;; tail call must still forward its result after the normal call.
 (module
