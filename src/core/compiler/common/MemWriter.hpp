@@ -52,7 +52,7 @@ public:
   ///
   /// @brief Resize the MemWriter active size
   ///
-  /// Will fill new bytes with undefined data
+  /// Will fill new bytes with zeroes
   ///
   /// @param size New active size
   /// @throws vb::RuntimeError If size is increased and reallocation failed

@@ -1,0 +1,478 @@
+WebAssembly Function Bodies
+vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
+40 42  mov.aa  a2, a4
+02 40  mov  d0, d4
+5d 00 02 00  jl  #8
+d9 b3 04 00  lea  a3, [a11]#4
+4d 00 e0 ef  mfcr  d14, #0xfe00
+19 2f f0 ff  ld.w  d15, [a2]#-0x10
+5f fe 11 00  jeq  d14, d15, #0x36
+ef 4e 0c 80  jnz.t  d14, #0x14, #0x30
+60 0d  mov.a  a13, d0
+40 2e  mov.aa  a14, a2
+40 3f  mov.aa  a15, a3
+0d 00 40 02  rslcx  
+80 d0  mov.d  d0, a13
+40 e2  mov.aa  a2, a14
+40 f3  mov.aa  a3, a15
+1d ff f0 ff  j  #0xc
+40 3b  mov.aa  a11, a3
+0d 00 80 01  ret  
+99 2a d8 ff  ld.a  sp, [a2]#-0x28
+d4 ac  ld.a  a12, [sp]
+74 c0  st.w  [a12], d0
+99 2b dc ff  ld.a  a11, [a2]#-0x24
+dc 0b  ji  a11
+44 00 00 00  Size of the function body: 68
+vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
+89 af 3c f5  st.w  [+sp]#-4, d15
+80 af  mov.d  d15, sp
+16 3f  and  d15, #0x3f
+60 f3  mov.a  a3, d15
+01 3a 20 a0  sub.a  sp, sp, a3
+d9 aa f0 ef  lea  sp, [sp]#-0x50
+78 02  st.w  [sp]#8, d15
+99 23 d8 ef  ld.a  a3, [a2]#-0x68
+01 a3 30 f4  ge.a  d15, a3, sp
+6f 0f 06 00  jz.t  d15, #0, #0x70
+bb d0 00 00  mov.u  d0, #0xd
+1d ff e5 ff  j  #0x36
+49 a0 90 09  stlcx  [sp]#0x10
+80 f4  mov.d  d4, a15
+82 05  mov  d5, #0
+bb 00 09 60  mov.u  d6, #0x90
+40 24  mov.aa  a4, a2
+99 25 e0 ef  ld.a  a5, [a2]#-0x60
+f4 a2  st.a  [sp], a2
+2d 05 00 00  calli  a5
+80 2f  mov.d  d15, a2
+d4 a2  ld.a  a2, [sp]
+df 0f 05 80  jne  d15, #0, #0x96
+82 40  mov  d0, #4
+1d ff d2 ff  j  #0x36
+df ff 05 80  jne  d15, #-1, #0xa0
+82 30  mov  d0, #3
+1d ff cd ff  j  #0x36
+60 f2  mov.a  a2, d15
+d9 22 10 20  lea  a2, [a2]#0x90
+f4 a2  st.a  [sp], a2
+49 a0 10 09  ldlcx  [sp]#0x10
+d4 a2  ld.a  a2, [sp]
+99 a3 08 00  ld.a  a3, [sp]#8
+30 3a  add.a  sp, a3
+d9 aa 10 10  lea  sp, [sp]#0x50
+99 23 e8 ff  ld.a  a3, [a2]#-0x18
+44 af  ld.w  d15, [sp+]
+00 70  fret  
+78 00 00 00  Size of the function body: 120
+vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
+20 84  sub.a  sp, #0x84
+99 2c d8 ef  ld.a  a12, [a2]#-0x68
+01 ac 30 e4  ge.a  d14, a12, sp
+6f 0e cd ff  jnz.t  d14, #0, #0x68
+39 25 f8 ff  ld.bu  d5, [a2]#-8
+df 05 05 00  jeq  d5, #0, #0xe0
+02 50  mov  d0, d5
+1d ff e0 ff  j  #0x9c
+bb 00 02 80  mov.u  d8, #0x20
+a0 1c  mov.a  a12, #1
+a0 0d  mov.a  a13, #0
+80 d6  mov.d  d6, a13
+80 c7  mov.d  d7, a12
+0b 76 b0 61  max.u  d6, d6, d7
+42 86  add  d6, d8
+3f 86 d4 ff  jlt.u  d6, d8, #0x9a
+60 6f  mov.a  a15, d6
+0e 64  jltz  d6, #0x100
+01 f3 30 64  ge.a  d6, a3, a15
+f6 63  jnz  d6, #0x104
+61 ff a4 ff  fcall  #0x48
+30 2d  add.a  a13, a2
+30 2c  add.a  a12, a2
+80 d6  mov.d  d6, a13
+80 c7  mov.d  d7, a12
+3f 76 1b 80  jlt.u  d6, d7, #0x142
+c6 76  xor  d6, d7
+6f 06 10 80  jnz.t  d6, #0, #0x132
+6f 07 06 00  jz.t  d7, #0, #0x122
+04 d6  ld.bu  d6, [a13+]
+1b f8 ff 8f  addi  d8, d8, #-1
+24 c6  st.b  [a12+], d6
+09 d6 48 01  ld.d  e6, [a13+]#8
+1b 88 ff 8f  addi  d8, d8, #-8
+89 c6 48 01  st.d  [a12+]#8, e6
+ff 88 fa ff  jge.u  d8, #8, #0x122
+bf 18 27 80  jlt.u  d8, #1, #0x180
+04 d6  ld.bu  d6, [a13+]
+24 c6  st.b  [a12+], d6
+9f 18 fe ff  jned  d8, #1, #0x136
+1d 00 21 00  j  #0x180
+42 86  add  d6, d8
+60 6d  mov.a  a13, d6
+42 87  add  d7, d8
+60 7c  mov.a  a12, d7
+c6 76  xor  d6, d7
+6f 06 12 80  jnz.t  d6, #0, #0x170
+6f 07 08 00  jz.t  d7, #0, #0x160
+09 d6 7f f4  ld.bu  d6, [+a13]#-1
+1b f8 ff 8f  addi  d8, d8, #-1
+89 c6 3f f4  st.b  [+a12]#-1, d6
+09 d6 78 f5  ld.d  e6, [+a13]#-8
+1b 88 ff 8f  addi  d8, d8, #-8
+89 c6 78 f5  st.d  [+a12]#-8, e6
+ff 88 fa ff  jge.u  d8, #8, #0x160
+bf 18 08 80  jlt.u  d8, #1, #0x180
+09 d6 7f f4  ld.bu  d6, [+a13]#-1
+89 c6 3f f4  st.b  [+a12]#-1, d6
+9f 18 fc ff  jned  d8, #1, #0x174
+d9 aa 04 20  lea  sp, [sp]#0x84
+00 70  fret  
+00 00  nop  
+c4 00 00 00  Size of the function body: 196
+vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
+20 84  sub.a  sp, #0x84
+99 2c d8 ef  ld.a  a12, [a2]#-0x68
+01 ac 30 e4  ge.a  d14, a12, sp
+6f 0e 69 ff  jnz.t  d14, #0, #0x68
+39 25 f8 ff  ld.bu  d5, [a2]#-8
+df 05 05 00  jeq  d5, #0, #0x1a8
+02 50  mov  d0, d5
+1d ff 7c ff  j  #0x9c
+bb 10 02 80  mov.u  d8, #0x21
+a0 2c  mov.a  a12, #2
+a0 1d  mov.a  a13, #1
+80 d6  mov.d  d6, a13
+80 c7  mov.d  d7, a12
+0b 76 b0 61  max.u  d6, d6, d7
+42 86  add  d6, d8
+3f 86 70 ff  jlt.u  d6, d8, #0x9a
+60 6f  mov.a  a15, d6
+0e 64  jltz  d6, #0x1c8
+01 f3 30 64  ge.a  d6, a3, a15
+f6 63  jnz  d6, #0x1cc
+61 ff 40 ff  fcall  #0x48
+30 2d  add.a  a13, a2
+30 2c  add.a  a12, a2
+80 d6  mov.d  d6, a13
+80 c7  mov.d  d7, a12
+3f 76 1b 80  jlt.u  d6, d7, #0x20a
+c6 76  xor  d6, d7
+6f 06 10 80  jnz.t  d6, #0, #0x1fa
+6f 07 06 00  jz.t  d7, #0, #0x1ea
+04 d6  ld.bu  d6, [a13+]
+1b f8 ff 8f  addi  d8, d8, #-1
+24 c6  st.b  [a12+], d6
+09 d6 48 01  ld.d  e6, [a13+]#8
+1b 88 ff 8f  addi  d8, d8, #-8
+89 c6 48 01  st.d  [a12+]#8, e6
+ff 88 fa ff  jge.u  d8, #8, #0x1ea
+bf 18 27 80  jlt.u  d8, #1, #0x248
+04 d6  ld.bu  d6, [a13+]
+24 c6  st.b  [a12+], d6
+9f 18 fe ff  jned  d8, #1, #0x1fe
+1d 00 21 00  j  #0x248
+42 86  add  d6, d8
+60 6d  mov.a  a13, d6
+42 87  add  d7, d8
+60 7c  mov.a  a12, d7
+c6 76  xor  d6, d7
+6f 06 12 80  jnz.t  d6, #0, #0x238
+6f 07 08 00  jz.t  d7, #0, #0x228
+09 d6 7f f4  ld.bu  d6, [+a13]#-1
+1b f8 ff 8f  addi  d8, d8, #-1
+89 c6 3f f4  st.b  [+a12]#-1, d6
+09 d6 78 f5  ld.d  e6, [+a13]#-8
+1b 88 ff 8f  addi  d8, d8, #-8
+89 c6 78 f5  st.d  [+a12]#-8, e6
+ff 88 fa ff  jge.u  d8, #8, #0x228
+bf 18 08 80  jlt.u  d8, #1, #0x248
+09 d6 7f f4  ld.bu  d6, [+a13]#-1
+89 c6 3f f4  st.b  [+a12]#-1, d6
+9f 18 fc ff  jned  d8, #1, #0x23c
+d9 aa 04 20  lea  sp, [sp]#0x84
+00 70  fret  
+00 00  nop  
+c4 00 00 00  Size of the function body: 196
+vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
+20 84  sub.a  sp, #0x84
+99 2c d8 ef  ld.a  a12, [a2]#-0x68
+01 ac 30 e4  ge.a  d14, a12, sp
+6f 0e 05 ff  jnz.t  d14, #0, #0x68
+39 25 f8 ff  ld.bu  d5, [a2]#-8
+df 05 05 00  jeq  d5, #0, #0x270
+02 50  mov  d0, d5
+1d ff 18 ff  j  #0x9c
+bb 20 02 80  mov.u  d8, #0x22
+a0 1c  mov.a  a12, #1
+a0 0d  mov.a  a13, #0
+80 d6  mov.d  d6, a13
+80 c7  mov.d  d7, a12
+0b 76 b0 61  max.u  d6, d6, d7
+42 86  add  d6, d8
+3f 86 0c ff  jlt.u  d6, d8, #0x9a
+60 6f  mov.a  a15, d6
+0e 64  jltz  d6, #0x290
+01 f3 30 64  ge.a  d6, a3, a15
+f6 63  jnz  d6, #0x294
+61 ff dc fe  fcall  #0x48
+30 2d  add.a  a13, a2
+30 2c  add.a  a12, a2
+80 d6  mov.d  d6, a13
+80 c7  mov.d  d7, a12
+3f 76 1b 80  jlt.u  d6, d7, #0x2d2
+c6 76  xor  d6, d7
+6f 06 10 80  jnz.t  d6, #0, #0x2c2
+6f 07 06 00  jz.t  d7, #0, #0x2b2
+04 d6  ld.bu  d6, [a13+]
+1b f8 ff 8f  addi  d8, d8, #-1
+24 c6  st.b  [a12+], d6
+09 d6 48 01  ld.d  e6, [a13+]#8
+1b 88 ff 8f  addi  d8, d8, #-8
+89 c6 48 01  st.d  [a12+]#8, e6
+ff 88 fa ff  jge.u  d8, #8, #0x2b2
+bf 18 27 80  jlt.u  d8, #1, #0x310
+04 d6  ld.bu  d6, [a13+]
+24 c6  st.b  [a12+], d6
+9f 18 fe ff  jned  d8, #1, #0x2c6
+1d 00 21 00  j  #0x310
+42 86  add  d6, d8
+60 6d  mov.a  a13, d6
+42 87  add  d7, d8
+60 7c  mov.a  a12, d7
+c6 76  xor  d6, d7
+6f 06 12 80  jnz.t  d6, #0, #0x300
+6f 07 08 00  jz.t  d7, #0, #0x2f0
+09 d6 7f f4  ld.bu  d6, [+a13]#-1
+1b f8 ff 8f  addi  d8, d8, #-1
+89 c6 3f f4  st.b  [+a12]#-1, d6
+09 d6 78 f5  ld.d  e6, [+a13]#-8
+1b 88 ff 8f  addi  d8, d8, #-8
+89 c6 78 f5  st.d  [+a12]#-8, e6
+ff 88 fa ff  jge.u  d8, #8, #0x2f0
+bf 18 08 80  jlt.u  d8, #1, #0x310
+09 d6 7f f4  ld.bu  d6, [+a13]#-1
+89 c6 3f f4  st.b  [+a12]#-1, d6
+9f 18 fc ff  jned  d8, #1, #0x304
+d9 aa 04 20  lea  sp, [sp]#0x84
+00 70  fret  
+00 00  nop  
+c4 00 00 00  Size of the function body: 196
+vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
+20 94  sub.a  sp, #0x94
+99 2c d8 ef  ld.a  a12, [a2]#-0x68
+01 ac 30 e4  ge.a  d14, a12, sp
+6f 0e a1 fe  jnz.t  d14, #0, #0x68
+39 25 f8 ff  ld.bu  d5, [a2]#-8
+df 05 05 00  jeq  d5, #0, #0x338
+02 50  mov  d0, d5
+1d ff b4 fe  j  #0x9c
+60 8f  mov.a  a15, d8
+0e 85  jltz  d8, #0x344
+b0 1f  add.a  a15, #1
+01 f3 30 94  ge.a  d9, a3, a15
+f6 93  jnz  d9, #0x348
+61 ff 82 fe  fcall  #0x48
+30 2f  add.a  a15, a2
+39 f2 ff ff  ld.bu  d2, [a15]#-1
+d9 aa 14 20  lea  sp, [sp]#0x94
+00 70  fret  
+38 00 00 00  Size of the function body: 56
+
+Initial Linear Memory Data
+vv vv vv vv vv vv vv vv vv vv  Data segment values, padded to 4B 
+03 01 04 01 05 09 02 06 05 03 05 08 09 07 09 03 02 03 06 04 05 09 02 06 07 03 04 08 09 07 09 03 00 07 01 00 00 00 00 00
+25 00 00 00  Data segment size: 37
+00 00 00 00  Data segment offset: 0
+01 00 00 00  Number of data segments: 1
+
+Function Names
+00 00 00 00  Number of function names: 0
+04 00 00 00  Section size (excl. this value): 4
+
+Start Function
+00 00 00 00  Section size (excl. this value, 0 means no start function): 0
+
+Mutable Non-Exported Globals
+00 00 00 00  Number of mutable globals: 0
+04 00 00 00  Section size (excl. this value): 4
+
+Dynamically Imported Functions
+00 00 00 00  Number of dynamically imported functions: 0
+04 00 00 00  Section size (excl. this value): 4
+
+Linear Memory
+01 00 00 00  Initial linear memory size in multiples of 64kB (0xFFFF'FFFF = no memory): 1
+
+Exported Globals
+00 00 00 00  Number of exported globals: 0
+04 00 00 00  Section size (excl. this value): 4
+
+Exported Functions
+vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI, padded to 4B 
+40 52  mov.aa  a2, a5
+20 20  sub.a  sp, #0x20
+b5 ab 10 00  st.a  [sp]#0x10, a11
+b5 a6 00 00  st.a  [sp]#0, a6
+b5 a7 14 00  st.a  [sp]#0x14, a7
+99 23 e8 ff  ld.a  a3, [a2]#-0x18
+99 2c d8 ff  ld.a  a12, [a2]#-0x28
+bd 0c 14 80  jnz.a  a12, #0x3f4
+b5 2a d8 ff  st.a  [a2]#-0x28, sp
+5d 00 02 00  jl  #0x3d8
+d9 bb 2c 00  lea  a11, [a11]#0x2c
+b5 2b dc ff  st.a  [a2]#-0x24, a11
+4d 00 e0 ef  mfcr  d14, #0xfe00
+59 2e f0 ff  st.w  [a2]#-0x10, d14
+99 2c d8 ef  ld.a  a12, [a2]#-0x68
+d9 cc 00 01  lea  a12, [a12]#0x1000
+b5 2c e0 ff  st.a  [a2]#-0x20, a12
+99 2c d8 ef  ld.a  a12, [a2]#-0x68
+01 ac 30 e4  ge.a  d14, a12, sp
+6f 0e 36 fe  jnz.t  d14, #0, #0x68
+61 ff 62 fe  fcall  #0xc4
+99 2c d8 ff  ld.a  a12, [a2]#-0x28
+7d ca 07 80  jne.a  sp, a12, #0x416
+82 0f  mov  d15, #0
+59 2f d8 ff  st.w  [a2]#-0x28, d15
+59 2f dc ff  st.w  [a2]#-0x24, d15
+99 ab 10 00  ld.a  a11, [sp]#0x10
+d9 aa 20 00  lea  sp, [sp]#0x20
+0d 00 80 01  ret  
+6e 00 00 00  Function wrapper size: 110
+28 29 00 00  Function signature, padded to 4B: "()"
+02 00 00 00  Function signature length: 2
+vv vv vv vv vv vv vv vv vv vv  Export name, padded to 4B: "copy32byte"
+63 6f 70 79 33 32 62 79 74 65 00 00
+0a 00 00 00  Export name length: 10
+00 00 00 00  WebAssembly function index: 0
+vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI, padded to 4B 
+40 52  mov.aa  a2, a5
+20 20  sub.a  sp, #0x20
+b5 ab 10 00  st.a  [sp]#0x10, a11
+b5 a6 00 00  st.a  [sp]#0, a6
+b5 a7 14 00  st.a  [sp]#0x14, a7
+99 23 e8 ff  ld.a  a3, [a2]#-0x18
+99 2c d8 ff  ld.a  a12, [a2]#-0x28
+bd 0c 14 80  jnz.a  a12, #0x484
+b5 2a d8 ff  st.a  [a2]#-0x28, sp
+5d 00 02 00  jl  #0x468
+d9 bb 2c 00  lea  a11, [a11]#0x2c
+b5 2b dc ff  st.a  [a2]#-0x24, a11
+4d 00 e0 ef  mfcr  d14, #0xfe00
+59 2e f0 ff  st.w  [a2]#-0x10, d14
+99 2c d8 ef  ld.a  a12, [a2]#-0x68
+d9 cc 00 01  lea  a12, [a12]#0x1000
+b5 2c e0 ff  st.a  [a2]#-0x20, a12
+99 2c d8 ef  ld.a  a12, [a2]#-0x68
+01 ac 30 e4  ge.a  d14, a12, sp
+6f 0e ee fd  jnz.t  d14, #0, #0x68
+61 ff 7e fe  fcall  #0x18c
+99 2c d8 ff  ld.a  a12, [a2]#-0x28
+7d ca 07 80  jne.a  sp, a12, #0x4a6
+82 0f  mov  d15, #0
+59 2f d8 ff  st.w  [a2]#-0x28, d15
+59 2f dc ff  st.w  [a2]#-0x24, d15
+99 ab 10 00  ld.a  a11, [sp]#0x10
+d9 aa 20 00  lea  sp, [sp]#0x20
+0d 00 80 01  ret  
+6e 00 00 00  Function wrapper size: 110
+28 29 00 00  Function signature, padded to 4B: "()"
+02 00 00 00  Function signature length: 2
+vv vv vv vv vv vv vv vv vv vv  Export name, padded to 4B: "copy33byte"
+63 6f 70 79 33 33 62 79 74 65 00 00
+0a 00 00 00  Export name length: 10
+01 00 00 00  WebAssembly function index: 1
+vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI, padded to 4B 
+40 52  mov.aa  a2, a5
+20 20  sub.a  sp, #0x20
+b5 ab 10 00  st.a  [sp]#0x10, a11
+b5 a6 00 00  st.a  [sp]#0, a6
+b5 a7 14 00  st.a  [sp]#0x14, a7
+99 23 e8 ff  ld.a  a3, [a2]#-0x18
+99 2c d8 ff  ld.a  a12, [a2]#-0x28
+bd 0c 14 80  jnz.a  a12, #0x514
+b5 2a d8 ff  st.a  [a2]#-0x28, sp
+5d 00 02 00  jl  #0x4f8
+d9 bb 2c 00  lea  a11, [a11]#0x2c
+b5 2b dc ff  st.a  [a2]#-0x24, a11
+4d 00 e0 ef  mfcr  d14, #0xfe00
+59 2e f0 ff  st.w  [a2]#-0x10, d14
+99 2c d8 ef  ld.a  a12, [a2]#-0x68
+d9 cc 00 01  lea  a12, [a12]#0x1000
+b5 2c e0 ff  st.a  [a2]#-0x20, a12
+99 2c d8 ef  ld.a  a12, [a2]#-0x68
+01 ac 30 e4  ge.a  d14, a12, sp
+6f 0e a6 fd  jnz.t  d14, #0, #0x68
+61 ff 9a fe  fcall  #0x254
+99 2c d8 ff  ld.a  a12, [a2]#-0x28
+7d ca 07 80  jne.a  sp, a12, #0x536
+82 0f  mov  d15, #0
+59 2f d8 ff  st.w  [a2]#-0x28, d15
+59 2f dc ff  st.w  [a2]#-0x24, d15
+99 ab 10 00  ld.a  a11, [sp]#0x10
+d9 aa 20 00  lea  sp, [sp]#0x20
+0d 00 80 01  ret  
+6e 00 00 00  Function wrapper size: 110
+28 29 00 00  Function signature, padded to 4B: "()"
+02 00 00 00  Function signature length: 2
+vv vv vv vv vv vv vv vv vv vv  Export name, padded to 4B: "copy34byte"
+63 6f 70 79 33 34 62 79 74 65 00 00
+0a 00 00 00  Export name length: 10
+02 00 00 00  WebAssembly function index: 2
+vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI, padded to 4B 
+40 52  mov.aa  a2, a5
+20 20  sub.a  sp, #0x20
+b5 ab 10 00  st.a  [sp]#0x10, a11
+b5 a6 00 00  st.a  [sp]#0, a6
+b5 a7 14 00  st.a  [sp]#0x14, a7
+99 23 e8 ff  ld.a  a3, [a2]#-0x18
+99 2c d8 ff  ld.a  a12, [a2]#-0x28
+bd 0c 14 80  jnz.a  a12, #0x5a4
+b5 2a d8 ff  st.a  [a2]#-0x28, sp
+5d 00 02 00  jl  #0x588
+d9 bb 34 00  lea  a11, [a11]#0x34
+b5 2b dc ff  st.a  [a2]#-0x24, a11
+4d 00 e0 ef  mfcr  d14, #0xfe00
+59 2e f0 ff  st.w  [a2]#-0x10, d14
+99 2c d8 ef  ld.a  a12, [a2]#-0x68
+d9 cc 00 01  lea  a12, [a12]#0x1000
+b5 2c e0 ff  st.a  [a2]#-0x20, a12
+99 2c d8 ef  ld.a  a12, [a2]#-0x68
+01 ac 30 e4  ge.a  d14, a12, sp
+6f 0e 5e fd  jnz.t  d14, #0, #0x68
+54 48  ld.w  d8, [a4]
+61 ff b5 fe  fcall  #0x31c
+99 a7 14 00  ld.a  a7, [sp]#0x14
+74 72  st.w  [a7], d2
+99 2c d8 ff  ld.a  a12, [a2]#-0x28
+7d ca 07 80  jne.a  sp, a12, #0x5ce
+82 0f  mov  d15, #0
+59 2f d8 ff  st.w  [a2]#-0x28, d15
+59 2f dc ff  st.w  [a2]#-0x24, d15
+99 ab 10 00  ld.a  a11, [sp]#0x10
+d9 aa 20 00  lea  sp, [sp]#0x20
+0d 00 80 01  ret  
+76 00 00 00  Function wrapper size: 118
+28 69 29 69  Function signature, padded to 4B: "(i)i"
+04 00 00 00  Function signature length: 4
+6c 6f 61 64 38 5f 75 00  Export name, padded to 4B: "load8_u"
+07 00 00 00  Export name length: 7
+03 00 00 00  WebAssembly function index: 3
+04 00 00 00  Number of exported functions: 4
+48 02 00 00  Section size (excl. this value): 584
+
+WebAssembly Link Status of Imported Functions
+Padding for link status table 
+00 00 00 00  Total number of imported functions: 0
+
+WebAssembly Table
+00 00 00 00  Number of table entries: 0
+00 00 00 00  Number of function table entries: 0
+
+More Info
+00 00 00 00  Size of link data: 0
+ff ff ff ff  Offset from here for the landing pad function body (0xFFFF'FFFF = undefined, pos: 611): 4294967295
+00 00 00 00  Stacktrace records 0, debugMode: 0
+03 00 00 00  Version of this binary module: 3
+1c 06 00 00  Module binary size (excl. this value): 1564
+

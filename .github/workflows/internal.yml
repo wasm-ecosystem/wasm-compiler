@@ -48,10 +48,8 @@ jobs:
       - name: install qcc compiler
         uses: ./.github/actions/install-qcc
         with:
-          artifactory-url: ${{ vars.DDAD_ARTIFACTORY_URL }}
           qcc-url: ${{ vars.QCC_URL }}
           qnx-license-server: ${{ vars.INTERNAL_QNX_LICENSE_SERVER }}
-          artifactory-user: ${{ secrets.TECH_USER_CODECRAFT_ACCOUNT }}
           artifactory-token: ${{ secrets.TECH_USER_DDAD_ARTIFACTORY_TOKEN }}
       - name: qcc build
         run: |
@@ -98,10 +96,8 @@ jobs:
       - name: install qcc compiler
         uses: ./.github/actions/install-qcc
         with:
-          artifactory-url: ${{ vars.DDAD_ARTIFACTORY_URL }}
           qcc-url: ${{ vars.QCC_URL }}
           qnx-license-server: ${{ vars.INTERNAL_QNX_LICENSE_SERVER }}
-          artifactory-user: ${{ secrets.TECH_USER_CODECRAFT_ACCOUNT }}
           artifactory-token: ${{ secrets.TECH_USER_DDAD_ARTIFACTORY_TOKEN }}
       - name: qcc build
         run: |
@@ -112,8 +108,13 @@ jobs:
           cmake --build . --parallel
 
       - name: download qemu image
+        env:
+          ARTIFACTORY_TOKEN: ${{ secrets.TECH_USER_DDAD_ARTIFACTORY_TOKEN }}
         run: |
-          wget --user ${{ secrets.TECH_USER_CODECRAFT_ACCOUNT }} --password ${{ secrets.TECH_USER_DDAD_ARTIFACTORY_TOKEN }}  https://${{ vars.INTERNAL_QNX_QEMU_ARM64_PATH }}/qnx_arm64.tar.gz
+          curl --fail --location \
+            --header "Authorization: Bearer ${ARTIFACTORY_TOKEN}" \
+            --output qnx_arm64.tar.gz \
+            "https://${{ vars.INTERNAL_QNX_QEMU_ARM64_PATH }}/qnx_arm64.tar.gz"
           tar -xvzf qnx_arm64.tar.gz
 
       - name: setup network

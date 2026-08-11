@@ -12,6 +12,7 @@ packaging==24.1
 pathspec==0.12.1
 platformdirs==4.2.2
 ply==3.11
+pyxcute==0.8.1
 pyparsing==3.1.2
 PyYAML==6.0.1
 rdflib==7.0.0

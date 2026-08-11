@@ -1,0 +1,66 @@
+WebAssembly Function Bodies
+vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
+fd 03 00 aa  mov  x29, x0
+e0 03 01 aa  mov  x0, x1
+a9 83 5d f8  ldur  x9, [x29, #-0x28]
+3f 01 00 91  mov  sp, x9
+e9 03 40 f9  ldr  x9, [sp]
+20 01 00 b9  str  w0, [x9]
+a9 03 5e f8  ldur  x9, [x29, #-0x20]
+20 01 1f d6  br  x9
+20 00 00 00  Size of the function body: 32
+
+Initial Linear Memory Data
+00 00 00 00  Number of data segments: 0
+
+Function Names
+00 00 00 00  Number of function names: 0
+04 00 00 00  Section size (excl. this value): 4
+
+Start Function
+00 00 00 00  Section size (excl. this value, 0 means no start function): 0
+
+Mutable Non-Exported Globals
+02 00 00 00  Initial value of this global: 2
+00 00 00 00  Offset at which this data will be placed in the link data: 0
+01  Type of this global, 7F=I32, 7E=I64, 7D=F32, 7C=F64: 1
+00 00 00  Padding to align to 4B 
+01 00 00 00  Number of mutable globals: 1
+10 00 00 00  Section size (excl. this value): 16
+
+Dynamically Imported Functions
+00 00 00 00  Number of dynamically imported functions: 0
+04 00 00 00  Section size (excl. this value): 4
+
+Linear Memory
+ff ff ff ff  Initial linear memory size in multiples of 64kB (0xFFFF'FFFF = no memory): 4294967295
+
+Exported Globals
+00 00 00 00  Offset at which this data will be placed in the link data: 0
+01  Whether this global is mutable: 1
+69  Type of this global, i=I32, I=I64, f=F32, F=F64: "i"
+00 00  Padding to align to 4B 
+67 31 00 00  Export name, padded to 4B: "g1"
+02 00 00 00  Export name length: 2
+01 00 00 00  Number of exported globals: 1
+14 00 00 00  Section size (excl. this value): 20
+
+Exported Functions
+00 00 00 00  Number of exported functions: 0
+04 00 00 00  Section size (excl. this value): 4
+
+WebAssembly Link Status of Imported Functions
+Padding for link status table 
+00 00 00 00  Total number of imported functions: 0
+
+WebAssembly Table
+00 00 00 00  Number of table entries: 0
+00 00 00 00  Number of function table entries: 0
+
+More Info
+08 00 00 00  Size of link data: 8
+85 00 00 00  Offset from here for the landing pad function body (0xFFFF'FFFF = undefined, pos: ffffffff): 133
+00 00 00 00  Stacktrace records 0, debugMode: 0
+03 00 00 00  Version of this binary module: 3
+90 00 00 00  Module binary size (excl. this value): 144
+

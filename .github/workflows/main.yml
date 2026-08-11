@@ -62,10 +62,15 @@ jobs:
           source ${GITHUB_WORKSPACE}/venv/bin/activate
           echo "VIRTUAL_ENV=${VIRTUAL_ENV}" >> $GITHUB_ENV
           echo "${VIRTUAL_ENV}/bin" >> $GITHUB_PATH
+          echo "${GITHUB_WORKSPACE}" >> $GITHUB_PATH
       - name: python deps
-        run: pip3 install wasmtime
+        run: pip3 install -r requirements.txt
       - name: binding
-        run: python3 binding/binding_all.py --venv-dir ${GITHUB_WORKSPACE}/venv
+        run: cute binding
+      - name: snapshot diff test
+        run: |
+          cute spectest:gen:wasm
+          cute test:snapshot
       - name: file check test
         run: python3 scripts/test.py --no-color
 

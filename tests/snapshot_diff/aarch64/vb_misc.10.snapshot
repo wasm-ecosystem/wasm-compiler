@@ -1,0 +1,116 @@
+WebAssembly Function Bodies
+vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
+fd 03 00 aa  mov  x29, x0
+e0 03 01 aa  mov  x0, x1
+a9 83 5d f8  ldur  x9, [x29, #-0x28]
+3f 01 00 91  mov  sp, x9
+e9 03 40 f9  ldr  x9, [sp]
+20 01 00 b9  str  w0, [x9]
+a9 03 5e f8  ldur  x9, [x29, #-0x20]
+20 01 1f d6  br  x9
+20 00 00 00  Size of the function body: 32
+
+Initial Linear Memory Data
+00 00 00 00  Number of data segments: 0
+
+Function Names
+00 00 00 00  Number of function names: 0
+04 00 00 00  Section size (excl. this value): 4
+
+Start Function
+00 00 00 00  Section size (excl. this value, 0 means no start function): 0
+
+Mutable Non-Exported Globals
+00 00 00 00  Number of mutable globals: 0
+04 00 00 00  Section size (excl. this value): 4
+
+Dynamically Imported Functions
+00 00 00 00  Number of dynamically imported functions: 0
+04 00 00 00  Section size (excl. this value): 4
+
+Linear Memory
+ff ff ff ff  Initial linear memory size in multiples of 64kB (0xFFFF'FFFF = no memory): 4294967295
+
+Exported Globals
+00 00 00 00  Number of exported globals: 0
+04 00 00 00  Section size (excl. this value): 4
+
+Exported Functions
+vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI, padded to 4B 
+ff 83 02 d1  sub  sp, sp, #0xa0
+f3 53 00 a9  stp  x19, x20, [sp]
+f5 5b 01 a9  stp  x21, x22, [sp, #0x10]
+f7 63 02 a9  stp  x23, x24, [sp, #0x20]
+f9 6b 03 a9  stp  x25, x26, [sp, #0x30]
+fb 73 04 a9  stp  x27, x28, [sp, #0x40]
+e8 27 05 6d  stp  d8, d9, [sp, #0x50]
+ea 2f 06 6d  stp  d10, d11, [sp, #0x60]
+ec 37 07 6d  stp  d12, d13, [sp, #0x70]
+ee 3f 08 6d  stp  d14, d15, [sp, #0x80]
+fe 77 09 a9  stp  x30, x29, [sp, #0x90]
+eb 03 00 aa  mov  x11, x0
+fd 03 01 aa  mov  x29, x1
+1c 15 80 52  mov  w28, #0xa8
+bc 03 1c cb  sub  x28, x29, x28
+ff c3 00 d1  sub  sp, sp, #0x30
+e2 03 00 f9  str  x2, [sp]
+e3 13 00 f9  str  x3, [sp, #0x20]
+aa 83 5d f8  ldur  x10, [x29, #-0x28]
+5f 01 1f eb  cmp  x10, xzr
+21 01 00 54  b.ne  0xc4
+e9 03 00 91  mov  x9, sp
+a9 83 1d f8  stur  x9, [x29, #-0x28]
+69 01 00 10  adr  x9, 0xd8
+a9 03 1e f8  stur  x9, [x29, #-0x20]
+09 48 88 52  mov  w9, #0x4240
+e9 01 a0 72  movk  w9, #0xf, lsl #16
+e9 63 29 cb  sub  x9, sp, x9
+a9 83 1e f8  stur  x9, [x29, #-0x18]
+60 01 40 b9  ldr  w0, [x11]
+a1 03 5b f8  ldur  x1, [x29, #-0x50]
+c0 01 80 52  mov  w0, #0xe
+ce ff ff 17  b  8
+ea 13 40 f9  ldr  x10, [sp, #0x20]
+aa 83 5d f8  ldur  x10, [x29, #-0x28]
+ff 63 2a eb  cmp  sp, x10
+61 00 00 54  b.ne  0xec
+bf 83 1d f8  stur  xzr, [x29, #-0x28]
+bf 03 1e f8  stur  xzr, [x29, #-0x20]
+ff c3 00 91  add  sp, sp, #0x30
+f3 53 40 a9  ldp  x19, x20, [sp]
+f5 5b 41 a9  ldp  x21, x22, [sp, #0x10]
+f7 63 42 a9  ldp  x23, x24, [sp, #0x20]
+f9 6b 43 a9  ldp  x25, x26, [sp, #0x30]
+fb 73 44 a9  ldp  x27, x28, [sp, #0x40]
+e8 27 45 6d  ldp  d8, d9, [sp, #0x50]
+ea 2f 46 6d  ldp  d10, d11, [sp, #0x60]
+ec 37 47 6d  ldp  d12, d13, [sp, #0x70]
+ee 3f 48 6d  ldp  d14, d15, [sp, #0x80]
+fe 77 49 a9  ldp  x30, x29, [sp, #0x90]
+ff 83 02 91  add  sp, sp, #0xa0
+c0 03 5f d6  ret  
+d0 00 00 00  Function wrapper size: 208
+28 69 29 00  Function signature, padded to 4B: "(i)"
+03 00 00 00  Function signature length: 3
+72 65 65 78 70 6f 72 74  Export name, padded to 4B: "reexport"
+08 00 00 00  Export name length: 8
+00 00 00 00  WebAssembly function index: 0
+01 00 00 00  Number of exported functions: 1
+f0 00 00 00  Section size (excl. this value): 240
+
+WebAssembly Link Status of Imported Functions
+00  Link status of function 0: 0
+00 00 00  Padding for link status table 
+01 00 00 00  Total number of imported functions: 1
+
+WebAssembly Table
+00 00 00 00  Number of table entries: 0
+00 00 00 00  Number of function table entries: 0
+
+More Info
+00 00 00 00  Size of link data: 0
+59 01 00 00  Offset from here for the landing pad function body (0xFFFF'FFFF = undefined, pos: ffffffff): 345
+00 00 00 00  Stacktrace records 0, debugMode: 0
+03 00 00 00  Version of this binary module: 3
+64 01 00 00  Module binary size (excl. this value): 356
+

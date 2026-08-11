@@ -437,3 +437,41 @@
 )
 
 (assert_return (invoke "target-reg-is-res-scratch-reg-tricore" (i32.const 1) (i64.const 2)) (i32.const 5))
+
+(module
+  (func $callee (param i32 i32 i32 i32 i32 i32 i32 i32 i32) (result i32)
+    local.get 8
+  )
+
+  (func $caller (export "reuse-loaded-call-params")
+      (param i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32) (result i32)
+    local.get 7
+    local.get 8
+    local.get 8
+    local.get 8
+    local.get 8
+    local.get 8
+    local.get 8
+    local.get 8
+    local.get 8
+    call $callee
+  )
+)
+
+(assert_return
+  (invoke "reuse-loaded-call-params"
+    (i32.const 0)
+    (i32.const 1)
+    (i32.const 2)
+    (i32.const 3)
+    (i32.const 4)
+    (i32.const 5)
+    (i32.const 6)
+    (i32.const 7)
+    (i32.const 8)
+    (i32.const 9)
+    (i32.const 10)
+    (i32.const 11)
+  )
+  (i32.const 8)
+)

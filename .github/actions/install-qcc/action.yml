@@ -2,17 +2,11 @@ name: "Install QCC Compiler"
 description: "Install the QNX qcc compiler toolchain"
 
 inputs:
-  artifactory-url:
-    description: "Artifactory host"
-    required: true
   qcc-url:
     description: "QNX qcc compiler archive URL"
     required: true
   qnx-license-server:
     description: "QNX license server"
-    required: true
-  artifactory-user:
-    description: "Artifactory username"
     required: true
   artifactory-token:
     description: "Artifactory token"
@@ -25,13 +19,7 @@ runs:
       shell: bash
       run: |
         sudo apt-get update
-        sudo apt-get install wget cmake -y --no-install-recommends
-    - name: Configure Artifactory access
-      shell: bash
-      run: |
-        set -e
-        umask 077
-        echo "machine ${{ inputs.artifactory-url }} login ${{ inputs.artifactory-user }} password ${{ inputs.artifactory-token }}" > ~/.netrc
+        sudo apt-get install wget curl cmake -y --no-install-recommends
     - name: Install wabt
       shell: bash
       run: |
@@ -41,9 +29,14 @@ runs:
 
     - name: Install qcc compiler
       shell: bash
+      env:
+        ARTIFACTORY_TOKEN: ${{ inputs.artifactory-token }}
       run: |
         set -e
-        wget --netrc -O qnx_base_with_so_r801_with_license.tar.gz "${{ inputs.qcc-url }}"
+        curl --fail --location \
+          --header "Authorization: Bearer ${ARTIFACTORY_TOKEN}" \
+          --output qnx_base_with_so_r801_with_license.tar.gz \
+          "${{ inputs.qcc-url }}"
         tar -zxf qnx_base_with_so_r801_with_license.tar.gz
         rm qnx_base_with_so_r801_with_license.tar.gz
         chmod -R 755 qnx_base_r801

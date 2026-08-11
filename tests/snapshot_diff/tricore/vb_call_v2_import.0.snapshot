@@ -1,0 +1,270 @@
+WebAssembly Function Bodies
+vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
+40 42  mov.aa  a2, a4
+02 40  mov  d0, d4
+5d 00 02 00  jl  #8
+d9 b3 04 00  lea  a3, [a11]#4
+4d 00 e0 ef  mfcr  d14, #0xfe00
+19 2f f0 ff  ld.w  d15, [a2]#-0x10
+5f fe 11 00  jeq  d14, d15, #0x36
+ef 4e 0c 80  jnz.t  d14, #0x14, #0x30
+60 0d  mov.a  a13, d0
+40 2e  mov.aa  a14, a2
+40 3f  mov.aa  a15, a3
+0d 00 40 02  rslcx  
+80 d0  mov.d  d0, a13
+40 e2  mov.aa  a2, a14
+40 f3  mov.aa  a3, a15
+1d ff f0 ff  j  #0xc
+40 3b  mov.aa  a11, a3
+0d 00 80 01  ret  
+99 2a d8 ff  ld.a  sp, [a2]#-0x28
+d4 ac  ld.a  a12, [sp]
+74 c0  st.w  [a12], d0
+99 2b dc ff  ld.a  a11, [a2]#-0x24
+dc 0b  ji  a11
+44 00 00 00  Size of the function body: 68
+vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
+20 84  sub.a  sp, #0x84
+99 2c d8 ef  ld.a  a12, [a2]#-0x68
+01 ac 30 e4  ge.a  d14, a12, sp
+6f 0e 06 00  jz.t  d14, #0, #0x5e
+bb d0 00 00  mov.u  d0, #0xd
+1d ff ee ff  j  #0x36
+39 25 f8 ff  ld.bu  d5, [a2]#-8
+df 05 05 00  jeq  d5, #0, #0x6c
+02 50  mov  d0, d5
+1d ff f9 ff  j  #0x5a
+d9 aa 08 00  lea  sp, [sp]#8
+bb 00 02 40  mov.u  d4, #0x20
+fb 00 04 60  mov  e6, #0x40
+bb 00 02 50  mov.u  d5, #0x20
+91 f0 28 cc  movh.a  a12, #0xc28f
+d9 cc e9 05  lea  a12, [a12]#0x5c29
+91 00 05 d4  movh.a  a13, #0x4050
+d9 dd b5 32  lea  a13, [a13]#0x28f5
+89 ac c0 09  st.da  [sp]#0, p12
+91 10 20 c4  movh.a  a12, #0x4201
+d9 cc 6e e4  lea  a12, [a12]#0x47ae
+b5 ac 08 00  st.a  [sp]#8, a12
+91 00 00 c0  movh.a  a12, #0
+d9 cc 00 20  lea  a12, [a12]#0x80
+a0 0d  mov.a  a13, #0
+89 ac cc 09  st.da  [sp]#0xc, p12
+a0 0c  mov.a  a12, #0
+91 00 06 d4  movh.a  a13, #0x4060
+d9 dd 00 01  lea  a13, [a13]#0x1000
+89 ac d4 09  st.da  [sp]#0x14, p12
+91 00 00 c0  movh.a  a12, #0
+d9 cc 00 20  lea  a12, [a12]#0x80
+b5 ac 1c 00  st.a  [sp]#0x1c, a12
+91 00 00 c0  movh.a  a12, #0
+d9 cc 00 40  lea  a12, [a12]#0x100
+b5 ac 20 00  st.a  [sp]#0x20, a12
+91 00 00 c0  movh.a  a12, #0
+d9 cc 00 80  lea  a12, [a12]#0x200
+a0 0d  mov.a  a13, #0
+89 ac e4 09  st.da  [sp]#0x24, p12
+99 24 f0 ef  ld.a  a4, [a2]#-0x50
+19 2f e8 ef  ld.w  d15, [a2]#-0x58
+78 1d  st.w  [sp]#0x74, d15
+bb e0 00 00  mov.u  d0, #0xe
+1d ff a5 ff  j  #0x36
+99 a2 34 10  ld.a  a2, [sp]#0x74
+d4 22  ld.a  a2, [a2]
+d9 22 10 20  lea  a2, [a2]#0x90
+39 2e f8 ff  ld.bu  d14, [a2]#-8
+df 0e 05 00  jeq  d14, #0, #0x108
+02 e0  mov  d0, d14
+1d ff f4 ff  j  #0xec
+99 23 e8 ff  ld.a  a3, [a2]#-0x18
+59 a2 30 10  st.w  [sp]#0x70, d2
+59 a3 28 10  st.w  [sp]#0x68, d3
+09 a8 58 19  ld.d  e8, [sp]#0x58
+bb a0 20 60  mov.u  d6, #0x20a
+0b 68 10 61  ne  d6, d8, d6
+8b 09 00 65  or.ne  d6, d9, #0
+60 6e  mov.a  a14, d6
+bd 0e 04 80  jnz.a  a14, #0x12e
+1d 00 07 00  j  #0x138
+bb a0 00 20  mov.u  d2, #0xa
+d9 aa 3c 10  lea  sp, [sp]#0x7c
+00 70  fret  
+19 a8 14 10  ld.w  d8, [sp]#0x54
+bb 90 10 90  mov.u  d9, #0x109
+0b 98 10 81  ne  d8, d8, d9
+60 8e  mov.a  a14, d8
+bd 0e 04 80  jnz.a  a14, #0x14e
+1d 00 07 00  j  #0x158
+bb 90 00 20  mov.u  d2, #9
+d9 aa 3c 10  lea  sp, [sp]#0x7c
+00 70  fret  
+19 a8 10 10  ld.w  d8, [sp]#0x50
+8b 88 28 82  ne  d8, d8, #0x88
+60 8e  mov.a  a14, d8
+bd 0e 04 80  jnz.a  a14, #0x16a
+1d 00 07 00  j  #0x174
+bb 80 00 20  mov.u  d2, #8
+d9 aa 3c 10  lea  sp, [sp]#0x7c
+00 70  fret  
+09 a8 48 19  ld.d  e8, [sp]#0x48
+82 06  mov  d6, #0
+7b 10 06 74  movh  d7, #0x4061
+4b 68 02 a0  cmp.df  d10, e8, e6
+8f da 00 a1  and  d10, d10, #0xd
+8b 0a 20 a2  ne  d10, d10, #0
+60 ae  mov.a  a14, d10
+bd 0e 04 80  jnz.a  a14, #0x194
+1d 00 06 00  j  #0x19c
+82 72  mov  d2, #7
+d9 aa 3c 10  lea  sp, [sp]#0x7c
+00 70  fret  
+09 a8 40 19  ld.d  e8, [sp]#0x40
+8b 68 28 62  ne  d6, d8, #0x86
+8b 09 00 65  or.ne  d6, d9, #0
+60 6e  mov.a  a14, d6
+bd 0e 04 80  jnz.a  a14, #0x1b2
+1d 00 06 00  j  #0x1ba
+82 62  mov  d2, #6
+d9 aa 3c 10  lea  sp, [sp]#0x7c
+00 70  fret  
+19 a8 3c 00  ld.w  d8, [sp]#0x3c
+3b e0 7a 94  mov  d9, #0x47ae
+9b 79 21 94  addih  d9, d9, #0x4217
+4b 98 01 60  cmp.f  d6, d8, d9
+8f d6 00 61  and  d6, d6, #0xd
+8b 06 20 62  ne  d6, d6, #0
+60 6e  mov.a  a14, d6
+bd 0e 04 80  jnz.a  a14, #0x1dc
+1d 00 06 00  j  #0x1e4
+82 52  mov  d2, #5
+d9 aa 3c 10  lea  sp, [sp]#0x7c
+00 70  fret  
+09 a8 74 09  ld.d  e8, [sp]#0x34
+3b 30 5c 6f  mov  d6, #-0xa3d
+9b 96 c2 65  addih  d6, d6, #0x5c29
+3b f0 28 74  mov  d7, #0x428f
+9b 17 05 74  addih  d7, d7, #0x4051
+4b 68 02 a0  cmp.df  d10, e8, e6
+8f da 00 a1  and  d10, d10, #0xd
+8b 0a 20 a2  ne  d10, d10, #0
+60 ae  mov.a  a14, d10
+bd 0e 04 80  jnz.a  a14, #0x20e
+1d 00 06 00  j  #0x216
+82 42  mov  d2, #4
+d9 aa 3c 10  lea  sp, [sp]#0x7c
+00 70  fret  
+19 a8 28 10  ld.w  d8, [sp]#0x68
+8b 38 22 82  ne  d8, d8, #0x23
+60 8e  mov.a  a14, d8
+bd 0e 04 80  jnz.a  a14, #0x228
+1d 00 06 00  j  #0x230
+82 32  mov  d2, #3
+d9 aa 3c 10  lea  sp, [sp]#0x7c
+00 70  fret  
+09 a8 6c 09  ld.d  e8, [sp]#0x2c
+8b 28 24 62  ne  d6, d8, #0x42
+8b 09 00 65  or.ne  d6, d9, #0
+60 6e  mov.a  a14, d6
+bd 0e 04 80  jnz.a  a14, #0x246
+1d 00 06 00  j  #0x24e
+82 22  mov  d2, #2
+d9 aa 3c 10  lea  sp, [sp]#0x7c
+00 70  fret  
+19 a8 30 10  ld.w  d8, [sp]#0x70
+8b 18 22 82  ne  d8, d8, #0x21
+60 8e  mov.a  a14, d8
+bd 0e 04 80  jnz.a  a14, #0x260
+1d 00 06 00  j  #0x268
+82 12  mov  d2, #1
+d9 aa 3c 10  lea  sp, [sp]#0x7c
+00 70  fret  
+82 02  mov  d2, #0
+d9 aa 3c 10  lea  sp, [sp]#0x7c
+00 70  fret  
+28 02 00 00  Size of the function body: 552
+
+Initial Linear Memory Data
+00 00 00 00  Number of data segments: 0
+
+Function Names
+00 00 00 00  Number of function names: 0
+04 00 00 00  Section size (excl. this value): 4
+
+Start Function
+00 00 00 00  Section size (excl. this value, 0 means no start function): 0
+
+Mutable Non-Exported Globals
+00 00 00 00  Number of mutable globals: 0
+04 00 00 00  Section size (excl. this value): 4
+
+Dynamically Imported Functions
+00 00 00 00  Number of dynamically imported functions: 0
+04 00 00 00  Section size (excl. this value): 4
+
+Linear Memory
+ff ff ff ff  Initial linear memory size in multiples of 64kB (0xFFFF'FFFF = no memory): 4294967295
+
+Exported Globals
+00 00 00 00  Number of exported globals: 0
+04 00 00 00  Section size (excl. this value): 4
+
+Exported Functions
+vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI, padded to 4B 
+40 52  mov.aa  a2, a5
+20 20  sub.a  sp, #0x20
+b5 ab 10 00  st.a  [sp]#0x10, a11
+b5 a6 00 00  st.a  [sp]#0, a6
+b5 a7 14 00  st.a  [sp]#0x14, a7
+99 23 e8 ff  ld.a  a3, [a2]#-0x18
+99 2c d8 ff  ld.a  a12, [a2]#-0x28
+bd 0c 14 80  jnz.a  a12, #0x2e0
+b5 2a d8 ff  st.a  [a2]#-0x28, sp
+5d 00 02 00  jl  #0x2c4
+d9 bb 32 00  lea  a11, [a11]#0x32
+b5 2b dc ff  st.a  [a2]#-0x24, a11
+4d 00 e0 ef  mfcr  d14, #0xfe00
+59 2e f0 ff  st.w  [a2]#-0x10, d14
+99 2c d8 ef  ld.a  a12, [a2]#-0x68
+d9 cc 00 01  lea  a12, [a12]#0x1000
+b5 2c e0 ff  st.a  [a2]#-0x20, a12
+99 2c d8 ef  ld.a  a12, [a2]#-0x68
+01 ac 30 e4  ge.a  d14, a12, sp
+6f 0e b7 fe  jnz.t  d14, #0, #0x56
+61 ff ae fe  fcall  #0x48
+99 a7 14 00  ld.a  a7, [sp]#0x14
+74 72  st.w  [a7], d2
+99 2c d8 ff  ld.a  a12, [a2]#-0x28
+7d ca 07 80  jne.a  sp, a12, #0x308
+82 0f  mov  d15, #0
+59 2f d8 ff  st.w  [a2]#-0x28, d15
+59 2f dc ff  st.w  [a2]#-0x24, d15
+99 ab 10 00  ld.a  a11, [sp]#0x10
+d9 aa 20 00  lea  sp, [sp]#0x20
+0d 00 80 01  ret  
+74 00 00 00  Function wrapper size: 116
+28 29 69 00  Function signature, padded to 4B: "()i"
+03 00 00 00  Function signature length: 3
+vv vv vv vv vv vv vv vv vv vv  Export name, padded to 4B: "func_invoker"
+66 75 6e 63 5f 69 6e 76 6f 6b 65 72
+0c 00 00 00  Export name length: 12
+01 00 00 00  WebAssembly function index: 1
+01 00 00 00  Number of exported functions: 1
+98 00 00 00  Section size (excl. this value): 152
+
+WebAssembly Link Status of Imported Functions
+00  Link status of function 0: 0
+00 00 00  Padding for link status table 
+01 00 00 00  Total number of imported functions: 1
+
+WebAssembly Table
+00 00 00 00  Number of table entries: 0
+00 00 00 00  Number of function table entries: 0
+
+More Info
+00 00 00 00  Size of link data: 0
+ff ff ff ff  Offset from here for the landing pad function body (0xFFFF'FFFF = undefined, pos: 351): 4294967295
+00 00 00 00  Stacktrace records 0, debugMode: 0
+03 00 00 00  Version of this binary module: 3
+5c 03 00 00  Module binary size (excl. this value): 860
+

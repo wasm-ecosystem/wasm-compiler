@@ -17,6 +17,7 @@
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <memory>
 
 #include "MemWriter.hpp"
@@ -28,9 +29,15 @@
 namespace vb {
 
 void MemWriter::resize(uint32_t const size) {
+  uint32_t const oldSize{size_};
   size_ = size;
   if (size_ > memory_.size()) {
     memory_.resize(size_);
+  }
+  if (size_ > oldSize) {
+    uint32_t const bytesToZero{size_ - oldSize};
+    // clean up for stable snapshot
+    static_cast<void>(std::memset(pAddI(memory_.data(), oldSize), 0, static_cast<size_t>(bytesToZero)));
   }
 }
 

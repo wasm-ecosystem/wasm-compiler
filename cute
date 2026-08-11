@@ -1,0 +1,13 @@
+#!/usr/bin/env python3
+
+from xcute import Cmd, cute
+
+
+cute(
+    **{
+        "binding": Cmd("python3 binding/binding_all.py --venv-dir venv"),
+        "test:snapshot": Cmd("python3 tests/snapshot_diff/run.py"),
+        "test:snapshot:update": Cmd("python3 tests/snapshot_diff/run.py -u"),
+        "spectest:gen:wasm": Cmd("python3 tests/snapshot_diff/run.py --update-wasm"),
+    }
+)
