@@ -1835,7 +1835,7 @@ void Frontend::parseCodeSection() {
           // Branch depth for this table element
           uint32_t const branchDepth{br_.readLEB128<uint32_t>()};
 
-          // TODO(): move validate logic to ValidationStack
+          // TODO(0): move validate logic to ValidationStack
           // temp work around here
           if (i == 0U) {
             validationStack_.validateBranch(instruction, branchDepth);
