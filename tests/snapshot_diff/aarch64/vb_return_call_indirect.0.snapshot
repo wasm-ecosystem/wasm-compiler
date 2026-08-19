@@ -357,6 +357,10 @@ e0 03 0b 2a  mov  w0, w11
 3f ff ff 17  b  0x250
 ff 83 01 91  add  sp, sp, #0x60
 fe 0b 00 f9  str  x30, [sp, #0x10]
+3b 01 80 52  mov  w27, #9
+fb 0b 00 b9  str  w27, [sp, #8]
+5b 01 80 52  mov  w27, #0xa
+fb 03 00 b9  str  w27, [sp]
 61 00 80 52  mov  w1, #3
 82 00 80 52  mov  w2, #4
 a3 00 80 52  mov  w3, #5
@@ -364,10 +368,6 @@ c4 00 80 52  mov  w4, #6
 e5 00 80 52  mov  w5, #7
 06 01 80 52  mov  w6, #8
 40 00 80 52  mov  w0, #2
-3b 01 80 52  mov  w27, #9
-fb 0b 00 b9  str  w27, [sp, #8]
-5b 01 80 52  mov  w27, #0xa
-fb 03 00 b9  str  w27, [sp]
 1f 1c 00 71  cmp  w0, #7
 62 e4 ff 54  b.hs  0x21c
 a9 83 57 f8  ldur  x9, [x29, #-0x88]

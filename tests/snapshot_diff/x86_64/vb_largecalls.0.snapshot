@@ -81,12 +81,6 @@ vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
 e9 2f fe ff ff  jmp  6
 48 8d a4 24 20 ff ff ff  lea  rsp, [rsp - 0xe0]
-bf 01 00 00 00  mov  edi, 1
-be 02 00 00 00  mov  esi, 2
-ba 03 00 00 00  mov  edx, 3
-b9 04 00 00 00  mov  ecx, 4
-41 b8 05 00 00 00  mov  r8d, 5
-41 b9 06 00 00 00  mov  r9d, 6
 c7 04 24 07 00 00 00  mov  dword ptr [rsp], 7
 c7 44 24 08 08 00 00 00  mov  dword ptr [rsp + 8], 8
 c7 44 24 10 09 00 00 00  mov  dword ptr [rsp + 0x10], 9
@@ -133,6 +127,12 @@ c7 84 24 50 01 00 00 31 00 00 00  mov  dword ptr [rsp + 0x150], 0x31
 c7 84 24 58 01 00 00 32 00 00 00  mov  dword ptr [rsp + 0x158], 0x32
 f2 44 0f 10 7b b8  movsd  xmm15, qword ptr [rbx - 0x48]
 f2 44 0f 11 bc 24 60 01 00 00  movsd  qword ptr [rsp + 0x160], xmm15
+bf 01 00 00 00  mov  edi, 1
+be 02 00 00 00  mov  esi, 2
+ba 03 00 00 00  mov  edx, 3
+b9 04 00 00 00  mov  ecx, 4
+41 b8 05 00 00 00  mov  r8d, 5
+41 b9 06 00 00 00  mov  r9d, 6
 b8 0e 00 00 00  mov  eax, 0xe
 e9 3a fc ff ff  jmp  6
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
@@ -149,22 +149,64 @@ vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
 e9 07 fc ff ff  jmp  6
 48 8d a4 24 30 ff ff ff  lea  rsp, [rsp - 0xd0]
-eb 04  jmp  0x40d
+c7 04 24 00 00 10 41  mov  dword ptr [rsp], 0x41100000
+c7 44 24 08 00 00 20 41  mov  dword ptr [rsp + 8], 0x41200000
+c7 44 24 10 00 00 30 41  mov  dword ptr [rsp + 0x10], 0x41300000
+c7 44 24 18 00 00 40 41  mov  dword ptr [rsp + 0x18], 0x41400000
+c7 44 24 20 00 00 50 41  mov  dword ptr [rsp + 0x20], 0x41500000
+c7 44 24 28 00 00 60 41  mov  dword ptr [rsp + 0x28], 0x41600000
+c7 44 24 30 00 00 70 41  mov  dword ptr [rsp + 0x30], 0x41700000
+c7 44 24 38 00 00 80 41  mov  dword ptr [rsp + 0x38], 0x41800000
+c7 44 24 40 00 00 88 41  mov  dword ptr [rsp + 0x40], 0x41880000
+c7 44 24 48 00 00 90 41  mov  dword ptr [rsp + 0x48], 0x41900000
+c7 44 24 50 00 00 98 41  mov  dword ptr [rsp + 0x50], 0x41980000
+c7 44 24 58 00 00 a0 41  mov  dword ptr [rsp + 0x58], 0x41a00000
+c7 44 24 60 00 00 a8 41  mov  dword ptr [rsp + 0x60], 0x41a80000
+c7 44 24 68 00 00 b0 41  mov  dword ptr [rsp + 0x68], 0x41b00000
+c7 44 24 70 00 00 b8 41  mov  dword ptr [rsp + 0x70], 0x41b80000
+c7 44 24 78 00 00 c0 41  mov  dword ptr [rsp + 0x78], 0x41c00000
+c7 84 24 80 00 00 00 00 00 c8 41  mov  dword ptr [rsp + 0x80], 0x41c80000
+c7 84 24 88 00 00 00 00 00 d0 41  mov  dword ptr [rsp + 0x88], 0x41d00000
+c7 84 24 90 00 00 00 00 00 d8 41  mov  dword ptr [rsp + 0x90], 0x41d80000
+c7 84 24 98 00 00 00 00 00 e0 41  mov  dword ptr [rsp + 0x98], 0x41e00000
+c7 84 24 a0 00 00 00 00 00 e8 41  mov  dword ptr [rsp + 0xa0], 0x41e80000
+c7 84 24 a8 00 00 00 00 00 f0 41  mov  dword ptr [rsp + 0xa8], 0x41f00000
+c7 84 24 b0 00 00 00 00 00 f8 41  mov  dword ptr [rsp + 0xb0], 0x41f80000
+c7 84 24 b8 00 00 00 00 00 00 42  mov  dword ptr [rsp + 0xb8], 0x42000000
+c7 84 24 c0 00 00 00 00 00 04 42  mov  dword ptr [rsp + 0xc0], 0x42040000
+c7 84 24 c8 00 00 00 00 00 08 42  mov  dword ptr [rsp + 0xc8], 0x42080000
+c7 84 24 d0 00 00 00 00 00 0c 42  mov  dword ptr [rsp + 0xd0], 0x420c0000
+c7 84 24 d8 00 00 00 00 00 10 42  mov  dword ptr [rsp + 0xd8], 0x42100000
+c7 84 24 e0 00 00 00 00 00 14 42  mov  dword ptr [rsp + 0xe0], 0x42140000
+c7 84 24 e8 00 00 00 00 00 18 42  mov  dword ptr [rsp + 0xe8], 0x42180000
+c7 84 24 f0 00 00 00 00 00 1c 42  mov  dword ptr [rsp + 0xf0], 0x421c0000
+c7 84 24 f8 00 00 00 00 00 20 42  mov  dword ptr [rsp + 0xf8], 0x42200000
+c7 84 24 00 01 00 00 00 00 24 42  mov  dword ptr [rsp + 0x100], 0x42240000
+c7 84 24 08 01 00 00 00 00 28 42  mov  dword ptr [rsp + 0x108], 0x42280000
+c7 84 24 10 01 00 00 00 00 2c 42  mov  dword ptr [rsp + 0x110], 0x422c0000
+c7 84 24 18 01 00 00 00 00 30 42  mov  dword ptr [rsp + 0x118], 0x42300000
+c7 84 24 20 01 00 00 00 00 34 42  mov  dword ptr [rsp + 0x120], 0x42340000
+c7 84 24 28 01 00 00 00 00 38 42  mov  dword ptr [rsp + 0x128], 0x42380000
+c7 84 24 30 01 00 00 00 00 3c 42  mov  dword ptr [rsp + 0x130], 0x423c0000
+c7 84 24 38 01 00 00 00 00 40 42  mov  dword ptr [rsp + 0x138], 0x42400000
+c7 84 24 40 01 00 00 00 00 44 42  mov  dword ptr [rsp + 0x140], 0x42440000
+c7 84 24 48 01 00 00 00 00 48 42  mov  dword ptr [rsp + 0x148], 0x42480000
+eb 04  jmp  0x5aa
 00 00  add  byte ptr [rax], al
 80 3f f3  cmp  byte ptr [rdi], 0xf3
 0f 10 05 f4 ff ff ff  movups  xmm0, xmmword ptr [rip - 0xc]
-eb 04  jmp  0x41b
+eb 04  jmp  0x5b8
 00 00  add  byte ptr [rax], al
 00 40 f3  add  byte ptr [rax - 0xd], al
 0f 10 0d f4 ff ff ff  movups  xmm1, xmmword ptr [rip - 0xc]
-eb 04  jmp  0x429
+eb 04  jmp  0x5c6
 00 00  add  byte ptr [rax], al
 40 40 f3 0f 10 15 f4 ff ff ff  movss  xmm2, dword ptr [rip - 0xc]
-eb 04  jmp  0x437
+eb 04  jmp  0x5d4
 00 00  add  byte ptr [rax], al
 80 40 f3 0f  add  byte ptr [rax - 0xd], 0xf
 10 1d f4 ff ff ff  adc  byte ptr [rip - 0xc], bl
-eb 04  jmp  0x445
+eb 04  jmp  0x5e2
 00 00  add  byte ptr [rax], al
 a0 40 f3 0f 10 25 f4 ff ff  movabs  al, byte ptr [0xfffff425100ff340]
 54 02 00 00  Size of the function body: 596
@@ -175,22 +217,110 @@ vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
 e9 af f9 ff ff  jmp  6
 48 8d a4 24 d0 fd ff ff  lea  rsp, [rsp - 0x230]
-eb 04  jmp  0x665
+c7 04 24 00 00 10 41  mov  dword ptr [rsp], 0x41100000
+c7 44 24 08 00 00 20 41  mov  dword ptr [rsp + 8], 0x41200000
+c7 44 24 10 00 00 30 41  mov  dword ptr [rsp + 0x10], 0x41300000
+c7 44 24 18 00 00 40 41  mov  dword ptr [rsp + 0x18], 0x41400000
+c7 44 24 20 00 00 50 41  mov  dword ptr [rsp + 0x20], 0x41500000
+c7 44 24 28 00 00 60 41  mov  dword ptr [rsp + 0x28], 0x41600000
+c7 44 24 30 00 00 70 41  mov  dword ptr [rsp + 0x30], 0x41700000
+c7 44 24 38 00 00 80 41  mov  dword ptr [rsp + 0x38], 0x41800000
+c7 44 24 40 00 00 88 41  mov  dword ptr [rsp + 0x40], 0x41880000
+c7 44 24 48 00 00 90 41  mov  dword ptr [rsp + 0x48], 0x41900000
+c7 44 24 50 00 00 98 41  mov  dword ptr [rsp + 0x50], 0x41980000
+c7 44 24 58 00 00 a0 41  mov  dword ptr [rsp + 0x58], 0x41a00000
+c7 44 24 60 00 00 a8 41  mov  dword ptr [rsp + 0x60], 0x41a80000
+c7 44 24 68 00 00 b0 41  mov  dword ptr [rsp + 0x68], 0x41b00000
+c7 44 24 70 00 00 b8 41  mov  dword ptr [rsp + 0x70], 0x41b80000
+c7 44 24 78 00 00 c0 41  mov  dword ptr [rsp + 0x78], 0x41c00000
+c7 84 24 80 00 00 00 00 00 c8 41  mov  dword ptr [rsp + 0x80], 0x41c80000
+c7 84 24 88 00 00 00 00 00 d0 41  mov  dword ptr [rsp + 0x88], 0x41d00000
+c7 84 24 90 00 00 00 00 00 d8 41  mov  dword ptr [rsp + 0x90], 0x41d80000
+c7 84 24 98 00 00 00 00 00 e0 41  mov  dword ptr [rsp + 0x98], 0x41e00000
+c7 84 24 a0 00 00 00 00 00 e8 41  mov  dword ptr [rsp + 0xa0], 0x41e80000
+c7 84 24 a8 00 00 00 00 00 f0 41  mov  dword ptr [rsp + 0xa8], 0x41f00000
+c7 84 24 b0 00 00 00 00 00 f8 41  mov  dword ptr [rsp + 0xb0], 0x41f80000
+c7 84 24 b8 00 00 00 00 00 00 42  mov  dword ptr [rsp + 0xb8], 0x42000000
+c7 84 24 c0 00 00 00 00 00 04 42  mov  dword ptr [rsp + 0xc0], 0x42040000
+c7 84 24 c8 00 00 00 00 00 08 42  mov  dword ptr [rsp + 0xc8], 0x42080000
+c7 84 24 d0 00 00 00 00 00 0c 42  mov  dword ptr [rsp + 0xd0], 0x420c0000
+c7 84 24 d8 00 00 00 00 00 10 42  mov  dword ptr [rsp + 0xd8], 0x42100000
+c7 84 24 e0 00 00 00 00 00 14 42  mov  dword ptr [rsp + 0xe0], 0x42140000
+c7 84 24 e8 00 00 00 00 00 18 42  mov  dword ptr [rsp + 0xe8], 0x42180000
+c7 84 24 f0 00 00 00 00 00 1c 42  mov  dword ptr [rsp + 0xf0], 0x421c0000
+c7 84 24 f8 00 00 00 00 00 20 42  mov  dword ptr [rsp + 0xf8], 0x42200000
+c7 84 24 00 01 00 00 00 00 24 42  mov  dword ptr [rsp + 0x100], 0x42240000
+c7 84 24 08 01 00 00 00 00 28 42  mov  dword ptr [rsp + 0x108], 0x42280000
+c7 84 24 10 01 00 00 00 00 2c 42  mov  dword ptr [rsp + 0x110], 0x422c0000
+c7 84 24 18 01 00 00 00 00 30 42  mov  dword ptr [rsp + 0x118], 0x42300000
+c7 84 24 20 01 00 00 00 00 34 42  mov  dword ptr [rsp + 0x120], 0x42340000
+c7 84 24 28 01 00 00 00 00 38 42  mov  dword ptr [rsp + 0x128], 0x42380000
+c7 84 24 30 01 00 00 00 00 3c 42  mov  dword ptr [rsp + 0x130], 0x423c0000
+c7 84 24 38 01 00 00 00 00 40 42  mov  dword ptr [rsp + 0x138], 0x42400000
+c7 84 24 40 01 00 00 00 00 44 42  mov  dword ptr [rsp + 0x140], 0x42440000
+c7 84 24 48 01 00 00 00 00 48 42  mov  dword ptr [rsp + 0x148], 0x42480000
+c7 84 24 50 01 00 00 07 00 00 00  mov  dword ptr [rsp + 0x150], 7
+c7 84 24 58 01 00 00 08 00 00 00  mov  dword ptr [rsp + 0x158], 8
+c7 84 24 60 01 00 00 09 00 00 00  mov  dword ptr [rsp + 0x160], 9
+c7 84 24 68 01 00 00 0a 00 00 00  mov  dword ptr [rsp + 0x168], 0xa
+c7 84 24 70 01 00 00 0b 00 00 00  mov  dword ptr [rsp + 0x170], 0xb
+c7 84 24 78 01 00 00 0c 00 00 00  mov  dword ptr [rsp + 0x178], 0xc
+c7 84 24 80 01 00 00 0d 00 00 00  mov  dword ptr [rsp + 0x180], 0xd
+c7 84 24 88 01 00 00 0e 00 00 00  mov  dword ptr [rsp + 0x188], 0xe
+c7 84 24 90 01 00 00 0f 00 00 00  mov  dword ptr [rsp + 0x190], 0xf
+c7 84 24 98 01 00 00 10 00 00 00  mov  dword ptr [rsp + 0x198], 0x10
+c7 84 24 a0 01 00 00 11 00 00 00  mov  dword ptr [rsp + 0x1a0], 0x11
+c7 84 24 a8 01 00 00 12 00 00 00  mov  dword ptr [rsp + 0x1a8], 0x12
+c7 84 24 b0 01 00 00 13 00 00 00  mov  dword ptr [rsp + 0x1b0], 0x13
+c7 84 24 b8 01 00 00 14 00 00 00  mov  dword ptr [rsp + 0x1b8], 0x14
+c7 84 24 c0 01 00 00 15 00 00 00  mov  dword ptr [rsp + 0x1c0], 0x15
+c7 84 24 c8 01 00 00 16 00 00 00  mov  dword ptr [rsp + 0x1c8], 0x16
+c7 84 24 d0 01 00 00 17 00 00 00  mov  dword ptr [rsp + 0x1d0], 0x17
+c7 84 24 d8 01 00 00 18 00 00 00  mov  dword ptr [rsp + 0x1d8], 0x18
+c7 84 24 e0 01 00 00 19 00 00 00  mov  dword ptr [rsp + 0x1e0], 0x19
+c7 84 24 e8 01 00 00 1a 00 00 00  mov  dword ptr [rsp + 0x1e8], 0x1a
+c7 84 24 f0 01 00 00 1b 00 00 00  mov  dword ptr [rsp + 0x1f0], 0x1b
+c7 84 24 f8 01 00 00 1c 00 00 00  mov  dword ptr [rsp + 0x1f8], 0x1c
+c7 84 24 00 02 00 00 1d 00 00 00  mov  dword ptr [rsp + 0x200], 0x1d
+c7 84 24 08 02 00 00 1e 00 00 00  mov  dword ptr [rsp + 0x208], 0x1e
+c7 84 24 10 02 00 00 1f 00 00 00  mov  dword ptr [rsp + 0x210], 0x1f
+c7 84 24 18 02 00 00 20 00 00 00  mov  dword ptr [rsp + 0x218], 0x20
+c7 84 24 20 02 00 00 21 00 00 00  mov  dword ptr [rsp + 0x220], 0x21
+c7 84 24 28 02 00 00 22 00 00 00  mov  dword ptr [rsp + 0x228], 0x22
+c7 84 24 30 02 00 00 23 00 00 00  mov  dword ptr [rsp + 0x230], 0x23
+c7 84 24 38 02 00 00 24 00 00 00  mov  dword ptr [rsp + 0x238], 0x24
+c7 84 24 40 02 00 00 25 00 00 00  mov  dword ptr [rsp + 0x240], 0x25
+c7 84 24 48 02 00 00 26 00 00 00  mov  dword ptr [rsp + 0x248], 0x26
+c7 84 24 50 02 00 00 27 00 00 00  mov  dword ptr [rsp + 0x250], 0x27
+c7 84 24 58 02 00 00 28 00 00 00  mov  dword ptr [rsp + 0x258], 0x28
+c7 84 24 60 02 00 00 29 00 00 00  mov  dword ptr [rsp + 0x260], 0x29
+c7 84 24 68 02 00 00 2a 00 00 00  mov  dword ptr [rsp + 0x268], 0x2a
+c7 84 24 70 02 00 00 2b 00 00 00  mov  dword ptr [rsp + 0x270], 0x2b
+c7 84 24 78 02 00 00 2c 00 00 00  mov  dword ptr [rsp + 0x278], 0x2c
+c7 84 24 80 02 00 00 2d 00 00 00  mov  dword ptr [rsp + 0x280], 0x2d
+c7 84 24 88 02 00 00 2e 00 00 00  mov  dword ptr [rsp + 0x288], 0x2e
+c7 84 24 90 02 00 00 2f 00 00 00  mov  dword ptr [rsp + 0x290], 0x2f
+c7 84 24 98 02 00 00 30 00 00 00  mov  dword ptr [rsp + 0x298], 0x30
+c7 84 24 a0 02 00 00 31 00 00 00  mov  dword ptr [rsp + 0x2a0], 0x31
+c7 84 24 a8 02 00 00 32 00 00 00  mov  dword ptr [rsp + 0x2a8], 0x32
+f2 44 0f 10 7b b8  movsd  xmm15, qword ptr [rbx - 0x48]
+f2 44 0f 11 bc 24 b0 02 00 00  movsd  qword ptr [rsp + 0x2b0], xmm15
+eb 04  jmp  0x9f6
 00 00  add  byte ptr [rax], al
 80 3f f3  cmp  byte ptr [rdi], 0xf3
 0f 10 05 f4 ff ff ff  movups  xmm0, xmmword ptr [rip - 0xc]
-eb 04  jmp  0x673
+eb 04  jmp  0xa04
 00 00  add  byte ptr [rax], al
 00 40 f3  add  byte ptr [rax - 0xd], al
 0f 10 0d f4 ff ff ff  movups  xmm1, xmmword ptr [rip - 0xc]
-eb 04  jmp  0x681
+eb 04  jmp  0xa12
 00 00  add  byte ptr [rax], al
 40 40 f3 0f 10 15 f4 ff ff ff  movss  xmm2, dword ptr [rip - 0xc]
-eb 04  jmp  0x68f
+eb 04  jmp  0xa20
 00 00  add  byte ptr [rax], al
 80 40 f3 0f  add  byte ptr [rax - 0xd], 0xf
 10 1d f4 ff ff ff  adc  byte ptr [rip - 0xc], bl
-eb 04  jmp  0x69d
+eb 04  jmp  0xa2e
 00 00  add  byte ptr [rax], al
 a0 40 f3 0f 10 25 f4 ff ff  movabs  al, byte ptr [0xfffff425100ff340]
 64 04 00 00  Size of the function body: 1124
@@ -201,28 +331,116 @@ vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
 e9 47 f5 ff ff  jmp  6
 48 8d a4 24 d0 fd ff ff  lea  rsp, [rsp - 0x230]
+c7 04 24 07 00 00 00  mov  dword ptr [rsp], 7
+c7 44 24 08 08 00 00 00  mov  dword ptr [rsp + 8], 8
+c7 44 24 10 09 00 00 00  mov  dword ptr [rsp + 0x10], 9
+c7 44 24 18 0a 00 00 00  mov  dword ptr [rsp + 0x18], 0xa
+c7 44 24 20 0b 00 00 00  mov  dword ptr [rsp + 0x20], 0xb
+c7 44 24 28 0c 00 00 00  mov  dword ptr [rsp + 0x28], 0xc
+c7 44 24 30 0d 00 00 00  mov  dword ptr [rsp + 0x30], 0xd
+c7 44 24 38 0e 00 00 00  mov  dword ptr [rsp + 0x38], 0xe
+c7 44 24 40 0f 00 00 00  mov  dword ptr [rsp + 0x40], 0xf
+c7 44 24 48 10 00 00 00  mov  dword ptr [rsp + 0x48], 0x10
+c7 44 24 50 11 00 00 00  mov  dword ptr [rsp + 0x50], 0x11
+c7 44 24 58 12 00 00 00  mov  dword ptr [rsp + 0x58], 0x12
+c7 44 24 60 13 00 00 00  mov  dword ptr [rsp + 0x60], 0x13
+c7 44 24 68 14 00 00 00  mov  dword ptr [rsp + 0x68], 0x14
+c7 44 24 70 15 00 00 00  mov  dword ptr [rsp + 0x70], 0x15
+c7 44 24 78 16 00 00 00  mov  dword ptr [rsp + 0x78], 0x16
+c7 84 24 80 00 00 00 17 00 00 00  mov  dword ptr [rsp + 0x80], 0x17
+c7 84 24 88 00 00 00 18 00 00 00  mov  dword ptr [rsp + 0x88], 0x18
+c7 84 24 90 00 00 00 19 00 00 00  mov  dword ptr [rsp + 0x90], 0x19
+c7 84 24 98 00 00 00 1a 00 00 00  mov  dword ptr [rsp + 0x98], 0x1a
+c7 84 24 a0 00 00 00 1b 00 00 00  mov  dword ptr [rsp + 0xa0], 0x1b
+c7 84 24 a8 00 00 00 1c 00 00 00  mov  dword ptr [rsp + 0xa8], 0x1c
+c7 84 24 b0 00 00 00 1d 00 00 00  mov  dword ptr [rsp + 0xb0], 0x1d
+c7 84 24 b8 00 00 00 1e 00 00 00  mov  dword ptr [rsp + 0xb8], 0x1e
+c7 84 24 c0 00 00 00 1f 00 00 00  mov  dword ptr [rsp + 0xc0], 0x1f
+c7 84 24 c8 00 00 00 20 00 00 00  mov  dword ptr [rsp + 0xc8], 0x20
+c7 84 24 d0 00 00 00 21 00 00 00  mov  dword ptr [rsp + 0xd0], 0x21
+c7 84 24 d8 00 00 00 22 00 00 00  mov  dword ptr [rsp + 0xd8], 0x22
+c7 84 24 e0 00 00 00 23 00 00 00  mov  dword ptr [rsp + 0xe0], 0x23
+c7 84 24 e8 00 00 00 24 00 00 00  mov  dword ptr [rsp + 0xe8], 0x24
+c7 84 24 f0 00 00 00 25 00 00 00  mov  dword ptr [rsp + 0xf0], 0x25
+c7 84 24 f8 00 00 00 26 00 00 00  mov  dword ptr [rsp + 0xf8], 0x26
+c7 84 24 00 01 00 00 27 00 00 00  mov  dword ptr [rsp + 0x100], 0x27
+c7 84 24 08 01 00 00 28 00 00 00  mov  dword ptr [rsp + 0x108], 0x28
+c7 84 24 10 01 00 00 29 00 00 00  mov  dword ptr [rsp + 0x110], 0x29
+c7 84 24 18 01 00 00 2a 00 00 00  mov  dword ptr [rsp + 0x118], 0x2a
+c7 84 24 20 01 00 00 2b 00 00 00  mov  dword ptr [rsp + 0x120], 0x2b
+c7 84 24 28 01 00 00 2c 00 00 00  mov  dword ptr [rsp + 0x128], 0x2c
+c7 84 24 30 01 00 00 2d 00 00 00  mov  dword ptr [rsp + 0x130], 0x2d
+c7 84 24 38 01 00 00 2e 00 00 00  mov  dword ptr [rsp + 0x138], 0x2e
+c7 84 24 40 01 00 00 2f 00 00 00  mov  dword ptr [rsp + 0x140], 0x2f
+c7 84 24 48 01 00 00 30 00 00 00  mov  dword ptr [rsp + 0x148], 0x30
+c7 84 24 50 01 00 00 31 00 00 00  mov  dword ptr [rsp + 0x150], 0x31
+c7 84 24 58 01 00 00 32 00 00 00  mov  dword ptr [rsp + 0x158], 0x32
+c7 84 24 60 01 00 00 00 00 10 41  mov  dword ptr [rsp + 0x160], 0x41100000
+c7 84 24 68 01 00 00 00 00 20 41  mov  dword ptr [rsp + 0x168], 0x41200000
+c7 84 24 70 01 00 00 00 00 30 41  mov  dword ptr [rsp + 0x170], 0x41300000
+c7 84 24 78 01 00 00 00 00 40 41  mov  dword ptr [rsp + 0x178], 0x41400000
+c7 84 24 80 01 00 00 00 00 50 41  mov  dword ptr [rsp + 0x180], 0x41500000
+c7 84 24 88 01 00 00 00 00 60 41  mov  dword ptr [rsp + 0x188], 0x41600000
+c7 84 24 90 01 00 00 00 00 70 41  mov  dword ptr [rsp + 0x190], 0x41700000
+c7 84 24 98 01 00 00 00 00 80 41  mov  dword ptr [rsp + 0x198], 0x41800000
+c7 84 24 a0 01 00 00 00 00 88 41  mov  dword ptr [rsp + 0x1a0], 0x41880000
+c7 84 24 a8 01 00 00 00 00 90 41  mov  dword ptr [rsp + 0x1a8], 0x41900000
+c7 84 24 b0 01 00 00 00 00 98 41  mov  dword ptr [rsp + 0x1b0], 0x41980000
+c7 84 24 b8 01 00 00 00 00 a0 41  mov  dword ptr [rsp + 0x1b8], 0x41a00000
+c7 84 24 c0 01 00 00 00 00 a8 41  mov  dword ptr [rsp + 0x1c0], 0x41a80000
+c7 84 24 c8 01 00 00 00 00 b0 41  mov  dword ptr [rsp + 0x1c8], 0x41b00000
+c7 84 24 d0 01 00 00 00 00 b8 41  mov  dword ptr [rsp + 0x1d0], 0x41b80000
+c7 84 24 d8 01 00 00 00 00 c0 41  mov  dword ptr [rsp + 0x1d8], 0x41c00000
+c7 84 24 e0 01 00 00 00 00 c8 41  mov  dword ptr [rsp + 0x1e0], 0x41c80000
+c7 84 24 e8 01 00 00 00 00 d0 41  mov  dword ptr [rsp + 0x1e8], 0x41d00000
+c7 84 24 f0 01 00 00 00 00 d8 41  mov  dword ptr [rsp + 0x1f0], 0x41d80000
+c7 84 24 f8 01 00 00 00 00 e0 41  mov  dword ptr [rsp + 0x1f8], 0x41e00000
+c7 84 24 00 02 00 00 00 00 e8 41  mov  dword ptr [rsp + 0x200], 0x41e80000
+c7 84 24 08 02 00 00 00 00 f0 41  mov  dword ptr [rsp + 0x208], 0x41f00000
+c7 84 24 10 02 00 00 00 00 f8 41  mov  dword ptr [rsp + 0x210], 0x41f80000
+c7 84 24 18 02 00 00 00 00 00 42  mov  dword ptr [rsp + 0x218], 0x42000000
+c7 84 24 20 02 00 00 00 00 04 42  mov  dword ptr [rsp + 0x220], 0x42040000
+c7 84 24 28 02 00 00 00 00 08 42  mov  dword ptr [rsp + 0x228], 0x42080000
+c7 84 24 30 02 00 00 00 00 0c 42  mov  dword ptr [rsp + 0x230], 0x420c0000
+c7 84 24 38 02 00 00 00 00 10 42  mov  dword ptr [rsp + 0x238], 0x42100000
+c7 84 24 40 02 00 00 00 00 14 42  mov  dword ptr [rsp + 0x240], 0x42140000
+c7 84 24 48 02 00 00 00 00 18 42  mov  dword ptr [rsp + 0x248], 0x42180000
+c7 84 24 50 02 00 00 00 00 1c 42  mov  dword ptr [rsp + 0x250], 0x421c0000
+c7 84 24 58 02 00 00 00 00 20 42  mov  dword ptr [rsp + 0x258], 0x42200000
+c7 84 24 60 02 00 00 00 00 24 42  mov  dword ptr [rsp + 0x260], 0x42240000
+c7 84 24 68 02 00 00 00 00 28 42  mov  dword ptr [rsp + 0x268], 0x42280000
+c7 84 24 70 02 00 00 00 00 2c 42  mov  dword ptr [rsp + 0x270], 0x422c0000
+c7 84 24 78 02 00 00 00 00 30 42  mov  dword ptr [rsp + 0x278], 0x42300000
+c7 84 24 80 02 00 00 00 00 34 42  mov  dword ptr [rsp + 0x280], 0x42340000
+c7 84 24 88 02 00 00 00 00 38 42  mov  dword ptr [rsp + 0x288], 0x42380000
+c7 84 24 90 02 00 00 00 00 3c 42  mov  dword ptr [rsp + 0x290], 0x423c0000
+c7 84 24 98 02 00 00 00 00 40 42  mov  dword ptr [rsp + 0x298], 0x42400000
+c7 84 24 a0 02 00 00 00 00 44 42  mov  dword ptr [rsp + 0x2a0], 0x42440000
+c7 84 24 a8 02 00 00 00 00 48 42  mov  dword ptr [rsp + 0x2a8], 0x42480000
+f2 44 0f 10 7b b8  movsd  xmm15, qword ptr [rbx - 0x48]
+f2 44 0f 11 bc 24 b0 02 00 00  movsd  qword ptr [rsp + 0x2b0], xmm15
 bf 01 00 00 00  mov  edi, 1
 be 02 00 00 00  mov  esi, 2
 ba 03 00 00 00  mov  edx, 3
 b9 04 00 00 00  mov  ecx, 4
 41 b8 05 00 00 00  mov  r8d, 5
 41 b9 06 00 00 00  mov  r9d, 6
-eb 04  jmp  0xaed
+eb 04  jmp  0xe7e
 00 00  add  byte ptr [rax], al
 80 3f f3  cmp  byte ptr [rdi], 0xf3
 0f 10 05 f4 ff ff ff  movups  xmm0, xmmword ptr [rip - 0xc]
-eb 04  jmp  0xafb
+eb 04  jmp  0xe8c
 00 00  add  byte ptr [rax], al
 00 40 f3  add  byte ptr [rax - 0xd], al
 0f 10 0d f4 ff ff ff  movups  xmm1, xmmword ptr [rip - 0xc]
-eb 04  jmp  0xb09
+eb 04  jmp  0xe9a
 00 00  add  byte ptr [rax], al
 40 40 f3 0f 10 15 f4 ff ff ff  movss  xmm2, dword ptr [rip - 0xc]
-eb 04  jmp  0xb17
+eb 04  jmp  0xea8
 00 00  add  byte ptr [rax], al
 80 40 f3 0f  add  byte ptr [rax - 0xd], 0xf
 10 1d f4 ff ff ff  adc  byte ptr [rip - 0xc], bl
-eb 04  jmp  0xb25
+eb 04  jmp  0xeb6
 00 00  add  byte ptr [rax], al
 a0 40 f3 0f 10 25 f4 ff ff  movabs  al, byte ptr [0xfffff425100ff340]
 64 04 00 00  Size of the function body: 1124
@@ -233,27 +451,115 @@ vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
 e9 df f0 ff ff  jmp  6
 48 8d a4 24 d0 fd ff ff  lea  rsp, [rsp - 0x230]
+c7 04 24 07 00 00 00  mov  dword ptr [rsp], 7
+c7 44 24 08 08 00 00 00  mov  dword ptr [rsp + 8], 8
+c7 44 24 10 09 00 00 00  mov  dword ptr [rsp + 0x10], 9
+c7 44 24 18 00 00 10 41  mov  dword ptr [rsp + 0x18], 0x41100000
+c7 44 24 20 0a 00 00 00  mov  dword ptr [rsp + 0x20], 0xa
+c7 44 24 28 00 00 20 41  mov  dword ptr [rsp + 0x28], 0x41200000
+c7 44 24 30 0b 00 00 00  mov  dword ptr [rsp + 0x30], 0xb
+c7 44 24 38 00 00 30 41  mov  dword ptr [rsp + 0x38], 0x41300000
+c7 44 24 40 0c 00 00 00  mov  dword ptr [rsp + 0x40], 0xc
+c7 44 24 48 00 00 40 41  mov  dword ptr [rsp + 0x48], 0x41400000
+c7 44 24 50 0d 00 00 00  mov  dword ptr [rsp + 0x50], 0xd
+c7 44 24 58 00 00 50 41  mov  dword ptr [rsp + 0x58], 0x41500000
+c7 44 24 60 0e 00 00 00  mov  dword ptr [rsp + 0x60], 0xe
+c7 44 24 68 00 00 60 41  mov  dword ptr [rsp + 0x68], 0x41600000
+c7 44 24 70 0f 00 00 00  mov  dword ptr [rsp + 0x70], 0xf
+c7 44 24 78 00 00 70 41  mov  dword ptr [rsp + 0x78], 0x41700000
+c7 84 24 80 00 00 00 10 00 00 00  mov  dword ptr [rsp + 0x80], 0x10
+c7 84 24 88 00 00 00 00 00 80 41  mov  dword ptr [rsp + 0x88], 0x41800000
+c7 84 24 90 00 00 00 11 00 00 00  mov  dword ptr [rsp + 0x90], 0x11
+c7 84 24 98 00 00 00 00 00 88 41  mov  dword ptr [rsp + 0x98], 0x41880000
+c7 84 24 a0 00 00 00 12 00 00 00  mov  dword ptr [rsp + 0xa0], 0x12
+c7 84 24 a8 00 00 00 00 00 90 41  mov  dword ptr [rsp + 0xa8], 0x41900000
+c7 84 24 b0 00 00 00 13 00 00 00  mov  dword ptr [rsp + 0xb0], 0x13
+c7 84 24 b8 00 00 00 00 00 98 41  mov  dword ptr [rsp + 0xb8], 0x41980000
+c7 84 24 c0 00 00 00 14 00 00 00  mov  dword ptr [rsp + 0xc0], 0x14
+c7 84 24 c8 00 00 00 00 00 a0 41  mov  dword ptr [rsp + 0xc8], 0x41a00000
+c7 84 24 d0 00 00 00 15 00 00 00  mov  dword ptr [rsp + 0xd0], 0x15
+c7 84 24 d8 00 00 00 00 00 a8 41  mov  dword ptr [rsp + 0xd8], 0x41a80000
+c7 84 24 e0 00 00 00 16 00 00 00  mov  dword ptr [rsp + 0xe0], 0x16
+c7 84 24 e8 00 00 00 00 00 b0 41  mov  dword ptr [rsp + 0xe8], 0x41b00000
+c7 84 24 f0 00 00 00 17 00 00 00  mov  dword ptr [rsp + 0xf0], 0x17
+c7 84 24 f8 00 00 00 00 00 b8 41  mov  dword ptr [rsp + 0xf8], 0x41b80000
+c7 84 24 00 01 00 00 18 00 00 00  mov  dword ptr [rsp + 0x100], 0x18
+c7 84 24 08 01 00 00 00 00 c0 41  mov  dword ptr [rsp + 0x108], 0x41c00000
+c7 84 24 10 01 00 00 19 00 00 00  mov  dword ptr [rsp + 0x110], 0x19
+c7 84 24 18 01 00 00 00 00 c8 41  mov  dword ptr [rsp + 0x118], 0x41c80000
+c7 84 24 20 01 00 00 1a 00 00 00  mov  dword ptr [rsp + 0x120], 0x1a
+c7 84 24 28 01 00 00 00 00 d0 41  mov  dword ptr [rsp + 0x128], 0x41d00000
+c7 84 24 30 01 00 00 1b 00 00 00  mov  dword ptr [rsp + 0x130], 0x1b
+c7 84 24 38 01 00 00 00 00 d8 41  mov  dword ptr [rsp + 0x138], 0x41d80000
+c7 84 24 40 01 00 00 1c 00 00 00  mov  dword ptr [rsp + 0x140], 0x1c
+c7 84 24 48 01 00 00 00 00 e0 41  mov  dword ptr [rsp + 0x148], 0x41e00000
+c7 84 24 50 01 00 00 1d 00 00 00  mov  dword ptr [rsp + 0x150], 0x1d
+c7 84 24 58 01 00 00 00 00 e8 41  mov  dword ptr [rsp + 0x158], 0x41e80000
+c7 84 24 60 01 00 00 1e 00 00 00  mov  dword ptr [rsp + 0x160], 0x1e
+c7 84 24 68 01 00 00 00 00 f0 41  mov  dword ptr [rsp + 0x168], 0x41f00000
+c7 84 24 70 01 00 00 1f 00 00 00  mov  dword ptr [rsp + 0x170], 0x1f
+c7 84 24 78 01 00 00 00 00 f8 41  mov  dword ptr [rsp + 0x178], 0x41f80000
+c7 84 24 80 01 00 00 20 00 00 00  mov  dword ptr [rsp + 0x180], 0x20
+c7 84 24 88 01 00 00 00 00 00 42  mov  dword ptr [rsp + 0x188], 0x42000000
+c7 84 24 90 01 00 00 21 00 00 00  mov  dword ptr [rsp + 0x190], 0x21
+c7 84 24 98 01 00 00 00 00 04 42  mov  dword ptr [rsp + 0x198], 0x42040000
+c7 84 24 a0 01 00 00 22 00 00 00  mov  dword ptr [rsp + 0x1a0], 0x22
+c7 84 24 a8 01 00 00 00 00 08 42  mov  dword ptr [rsp + 0x1a8], 0x42080000
+c7 84 24 b0 01 00 00 23 00 00 00  mov  dword ptr [rsp + 0x1b0], 0x23
+c7 84 24 b8 01 00 00 00 00 0c 42  mov  dword ptr [rsp + 0x1b8], 0x420c0000
+c7 84 24 c0 01 00 00 24 00 00 00  mov  dword ptr [rsp + 0x1c0], 0x24
+c7 84 24 c8 01 00 00 00 00 10 42  mov  dword ptr [rsp + 0x1c8], 0x42100000
+c7 84 24 d0 01 00 00 25 00 00 00  mov  dword ptr [rsp + 0x1d0], 0x25
+c7 84 24 d8 01 00 00 00 00 14 42  mov  dword ptr [rsp + 0x1d8], 0x42140000
+c7 84 24 e0 01 00 00 26 00 00 00  mov  dword ptr [rsp + 0x1e0], 0x26
+c7 84 24 e8 01 00 00 00 00 18 42  mov  dword ptr [rsp + 0x1e8], 0x42180000
+c7 84 24 f0 01 00 00 27 00 00 00  mov  dword ptr [rsp + 0x1f0], 0x27
+c7 84 24 f8 01 00 00 00 00 1c 42  mov  dword ptr [rsp + 0x1f8], 0x421c0000
+c7 84 24 00 02 00 00 28 00 00 00  mov  dword ptr [rsp + 0x200], 0x28
+c7 84 24 08 02 00 00 00 00 20 42  mov  dword ptr [rsp + 0x208], 0x42200000
+c7 84 24 10 02 00 00 29 00 00 00  mov  dword ptr [rsp + 0x210], 0x29
+c7 84 24 18 02 00 00 00 00 24 42  mov  dword ptr [rsp + 0x218], 0x42240000
+c7 84 24 20 02 00 00 2a 00 00 00  mov  dword ptr [rsp + 0x220], 0x2a
+c7 84 24 28 02 00 00 00 00 28 42  mov  dword ptr [rsp + 0x228], 0x42280000
+c7 84 24 30 02 00 00 2b 00 00 00  mov  dword ptr [rsp + 0x230], 0x2b
+c7 84 24 38 02 00 00 00 00 2c 42  mov  dword ptr [rsp + 0x238], 0x422c0000
+c7 84 24 40 02 00 00 2c 00 00 00  mov  dword ptr [rsp + 0x240], 0x2c
+c7 84 24 48 02 00 00 00 00 30 42  mov  dword ptr [rsp + 0x248], 0x42300000
+c7 84 24 50 02 00 00 2d 00 00 00  mov  dword ptr [rsp + 0x250], 0x2d
+c7 84 24 58 02 00 00 00 00 34 42  mov  dword ptr [rsp + 0x258], 0x42340000
+c7 84 24 60 02 00 00 2e 00 00 00  mov  dword ptr [rsp + 0x260], 0x2e
+c7 84 24 68 02 00 00 00 00 38 42  mov  dword ptr [rsp + 0x268], 0x42380000
+c7 84 24 70 02 00 00 2f 00 00 00  mov  dword ptr [rsp + 0x270], 0x2f
+c7 84 24 78 02 00 00 00 00 3c 42  mov  dword ptr [rsp + 0x278], 0x423c0000
+c7 84 24 80 02 00 00 30 00 00 00  mov  dword ptr [rsp + 0x280], 0x30
+c7 84 24 88 02 00 00 00 00 40 42  mov  dword ptr [rsp + 0x288], 0x42400000
+c7 84 24 90 02 00 00 31 00 00 00  mov  dword ptr [rsp + 0x290], 0x31
+c7 84 24 98 02 00 00 00 00 44 42  mov  dword ptr [rsp + 0x298], 0x42440000
+c7 84 24 a0 02 00 00 32 00 00 00  mov  dword ptr [rsp + 0x2a0], 0x32
+c7 84 24 a8 02 00 00 00 00 48 42  mov  dword ptr [rsp + 0x2a8], 0x42480000
+f2 44 0f 10 7b b8  movsd  xmm15, qword ptr [rbx - 0x48]
+f2 44 0f 11 bc 24 b0 02 00 00  movsd  qword ptr [rsp + 0x2b0], xmm15
 bf 01 00 00 00  mov  edi, 1
-eb 04  jmp  0xf3a
+eb 04  jmp  0x12cb
 00 00  add  byte ptr [rax], al
 80 3f f3  cmp  byte ptr [rdi], 0xf3
 0f 10 05 f4 ff ff ff  movups  xmm0, xmmword ptr [rip - 0xc]
 be 02 00 00 00  mov  esi, 2
-eb 04  jmp  0xf4d
+eb 04  jmp  0x12de
 00 00  add  byte ptr [rax], al
 00 40 f3  add  byte ptr [rax - 0xd], al
 0f 10 0d f4 ff ff ff  movups  xmm1, xmmword ptr [rip - 0xc]
 ba 03 00 00 00  mov  edx, 3
-eb 04  jmp  0xf60
+eb 04  jmp  0x12f1
 00 00  add  byte ptr [rax], al
 40 40 f3 0f 10 15 f4 ff ff ff  movss  xmm2, dword ptr [rip - 0xc]
 b9 04 00 00 00  mov  ecx, 4
-eb 04  jmp  0xf73
+eb 04  jmp  0x1304
 00 00  add  byte ptr [rax], al
 80 40 f3 0f  add  byte ptr [rax - 0xd], 0xf
 10 1d f4 ff ff ff  adc  byte ptr [rip - 0xc], bl
 41 b8 05 00 00 00  mov  r8d, 5
-eb 04  jmp  0xf87
+eb 04  jmp  0x1318
 00 00  add  byte ptr [rax], al
 a0 40 f3 0f 10 25 f4 ff ff  movabs  al, byte ptr [0xfffff425100ff340]
 ff 41 b9  inc  dword ptr [rcx - 0x47]
@@ -265,27 +571,115 @@ vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
 e9 77 ec ff ff  jmp  6
 48 8d a4 24 d0 fd ff ff  lea  rsp, [rsp - 0x230]
+c7 04 24 07 00 00 00  mov  dword ptr [rsp], 7
+c7 44 24 08 08 00 00 00  mov  dword ptr [rsp + 8], 8
+c7 44 24 10 09 00 00 00  mov  dword ptr [rsp + 0x10], 9
+c7 44 24 18 00 00 10 41  mov  dword ptr [rsp + 0x18], 0x41100000
+c7 44 24 20 0a 00 00 00  mov  dword ptr [rsp + 0x20], 0xa
+c7 44 24 28 00 00 20 41  mov  dword ptr [rsp + 0x28], 0x41200000
+c7 44 24 30 0b 00 00 00  mov  dword ptr [rsp + 0x30], 0xb
+c7 44 24 38 00 00 30 41  mov  dword ptr [rsp + 0x38], 0x41300000
+c7 44 24 40 0c 00 00 00  mov  dword ptr [rsp + 0x40], 0xc
+c7 44 24 48 00 00 40 41  mov  dword ptr [rsp + 0x48], 0x41400000
+c7 44 24 50 0d 00 00 00  mov  dword ptr [rsp + 0x50], 0xd
+c7 44 24 58 00 00 50 41  mov  dword ptr [rsp + 0x58], 0x41500000
+c7 44 24 60 0e 00 00 00  mov  dword ptr [rsp + 0x60], 0xe
+c7 44 24 68 00 00 60 41  mov  dword ptr [rsp + 0x68], 0x41600000
+c7 44 24 70 0f 00 00 00  mov  dword ptr [rsp + 0x70], 0xf
+c7 44 24 78 00 00 70 41  mov  dword ptr [rsp + 0x78], 0x41700000
+c7 84 24 80 00 00 00 10 00 00 00  mov  dword ptr [rsp + 0x80], 0x10
+c7 84 24 88 00 00 00 00 00 80 41  mov  dword ptr [rsp + 0x88], 0x41800000
+c7 84 24 90 00 00 00 11 00 00 00  mov  dword ptr [rsp + 0x90], 0x11
+c7 84 24 98 00 00 00 00 00 88 41  mov  dword ptr [rsp + 0x98], 0x41880000
+c7 84 24 a0 00 00 00 12 00 00 00  mov  dword ptr [rsp + 0xa0], 0x12
+c7 84 24 a8 00 00 00 00 00 90 41  mov  dword ptr [rsp + 0xa8], 0x41900000
+c7 84 24 b0 00 00 00 13 00 00 00  mov  dword ptr [rsp + 0xb0], 0x13
+c7 84 24 b8 00 00 00 00 00 98 41  mov  dword ptr [rsp + 0xb8], 0x41980000
+c7 84 24 c0 00 00 00 14 00 00 00  mov  dword ptr [rsp + 0xc0], 0x14
+c7 84 24 c8 00 00 00 00 00 a0 41  mov  dword ptr [rsp + 0xc8], 0x41a00000
+c7 84 24 d0 00 00 00 15 00 00 00  mov  dword ptr [rsp + 0xd0], 0x15
+c7 84 24 d8 00 00 00 00 00 a8 41  mov  dword ptr [rsp + 0xd8], 0x41a80000
+c7 84 24 e0 00 00 00 16 00 00 00  mov  dword ptr [rsp + 0xe0], 0x16
+c7 84 24 e8 00 00 00 00 00 b0 41  mov  dword ptr [rsp + 0xe8], 0x41b00000
+c7 84 24 f0 00 00 00 17 00 00 00  mov  dword ptr [rsp + 0xf0], 0x17
+c7 84 24 f8 00 00 00 00 00 b8 41  mov  dword ptr [rsp + 0xf8], 0x41b80000
+c7 84 24 00 01 00 00 18 00 00 00  mov  dword ptr [rsp + 0x100], 0x18
+c7 84 24 08 01 00 00 00 00 c0 41  mov  dword ptr [rsp + 0x108], 0x41c00000
+c7 84 24 10 01 00 00 19 00 00 00  mov  dword ptr [rsp + 0x110], 0x19
+c7 84 24 18 01 00 00 00 00 c8 41  mov  dword ptr [rsp + 0x118], 0x41c80000
+c7 84 24 20 01 00 00 1a 00 00 00  mov  dword ptr [rsp + 0x120], 0x1a
+c7 84 24 28 01 00 00 00 00 d0 41  mov  dword ptr [rsp + 0x128], 0x41d00000
+c7 84 24 30 01 00 00 1b 00 00 00  mov  dword ptr [rsp + 0x130], 0x1b
+c7 84 24 38 01 00 00 00 00 d8 41  mov  dword ptr [rsp + 0x138], 0x41d80000
+c7 84 24 40 01 00 00 1c 00 00 00  mov  dword ptr [rsp + 0x140], 0x1c
+c7 84 24 48 01 00 00 00 00 e0 41  mov  dword ptr [rsp + 0x148], 0x41e00000
+c7 84 24 50 01 00 00 1d 00 00 00  mov  dword ptr [rsp + 0x150], 0x1d
+c7 84 24 58 01 00 00 00 00 e8 41  mov  dword ptr [rsp + 0x158], 0x41e80000
+c7 84 24 60 01 00 00 1e 00 00 00  mov  dword ptr [rsp + 0x160], 0x1e
+c7 84 24 68 01 00 00 00 00 f0 41  mov  dword ptr [rsp + 0x168], 0x41f00000
+c7 84 24 70 01 00 00 1f 00 00 00  mov  dword ptr [rsp + 0x170], 0x1f
+c7 84 24 78 01 00 00 00 00 f8 41  mov  dword ptr [rsp + 0x178], 0x41f80000
+c7 84 24 80 01 00 00 20 00 00 00  mov  dword ptr [rsp + 0x180], 0x20
+c7 84 24 88 01 00 00 00 00 00 42  mov  dword ptr [rsp + 0x188], 0x42000000
+c7 84 24 90 01 00 00 21 00 00 00  mov  dword ptr [rsp + 0x190], 0x21
+c7 84 24 98 01 00 00 00 00 04 42  mov  dword ptr [rsp + 0x198], 0x42040000
+c7 84 24 a0 01 00 00 22 00 00 00  mov  dword ptr [rsp + 0x1a0], 0x22
+c7 84 24 a8 01 00 00 00 00 08 42  mov  dword ptr [rsp + 0x1a8], 0x42080000
+c7 84 24 b0 01 00 00 23 00 00 00  mov  dword ptr [rsp + 0x1b0], 0x23
+c7 84 24 b8 01 00 00 00 00 0c 42  mov  dword ptr [rsp + 0x1b8], 0x420c0000
+c7 84 24 c0 01 00 00 24 00 00 00  mov  dword ptr [rsp + 0x1c0], 0x24
+c7 84 24 c8 01 00 00 00 00 10 42  mov  dword ptr [rsp + 0x1c8], 0x42100000
+c7 84 24 d0 01 00 00 25 00 00 00  mov  dword ptr [rsp + 0x1d0], 0x25
+c7 84 24 d8 01 00 00 00 00 14 42  mov  dword ptr [rsp + 0x1d8], 0x42140000
+c7 84 24 e0 01 00 00 26 00 00 00  mov  dword ptr [rsp + 0x1e0], 0x26
+c7 84 24 e8 01 00 00 00 00 18 42  mov  dword ptr [rsp + 0x1e8], 0x42180000
+c7 84 24 f0 01 00 00 27 00 00 00  mov  dword ptr [rsp + 0x1f0], 0x27
+c7 84 24 f8 01 00 00 00 00 1c 42  mov  dword ptr [rsp + 0x1f8], 0x421c0000
+c7 84 24 00 02 00 00 28 00 00 00  mov  dword ptr [rsp + 0x200], 0x28
+c7 84 24 08 02 00 00 00 00 20 42  mov  dword ptr [rsp + 0x208], 0x42200000
+c7 84 24 10 02 00 00 29 00 00 00  mov  dword ptr [rsp + 0x210], 0x29
+c7 84 24 18 02 00 00 00 00 24 42  mov  dword ptr [rsp + 0x218], 0x42240000
+c7 84 24 20 02 00 00 2a 00 00 00  mov  dword ptr [rsp + 0x220], 0x2a
+c7 84 24 28 02 00 00 00 00 28 42  mov  dword ptr [rsp + 0x228], 0x42280000
+c7 84 24 30 02 00 00 2b 00 00 00  mov  dword ptr [rsp + 0x230], 0x2b
+c7 84 24 38 02 00 00 00 00 2c 42  mov  dword ptr [rsp + 0x238], 0x422c0000
+c7 84 24 40 02 00 00 2c 00 00 00  mov  dword ptr [rsp + 0x240], 0x2c
+c7 84 24 48 02 00 00 00 00 30 42  mov  dword ptr [rsp + 0x248], 0x42300000
+c7 84 24 50 02 00 00 2d 00 00 00  mov  dword ptr [rsp + 0x250], 0x2d
+c7 84 24 58 02 00 00 00 00 34 42  mov  dword ptr [rsp + 0x258], 0x42340000
+c7 84 24 60 02 00 00 2e 00 00 00  mov  dword ptr [rsp + 0x260], 0x2e
+c7 84 24 68 02 00 00 00 00 38 42  mov  dword ptr [rsp + 0x268], 0x42380000
+c7 84 24 70 02 00 00 2f 00 00 00  mov  dword ptr [rsp + 0x270], 0x2f
+c7 84 24 78 02 00 00 00 00 3c 42  mov  dword ptr [rsp + 0x278], 0x423c0000
+c7 84 24 80 02 00 00 30 00 00 00  mov  dword ptr [rsp + 0x280], 0x30
+c7 84 24 88 02 00 00 00 00 40 42  mov  dword ptr [rsp + 0x288], 0x42400000
+c7 84 24 90 02 00 00 31 00 00 00  mov  dword ptr [rsp + 0x290], 0x31
+c7 84 24 98 02 00 00 00 00 44 42  mov  dword ptr [rsp + 0x298], 0x42440000
+c7 84 24 a0 02 00 00 32 00 00 00  mov  dword ptr [rsp + 0x2a0], 0x32
+c7 84 24 a8 02 00 00 00 00 48 42  mov  dword ptr [rsp + 0x2a8], 0x42480000
+f2 44 0f 10 7b b8  movsd  xmm15, qword ptr [rbx - 0x48]
+f2 44 0f 11 bc 24 b0 02 00 00  movsd  qword ptr [rsp + 0x2b0], xmm15
 bf 01 00 00 00  mov  edi, 1
-eb 04  jmp  0x13a2
+eb 04  jmp  0x1733
 00 00  add  byte ptr [rax], al
 80 3f f3  cmp  byte ptr [rdi], 0xf3
 0f 10 05 f4 ff ff ff  movups  xmm0, xmmword ptr [rip - 0xc]
 be 02 00 00 00  mov  esi, 2
-eb 04  jmp  0x13b5
+eb 04  jmp  0x1746
 00 00  add  byte ptr [rax], al
 00 40 f3  add  byte ptr [rax - 0xd], al
 0f 10 0d f4 ff ff ff  movups  xmm1, xmmword ptr [rip - 0xc]
 ba 03 00 00 00  mov  edx, 3
-eb 04  jmp  0x13c8
+eb 04  jmp  0x1759
 00 00  add  byte ptr [rax], al
 40 40 f3 0f 10 15 f4 ff ff ff  movss  xmm2, dword ptr [rip - 0xc]
 b9 04 00 00 00  mov  ecx, 4
-eb 04  jmp  0x13db
+eb 04  jmp  0x176c
 00 00  add  byte ptr [rax], al
 80 40 f3 0f  add  byte ptr [rax - 0xd], 0xf
 10 1d f4 ff ff ff  adc  byte ptr [rip - 0xc], bl
 41 b8 05 00 00 00  mov  r8d, 5
-eb 04  jmp  0x13ef
+eb 04  jmp  0x1780
 00 00  add  byte ptr [rax], al
 a0 40 f3 0f 10 25 f4 ff ff  movabs  al, byte ptr [0xfffff425100ff340]
 ff 41 b9  inc  dword ptr [rcx - 0x47]
@@ -297,11 +691,6 @@ vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
 e9 0f e8 ff ff  jmp  6
 48 8d a4 24 10 ff ff ff  lea  rsp, [rsp - 0xf0]
-bd 01 00 00 00  mov  ebp, 1
-bf 02 00 00 00  mov  edi, 2
-be 03 00 00 00  mov  esi, 3
-41 b9 04 00 00 00  mov  r9d, 4
-ba 00 00 00 00  mov  edx, 0
 c7 84 24 68 01 00 00 05 00 00 00  mov  dword ptr [rsp + 0x168], 5
 c7 84 24 60 01 00 00 06 00 00 00  mov  dword ptr [rsp + 0x160], 6
 c7 84 24 58 01 00 00 07 00 00 00  mov  dword ptr [rsp + 0x158], 7
@@ -348,6 +737,11 @@ c7 44 24 18 2f 00 00 00  mov  dword ptr [rsp + 0x18], 0x2f
 c7 44 24 10 30 00 00 00  mov  dword ptr [rsp + 0x10], 0x30
 c7 44 24 08 31 00 00 00  mov  dword ptr [rsp + 8], 0x31
 c7 04 24 32 00 00 00  mov  dword ptr [rsp], 0x32
+bd 01 00 00 00  mov  ebp, 1
+bf 02 00 00 00  mov  edi, 2
+be 03 00 00 00  mov  esi, 3
+41 b9 04 00 00 00  mov  r9d, 4
+ba 00 00 00 00  mov  edx, 0
 81 fa 1e 00 00 00  cmp  edx, 0x1e
 72 0a  jb  0x19f4
 b8 05 00 00 00  mov  eax, 5
@@ -377,22 +771,6 @@ vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
 e9 ab e5 ff ff  jmp  6
 48 8d a4 24 10 ff ff ff  lea  rsp, [rsp - 0xf0]
-eb 04  jmp  0x1a69
-00 00  add  byte ptr [rax], al
-80 3f f3  cmp  byte ptr [rdi], 0xf3
-0f 10 25 f4 ff ff ff  movups  xmm4, xmmword ptr [rip - 0xc]
-eb 04  jmp  0x1a77
-00 00  add  byte ptr [rax], al
-00 40 f3  add  byte ptr [rax - 0xd], al
-0f 10 2d f4 ff ff ff  movups  xmm5, xmmword ptr [rip - 0xc]
-eb 04  jmp  0x1a85
-00 00  add  byte ptr [rax], al
-40 40 f3 0f 10 35 f4 ff ff ff  movss  xmm6, dword ptr [rip - 0xc]
-eb 04  jmp  0x1a93
-00 00  add  byte ptr [rax], al
-80 40 f3 0f  add  byte ptr [rax - 0xd], 0xf
-10 3d f4 ff ff ff  adc  byte ptr [rip - 0xc], bh
-ba 01 00 00 00  mov  edx, 1
 c7 84 24 68 01 00 00 00 00 a0 40  mov  dword ptr [rsp + 0x168], 0x40a00000
 c7 84 24 60 01 00 00 00 00 c0 40  mov  dword ptr [rsp + 0x160], 0x40c00000
 c7 84 24 58 01 00 00 00 00 e0 40  mov  dword ptr [rsp + 0x158], 0x40e00000
@@ -439,6 +817,22 @@ c7 44 24 18 00 00 3c 42  mov  dword ptr [rsp + 0x18], 0x423c0000
 c7 44 24 10 00 00 40 42  mov  dword ptr [rsp + 0x10], 0x42400000
 c7 44 24 08 00 00 44 42  mov  dword ptr [rsp + 8], 0x42440000
 c7 04 24 00 00 48 42  mov  dword ptr [rsp], 0x42480000
+eb 04  jmp  0x1c32
+00 00  add  byte ptr [rax], al
+80 3f f3  cmp  byte ptr [rdi], 0xf3
+0f 10 25 f4 ff ff ff  movups  xmm4, xmmword ptr [rip - 0xc]
+eb 04  jmp  0x1c40
+00 00  add  byte ptr [rax], al
+00 40 f3  add  byte ptr [rax - 0xd], al
+0f 10 2d f4 ff ff ff  movups  xmm5, xmmword ptr [rip - 0xc]
+eb 04  jmp  0x1c4e
+00 00  add  byte ptr [rax], al
+40 40 f3 0f 10 35 f4 ff ff ff  movss  xmm6, dword ptr [rip - 0xc]
+eb 04  jmp  0x1c5c
+00 00  add  byte ptr [rax], al
+80 40 f3 0f  add  byte ptr [rax - 0xd], 0xf
+10 3d f4 ff ff ff  adc  byte ptr [rip - 0xc], bh
+ba 01 00 00 00  mov  edx, 1
 81 fa 1e 00 00 00  cmp  edx, 0x1e
 72 0a  jb  0x1c7b
 b8 05 00 00 00  mov  eax, 5
@@ -468,26 +862,6 @@ vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
 e9 23 e3 ff ff  jmp  6
 48 8d a4 24 a0 fd ff ff  lea  rsp, [rsp - 0x260]
-eb 04  jmp  0x1cf1
-00 00  add  byte ptr [rax], al
-80 3f f3  cmp  byte ptr [rdi], 0xf3
-0f 10 25 f4 ff ff ff  movups  xmm4, xmmword ptr [rip - 0xc]
-eb 04  jmp  0x1cff
-00 00  add  byte ptr [rax], al
-00 40 f3  add  byte ptr [rax - 0xd], al
-0f 10 2d f4 ff ff ff  movups  xmm5, xmmword ptr [rip - 0xc]
-eb 04  jmp  0x1d0d
-00 00  add  byte ptr [rax], al
-40 40 f3 0f 10 35 f4 ff ff ff  movss  xmm6, dword ptr [rip - 0xc]
-eb 04  jmp  0x1d1b
-00 00  add  byte ptr [rax], al
-80 40 f3 0f  add  byte ptr [rax - 0xd], 0xf
-10 3d f4 ff ff ff  adc  byte ptr [rip - 0xc], bh
-bd 01 00 00 00  mov  ebp, 1
-bf 02 00 00 00  mov  edi, 2
-be 03 00 00 00  mov  esi, 3
-41 b9 04 00 00 00  mov  r9d, 4
-ba 02 00 00 00  mov  edx, 2
 c7 84 24 d8 02 00 00 00 00 a0 40  mov  dword ptr [rsp + 0x2d8], 0x40a00000
 c7 84 24 d0 02 00 00 00 00 c0 40  mov  dword ptr [rsp + 0x2d0], 0x40c00000
 c7 84 24 c8 02 00 00 00 00 e0 40  mov  dword ptr [rsp + 0x2c8], 0x40e00000
@@ -580,6 +954,26 @@ c7 44 24 18 2f 00 00 00  mov  dword ptr [rsp + 0x18], 0x2f
 c7 44 24 10 30 00 00 00  mov  dword ptr [rsp + 0x10], 0x30
 c7 44 24 08 31 00 00 00  mov  dword ptr [rsp + 8], 0x31
 c7 04 24 32 00 00 00  mov  dword ptr [rsp], 0x32
+eb 04  jmp  0x20b4
+00 00  add  byte ptr [rax], al
+80 3f f3  cmp  byte ptr [rdi], 0xf3
+0f 10 25 f4 ff ff ff  movups  xmm4, xmmword ptr [rip - 0xc]
+eb 04  jmp  0x20c2
+00 00  add  byte ptr [rax], al
+00 40 f3  add  byte ptr [rax - 0xd], al
+0f 10 2d f4 ff ff ff  movups  xmm5, xmmword ptr [rip - 0xc]
+eb 04  jmp  0x20d0
+00 00  add  byte ptr [rax], al
+40 40 f3 0f 10 35 f4 ff ff ff  movss  xmm6, dword ptr [rip - 0xc]
+eb 04  jmp  0x20de
+00 00  add  byte ptr [rax], al
+80 40 f3 0f  add  byte ptr [rax - 0xd], 0xf
+10 3d f4 ff ff ff  adc  byte ptr [rip - 0xc], bh
+bd 01 00 00 00  mov  ebp, 1
+bf 02 00 00 00  mov  edi, 2
+be 03 00 00 00  mov  esi, 3
+41 b9 04 00 00 00  mov  r9d, 4
+ba 02 00 00 00  mov  edx, 2
 81 fa 1e 00 00 00  cmp  edx, 0x1e
 72 0a  jb  0x2112
 b8 05 00 00 00  mov  eax, 5
@@ -608,26 +1002,6 @@ vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
 e9 8f de ff ff  jmp  6
 48 8d a4 24 a0 fd ff ff  lea  rsp, [rsp - 0x260]
-bd 01 00 00 00  mov  ebp, 1
-bf 02 00 00 00  mov  edi, 2
-be 03 00 00 00  mov  esi, 3
-41 b9 04 00 00 00  mov  r9d, 4
-eb 04  jmp  0x219a
-00 00  add  byte ptr [rax], al
-80 3f f3  cmp  byte ptr [rdi], 0xf3
-0f 10 25 f4 ff ff ff  movups  xmm4, xmmword ptr [rip - 0xc]
-eb 04  jmp  0x21a8
-00 00  add  byte ptr [rax], al
-00 40 f3  add  byte ptr [rax - 0xd], al
-0f 10 2d f4 ff ff ff  movups  xmm5, xmmword ptr [rip - 0xc]
-eb 04  jmp  0x21b6
-00 00  add  byte ptr [rax], al
-40 40 f3 0f 10 35 f4 ff ff ff  movss  xmm6, dword ptr [rip - 0xc]
-eb 04  jmp  0x21c4
-00 00  add  byte ptr [rax], al
-80 40 f3 0f  add  byte ptr [rax - 0xd], 0xf
-10 3d f4 ff ff ff  adc  byte ptr [rip - 0xc], bh
-ba 03 00 00 00  mov  edx, 3
 c7 84 24 d8 02 00 00 05 00 00 00  mov  dword ptr [rsp + 0x2d8], 5
 c7 84 24 d0 02 00 00 06 00 00 00  mov  dword ptr [rsp + 0x2d0], 6
 c7 84 24 c8 02 00 00 07 00 00 00  mov  dword ptr [rsp + 0x2c8], 7
@@ -720,6 +1094,26 @@ c7 44 24 18 00 00 3c 42  mov  dword ptr [rsp + 0x18], 0x423c0000
 c7 44 24 10 00 00 40 42  mov  dword ptr [rsp + 0x10], 0x42400000
 c7 44 24 08 00 00 44 42  mov  dword ptr [rsp + 8], 0x42440000
 c7 04 24 00 00 48 42  mov  dword ptr [rsp], 0x42480000
+bd 01 00 00 00  mov  ebp, 1
+bf 02 00 00 00  mov  edi, 2
+be 03 00 00 00  mov  esi, 3
+41 b9 04 00 00 00  mov  r9d, 4
+eb 04  jmp  0x255d
+00 00  add  byte ptr [rax], al
+80 3f f3  cmp  byte ptr [rdi], 0xf3
+0f 10 25 f4 ff ff ff  movups  xmm4, xmmword ptr [rip - 0xc]
+eb 04  jmp  0x256b
+00 00  add  byte ptr [rax], al
+00 40 f3  add  byte ptr [rax - 0xd], al
+0f 10 2d f4 ff ff ff  movups  xmm5, xmmword ptr [rip - 0xc]
+eb 04  jmp  0x2579
+00 00  add  byte ptr [rax], al
+40 40 f3 0f 10 35 f4 ff ff ff  movss  xmm6, dword ptr [rip - 0xc]
+eb 04  jmp  0x2587
+00 00  add  byte ptr [rax], al
+80 40 f3 0f  add  byte ptr [rax - 0xd], 0xf
+10 3d f4 ff ff ff  adc  byte ptr [rip - 0xc], bh
+ba 03 00 00 00  mov  edx, 3
 81 fa 1e 00 00 00  cmp  edx, 0x1e
 72 0a  jb  0x25a6
 b8 05 00 00 00  mov  eax, 5
@@ -748,26 +1142,6 @@ vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
 e9 fb d9 ff ff  jmp  6
 48 8d a4 24 a0 fd ff ff  lea  rsp, [rsp - 0x260]
-bd 01 00 00 00  mov  ebp, 1
-eb 04  jmp  0x261e
-00 00  add  byte ptr [rax], al
-80 3f f3  cmp  byte ptr [rdi], 0xf3
-0f 10 25 f4 ff ff ff  movups  xmm4, xmmword ptr [rip - 0xc]
-bf 02 00 00 00  mov  edi, 2
-eb 04  jmp  0x2631
-00 00  add  byte ptr [rax], al
-00 40 f3  add  byte ptr [rax - 0xd], al
-0f 10 2d f4 ff ff ff  movups  xmm5, xmmword ptr [rip - 0xc]
-be 03 00 00 00  mov  esi, 3
-eb 04  jmp  0x2644
-00 00  add  byte ptr [rax], al
-40 40 f3 0f 10 35 f4 ff ff ff  movss  xmm6, dword ptr [rip - 0xc]
-41 b9 04 00 00 00  mov  r9d, 4
-eb 04  jmp  0x2658
-00 00  add  byte ptr [rax], al
-80 40 f3 0f  add  byte ptr [rax - 0xd], 0xf
-10 3d f4 ff ff ff  adc  byte ptr [rip - 0xc], bh
-ba 04 00 00 00  mov  edx, 4
 c7 84 24 d8 02 00 00 05 00 00 00  mov  dword ptr [rsp + 0x2d8], 5
 c7 84 24 d0 02 00 00 00 00 a0 40  mov  dword ptr [rsp + 0x2d0], 0x40a00000
 c7 84 24 c8 02 00 00 06 00 00 00  mov  dword ptr [rsp + 0x2c8], 6
@@ -860,6 +1234,26 @@ c7 44 24 18 31 00 00 00  mov  dword ptr [rsp + 0x18], 0x31
 c7 44 24 10 00 00 44 42  mov  dword ptr [rsp + 0x10], 0x42440000
 c7 44 24 08 32 00 00 00  mov  dword ptr [rsp + 8], 0x32
 c7 04 24 00 00 48 42  mov  dword ptr [rsp], 0x42480000
+bd 01 00 00 00  mov  ebp, 1
+eb 04  jmp  0x29e1
+00 00  add  byte ptr [rax], al
+80 3f f3  cmp  byte ptr [rdi], 0xf3
+0f 10 25 f4 ff ff ff  movups  xmm4, xmmword ptr [rip - 0xc]
+bf 02 00 00 00  mov  edi, 2
+eb 04  jmp  0x29f4
+00 00  add  byte ptr [rax], al
+00 40 f3  add  byte ptr [rax - 0xd], al
+0f 10 2d f4 ff ff ff  movups  xmm5, xmmword ptr [rip - 0xc]
+be 03 00 00 00  mov  esi, 3
+eb 04  jmp  0x2a07
+00 00  add  byte ptr [rax], al
+40 40 f3 0f 10 35 f4 ff ff ff  movss  xmm6, dword ptr [rip - 0xc]
+41 b9 04 00 00 00  mov  r9d, 4
+eb 04  jmp  0x2a1b
+00 00  add  byte ptr [rax], al
+80 40 f3 0f  add  byte ptr [rax - 0xd], 0xf
+10 3d f4 ff ff ff  adc  byte ptr [rip - 0xc], bh
+ba 04 00 00 00  mov  edx, 4
 81 fa 1e 00 00 00  cmp  edx, 0x1e
 72 0a  jb  0x2a3a
 b8 05 00 00 00  mov  eax, 5
@@ -888,26 +1282,6 @@ vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
 e9 67 d5 ff ff  jmp  6
 48 8d a4 24 a0 fd ff ff  lea  rsp, [rsp - 0x260]
-bd 01 00 00 00  mov  ebp, 1
-eb 04  jmp  0x2ab2
-00 00  add  byte ptr [rax], al
-80 3f f3  cmp  byte ptr [rdi], 0xf3
-0f 10 25 f4 ff ff ff  movups  xmm4, xmmword ptr [rip - 0xc]
-bf 02 00 00 00  mov  edi, 2
-eb 04  jmp  0x2ac5
-00 00  add  byte ptr [rax], al
-00 40 f3  add  byte ptr [rax - 0xd], al
-0f 10 2d f4 ff ff ff  movups  xmm5, xmmword ptr [rip - 0xc]
-be 03 00 00 00  mov  esi, 3
-eb 04  jmp  0x2ad8
-00 00  add  byte ptr [rax], al
-40 40 f3 0f 10 35 f4 ff ff ff  movss  xmm6, dword ptr [rip - 0xc]
-41 b9 04 00 00 00  mov  r9d, 4
-eb 04  jmp  0x2aec
-00 00  add  byte ptr [rax], al
-80 40 f3 0f  add  byte ptr [rax - 0xd], 0xf
-10 3d f4 ff ff ff  adc  byte ptr [rip - 0xc], bh
-ba 05 00 00 00  mov  edx, 5
 c7 84 24 d8 02 00 00 05 00 00 00  mov  dword ptr [rsp + 0x2d8], 5
 c7 84 24 d0 02 00 00 00 00 a0 40  mov  dword ptr [rsp + 0x2d0], 0x40a00000
 c7 84 24 c8 02 00 00 06 00 00 00  mov  dword ptr [rsp + 0x2c8], 6
@@ -1000,6 +1374,26 @@ c7 44 24 18 31 00 00 00  mov  dword ptr [rsp + 0x18], 0x31
 c7 44 24 10 00 00 44 42  mov  dword ptr [rsp + 0x10], 0x42440000
 c7 44 24 08 32 00 00 00  mov  dword ptr [rsp + 8], 0x32
 c7 04 24 00 00 48 42  mov  dword ptr [rsp], 0x42480000
+bd 01 00 00 00  mov  ebp, 1
+eb 04  jmp  0x2e75
+00 00  add  byte ptr [rax], al
+80 3f f3  cmp  byte ptr [rdi], 0xf3
+0f 10 25 f4 ff ff ff  movups  xmm4, xmmword ptr [rip - 0xc]
+bf 02 00 00 00  mov  edi, 2
+eb 04  jmp  0x2e88
+00 00  add  byte ptr [rax], al
+00 40 f3  add  byte ptr [rax - 0xd], al
+0f 10 2d f4 ff ff ff  movups  xmm5, xmmword ptr [rip - 0xc]
+be 03 00 00 00  mov  esi, 3
+eb 04  jmp  0x2e9b
+00 00  add  byte ptr [rax], al
+40 40 f3 0f 10 35 f4 ff ff ff  movss  xmm6, dword ptr [rip - 0xc]
+41 b9 04 00 00 00  mov  r9d, 4
+eb 04  jmp  0x2eaf
+00 00  add  byte ptr [rax], al
+80 40 f3 0f  add  byte ptr [rax - 0xd], 0xf
+10 3d f4 ff ff ff  adc  byte ptr [rip - 0xc], bh
+ba 05 00 00 00  mov  edx, 5
 81 fa 1e 00 00 00  cmp  edx, 0x1e
 72 0a  jb  0x2ece
 b8 05 00 00 00  mov  eax, 5
@@ -1385,10 +1779,6 @@ vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
 e9 07 c7 ff ff  jmp  6
 48 8d a4 24 10 ff ff ff  lea  rsp, [rsp - 0xf0]
-bd 01 00 00 00  mov  ebp, 1
-bf 02 00 00 00  mov  edi, 2
-be 03 00 00 00  mov  esi, 3
-41 b9 04 00 00 00  mov  r9d, 4
 c7 84 24 68 01 00 00 05 00 00 00  mov  dword ptr [rsp + 0x168], 5
 c7 84 24 60 01 00 00 06 00 00 00  mov  dword ptr [rsp + 0x160], 6
 c7 84 24 58 01 00 00 07 00 00 00  mov  dword ptr [rsp + 0x158], 7
@@ -1435,6 +1825,10 @@ c7 44 24 18 2f 00 00 00  mov  dword ptr [rsp + 0x18], 0x2f
 c7 44 24 10 30 00 00 00  mov  dword ptr [rsp + 0x10], 0x30
 c7 44 24 08 31 00 00 00  mov  dword ptr [rsp + 8], 0x31
 c7 04 24 32 00 00 00  mov  dword ptr [rsp], 0x32
+bd 01 00 00 00  mov  ebp, 1
+bf 02 00 00 00  mov  edi, 2
+be 03 00 00 00  mov  esi, 3
+41 b9 04 00 00 00  mov  r9d, 4
 e8 32 f4 ff ff  call  0x2f1c
 48 8d a4 24 78 01 00 00  lea  rsp, [rsp + 0x178]
 c3  ret  
@@ -1446,21 +1840,6 @@ vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
 e9 f7 c4 ff ff  jmp  6
 48 8d a4 24 10 ff ff ff  lea  rsp, [rsp - 0xf0]
-eb 04  jmp  0x3b1d
-00 00  add  byte ptr [rax], al
-80 3f f3  cmp  byte ptr [rdi], 0xf3
-0f 10 25 f4 ff ff ff  movups  xmm4, xmmword ptr [rip - 0xc]
-eb 04  jmp  0x3b2b
-00 00  add  byte ptr [rax], al
-00 40 f3  add  byte ptr [rax - 0xd], al
-0f 10 2d f4 ff ff ff  movups  xmm5, xmmword ptr [rip - 0xc]
-eb 04  jmp  0x3b39
-00 00  add  byte ptr [rax], al
-40 40 f3 0f 10 35 f4 ff ff ff  movss  xmm6, dword ptr [rip - 0xc]
-eb 04  jmp  0x3b47
-00 00  add  byte ptr [rax], al
-80 40 f3 0f  add  byte ptr [rax - 0xd], 0xf
-10 3d f4 ff ff ff  adc  byte ptr [rip - 0xc], bh
 c7 84 24 68 01 00 00 00 00 a0 40  mov  dword ptr [rsp + 0x168], 0x40a00000
 c7 84 24 60 01 00 00 00 00 c0 40  mov  dword ptr [rsp + 0x160], 0x40c00000
 c7 84 24 58 01 00 00 00 00 e0 40  mov  dword ptr [rsp + 0x158], 0x40e00000
@@ -1507,6 +1886,21 @@ c7 44 24 18 00 00 3c 42  mov  dword ptr [rsp + 0x18], 0x423c0000
 c7 44 24 10 00 00 40 42  mov  dword ptr [rsp + 0x10], 0x42400000
 c7 44 24 08 00 00 44 42  mov  dword ptr [rsp + 8], 0x42440000
 c7 04 24 00 00 48 42  mov  dword ptr [rsp], 0x42480000
+eb 04  jmp  0x3ce6
+00 00  add  byte ptr [rax], al
+80 3f f3  cmp  byte ptr [rdi], 0xf3
+0f 10 25 f4 ff ff ff  movups  xmm4, xmmword ptr [rip - 0xc]
+eb 04  jmp  0x3cf4
+00 00  add  byte ptr [rax], al
+00 40 f3  add  byte ptr [rax - 0xd], al
+0f 10 2d f4 ff ff ff  movups  xmm5, xmmword ptr [rip - 0xc]
+eb 04  jmp  0x3d02
+00 00  add  byte ptr [rax], al
+40 40 f3 0f 10 35 f4 ff ff ff  movss  xmm6, dword ptr [rip - 0xc]
+eb 04  jmp  0x3d10
+00 00  add  byte ptr [rax], al
+80 40 f3 0f  add  byte ptr [rax - 0xd], 0xf
+10 3d f4 ff ff ff  adc  byte ptr [rip - 0xc], bh
 e8 6f f3 ff ff  call  0x308c
 48 8d a4 24 78 01 00 00  lea  rsp, [rsp + 0x178]
 c3  ret  
@@ -1519,25 +1913,6 @@ vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
 e9 c3 c2 ff ff  jmp  6
 48 8d a4 24 a0 fd ff ff  lea  rsp, [rsp - 0x260]
-eb 04  jmp  0x3d51
-00 00  add  byte ptr [rax], al
-80 3f f3  cmp  byte ptr [rdi], 0xf3
-0f 10 25 f4 ff ff ff  movups  xmm4, xmmword ptr [rip - 0xc]
-eb 04  jmp  0x3d5f
-00 00  add  byte ptr [rax], al
-00 40 f3  add  byte ptr [rax - 0xd], al
-0f 10 2d f4 ff ff ff  movups  xmm5, xmmword ptr [rip - 0xc]
-eb 04  jmp  0x3d6d
-00 00  add  byte ptr [rax], al
-40 40 f3 0f 10 35 f4 ff ff ff  movss  xmm6, dword ptr [rip - 0xc]
-eb 04  jmp  0x3d7b
-00 00  add  byte ptr [rax], al
-80 40 f3 0f  add  byte ptr [rax - 0xd], 0xf
-10 3d f4 ff ff ff  adc  byte ptr [rip - 0xc], bh
-bd 01 00 00 00  mov  ebp, 1
-bf 02 00 00 00  mov  edi, 2
-be 03 00 00 00  mov  esi, 3
-41 b9 04 00 00 00  mov  r9d, 4
 c7 84 24 d8 02 00 00 00 00 a0 40  mov  dword ptr [rsp + 0x2d8], 0x40a00000
 c7 84 24 d0 02 00 00 00 00 c0 40  mov  dword ptr [rsp + 0x2d0], 0x40c00000
 c7 84 24 c8 02 00 00 00 00 e0 40  mov  dword ptr [rsp + 0x2c8], 0x40e00000
@@ -1630,6 +2005,25 @@ c7 44 24 18 2f 00 00 00  mov  dword ptr [rsp + 0x18], 0x2f
 c7 44 24 10 30 00 00 00  mov  dword ptr [rsp + 0x10], 0x30
 c7 44 24 08 31 00 00 00  mov  dword ptr [rsp + 8], 0x31
 c7 04 24 32 00 00 00  mov  dword ptr [rsp], 0x32
+eb 04  jmp  0x4114
+00 00  add  byte ptr [rax], al
+80 3f f3  cmp  byte ptr [rdi], 0xf3
+0f 10 25 f4 ff ff ff  movups  xmm4, xmmword ptr [rip - 0xc]
+eb 04  jmp  0x4122
+00 00  add  byte ptr [rax], al
+00 40 f3  add  byte ptr [rax - 0xd], al
+0f 10 2d f4 ff ff ff  movups  xmm5, xmmword ptr [rip - 0xc]
+eb 04  jmp  0x4130
+00 00  add  byte ptr [rax], al
+40 40 f3 0f 10 35 f4 ff ff ff  movss  xmm6, dword ptr [rip - 0xc]
+eb 04  jmp  0x413e
+00 00  add  byte ptr [rax], al
+80 40 f3 0f  add  byte ptr [rax - 0xd], 0xf
+10 3d f4 ff ff ff  adc  byte ptr [rip - 0xc], bh
+bd 01 00 00 00  mov  ebp, 1
+bf 02 00 00 00  mov  edi, 2
+be 03 00 00 00  mov  esi, 3
+41 b9 04 00 00 00  mov  r9d, 4
 e8 00 f1 ff ff  call  0x3260
 48 8d a4 24 e8 02 00 00  lea  rsp, [rsp + 0x2e8]
 c3  ret  
@@ -1642,25 +2036,6 @@ vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
 e9 7f be ff ff  jmp  6
 48 8d a4 24 a0 fd ff ff  lea  rsp, [rsp - 0x260]
-bd 01 00 00 00  mov  ebp, 1
-bf 02 00 00 00  mov  edi, 2
-be 03 00 00 00  mov  esi, 3
-41 b9 04 00 00 00  mov  r9d, 4
-eb 04  jmp  0x41aa
-00 00  add  byte ptr [rax], al
-80 3f f3  cmp  byte ptr [rdi], 0xf3
-0f 10 25 f4 ff ff ff  movups  xmm4, xmmword ptr [rip - 0xc]
-eb 04  jmp  0x41b8
-00 00  add  byte ptr [rax], al
-00 40 f3  add  byte ptr [rax - 0xd], al
-0f 10 2d f4 ff ff ff  movups  xmm5, xmmword ptr [rip - 0xc]
-eb 04  jmp  0x41c6
-00 00  add  byte ptr [rax], al
-40 40 f3 0f 10 35 f4 ff ff ff  movss  xmm6, dword ptr [rip - 0xc]
-eb 04  jmp  0x41d4
-00 00  add  byte ptr [rax], al
-80 40 f3 0f  add  byte ptr [rax - 0xd], 0xf
-10 3d f4 ff ff ff  adc  byte ptr [rip - 0xc], bh
 c7 84 24 d8 02 00 00 05 00 00 00  mov  dword ptr [rsp + 0x2d8], 5
 c7 84 24 d0 02 00 00 06 00 00 00  mov  dword ptr [rsp + 0x2d0], 6
 c7 84 24 c8 02 00 00 07 00 00 00  mov  dword ptr [rsp + 0x2c8], 7
@@ -1753,6 +2128,25 @@ c7 44 24 18 00 00 3c 42  mov  dword ptr [rsp + 0x18], 0x423c0000
 c7 44 24 10 00 00 40 42  mov  dword ptr [rsp + 0x10], 0x42400000
 c7 44 24 08 00 00 44 42  mov  dword ptr [rsp + 8], 0x42440000
 c7 04 24 00 00 48 42  mov  dword ptr [rsp], 0x42480000
+bd 01 00 00 00  mov  ebp, 1
+bf 02 00 00 00  mov  edi, 2
+be 03 00 00 00  mov  esi, 3
+41 b9 04 00 00 00  mov  r9d, 4
+eb 04  jmp  0x456d
+00 00  add  byte ptr [rax], al
+80 3f f3  cmp  byte ptr [rdi], 0xf3
+0f 10 25 f4 ff ff ff  movups  xmm4, xmmword ptr [rip - 0xc]
+eb 04  jmp  0x457b
+00 00  add  byte ptr [rax], al
+00 40 f3  add  byte ptr [rax - 0xd], al
+0f 10 2d f4 ff ff ff  movups  xmm5, xmmword ptr [rip - 0xc]
+eb 04  jmp  0x4589
+00 00  add  byte ptr [rax], al
+40 40 f3 0f 10 35 f4 ff ff ff  movss  xmm6, dword ptr [rip - 0xc]
+eb 04  jmp  0x4597
+00 00  add  byte ptr [rax], al
+80 40 f3 0f  add  byte ptr [rax - 0xd], 0xf
+10 3d f4 ff ff ff  adc  byte ptr [rip - 0xc], bh
 e8 2c ee ff ff  call  0x33d0
 48 8d a4 24 e8 02 00 00  lea  rsp, [rsp + 0x2e8]
 c3  ret  
@@ -1765,25 +2159,6 @@ vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
 e9 3b ba ff ff  jmp  6
 48 8d a4 24 a0 fd ff ff  lea  rsp, [rsp - 0x260]
-bd 01 00 00 00  mov  ebp, 1
-eb 04  jmp  0x45de
-00 00  add  byte ptr [rax], al
-80 3f f3  cmp  byte ptr [rdi], 0xf3
-0f 10 25 f4 ff ff ff  movups  xmm4, xmmword ptr [rip - 0xc]
-bf 02 00 00 00  mov  edi, 2
-eb 04  jmp  0x45f1
-00 00  add  byte ptr [rax], al
-00 40 f3  add  byte ptr [rax - 0xd], al
-0f 10 2d f4 ff ff ff  movups  xmm5, xmmword ptr [rip - 0xc]
-be 03 00 00 00  mov  esi, 3
-eb 04  jmp  0x4604
-00 00  add  byte ptr [rax], al
-40 40 f3 0f 10 35 f4 ff ff ff  movss  xmm6, dword ptr [rip - 0xc]
-41 b9 04 00 00 00  mov  r9d, 4
-eb 04  jmp  0x4618
-00 00  add  byte ptr [rax], al
-80 40 f3 0f  add  byte ptr [rax - 0xd], 0xf
-10 3d f4 ff ff ff  adc  byte ptr [rip - 0xc], bh
 c7 84 24 d8 02 00 00 05 00 00 00  mov  dword ptr [rsp + 0x2d8], 5
 c7 84 24 d0 02 00 00 00 00 a0 40  mov  dword ptr [rsp + 0x2d0], 0x40a00000
 c7 84 24 c8 02 00 00 06 00 00 00  mov  dword ptr [rsp + 0x2c8], 6
@@ -1876,6 +2251,25 @@ c7 44 24 18 31 00 00 00  mov  dword ptr [rsp + 0x18], 0x31
 c7 44 24 10 00 00 44 42  mov  dword ptr [rsp + 0x10], 0x42440000
 c7 44 24 08 32 00 00 00  mov  dword ptr [rsp + 8], 0x32
 c7 04 24 00 00 48 42  mov  dword ptr [rsp], 0x42480000
+bd 01 00 00 00  mov  ebp, 1
+eb 04  jmp  0x49a1
+00 00  add  byte ptr [rax], al
+80 3f f3  cmp  byte ptr [rdi], 0xf3
+0f 10 25 f4 ff ff ff  movups  xmm4, xmmword ptr [rip - 0xc]
+bf 02 00 00 00  mov  edi, 2
+eb 04  jmp  0x49b4
+00 00  add  byte ptr [rax], al
+00 40 f3  add  byte ptr [rax - 0xd], al
+0f 10 2d f4 ff ff ff  movups  xmm5, xmmword ptr [rip - 0xc]
+be 03 00 00 00  mov  esi, 3
+eb 04  jmp  0x49c7
+00 00  add  byte ptr [rax], al
+40 40 f3 0f 10 35 f4 ff ff ff  movss  xmm6, dword ptr [rip - 0xc]
+41 b9 04 00 00 00  mov  r9d, 4
+eb 04  jmp  0x49db
+00 00  add  byte ptr [rax], al
+80 40 f3 0f  add  byte ptr [rax - 0xd], 0xf
+10 3d f4 ff ff ff  adc  byte ptr [rip - 0xc], bh
 e8 bc eb ff ff  call  0x35a4
 48 8d a4 24 e8 02 00 00  lea  rsp, [rsp + 0x2e8]
 c3  ret  
@@ -1888,25 +2282,6 @@ vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
 e9 f7 b5 ff ff  jmp  6
 48 8d a4 24 a0 fd ff ff  lea  rsp, [rsp - 0x260]
-bd 01 00 00 00  mov  ebp, 1
-eb 04  jmp  0x4a22
-00 00  add  byte ptr [rax], al
-80 3f f3  cmp  byte ptr [rdi], 0xf3
-0f 10 25 f4 ff ff ff  movups  xmm4, xmmword ptr [rip - 0xc]
-bf 02 00 00 00  mov  edi, 2
-eb 04  jmp  0x4a35
-00 00  add  byte ptr [rax], al
-00 40 f3  add  byte ptr [rax - 0xd], al
-0f 10 2d f4 ff ff ff  movups  xmm5, xmmword ptr [rip - 0xc]
-be 03 00 00 00  mov  esi, 3
-eb 04  jmp  0x4a48
-00 00  add  byte ptr [rax], al
-40 40 f3 0f 10 35 f4 ff ff ff  movss  xmm6, dword ptr [rip - 0xc]
-41 b9 04 00 00 00  mov  r9d, 4
-eb 04  jmp  0x4a5c
-00 00  add  byte ptr [rax], al
-80 40 f3 0f  add  byte ptr [rax - 0xd], 0xf
-10 3d f4 ff ff ff  adc  byte ptr [rip - 0xc], bh
 c7 84 24 d8 02 00 00 05 00 00 00  mov  dword ptr [rsp + 0x2d8], 5
 c7 84 24 d0 02 00 00 00 00 a0 40  mov  dword ptr [rsp + 0x2d0], 0x40a00000
 c7 84 24 c8 02 00 00 06 00 00 00  mov  dword ptr [rsp + 0x2c8], 6
@@ -1999,6 +2374,25 @@ c7 44 24 18 31 00 00 00  mov  dword ptr [rsp + 0x18], 0x31
 c7 44 24 10 00 00 44 42  mov  dword ptr [rsp + 0x10], 0x42440000
 c7 44 24 08 32 00 00 00  mov  dword ptr [rsp + 8], 0x32
 c7 04 24 00 00 48 42  mov  dword ptr [rsp], 0x42480000
+bd 01 00 00 00  mov  ebp, 1
+eb 04  jmp  0x4de5
+00 00  add  byte ptr [rax], al
+80 3f f3  cmp  byte ptr [rdi], 0xf3
+0f 10 25 f4 ff ff ff  movups  xmm4, xmmword ptr [rip - 0xc]
+bf 02 00 00 00  mov  edi, 2
+eb 04  jmp  0x4df8
+00 00  add  byte ptr [rax], al
+00 40 f3  add  byte ptr [rax - 0xd], al
+0f 10 2d f4 ff ff ff  movups  xmm5, xmmword ptr [rip - 0xc]
+be 03 00 00 00  mov  esi, 3
+eb 04  jmp  0x4e0b
+00 00  add  byte ptr [rax], al
+40 40 f3 0f 10 35 f4 ff ff ff  movss  xmm6, dword ptr [rip - 0xc]
+41 b9 04 00 00 00  mov  r9d, 4
+eb 04  jmp  0x4e1f
+00 00  add  byte ptr [rax], al
+80 40 f3 0f  add  byte ptr [rax - 0xd], 0xf
+10 3d f4 ff ff ff  adc  byte ptr [rip - 0xc], bh
 e8 e8 e8 ff ff  call  0x3714
 48 8d a4 24 e8 02 00 00  lea  rsp, [rsp + 0x2e8]
 c3  ret  
@@ -2011,11 +2405,6 @@ vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
 e9 b3 b1 ff ff  jmp  6
 48 8d a4 24 10 ff ff ff  lea  rsp, [rsp - 0xf0]
-bd 01 00 00 00  mov  ebp, 1
-bf 02 00 00 00  mov  edi, 2
-be 03 00 00 00  mov  esi, 3
-41 b9 04 00 00 00  mov  r9d, 4
-ba 0a 00 00 00  mov  edx, 0xa
 c7 84 24 68 01 00 00 05 00 00 00  mov  dword ptr [rsp + 0x168], 5
 c7 84 24 60 01 00 00 06 00 00 00  mov  dword ptr [rsp + 0x160], 6
 c7 84 24 58 01 00 00 07 00 00 00  mov  dword ptr [rsp + 0x158], 7
@@ -2062,6 +2451,11 @@ c7 44 24 18 2f 00 00 00  mov  dword ptr [rsp + 0x18], 0x2f
 c7 44 24 10 30 00 00 00  mov  dword ptr [rsp + 0x10], 0x30
 c7 44 24 08 31 00 00 00  mov  dword ptr [rsp + 8], 0x31
 c7 04 24 32 00 00 00  mov  dword ptr [rsp], 0x32
+bd 01 00 00 00  mov  ebp, 1
+bf 02 00 00 00  mov  edi, 2
+be 03 00 00 00  mov  esi, 3
+41 b9 04 00 00 00  mov  r9d, 4
+ba 0a 00 00 00  mov  edx, 0xa
 81 fa 1e 00 00 00  cmp  edx, 0x1e
 72 0a  jb  0x5050
 b8 05 00 00 00  mov  eax, 5
@@ -2091,22 +2485,6 @@ vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
 e9 4f af ff ff  jmp  6
 48 8d a4 24 10 ff ff ff  lea  rsp, [rsp - 0xf0]
-eb 04  jmp  0x50c5
-00 00  add  byte ptr [rax], al
-80 3f f3  cmp  byte ptr [rdi], 0xf3
-0f 10 25 f4 ff ff ff  movups  xmm4, xmmword ptr [rip - 0xc]
-eb 04  jmp  0x50d3
-00 00  add  byte ptr [rax], al
-00 40 f3  add  byte ptr [rax - 0xd], al
-0f 10 2d f4 ff ff ff  movups  xmm5, xmmword ptr [rip - 0xc]
-eb 04  jmp  0x50e1
-00 00  add  byte ptr [rax], al
-40 40 f3 0f 10 35 f4 ff ff ff  movss  xmm6, dword ptr [rip - 0xc]
-eb 04  jmp  0x50ef
-00 00  add  byte ptr [rax], al
-80 40 f3 0f  add  byte ptr [rax - 0xd], 0xf
-10 3d f4 ff ff ff  adc  byte ptr [rip - 0xc], bh
-ba 0b 00 00 00  mov  edx, 0xb
 c7 84 24 68 01 00 00 00 00 a0 40  mov  dword ptr [rsp + 0x168], 0x40a00000
 c7 84 24 60 01 00 00 00 00 c0 40  mov  dword ptr [rsp + 0x160], 0x40c00000
 c7 84 24 58 01 00 00 00 00 e0 40  mov  dword ptr [rsp + 0x158], 0x40e00000
@@ -2153,6 +2531,22 @@ c7 44 24 18 00 00 3c 42  mov  dword ptr [rsp + 0x18], 0x423c0000
 c7 44 24 10 00 00 40 42  mov  dword ptr [rsp + 0x10], 0x42400000
 c7 44 24 08 00 00 44 42  mov  dword ptr [rsp + 8], 0x42440000
 c7 04 24 00 00 48 42  mov  dword ptr [rsp], 0x42480000
+eb 04  jmp  0x528e
+00 00  add  byte ptr [rax], al
+80 3f f3  cmp  byte ptr [rdi], 0xf3
+0f 10 25 f4 ff ff ff  movups  xmm4, xmmword ptr [rip - 0xc]
+eb 04  jmp  0x529c
+00 00  add  byte ptr [rax], al
+00 40 f3  add  byte ptr [rax - 0xd], al
+0f 10 2d f4 ff ff ff  movups  xmm5, xmmword ptr [rip - 0xc]
+eb 04  jmp  0x52aa
+00 00  add  byte ptr [rax], al
+40 40 f3 0f 10 35 f4 ff ff ff  movss  xmm6, dword ptr [rip - 0xc]
+eb 04  jmp  0x52b8
+00 00  add  byte ptr [rax], al
+80 40 f3 0f  add  byte ptr [rax - 0xd], 0xf
+10 3d f4 ff ff ff  adc  byte ptr [rip - 0xc], bh
+ba 0b 00 00 00  mov  edx, 0xb
 81 fa 1e 00 00 00  cmp  edx, 0x1e
 72 0a  jb  0x52d7
 b8 05 00 00 00  mov  eax, 5
@@ -2182,26 +2576,6 @@ vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
 e9 c7 ac ff ff  jmp  6
 48 8d a4 24 a0 fd ff ff  lea  rsp, [rsp - 0x260]
-eb 04  jmp  0x534d
-00 00  add  byte ptr [rax], al
-80 3f f3  cmp  byte ptr [rdi], 0xf3
-0f 10 25 f4 ff ff ff  movups  xmm4, xmmword ptr [rip - 0xc]
-eb 04  jmp  0x535b
-00 00  add  byte ptr [rax], al
-00 40 f3  add  byte ptr [rax - 0xd], al
-0f 10 2d f4 ff ff ff  movups  xmm5, xmmword ptr [rip - 0xc]
-eb 04  jmp  0x5369
-00 00  add  byte ptr [rax], al
-40 40 f3 0f 10 35 f4 ff ff ff  movss  xmm6, dword ptr [rip - 0xc]
-eb 04  jmp  0x5377
-00 00  add  byte ptr [rax], al
-80 40 f3 0f  add  byte ptr [rax - 0xd], 0xf
-10 3d f4 ff ff ff  adc  byte ptr [rip - 0xc], bh
-bd 01 00 00 00  mov  ebp, 1
-bf 02 00 00 00  mov  edi, 2
-be 03 00 00 00  mov  esi, 3
-41 b9 04 00 00 00  mov  r9d, 4
-ba 0c 00 00 00  mov  edx, 0xc
 c7 84 24 d8 02 00 00 00 00 a0 40  mov  dword ptr [rsp + 0x2d8], 0x40a00000
 c7 84 24 d0 02 00 00 00 00 c0 40  mov  dword ptr [rsp + 0x2d0], 0x40c00000
 c7 84 24 c8 02 00 00 00 00 e0 40  mov  dword ptr [rsp + 0x2c8], 0x40e00000
@@ -2294,6 +2668,26 @@ c7 44 24 18 2f 00 00 00  mov  dword ptr [rsp + 0x18], 0x2f
 c7 44 24 10 30 00 00 00  mov  dword ptr [rsp + 0x10], 0x30
 c7 44 24 08 31 00 00 00  mov  dword ptr [rsp + 8], 0x31
 c7 04 24 32 00 00 00  mov  dword ptr [rsp], 0x32
+eb 04  jmp  0x5710
+00 00  add  byte ptr [rax], al
+80 3f f3  cmp  byte ptr [rdi], 0xf3
+0f 10 25 f4 ff ff ff  movups  xmm4, xmmword ptr [rip - 0xc]
+eb 04  jmp  0x571e
+00 00  add  byte ptr [rax], al
+00 40 f3  add  byte ptr [rax - 0xd], al
+0f 10 2d f4 ff ff ff  movups  xmm5, xmmword ptr [rip - 0xc]
+eb 04  jmp  0x572c
+00 00  add  byte ptr [rax], al
+40 40 f3 0f 10 35 f4 ff ff ff  movss  xmm6, dword ptr [rip - 0xc]
+eb 04  jmp  0x573a
+00 00  add  byte ptr [rax], al
+80 40 f3 0f  add  byte ptr [rax - 0xd], 0xf
+10 3d f4 ff ff ff  adc  byte ptr [rip - 0xc], bh
+bd 01 00 00 00  mov  ebp, 1
+bf 02 00 00 00  mov  edi, 2
+be 03 00 00 00  mov  esi, 3
+41 b9 04 00 00 00  mov  r9d, 4
+ba 0c 00 00 00  mov  edx, 0xc
 81 fa 1e 00 00 00  cmp  edx, 0x1e
 72 0a  jb  0x576e
 b8 05 00 00 00  mov  eax, 5
@@ -2322,26 +2716,6 @@ vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
 e9 33 a8 ff ff  jmp  6
 48 8d a4 24 a0 fd ff ff  lea  rsp, [rsp - 0x260]
-bd 01 00 00 00  mov  ebp, 1
-bf 02 00 00 00  mov  edi, 2
-be 03 00 00 00  mov  esi, 3
-41 b9 04 00 00 00  mov  r9d, 4
-eb 04  jmp  0x57f6
-00 00  add  byte ptr [rax], al
-80 3f f3  cmp  byte ptr [rdi], 0xf3
-0f 10 25 f4 ff ff ff  movups  xmm4, xmmword ptr [rip - 0xc]
-eb 04  jmp  0x5804
-00 00  add  byte ptr [rax], al
-00 40 f3  add  byte ptr [rax - 0xd], al
-0f 10 2d f4 ff ff ff  movups  xmm5, xmmword ptr [rip - 0xc]
-eb 04  jmp  0x5812
-00 00  add  byte ptr [rax], al
-40 40 f3 0f 10 35 f4 ff ff ff  movss  xmm6, dword ptr [rip - 0xc]
-eb 04  jmp  0x5820
-00 00  add  byte ptr [rax], al
-80 40 f3 0f  add  byte ptr [rax - 0xd], 0xf
-10 3d f4 ff ff ff  adc  byte ptr [rip - 0xc], bh
-ba 0d 00 00 00  mov  edx, 0xd
 c7 84 24 d8 02 00 00 05 00 00 00  mov  dword ptr [rsp + 0x2d8], 5
 c7 84 24 d0 02 00 00 06 00 00 00  mov  dword ptr [rsp + 0x2d0], 6
 c7 84 24 c8 02 00 00 07 00 00 00  mov  dword ptr [rsp + 0x2c8], 7
@@ -2434,6 +2808,26 @@ c7 44 24 18 00 00 3c 42  mov  dword ptr [rsp + 0x18], 0x423c0000
 c7 44 24 10 00 00 40 42  mov  dword ptr [rsp + 0x10], 0x42400000
 c7 44 24 08 00 00 44 42  mov  dword ptr [rsp + 8], 0x42440000
 c7 04 24 00 00 48 42  mov  dword ptr [rsp], 0x42480000
+bd 01 00 00 00  mov  ebp, 1
+bf 02 00 00 00  mov  edi, 2
+be 03 00 00 00  mov  esi, 3
+41 b9 04 00 00 00  mov  r9d, 4
+eb 04  jmp  0x5bb9
+00 00  add  byte ptr [rax], al
+80 3f f3  cmp  byte ptr [rdi], 0xf3
+0f 10 25 f4 ff ff ff  movups  xmm4, xmmword ptr [rip - 0xc]
+eb 04  jmp  0x5bc7
+00 00  add  byte ptr [rax], al
+00 40 f3  add  byte ptr [rax - 0xd], al
+0f 10 2d f4 ff ff ff  movups  xmm5, xmmword ptr [rip - 0xc]
+eb 04  jmp  0x5bd5
+00 00  add  byte ptr [rax], al
+40 40 f3 0f 10 35 f4 ff ff ff  movss  xmm6, dword ptr [rip - 0xc]
+eb 04  jmp  0x5be3
+00 00  add  byte ptr [rax], al
+80 40 f3 0f  add  byte ptr [rax - 0xd], 0xf
+10 3d f4 ff ff ff  adc  byte ptr [rip - 0xc], bh
+ba 0d 00 00 00  mov  edx, 0xd
 81 fa 1e 00 00 00  cmp  edx, 0x1e
 72 0a  jb  0x5c02
 b8 05 00 00 00  mov  eax, 5
@@ -2462,26 +2856,6 @@ vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
 e9 9f a3 ff ff  jmp  6
 48 8d a4 24 a0 fd ff ff  lea  rsp, [rsp - 0x260]
-bd 01 00 00 00  mov  ebp, 1
-eb 04  jmp  0x5c7a
-00 00  add  byte ptr [rax], al
-80 3f f3  cmp  byte ptr [rdi], 0xf3
-0f 10 25 f4 ff ff ff  movups  xmm4, xmmword ptr [rip - 0xc]
-bf 02 00 00 00  mov  edi, 2
-eb 04  jmp  0x5c8d
-00 00  add  byte ptr [rax], al
-00 40 f3  add  byte ptr [rax - 0xd], al
-0f 10 2d f4 ff ff ff  movups  xmm5, xmmword ptr [rip - 0xc]
-be 03 00 00 00  mov  esi, 3
-eb 04  jmp  0x5ca0
-00 00  add  byte ptr [rax], al
-40 40 f3 0f 10 35 f4 ff ff ff  movss  xmm6, dword ptr [rip - 0xc]
-41 b9 04 00 00 00  mov  r9d, 4
-eb 04  jmp  0x5cb4
-00 00  add  byte ptr [rax], al
-80 40 f3 0f  add  byte ptr [rax - 0xd], 0xf
-10 3d f4 ff ff ff  adc  byte ptr [rip - 0xc], bh
-ba 0e 00 00 00  mov  edx, 0xe
 c7 84 24 d8 02 00 00 05 00 00 00  mov  dword ptr [rsp + 0x2d8], 5
 c7 84 24 d0 02 00 00 00 00 a0 40  mov  dword ptr [rsp + 0x2d0], 0x40a00000
 c7 84 24 c8 02 00 00 06 00 00 00  mov  dword ptr [rsp + 0x2c8], 6
@@ -2574,6 +2948,26 @@ c7 44 24 18 31 00 00 00  mov  dword ptr [rsp + 0x18], 0x31
 c7 44 24 10 00 00 44 42  mov  dword ptr [rsp + 0x10], 0x42440000
 c7 44 24 08 32 00 00 00  mov  dword ptr [rsp + 8], 0x32
 c7 04 24 00 00 48 42  mov  dword ptr [rsp], 0x42480000
+bd 01 00 00 00  mov  ebp, 1
+eb 04  jmp  0x603d
+00 00  add  byte ptr [rax], al
+80 3f f3  cmp  byte ptr [rdi], 0xf3
+0f 10 25 f4 ff ff ff  movups  xmm4, xmmword ptr [rip - 0xc]
+bf 02 00 00 00  mov  edi, 2
+eb 04  jmp  0x6050
+00 00  add  byte ptr [rax], al
+00 40 f3  add  byte ptr [rax - 0xd], al
+0f 10 2d f4 ff ff ff  movups  xmm5, xmmword ptr [rip - 0xc]
+be 03 00 00 00  mov  esi, 3
+eb 04  jmp  0x6063
+00 00  add  byte ptr [rax], al
+40 40 f3 0f 10 35 f4 ff ff ff  movss  xmm6, dword ptr [rip - 0xc]
+41 b9 04 00 00 00  mov  r9d, 4
+eb 04  jmp  0x6077
+00 00  add  byte ptr [rax], al
+80 40 f3 0f  add  byte ptr [rax - 0xd], 0xf
+10 3d f4 ff ff ff  adc  byte ptr [rip - 0xc], bh
+ba 0e 00 00 00  mov  edx, 0xe
 81 fa 1e 00 00 00  cmp  edx, 0x1e
 72 0a  jb  0x6096
 b8 05 00 00 00  mov  eax, 5
@@ -2602,26 +2996,6 @@ vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
 e9 0b 9f ff ff  jmp  6
 48 8d a4 24 a0 fd ff ff  lea  rsp, [rsp - 0x260]
-bd 01 00 00 00  mov  ebp, 1
-eb 04  jmp  0x610e
-00 00  add  byte ptr [rax], al
-80 3f f3  cmp  byte ptr [rdi], 0xf3
-0f 10 25 f4 ff ff ff  movups  xmm4, xmmword ptr [rip - 0xc]
-bf 02 00 00 00  mov  edi, 2
-eb 04  jmp  0x6121
-00 00  add  byte ptr [rax], al
-00 40 f3  add  byte ptr [rax - 0xd], al
-0f 10 2d f4 ff ff ff  movups  xmm5, xmmword ptr [rip - 0xc]
-be 03 00 00 00  mov  esi, 3
-eb 04  jmp  0x6134
-00 00  add  byte ptr [rax], al
-40 40 f3 0f 10 35 f4 ff ff ff  movss  xmm6, dword ptr [rip - 0xc]
-41 b9 04 00 00 00  mov  r9d, 4
-eb 04  jmp  0x6148
-00 00  add  byte ptr [rax], al
-80 40 f3 0f  add  byte ptr [rax - 0xd], 0xf
-10 3d f4 ff ff ff  adc  byte ptr [rip - 0xc], bh
-ba 0f 00 00 00  mov  edx, 0xf
 c7 84 24 d8 02 00 00 05 00 00 00  mov  dword ptr [rsp + 0x2d8], 5
 c7 84 24 d0 02 00 00 00 00 a0 40  mov  dword ptr [rsp + 0x2d0], 0x40a00000
 c7 84 24 c8 02 00 00 06 00 00 00  mov  dword ptr [rsp + 0x2c8], 6
@@ -2714,6 +3088,26 @@ c7 44 24 18 31 00 00 00  mov  dword ptr [rsp + 0x18], 0x31
 c7 44 24 10 00 00 44 42  mov  dword ptr [rsp + 0x10], 0x42440000
 c7 44 24 08 32 00 00 00  mov  dword ptr [rsp + 8], 0x32
 c7 04 24 00 00 48 42  mov  dword ptr [rsp], 0x42480000
+bd 01 00 00 00  mov  ebp, 1
+eb 04  jmp  0x64d1
+00 00  add  byte ptr [rax], al
+80 3f f3  cmp  byte ptr [rdi], 0xf3
+0f 10 25 f4 ff ff ff  movups  xmm4, xmmword ptr [rip - 0xc]
+bf 02 00 00 00  mov  edi, 2
+eb 04  jmp  0x64e4
+00 00  add  byte ptr [rax], al
+00 40 f3  add  byte ptr [rax - 0xd], al
+0f 10 2d f4 ff ff ff  movups  xmm5, xmmword ptr [rip - 0xc]
+be 03 00 00 00  mov  esi, 3
+eb 04  jmp  0x64f7
+00 00  add  byte ptr [rax], al
+40 40 f3 0f 10 35 f4 ff ff ff  movss  xmm6, dword ptr [rip - 0xc]
+41 b9 04 00 00 00  mov  r9d, 4
+eb 04  jmp  0x650b
+00 00  add  byte ptr [rax], al
+80 40 f3 0f  add  byte ptr [rax - 0xd], 0xf
+10 3d f4 ff ff ff  adc  byte ptr [rip - 0xc], bh
+ba 0f 00 00 00  mov  edx, 0xf
 81 fa 1e 00 00 00  cmp  edx, 0x1e
 72 0a  jb  0x652a
 b8 05 00 00 00  mov  eax, 5
@@ -2742,7 +3136,36 @@ vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
 e9 77 9a ff ff  jmp  6
 48 8d 64 24 d0  lea  rsp, [rsp - 0x30]
-eb 08  jmp  0x659e
+c7 04 24 00 00 10 41  mov  dword ptr [rsp], 0x41100000
+c7 44 24 08 00 00 00 00  mov  dword ptr [rsp + 8], 0
+c7 44 24 0c 00 00 24 40  mov  dword ptr [rsp + 0xc], 0x40240000
+c7 44 24 10 00 00 30 41  mov  dword ptr [rsp + 0x10], 0x41300000
+c7 44 24 18 00 00 40 41  mov  dword ptr [rsp + 0x18], 0x41400000
+c7 44 24 20 00 00 50 41  mov  dword ptr [rsp + 0x20], 0x41500000
+c7 44 24 28 00 00 60 41  mov  dword ptr [rsp + 0x28], 0x41600000
+c7 44 24 30 00 00 00 00  mov  dword ptr [rsp + 0x30], 0
+c7 44 24 34 00 00 2e 40  mov  dword ptr [rsp + 0x34], 0x402e0000
+c7 44 24 38 00 00 00 00  mov  dword ptr [rsp + 0x38], 0
+c7 44 24 3c 00 00 30 40  mov  dword ptr [rsp + 0x3c], 0x40300000
+c7 44 24 40 00 00 88 41  mov  dword ptr [rsp + 0x40], 0x41880000
+c7 44 24 48 00 00 00 00  mov  dword ptr [rsp + 0x48], 0
+c7 44 24 4c 00 00 32 40  mov  dword ptr [rsp + 0x4c], 0x40320000
+c7 44 24 50 00 00 98 41  mov  dword ptr [rsp + 0x50], 0x41980000
+c7 44 24 58 00 00 a0 41  mov  dword ptr [rsp + 0x58], 0x41a00000
+c7 44 24 60 00 00 00 00  mov  dword ptr [rsp + 0x60], 0
+c7 44 24 64 00 00 35 40  mov  dword ptr [rsp + 0x64], 0x40350000
+c7 44 24 68 00 00 b0 41  mov  dword ptr [rsp + 0x68], 0x41b00000
+c7 44 24 70 00 00 b8 41  mov  dword ptr [rsp + 0x70], 0x41b80000
+c7 44 24 78 00 00 c0 41  mov  dword ptr [rsp + 0x78], 0x41c00000
+c7 84 24 80 00 00 00 00 00 00 00  mov  dword ptr [rsp + 0x80], 0
+c7 84 24 84 00 00 00 00 00 39 40  mov  dword ptr [rsp + 0x84], 0x40390000
+c7 84 24 88 00 00 00 00 00 d0 41  mov  dword ptr [rsp + 0x88], 0x41d00000
+c7 84 24 90 00 00 00 00 00 d8 41  mov  dword ptr [rsp + 0x90], 0x41d80000
+c7 84 24 98 00 00 00 00 00 e0 41  mov  dword ptr [rsp + 0x98], 0x41e00000
+c7 84 24 a0 00 00 00 00 00 e8 41  mov  dword ptr [rsp + 0xa0], 0x41e80000
+c7 84 24 a8 00 00 00 00 00 00 00  mov  dword ptr [rsp + 0xa8], 0
+c7 84 24 ac 00 00 00 00 00 3e 40  mov  dword ptr [rsp + 0xac], 0x403e0000
+eb 08  jmp  0x669d
 00 00  add  byte ptr [rax], al
 00 00  add  byte ptr [rax], al
 00 00  add  byte ptr [rax], al
@@ -2754,7 +3177,36 @@ vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
 e9 b3 98 ff ff  jmp  6
 48 8d 64 24 d0  lea  rsp, [rsp - 0x30]
-eb 08  jmp  0x6762
+c7 04 24 00 00 10 41  mov  dword ptr [rsp], 0x41100000
+c7 44 24 08 00 00 00 00  mov  dword ptr [rsp + 8], 0
+c7 44 24 0c 00 00 24 40  mov  dword ptr [rsp + 0xc], 0x40240000
+c7 44 24 10 00 00 30 41  mov  dword ptr [rsp + 0x10], 0x41300000
+c7 44 24 18 00 00 40 41  mov  dword ptr [rsp + 0x18], 0x41400000
+c7 44 24 20 00 00 50 41  mov  dword ptr [rsp + 0x20], 0x41500000
+c7 44 24 28 00 00 60 41  mov  dword ptr [rsp + 0x28], 0x41600000
+c7 44 24 30 00 00 00 00  mov  dword ptr [rsp + 0x30], 0
+c7 44 24 34 00 00 2e 40  mov  dword ptr [rsp + 0x34], 0x402e0000
+c7 44 24 38 00 00 00 00  mov  dword ptr [rsp + 0x38], 0
+c7 44 24 3c 00 00 30 40  mov  dword ptr [rsp + 0x3c], 0x40300000
+c7 44 24 40 00 00 88 41  mov  dword ptr [rsp + 0x40], 0x41880000
+c7 44 24 48 00 00 00 00  mov  dword ptr [rsp + 0x48], 0
+c7 44 24 4c 00 00 32 40  mov  dword ptr [rsp + 0x4c], 0x40320000
+c7 44 24 50 00 00 98 41  mov  dword ptr [rsp + 0x50], 0x41980000
+c7 44 24 58 00 00 a0 41  mov  dword ptr [rsp + 0x58], 0x41a00000
+c7 44 24 60 00 00 00 00  mov  dword ptr [rsp + 0x60], 0
+c7 44 24 64 00 00 35 40  mov  dword ptr [rsp + 0x64], 0x40350000
+c7 44 24 68 00 00 b0 41  mov  dword ptr [rsp + 0x68], 0x41b00000
+c7 44 24 70 00 00 b8 41  mov  dword ptr [rsp + 0x70], 0x41b80000
+c7 44 24 78 00 00 c0 41  mov  dword ptr [rsp + 0x78], 0x41c00000
+c7 84 24 80 00 00 00 00 00 00 00  mov  dword ptr [rsp + 0x80], 0
+c7 84 24 84 00 00 00 00 00 39 40  mov  dword ptr [rsp + 0x84], 0x40390000
+c7 84 24 88 00 00 00 00 00 d0 41  mov  dword ptr [rsp + 0x88], 0x41d00000
+c7 84 24 90 00 00 00 00 00 d8 41  mov  dword ptr [rsp + 0x90], 0x41d80000
+c7 84 24 98 00 00 00 00 00 e0 41  mov  dword ptr [rsp + 0x98], 0x41e00000
+c7 84 24 a0 00 00 00 00 00 e8 41  mov  dword ptr [rsp + 0xa0], 0x41e80000
+c7 84 24 a8 00 00 00 00 00 00 00  mov  dword ptr [rsp + 0xa8], 0
+c7 84 24 ac 00 00 00 00 00 3e 40  mov  dword ptr [rsp + 0xac], 0x403e0000
+eb 08  jmp  0x6861
 00 00  add  byte ptr [rax], al
 00 00  add  byte ptr [rax], al
 00 00  add  byte ptr [rax], al
@@ -2766,47 +3218,6 @@ vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
 e9 ef 96 ff ff  jmp  6
 48 8d 64 24 d0  lea  rsp, [rsp - 0x30]
-eb 04  jmp  0x6922
-00 00  add  byte ptr [rax], al
-80 3f f3  cmp  byte ptr [rdi], 0xf3
-0f 10 05 f4 ff ff ff  movups  xmm0, xmmword ptr [rip - 0xc]
-eb 08  jmp  0x6934
-00 00  add  byte ptr [rax], al
-00 00  add  byte ptr [rax], al
-00 00  add  byte ptr [rax], al
-00 40 f2  add  byte ptr [rax - 0xe], al
-0f 10 0d f0 ff ff ff  movups  xmm1, xmmword ptr [rip - 0x10]
-eb 04  jmp  0x6942
-00 00  add  byte ptr [rax], al
-40 40 f3 0f 10 15 f4 ff ff ff  movss  xmm2, dword ptr [rip - 0xc]
-eb 08  jmp  0x6954
-00 00  add  byte ptr [rax], al
-00 00  add  byte ptr [rax], al
-00 00  add  byte ptr [rax], al
-10 40 f2  adc  byte ptr [rax - 0xe], al
-0f 10 1d f0 ff ff ff  movups  xmm3, xmmword ptr [rip - 0x10]
-eb 08  jmp  0x6966
-00 00  add  byte ptr [rax], al
-00 00  add  byte ptr [rax], al
-00 00  add  byte ptr [rax], al
-14 40  adc  al, 0x40
-f2 0f 10 25 f0 ff ff ff  movsd  xmm4, qword ptr [rip - 0x10]
-eb 04  jmp  0x6974
-00 00  add  byte ptr [rax], al
-c0 40 f3 0f  rol  byte ptr [rax - 0xd], 0xf
-10 2d f4 ff ff ff  adc  byte ptr [rip - 0xc], ch
-eb 08  jmp  0x6986
-00 00  add  byte ptr [rax], al
-00 00  add  byte ptr [rax], al
-00 00  add  byte ptr [rax], al
-1c 40  sbb  al, 0x40
-f2 0f 10 35 f0 ff ff ff  movsd  xmm6, qword ptr [rip - 0x10]
-eb 08  jmp  0x6998
-00 00  add  byte ptr [rax], al
-00 00  add  byte ptr [rax], al
-00 00  add  byte ptr [rax], al
-20 40 f2  and  byte ptr [rax - 0xe], al
-0f 10 3d f0 ff ff ff  movups  xmm7, xmmword ptr [rip - 0x10]
 c7 04 24 00 00 00 00  mov  dword ptr [rsp], 0
 c7 44 24 04 00 00 22 40  mov  dword ptr [rsp + 4], 0x40220000
 c7 44 24 08 00 00 20 41  mov  dword ptr [rsp + 8], 0x41200000
@@ -2844,6 +3255,47 @@ c7 84 24 9c 00 00 00 00 00 3c 40  mov  dword ptr [rsp + 0x9c], 0x403c0000
 c7 84 24 a0 00 00 00 00 00 00 00  mov  dword ptr [rsp + 0xa0], 0
 c7 84 24 a4 00 00 00 00 00 3d 40  mov  dword ptr [rsp + 0xa4], 0x403d0000
 c7 84 24 a8 00 00 00 00 00 f0 41  mov  dword ptr [rsp + 0xa8], 0x41f00000
+eb 04  jmp  0x6a67
+00 00  add  byte ptr [rax], al
+80 3f f3  cmp  byte ptr [rdi], 0xf3
+0f 10 05 f4 ff ff ff  movups  xmm0, xmmword ptr [rip - 0xc]
+eb 08  jmp  0x6a79
+00 00  add  byte ptr [rax], al
+00 00  add  byte ptr [rax], al
+00 00  add  byte ptr [rax], al
+00 40 f2  add  byte ptr [rax - 0xe], al
+0f 10 0d f0 ff ff ff  movups  xmm1, xmmword ptr [rip - 0x10]
+eb 04  jmp  0x6a87
+00 00  add  byte ptr [rax], al
+40 40 f3 0f 10 15 f4 ff ff ff  movss  xmm2, dword ptr [rip - 0xc]
+eb 08  jmp  0x6a99
+00 00  add  byte ptr [rax], al
+00 00  add  byte ptr [rax], al
+00 00  add  byte ptr [rax], al
+10 40 f2  adc  byte ptr [rax - 0xe], al
+0f 10 1d f0 ff ff ff  movups  xmm3, xmmword ptr [rip - 0x10]
+eb 08  jmp  0x6aab
+00 00  add  byte ptr [rax], al
+00 00  add  byte ptr [rax], al
+00 00  add  byte ptr [rax], al
+14 40  adc  al, 0x40
+f2 0f 10 25 f0 ff ff ff  movsd  xmm4, qword ptr [rip - 0x10]
+eb 04  jmp  0x6ab9
+00 00  add  byte ptr [rax], al
+c0 40 f3 0f  rol  byte ptr [rax - 0xd], 0xf
+10 2d f4 ff ff ff  adc  byte ptr [rip - 0xc], ch
+eb 08  jmp  0x6acb
+00 00  add  byte ptr [rax], al
+00 00  add  byte ptr [rax], al
+00 00  add  byte ptr [rax], al
+1c 40  sbb  al, 0x40
+f2 0f 10 35 f0 ff ff ff  movsd  xmm6, qword ptr [rip - 0x10]
+eb 08  jmp  0x6add
+00 00  add  byte ptr [rax], al
+00 00  add  byte ptr [rax], al
+00 00  add  byte ptr [rax], al
+20 40 f2  and  byte ptr [rax - 0xe], al
+0f 10 3d f0 ff ff ff  movups  xmm7, xmmword ptr [rip - 0x10]
 48 8b 7b b8  mov  rdi, qword ptr [rbx - 0x48]
 b8 0e 00 00 00  mov  eax, 0xe
 e9 13 95 ff ff  jmp  6
@@ -2861,47 +3313,6 @@ vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
 e9 df 94 ff ff  jmp  6
 48 8d 64 24 d0  lea  rsp, [rsp - 0x30]
-eb 04  jmp  0x6b32
-00 00  add  byte ptr [rax], al
-80 3f f3  cmp  byte ptr [rdi], 0xf3
-0f 10 05 f4 ff ff ff  movups  xmm0, xmmword ptr [rip - 0xc]
-eb 08  jmp  0x6b44
-00 00  add  byte ptr [rax], al
-00 00  add  byte ptr [rax], al
-00 00  add  byte ptr [rax], al
-00 40 f2  add  byte ptr [rax - 0xe], al
-0f 10 0d f0 ff ff ff  movups  xmm1, xmmword ptr [rip - 0x10]
-eb 04  jmp  0x6b52
-00 00  add  byte ptr [rax], al
-40 40 f3 0f 10 15 f4 ff ff ff  movss  xmm2, dword ptr [rip - 0xc]
-eb 08  jmp  0x6b64
-00 00  add  byte ptr [rax], al
-00 00  add  byte ptr [rax], al
-00 00  add  byte ptr [rax], al
-10 40 f2  adc  byte ptr [rax - 0xe], al
-0f 10 1d f0 ff ff ff  movups  xmm3, xmmword ptr [rip - 0x10]
-eb 08  jmp  0x6b76
-00 00  add  byte ptr [rax], al
-00 00  add  byte ptr [rax], al
-00 00  add  byte ptr [rax], al
-14 40  adc  al, 0x40
-f2 0f 10 25 f0 ff ff ff  movsd  xmm4, qword ptr [rip - 0x10]
-eb 04  jmp  0x6b84
-00 00  add  byte ptr [rax], al
-c0 40 f3 0f  rol  byte ptr [rax - 0xd], 0xf
-10 2d f4 ff ff ff  adc  byte ptr [rip - 0xc], ch
-eb 08  jmp  0x6b96
-00 00  add  byte ptr [rax], al
-00 00  add  byte ptr [rax], al
-00 00  add  byte ptr [rax], al
-1c 40  sbb  al, 0x40
-f2 0f 10 35 f0 ff ff ff  movsd  xmm6, qword ptr [rip - 0x10]
-eb 08  jmp  0x6ba8
-00 00  add  byte ptr [rax], al
-00 00  add  byte ptr [rax], al
-00 00  add  byte ptr [rax], al
-20 40 f2  and  byte ptr [rax - 0xe], al
-0f 10 3d f0 ff ff ff  movups  xmm7, xmmword ptr [rip - 0x10]
 c7 04 24 00 00 00 00  mov  dword ptr [rsp], 0
 c7 44 24 04 00 00 22 40  mov  dword ptr [rsp + 4], 0x40220000
 c7 44 24 08 00 00 20 41  mov  dword ptr [rsp + 8], 0x41200000
@@ -2939,6 +3350,47 @@ c7 84 24 9c 00 00 00 00 00 3c 40  mov  dword ptr [rsp + 0x9c], 0x403c0000
 c7 84 24 a0 00 00 00 00 00 00 00  mov  dword ptr [rsp + 0xa0], 0
 c7 84 24 a4 00 00 00 00 00 3d 40  mov  dword ptr [rsp + 0xa4], 0x403d0000
 c7 84 24 a8 00 00 00 00 00 f0 41  mov  dword ptr [rsp + 0xa8], 0x41f00000
+eb 04  jmp  0x6c77
+00 00  add  byte ptr [rax], al
+80 3f f3  cmp  byte ptr [rdi], 0xf3
+0f 10 05 f4 ff ff ff  movups  xmm0, xmmword ptr [rip - 0xc]
+eb 08  jmp  0x6c89
+00 00  add  byte ptr [rax], al
+00 00  add  byte ptr [rax], al
+00 00  add  byte ptr [rax], al
+00 40 f2  add  byte ptr [rax - 0xe], al
+0f 10 0d f0 ff ff ff  movups  xmm1, xmmword ptr [rip - 0x10]
+eb 04  jmp  0x6c97
+00 00  add  byte ptr [rax], al
+40 40 f3 0f 10 15 f4 ff ff ff  movss  xmm2, dword ptr [rip - 0xc]
+eb 08  jmp  0x6ca9
+00 00  add  byte ptr [rax], al
+00 00  add  byte ptr [rax], al
+00 00  add  byte ptr [rax], al
+10 40 f2  adc  byte ptr [rax - 0xe], al
+0f 10 1d f0 ff ff ff  movups  xmm3, xmmword ptr [rip - 0x10]
+eb 08  jmp  0x6cbb
+00 00  add  byte ptr [rax], al
+00 00  add  byte ptr [rax], al
+00 00  add  byte ptr [rax], al
+14 40  adc  al, 0x40
+f2 0f 10 25 f0 ff ff ff  movsd  xmm4, qword ptr [rip - 0x10]
+eb 04  jmp  0x6cc9
+00 00  add  byte ptr [rax], al
+c0 40 f3 0f  rol  byte ptr [rax - 0xd], 0xf
+10 2d f4 ff ff ff  adc  byte ptr [rip - 0xc], ch
+eb 08  jmp  0x6cdb
+00 00  add  byte ptr [rax], al
+00 00  add  byte ptr [rax], al
+00 00  add  byte ptr [rax], al
+1c 40  sbb  al, 0x40
+f2 0f 10 35 f0 ff ff ff  movsd  xmm6, qword ptr [rip - 0x10]
+eb 08  jmp  0x6ced
+00 00  add  byte ptr [rax], al
+00 00  add  byte ptr [rax], al
+00 00  add  byte ptr [rax], al
+20 40 f2  and  byte ptr [rax - 0xe], al
+0f 10 3d f0 ff ff ff  movups  xmm7, xmmword ptr [rip - 0x10]
 48 8b 7b b8  mov  rdi, qword ptr [rbx - 0x48]
 b8 0e 00 00 00  mov  eax, 0xe
 e9 03 93 ff ff  jmp  6
@@ -2956,12 +3408,6 @@ vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
 e9 cf 92 ff ff  jmp  6
 48 8d 64 24 c0  lea  rsp, [rsp - 0x40]
-bf 01 00 00 00  mov  edi, 1
-be 02 00 00 00  mov  esi, 2
-ba 03 00 00 00  mov  edx, 3
-b9 04 00 00 00  mov  ecx, 4
-41 b8 05 00 00 00  mov  r8d, 5
-41 b9 06 00 00 00  mov  r9d, 6
 c7 04 24 07 00 00 00  mov  dword ptr [rsp], 7
 c7 44 24 08 08 00 00 00  mov  dword ptr [rsp + 8], 8
 c7 44 24 10 09 00 00 00  mov  dword ptr [rsp + 0x10], 9
@@ -2988,6 +3434,12 @@ c7 84 24 b0 00 00 00 1d 00 00 00  mov  dword ptr [rsp + 0xb0], 0x1d
 48 c7 84 24 b8 00 00 00 1e 00 00 00  mov  qword ptr [rsp + 0xb8], 0x1e
 f2 44 0f 10 7b b8  movsd  xmm15, qword ptr [rbx - 0x48]
 f2 44 0f 11 bc 24 c0 00 00 00  movsd  qword ptr [rsp + 0xc0], xmm15
+bf 01 00 00 00  mov  edi, 1
+be 02 00 00 00  mov  esi, 2
+ba 03 00 00 00  mov  edx, 3
+b9 04 00 00 00  mov  ecx, 4
+41 b8 05 00 00 00  mov  r8d, 5
+41 b9 06 00 00 00  mov  r9d, 6
 b8 0e 00 00 00  mov  eax, 0xe
 e9 b2 91 ff ff  jmp  6
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
@@ -3004,12 +3456,6 @@ vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
 e9 7f 91 ff ff  jmp  6
 48 8d 64 24 c0  lea  rsp, [rsp - 0x40]
-48 bf 01 00 00 00 00 00 00 f0  movabs  rdi, 0xf000000000000001
-be 02 00 00 00  mov  esi, 2
-ba 03 00 00 00  mov  edx, 3
-b9 04 00 00 00  mov  ecx, 4
-41 b8 05 00 00 00  mov  r8d, 5
-41 b9 06 00 00 00  mov  r9d, 6
 c7 04 24 07 00 00 00  mov  dword ptr [rsp], 7
 c7 44 24 08 08 00 00 00  mov  dword ptr [rsp + 8], 8
 c7 44 24 10 09 00 00 00  mov  dword ptr [rsp + 0x10], 9
@@ -3036,6 +3482,12 @@ c7 84 24 b0 00 00 00 1d 00 00 00  mov  dword ptr [rsp + 0xb0], 0x1d
 48 c7 84 24 b8 00 00 00 1e 00 00 00  mov  qword ptr [rsp + 0xb8], 0x1e
 f2 44 0f 10 7b b8  movsd  xmm15, qword ptr [rbx - 0x48]
 f2 44 0f 11 bc 24 c0 00 00 00  movsd  qword ptr [rsp + 0xc0], xmm15
+48 bf 01 00 00 00 00 00 00 f0  movabs  rdi, 0xf000000000000001
+be 02 00 00 00  mov  esi, 2
+ba 03 00 00 00  mov  edx, 3
+b9 04 00 00 00  mov  ecx, 4
+41 b8 05 00 00 00  mov  r8d, 5
+41 b9 06 00 00 00  mov  r9d, 6
 b8 0e 00 00 00  mov  eax, 0xe
 e9 5d 90 ff ff  jmp  6
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
@@ -3053,12 +3505,6 @@ vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
 e9 27 90 ff ff  jmp  6
 48 8d 64 24 c0  lea  rsp, [rsp - 0x40]
-bf 01 00 00 00  mov  edi, 1
-be 02 00 00 00  mov  esi, 2
-ba 03 00 00 00  mov  edx, 3
-b9 04 00 00 00  mov  ecx, 4
-41 b8 05 00 00 00  mov  r8d, 5
-41 b9 06 00 00 00  mov  r9d, 6
 48 c7 04 24 07 00 00 00  mov  qword ptr [rsp], 7
 48 c7 44 24 08 08 00 00 00  mov  qword ptr [rsp + 8], 8
 48 c7 44 24 10 09 00 00 00  mov  qword ptr [rsp + 0x10], 9
@@ -3085,6 +3531,12 @@ c7 84 24 90 00 00 00 19 00 00 00  mov  dword ptr [rsp + 0x90], 0x19
 c7 84 24 b8 00 00 00 1e 00 00 00  mov  dword ptr [rsp + 0xb8], 0x1e
 f2 44 0f 10 7b b8  movsd  xmm15, qword ptr [rbx - 0x48]
 f2 44 0f 11 bc 24 c0 00 00 00  movsd  qword ptr [rsp + 0xc0], xmm15
+bf 01 00 00 00  mov  edi, 1
+be 02 00 00 00  mov  esi, 2
+ba 03 00 00 00  mov  edx, 3
+b9 04 00 00 00  mov  ecx, 4
+41 b8 05 00 00 00  mov  r8d, 5
+41 b9 06 00 00 00  mov  r9d, 6
 b8 0e 00 00 00  mov  eax, 0xe
 e9 00 8f ff ff  jmp  6
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
@@ -3102,12 +3554,6 @@ vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
 e9 cb 8e ff ff  jmp  6
 48 8d 64 24 c0  lea  rsp, [rsp - 0x40]
-bf 01 00 00 00  mov  edi, 1
-be 02 00 00 00  mov  esi, 2
-ba 03 00 00 00  mov  edx, 3
-b9 04 00 00 00  mov  ecx, 4
-41 b8 05 00 00 00  mov  r8d, 5
-41 b9 06 00 00 00  mov  r9d, 6
 48 c7 04 24 07 00 00 00  mov  qword ptr [rsp], 7
 48 c7 44 24 08 08 00 00 00  mov  qword ptr [rsp + 8], 8
 48 c7 44 24 10 09 00 00 00  mov  qword ptr [rsp + 0x10], 9
@@ -3134,6 +3580,12 @@ c7 84 24 90 00 00 00 19 00 00 00  mov  dword ptr [rsp + 0x90], 0x19
 c7 84 24 b8 00 00 00 1e 00 00 00  mov  dword ptr [rsp + 0xb8], 0x1e
 f2 44 0f 10 7b b8  movsd  xmm15, qword ptr [rbx - 0x48]
 f2 44 0f 11 bc 24 c0 00 00 00  movsd  qword ptr [rsp + 0xc0], xmm15
+bf 01 00 00 00  mov  edi, 1
+be 02 00 00 00  mov  esi, 2
+ba 03 00 00 00  mov  edx, 3
+b9 04 00 00 00  mov  ecx, 4
+41 b8 05 00 00 00  mov  r8d, 5
+41 b9 06 00 00 00  mov  r9d, 6
 b8 0e 00 00 00  mov  eax, 0xe
 e9 a4 8d ff ff  jmp  6
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0

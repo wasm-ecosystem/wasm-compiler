@@ -36,9 +36,6 @@ df 05 05 00  jeq  d5, #0, #0x6c
 02 50  mov  d0, d5
 1d ff f9 ff  j  #0x5a
 d9 aa 08 00  lea  sp, [sp]#8
-bb 00 02 40  mov.u  d4, #0x20
-fb 00 04 60  mov  e6, #0x40
-bb 00 02 50  mov.u  d5, #0x20
 91 f0 28 cc  movh.a  a12, #0xc28f
 d9 cc e9 05  lea  a12, [a12]#0x5c29
 91 00 05 d4  movh.a  a13, #0x4050
@@ -66,6 +63,9 @@ d9 cc 00 80  lea  a12, [a12]#0x200
 a0 0d  mov.a  a13, #0
 89 ac e4 09  st.da  [sp]#0x24, p12
 99 24 f0 ef  ld.a  a4, [a2]#-0x50
+bb 00 02 40  mov.u  d4, #0x20
+fb 00 04 60  mov  e6, #0x40
+bb 00 02 50  mov.u  d5, #0x20
 19 2f e8 ef  ld.w  d15, [a2]#-0x58
 78 1d  st.w  [sp]#0x74, d15
 bb e0 00 00  mov.u  d0, #0xe

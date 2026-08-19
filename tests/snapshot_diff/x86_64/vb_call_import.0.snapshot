@@ -104,12 +104,12 @@ vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
 e9 c7 fd ff ff  jmp  6
 48 8d 64 24 70  lea  rsp, [rsp + 0x70]
+48 c7 44 24 08 01 00 00 00  mov  qword ptr [rsp + 8], 1
+48 c7 04 24 01 00 00 00  mov  qword ptr [rsp], 1
 bd 01 00 00 00  mov  ebp, 1
 bf 01 00 00 00  mov  edi, 1
 be 01 00 00 00  mov  esi, 1
 41 b9 01 00 00 00  mov  r9d, 1
-48 c7 44 24 08 01 00 00 00  mov  qword ptr [rsp + 8], 1
-48 c7 04 24 01 00 00 00  mov  qword ptr [rsp], 1
 e8 51 ff ff ff  call  0x1c0
 48 8d 64 24 18  lea  rsp, [rsp + 0x18]
 c3  ret  

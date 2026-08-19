@@ -81,20 +81,23 @@ vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
 e9 2f fe ff ff  jmp  6
 48 8d 64 24 40  lea  rsp, [rsp + 0x40]
+c7 44 24 10 80 00 00 00  mov  dword ptr [rsp + 0x10], 0x80
+c7 44 24 08 00 01 00 00  mov  dword ptr [rsp + 8], 0x100
+48 c7 04 24 00 02 00 00  mov  qword ptr [rsp], 0x200
 bd 20 00 00 00  mov  ebp, 0x20
 bf 40 00 00 00  mov  edi, 0x40
 be 20 00 00 00  mov  esi, 0x20
-eb 08  jmp  0x1f5
+eb 08  jmp  0x20d
 29 5c 8f c2  sub  dword ptr [rdi + rcx*4 - 0x3e], ebx
 f5  cmc  
 28 50 40  sub  byte ptr [rax + 0x40], dl
 f2 0f 10 25 f0 ff ff ff  movsd  xmm4, qword ptr [rip - 0x10]
-eb 04  jmp  0x203
+eb 04  jmp  0x21b
 ae  scasb  al, byte ptr [rdi]
 47 01 42 f3  add  dword ptr [r10 - 0xd], r8d
 0f 10 2d f4 ff ff ff  movups  xmm5, xmmword ptr [rip - 0xc]
 41 b9 80 00 00 00  mov  r9d, 0x80
-eb 08  jmp  0x21b
+eb 08  jmp  0x233
 00 00  add  byte ptr [rax], al
 00 00  add  byte ptr [rax], al
 00 10  add  byte ptr [rax], dl

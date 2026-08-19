@@ -77,10 +77,10 @@ de ff ff 17  b  0x94
 e8 83 00 f9  str  x8, [sp, #0x100]
 ff c3 01 91  add  sp, sp, #0x70
 fe 03 00 f9  str  x30, [sp]
-e0 03 13 2a  mov  w0, w19
 41 00 80 d2  mov  x1, #2
 01 7d 01 9b  mul  x1, x8, x1
 e1 03 01 2a  mov  w1, w1
+e0 03 13 2a  mov  w0, w19
 82 33 40 f9  ldr  x2, [x28, #0x60]
 c0 01 80 52  mov  w0, #0xe
 b1 ff ff 17  b  8

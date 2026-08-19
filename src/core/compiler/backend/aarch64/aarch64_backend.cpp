@@ -1671,8 +1671,11 @@ void Backend::execDirectFncCallWithoutSaveLocals(uint32_t const fncIndex, bool c
       return pos;
     };
     // coverity[autosar_cpp14_a5_1_4_violation]
+    Common::RegUsedAsTarget regUsedAsTarget{common_.prepareRegUsedAsTarget(sigIndex, false, Common::ParamPosFunction(paramPosFunction))};
+    paramOffset = 0U;
+    // coverity[autosar_cpp14_a5_1_4_violation]
     // coverity[autosar_cpp14_a5_1_9_violation]
-    Stack::iterator const paramsBase{common_.prepareCallParams(sigIndex, false, Common::ParamPosFunction(paramPosFunction))};
+    Stack::iterator const paramsBase{common_.prepareCallParams(sigIndex, false, Common::ParamPosFunction(paramPosFunction), regUsedAsTarget)};
     v2ImportCall.iterateParams(paramsBase);
     common_.markLocalsAsSpilled(spilledLocalsRegMask);
     uint32_t const jobMemoryPtrPtrOffset{v2ImportCall.getJobMemoryPtrPtrOffset()};
@@ -1717,7 +1720,10 @@ void Backend::execDirectFncCallWithoutSaveLocals(uint32_t const fncIndex, bool c
       return pos;
     };
     // coverity[autosar_cpp14_a5_1_4_violation]
-    Stack::iterator const paramsBase{common_.prepareCallParams(sigIndex, false, Common::ParamPosFunction(paramPosFunction))};
+    Common::RegUsedAsTarget regUsedAsTarget{common_.prepareRegUsedAsTarget(sigIndex, false, Common::ParamPosFunction(paramPosFunction))};
+    tracker = RegStackTracker{};
+    // coverity[autosar_cpp14_a5_1_4_violation]
+    Stack::iterator const paramsBase{common_.prepareCallParams(sigIndex, false, Common::ParamPosFunction(paramPosFunction), regUsedAsTarget)};
 
     static_cast<void>(importCallV1Impl.iterateParams(paramsBase));
     importCallV1Impl.prepareCtx();
@@ -1765,7 +1771,10 @@ void Backend::execDirectFncCallWithoutSaveLocals(uint32_t const fncIndex, bool c
       return pos;
     };
     // coverity[autosar_cpp14_a5_1_4_violation]
-    Stack::iterator const paramsBase{common_.prepareCallParams(sigIndex, false, Common::ParamPosFunction(paramPosFunction))};
+    Common::RegUsedAsTarget regUsedAsTarget{common_.prepareRegUsedAsTarget(sigIndex, false, Common::ParamPosFunction(paramPosFunction))};
+    tracker = RegStackTracker{};
+    // coverity[autosar_cpp14_a5_1_4_violation]
+    Stack::iterator const paramsBase{common_.prepareCallParams(sigIndex, false, Common::ParamPosFunction(paramPosFunction), regUsedAsTarget)};
     static_cast<void>(directWasmCallImpl.iterateParams(paramsBase));
     directWasmCallImpl.resolveRegisterCopies();
     common_.markLocalsAsSpilled(spilledLocalsRegMask);
@@ -1801,7 +1810,10 @@ void Backend::execReturnCall(uint32_t const fncIndex) {
       return pos;
     };
     // coverity[autosar_cpp14_a5_1_4_violation]
-    Stack::iterator const paramsBase{common_.prepareCallParams(calleeSigIndex, false, Common::ParamPosFunction(paramPosFunction))};
+    Common::RegUsedAsTarget regUsedAsTarget{common_.prepareRegUsedAsTarget(calleeSigIndex, false, Common::ParamPosFunction(paramPosFunction))};
+    hintTracker = RegStackTracker{};
+    // coverity[autosar_cpp14_a5_1_4_violation]
+    Stack::iterator const paramsBase{common_.prepareCallParams(calleeSigIndex, false, Common::ParamPosFunction(paramPosFunction), regUsedAsTarget)};
 
     // Set up params in their final positions for the tail jump
     uint32_t const parallelMoveCapacity{moduleInfo_.getNumParamsForSignature(calleeSigIndex)};
@@ -1892,7 +1904,10 @@ void Backend::execReturnCallIndirect(uint32_t const sigIndex, uint32_t const tab
       return pos;
     };
     // coverity[autosar_cpp14_a5_1_4_violation]
-    Stack::iterator const paramsBase{common_.prepareCallParams(sigIndex, true, Common::ParamPosFunction(paramPosFunction))};
+    Common::RegUsedAsTarget regUsedAsTarget{common_.prepareRegUsedAsTarget(sigIndex, true, Common::ParamPosFunction(paramPosFunction))};
+    hintTracker = RegStackTracker{};
+    // coverity[autosar_cpp14_a5_1_4_violation]
+    Stack::iterator const paramsBase{common_.prepareCallParams(sigIndex, true, Common::ParamPosFunction(paramPosFunction), regUsedAsTarget)};
     ParallelMoveResolver moveResolver{compiler_.getCompilerMemoryAllocFnc(), compiler_.getCompilerMemoryFreeFnc(), compiler_.getCompilerMemoryCtx(),
                                       moduleInfo_.getNumParamsForSignature(sigIndex) + 1U};
     RegStackTracker iterTracker{};
@@ -1976,7 +1991,10 @@ void Backend::execIndirectWasmCallWithoutSaveLocals(uint32_t const sigIndex, Reg
     return pos;
   };
   // coverity[autosar_cpp14_a5_1_4_violation]
-  Stack::iterator const paramsBase{common_.prepareCallParams(sigIndex, true, Common::ParamPosFunction(paramPosFunction))};
+  Common::RegUsedAsTarget regUsedAsTarget{common_.prepareRegUsedAsTarget(sigIndex, true, Common::ParamPosFunction(paramPosFunction))};
+  tracker = RegStackTracker{};
+  // coverity[autosar_cpp14_a5_1_4_violation]
+  Stack::iterator const paramsBase{common_.prepareCallParams(sigIndex, true, Common::ParamPosFunction(paramPosFunction), regUsedAsTarget)};
   Stack::iterator const indirectCallIndex{indirectCallImpl.iterateParams(paramsBase)};
   indirectCallImpl.handleIndirectCallReg(indirectCallIndex);
 

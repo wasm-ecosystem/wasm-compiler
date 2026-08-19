@@ -37,33 +37,30 @@ df 05 05 00  jeq  d5, #0, #0x6c
 1d ff f9 ff  j  #0x5a
 59 a8 08 30  st.w  [sp]#0xc8, d8
 d9 aa 30 10  lea  sp, [sp]#0x70
-02 84  mov  d4, d8
 09 a0 48 29  ld.d  e0, [sp]#0x88
 d2 22  mov  e2, #2
-20 28  sub.a  sp, #0x28
-59 a4 20 00  st.w  [sp]#0x20, d4
 73 20 68 40  mul.u  e4, d0, d2
 03 30 0a 55  madd  d5, d5, d0, d3
 03 21 0a 55  madd  d5, d5, d1, d2
 02 45  mov  d5, d4
-d9 aa 28 00  lea  sp, [sp]#0x28
 99 24 f0 ef  ld.a  a4, [a2]#-0x50
-19 a4 f8 ff  ld.w  d4, [sp]#-8
+02 84  mov  d4, d8
 19 2f e8 ef  ld.w  d15, [a2]#-0x58
 78 02  st.w  [sp]#8, d15
 bb e0 00 00  mov.u  d0, #0xe
-1d ff c8 ff  j  #0x36
+1d ff cf ff  j  #0x36
 99 a2 08 00  ld.a  a2, [sp]#8
 d4 22  ld.a  a2, [a2]
 d9 22 10 20  lea  a2, [a2]#0x90
 39 2e f8 ff  ld.bu  d14, [a2]#-8
-df 0e 05 00  jeq  d14, #0, #0xc2
+df 0e 05 00  jeq  d14, #0, #0xb4
 02 e0  mov  d0, d14
-1d ff f4 ff  j  #0xa6
+1d ff f4 ff  j  #0x98
 99 23 e8 ff  ld.a  a3, [a2]#-0x18
 d9 aa 04 20  lea  sp, [sp]#0x84
 00 70  fret  
-84 00 00 00  Size of the function body: 132
+00 00  nop  
+78 00 00 00  Size of the function body: 120
 
 Initial Linear Memory Data
 00 00 00 00  Number of data segments: 0
@@ -99,9 +96,9 @@ b5 a6 00 00  st.a  [sp]#0, a6
 b5 a7 14 00  st.a  [sp]#0x14, a7
 99 23 e8 ff  ld.a  a3, [a2]#-0x18
 99 2c d8 ff  ld.a  a12, [a2]#-0x28
-bd 0c 14 80  jnz.a  a12, #0x13c
+bd 0c 14 80  jnz.a  a12, #0x130
 b5 2a d8 ff  st.a  [a2]#-0x28, sp
-5d 00 02 00  jl  #0x120
+5d 00 02 00  jl  #0x114
 d9 bb 02 10  lea  a11, [a11]#0x42
 b5 2b dc ff  st.a  [a2]#-0x24, a11
 4d 00 e0 ef  mfcr  d14, #0xfe00
@@ -112,16 +109,16 @@ b5 2c e0 ff  st.a  [a2]#-0x20, a12
 20 08  sub.a  sp, #8
 99 2c d8 ef  ld.a  a12, [a2]#-0x68
 01 ac 30 e4  ge.a  d14, a12, sp
-6f 0e 88 ff  jnz.t  d14, #0, #0x56
+6f 0e 8e ff  jnz.t  d14, #0, #0x56
 54 48  ld.w  d8, [a4]
 09 4e 48 09  ld.d  e14, [a4]#8
 89 ae 40 09  st.d  [sp]#0, e14
-61 ff 7a ff  fcall  #0x48
+61 ff 80 ff  fcall  #0x48
 99 a7 1c 00  ld.a  a7, [sp]#0x1c
 74 72  st.w  [a7], d2
 d9 aa 08 00  lea  sp, [sp]#8
 99 2c d8 ff  ld.a  a12, [a2]#-0x28
-7d ca 07 80  jne.a  sp, a12, #0x174
+7d ca 07 80  jne.a  sp, a12, #0x168
 82 0f  mov  d15, #0
 59 2f d8 ff  st.w  [a2]#-0x28, d15
 59 2f dc ff  st.w  [a2]#-0x24, d15
@@ -149,8 +146,8 @@ WebAssembly Table
 
 More Info
 00 00 00 00  Size of link data: 0
-ff ff ff ff  Offset from here for the landing pad function body (0xFFFF'FFFF = undefined, pos: 1dd): 4294967295
+ff ff ff ff  Offset from here for the landing pad function body (0xFFFF'FFFF = undefined, pos: 1d1): 4294967295
 00 00 00 00  Stacktrace records 0, debugMode: 0
 03 00 00 00  Version of this binary module: 3
-e8 01 00 00  Module binary size (excl. this value): 488
+dc 01 00 00  Module binary size (excl. this value): 476
 

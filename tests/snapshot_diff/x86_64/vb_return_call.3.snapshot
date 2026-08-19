@@ -94,13 +94,13 @@ vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
 e9 f3 fd ff ff  jmp  6
 48 8d 64 24 60  lea  rsp, [rsp + 0x60]
+c7 44 24 10 05 00 00 00  mov  dword ptr [rsp + 0x10], 5
+c7 44 24 08 06 00 00 00  mov  dword ptr [rsp + 8], 6
+c7 04 24 07 00 00 00  mov  dword ptr [rsp], 7
 bd 01 00 00 00  mov  ebp, 1
 bf 02 00 00 00  mov  edi, 2
 be 03 00 00 00  mov  esi, 3
 41 b9 04 00 00 00  mov  r9d, 4
-c7 44 24 10 05 00 00 00  mov  dword ptr [rsp + 0x10], 5
-c7 44 24 08 06 00 00 00  mov  dword ptr [rsp + 8], 6
-c7 04 24 07 00 00 00  mov  dword ptr [rsp], 7
 e8 77 ff ff ff  call  0x1c0
 f3 44 0f 10 7c 24 18  movss  xmm15, dword ptr [rsp + 0x18]
 f3 44 0f 11 7c 24 70  movss  dword ptr [rsp + 0x70], xmm15
@@ -115,14 +115,14 @@ vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
 e9 8b fd ff ff  jmp  6
 48 8d 64 24 60  lea  rsp, [rsp + 0x60]
-bd 01 00 00 00  mov  ebp, 1
-bf 02 00 00 00  mov  edi, 2
-be 03 00 00 00  mov  esi, 3
-41 b9 04 00 00 00  mov  r9d, 4
 c7 44 24 18 05 00 00 00  mov  dword ptr [rsp + 0x18], 5
 c7 44 24 10 06 00 00 00  mov  dword ptr [rsp + 0x10], 6
 c7 44 24 08 07 00 00 00  mov  dword ptr [rsp + 8], 7
 c7 04 24 08 00 00 00  mov  dword ptr [rsp], 8
+bd 01 00 00 00  mov  ebp, 1
+bf 02 00 00 00  mov  edi, 2
+be 03 00 00 00  mov  esi, 3
+41 b9 04 00 00 00  mov  r9d, 4
 e8 43 ff ff ff  call  0x1fc
 03 4c 24 20  add  ecx, dword ptr [rsp + 0x20]
 01 c8  add  eax, ecx

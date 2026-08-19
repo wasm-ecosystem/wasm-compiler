@@ -105,13 +105,13 @@ e0 03 0b 2a  mov  w0, w11
 c3 ff ff 17  b  0x94
 ff c3 01 91  add  sp, sp, #0x70
 fe 0b 00 f9  str  x30, [sp, #0x10]
-84 0c 80 52  mov  w4, #0x64
-05 19 80 52  mov  w5, #0xc8
-86 25 80 52  mov  w6, #0x12c
 1b 32 80 52  mov  w27, #0x190
 fb 0b 00 b9  str  w27, [sp, #8]
 9b 3e 80 52  mov  w27, #0x1f4
 fb 03 00 b9  str  w27, [sp]
+84 0c 80 52  mov  w4, #0x64
+05 19 80 52  mov  w5, #0xc8
+86 25 80 52  mov  w6, #0x12c
 d7 ff ff 97  bl  0x10c
 fe 0b 40 f9  ldr  x30, [sp, #0x10]
 ff 03 01 91  add  sp, sp, #0x40
@@ -234,16 +234,16 @@ e0 03 0b 2a  mov  w0, w11
 4a ff ff 17  b  0x94
 ff 83 01 91  add  sp, sp, #0x60
 fe 0b 00 f9  str  x30, [sp, #0x10]
+1b 0a 80 52  mov  w27, #0x50
+fb 0b 00 b9  str  w27, [sp, #8]
+5b 0b 80 52  mov  w27, #0x5a
+fb 03 00 b9  str  w27, [sp]
 81 02 80 52  mov  w1, #0x14
 c2 03 80 52  mov  w2, #0x1e
 03 05 80 52  mov  w3, #0x28
 44 06 80 52  mov  w4, #0x32
 85 07 80 52  mov  w5, #0x3c
 c6 08 80 52  mov  w6, #0x46
-1b 0a 80 52  mov  w27, #0x50
-fb 0b 00 b9  str  w27, [sp, #8]
-5b 0b 80 52  mov  w27, #0x5a
-fb 03 00 b9  str  w27, [sp]
 de ff ff 97  bl  0x318
 fe 0b 40 f9  ldr  x30, [sp, #0x10]
 ff c3 00 91  add  sp, sp, #0x30

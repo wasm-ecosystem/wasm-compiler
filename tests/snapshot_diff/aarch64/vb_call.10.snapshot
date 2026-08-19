@@ -95,6 +95,8 @@ e6 83 00 b9  str  w6, [sp, #0x80]
 ff c3 01 91  add  sp, sp, #0x70
 fe 07 00 f9  str  x30, [sp, #8]
 f3 03 06 2a  mov  w19, w6
+ff 6b 40 bd  ldr  s31, [sp, #0x68]
+ff 03 00 bd  str  s31, [sp]
 e8 6b 40 b9  ldr  w8, [sp, #0x68]
 e1 6b 40 b9  ldr  w1, [sp, #0x68]
 e2 6b 40 b9  ldr  w2, [sp, #0x68]
@@ -102,8 +104,6 @@ e3 6b 40 b9  ldr  w3, [sp, #0x68]
 e4 6b 40 b9  ldr  w4, [sp, #0x68]
 e5 6b 40 b9  ldr  w5, [sp, #0x68]
 e6 6b 40 b9  ldr  w6, [sp, #0x68]
-ff 6b 40 bd  ldr  s31, [sp, #0x68]
-ff 03 00 bd  str  s31, [sp]
 de ff ff 97  bl  0x10c
 fe 07 40 f9  ldr  x30, [sp, #8]
 ff 43 01 91  add  sp, sp, #0x50

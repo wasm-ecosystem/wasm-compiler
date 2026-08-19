@@ -91,9 +91,9 @@ vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
 e9 07 fe ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
-bf 7b 00 00 00  mov  edi, 0x7b
 ba 00 00 00 00  mov  edx, 0
 83 c2 00  add  edx, 0
+bf 7b 00 00 00  mov  edi, 0x7b
 81 fa 01 00 00 00  cmp  edx, 1
 72 0a  jb  0x226
 b8 05 00 00 00  mov  eax, 5

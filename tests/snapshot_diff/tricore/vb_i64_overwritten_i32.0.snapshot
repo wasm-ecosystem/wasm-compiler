@@ -38,8 +38,8 @@ df 05 05 00  jeq  d5, #0, #0x6c
 bb 20 4d 90  mov.u  d9, #0x4d2
 59 a9 30 20  st.w  [sp]#0xb0, d9
 d9 aa 38 10  lea  sp, [sp]#0x78
-d2 14  mov  e4, #1
 99 24 f0 ef  ld.a  a4, [a2]#-0x50
+d2 14  mov  e4, #1
 d2 26  mov  e6, #2
 19 2f e8 ef  ld.w  d15, [a2]#-0x58
 78 02  st.w  [sp]#8, d15

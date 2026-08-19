@@ -63,11 +63,11 @@ df 05 05 00  jeq  d5, #0, #0xc0
 02 50  mov  d0, d5
 1d ff cf ff  j  #0x5a
 d9 aa 30 10  lea  sp, [sp]#0x70
-82 50  mov  d0, #5
 91 00 00 c0  movh.a  a12, #0
 d9 cc 2a 00  lea  a12, [a12]#0x2a
 a0 0d  mov.a  a13, #0
 89 ac c0 09  st.da  [sp]#0, p12
+82 50  mov  d0, #5
 bf 30 05 80  jlt.u  d0, #3, #0xde
 82 50  mov  d0, #5
 1d ff ae ff  j  #0x36
@@ -98,11 +98,11 @@ df 05 05 00  jeq  d5, #0, #0x134
 02 50  mov  d0, d5
 1d ff e7 ff  j  #0xfe
 d9 aa 30 10  lea  sp, [sp]#0x70
-82 10  mov  d0, #1
 91 00 00 c0  movh.a  a12, #0
 d9 cc 2a 00  lea  a12, [a12]#0x2a
 a0 0d  mov.a  a13, #0
 89 ac c0 09  st.da  [sp]#0, p12
+82 10  mov  d0, #1
 ff 30 c8 ff  jge.u  d0, #3, #0xd8
 99 2c d0 ef  ld.a  a12, [a2]#-0x70
 01 c0 03 c6  addsc.a  a12, a12, d0, #3

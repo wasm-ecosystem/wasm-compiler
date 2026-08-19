@@ -1368,7 +1368,25 @@ Stack::iterator Common::pushOperandsToStack(StackElement const &arg) const {
   return argIt;
 }
 
-Stack::iterator Common::prepareCallParams(uint32_t const sigIndex, bool const isIndirectCall, ParamPosFunction const &paramPosFunc) {
+Common::RegUsedAsTarget Common::prepareRegUsedAsTarget(uint32_t const sigIndex, bool const isIndirectCall, ParamPosFunction const &paramPosFunc) {
+  RegUsedAsTarget regUsedAsTarget{};
+  compiler_.moduleInfo_.iterateParamsForSignature(sigIndex,
+                                                  FunctionRef<void(MachineType)>([&regUsedAsTarget, &paramPosFunc](MachineType const paramType) {
+                                                    // coverity[autosar_cpp14_a4_5_1_violation]
+                                                    ParamPos const targetPos{paramPosFunc(paramType)};
+                                                    if (targetPos.reg != TReg::NONE) {
+                                                      regUsedAsTarget[static_cast<size_t>(targetPos.reg)] = true;
+                                                    }
+                                                  }));
+
+  if (isIndirectCall) {
+    regUsedAsTarget[static_cast<size_t>(NBackend::WasmABI::REGS::indirectCallReg)] = true;
+  }
+  return regUsedAsTarget;
+}
+
+Stack::iterator Common::prepareCallParams(uint32_t const sigIndex, bool const isIndirectCall, ParamPosFunction const &paramPosFunc,
+                                          RegUsedAsTarget &regUsedAsTarget) {
   uint32_t const numParams{compiler_.moduleInfo_.getNumParamsForSignature(sigIndex)};
   uint32_t const numVBsToResolve{isIndirectCall ? (numParams + 1U) : numParams};
   uint32_t skipCount{numVBsToResolve};
@@ -1388,12 +1406,13 @@ Stack::iterator Common::prepareCallParams(uint32_t const sigIndex, bool const is
     }
 
     compiler_.moduleInfo_.iterateParamsForSignature(
-        sigIndex, FunctionRef<void(MachineType)>([this, &paramsBase, &skipCount, &paramPosFunc, allParamsStart](MachineType const paramType) {
+        sigIndex,
+        FunctionRef<void(MachineType)>([this, &paramsBase, &skipCount, &regUsedAsTarget, &paramPosFunc, allParamsStart](MachineType const paramType) {
           skipCount--;
           // coverity[autosar_cpp14_a4_5_1_violation]
           ParamPos const targetPos{paramPosFunc(paramType)};
           Stack::iterator const condenseResult{
-              condenseParameter(targetPos, paramType, skipCount, paramsBase.isEmpty() ? allParamsStart : paramsBase)};
+              condenseParameter(targetPos, paramType, skipCount, paramsBase.isEmpty() ? allParamsStart : paramsBase, regUsedAsTarget)};
           if (paramsBase.isEmpty()) {
             paramsBase = condenseResult;
           }
@@ -1404,10 +1423,9 @@ Stack::iterator Common::prepareCallParams(uint32_t const sigIndex, bool const is
       // GCOVR_EXCL_START
       assert(skipCount == 0U);
       // GCOVR_EXCL_STOP
-      ParamPos indirectCallRegPos{};
-      indirectCallRegPos.reg = NBackend::WasmABI::REGS::indirectCallReg;
+      constexpr ParamPos indirectCallRegPos{NBackend::WasmABI::REGS::indirectCallReg, 0U};
       Stack::iterator const condenseResult{
-          condenseParameter(indirectCallRegPos, MachineType::I32, skipCount, paramsBase.isEmpty() ? allParamsStart : paramsBase)};
+          condenseParameter(indirectCallRegPos, MachineType::I32, skipCount, paramsBase.isEmpty() ? allParamsStart : paramsBase, regUsedAsTarget)};
       if (paramsBase.isEmpty()) {
         paramsBase = condenseResult;
       }
@@ -1428,7 +1446,7 @@ Stack::iterator Common::prepareCallParams(uint32_t const sigIndex, bool const is
 }
 
 Stack::iterator Common::condenseParameter(ParamPos const targetPos, vb::MachineType const paramType, uint32_t const currentParamCount,
-                                          Stack::iterator const allParamsStart) {
+                                          Stack::iterator const allParamsStart, RegUsedAsTarget const &regUsedAsTarget) {
   StackElement targetHint{};
   Stack::iterator const baseIt{skipValentBlock(currentParamCount)};
   bool targetStackMemoryUsedByOtherParams{false}; // Only happened in return_call that callee reuse caller's param stack memory
@@ -1484,22 +1502,35 @@ Stack::iterator Common::condenseParameter(ParamPos const targetPos, vb::MachineT
     }
   }
 
-  Stack::iterator const condenseResult{condenseValentBlockBelow(baseIt, (targetHint.type == StackType::INVALID) ? nullptr : &targetHint)};
-  if ((targetPos.reg == TReg::NONE) && !targetStackMemoryUsedByOtherParams) {
-    VariableStorage const sourceStorage{compiler_.moduleInfo_.getStorage(*condenseResult)};
-    // Move to stack in advance to save regiters for the following condense, if source storage is register and target is unconflict stack memory
-    //
-    // if source storage is not in register, no need to move it now, because condense may increase stack size
-    // then the sp offset for example mov reg, [sp + offset] is a larger value and consumes more code size
-    // After condense, the stack size will be recovered to a smaller size, then the offset is smaller and save code size
-    if (sourceStorage.type == StorageType::REGISTER) {
-      // Move to stack if target is stack memory
-      VariableStorage const targetStorage{VariableStorage::stackMemory(paramType, targetPos.offsetToStackBase)};
+  // If current source is used as target by future params, emit move in advance to free current source register
+  bool sourceRegUsedByFutureTarget{false};
+  VariableStorage const currentSourceStorage{compiler_.moduleInfo_.getStorage(*currentParamEnd)};
+  if (currentSourceStorage.type == StorageType::REGISTER) {
+    TReg const currentReg{currentSourceStorage.location.reg};
+    // coverity[autosar_cpp14_a7_2_1_violation]
+    sourceRegUsedByFutureTarget = regUsedAsTarget[static_cast<size_t>(currentReg)];
+  }
 
-      compiler_.backend_.emitMoveImpl(targetStorage, sourceStorage, false);
-      replaceAndUpdateReference(condenseResult,
-                                StackElement::tempResult(paramType, targetStorage, compiler_.moduleInfo_.getStackMemoryReferencePosition()));
-    }
+  bool const useTargetHint{(targetHint.type != StackType::INVALID) &&
+                           ((currentParamEnd->type == StackType::DEFERREDACTION) || sourceRegUsedByFutureTarget)};
+
+  Stack::iterator const condenseResult{condenseValentBlockBelow(baseIt, useTargetHint ? &targetHint : nullptr)};
+  // No need to set regUsedAsTarget back to false. Because target-hint is only used when it not conflict with the future sources.
+  // Which means set-to-false here will not help with future delay condense.
+  VariableStorage const condenseStorage{compiler_.moduleInfo_.getStorage(*condenseResult)};
+
+  // Move to stack in advance to save regiters for the following condense, if source storage is register and target is unconflict stack memory
+  //
+  // if source storage is not in register, no need to move it now, because condense may increase stack size
+  // then the sp offset for example mov reg, [sp + offset] is a larger value and consumes more code size
+  // After condense, the stack size will be recovered to a smaller size, then the offset is smaller and save code size
+  bool const shouldMoveToStack{(targetPos.reg == TReg::NONE) && !targetStackMemoryUsedByOtherParams};
+  if ((condenseStorage.type == StorageType::REGISTER) && shouldMoveToStack) {
+    // Move to stack if target is stack memory
+    VariableStorage const targetStorage{VariableStorage::stackMemory(paramType, targetPos.offsetToStackBase)};
+    compiler_.backend_.emitMoveImpl(targetStorage, condenseStorage, false);
+    replaceAndUpdateReference(condenseResult,
+                              StackElement::tempResult(paramType, targetStorage, compiler_.moduleInfo_.getStackMemoryReferencePosition()));
   }
   return condenseResult;
 }

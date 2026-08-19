@@ -39,10 +39,6 @@ df 05 05 00  jeq  d5, #0, #0x6c
 99 2c d8 ef  ld.a  a12, [a2]#-0x68
 01 ac 30 04  ge.a  d0, a12, sp
 6f 00 f0 ff  jnz.t  d0, #0, #0x56
-82 14  mov  d4, #1
-82 25  mov  d5, #2
-82 36  mov  d6, #3
-82 47  mov  d7, #4
 a0 5c  mov.a  a12, #5
 f4 ac  st.a  [sp], a12
 a0 6c  mov.a  a12, #6
@@ -171,6 +167,10 @@ b5 ac 30 20  st.a  [sp]#0xb0, a12
 d9 cc 32 00  lea  a12, [a12]#0x32
 b5 ac 34 20  st.a  [sp]#0xb4, a12
 99 24 f0 ef  ld.a  a4, [a2]#-0x50
+82 14  mov  d4, #1
+82 25  mov  d5, #2
+82 36  mov  d6, #3
+82 47  mov  d7, #4
 19 2f e8 ef  ld.w  d15, [a2]#-0x58
 78 30  st.w  [sp]#0xc0, d15
 bb e0 00 00  mov.u  d0, #0xe
@@ -200,10 +200,6 @@ df 05 05 00  jeq  d5, #0, #0x2bc
 99 2c d8 ef  ld.a  a12, [a2]#-0x68
 01 ac 30 04  ge.a  d0, a12, sp
 6f 00 c8 fe  jnz.t  d0, #0, #0x56
-7b 00 f8 43  movh  d4, #0x3f80
-7b 00 00 54  movh  d5, #0x4000
-7b 00 04 64  movh  d6, #0x4040
-7b 00 08 74  movh  d7, #0x4080
 91 00 0a c4  movh.a  a12, #0x40a0
 f4 ac  st.a  [sp], a12
 91 00 0c c4  movh.a  a12, #0x40c0
@@ -297,6 +293,10 @@ b5 ac 30 20  st.a  [sp]#0xb0, a12
 91 80 24 c4  movh.a  a12, #0x4248
 b5 ac 34 20  st.a  [sp]#0xb4, a12
 99 24 f0 ef  ld.a  a4, [a2]#-0x50
+7b 00 f8 43  movh  d4, #0x3f80
+7b 00 00 54  movh  d5, #0x4000
+7b 00 04 64  movh  d6, #0x4040
+7b 00 08 74  movh  d7, #0x4080
 19 2f e8 ef  ld.w  d15, [a2]#-0x58
 78 30  st.w  [sp]#0xc0, d15
 1d ff 0f ff  j  #0x270
@@ -324,10 +324,6 @@ d9 aa f0 bf  lea  sp, [sp]#-0x110
 99 2c d8 ef  ld.a  a12, [a2]#-0x68
 01 ac 30 04  ge.a  d0, a12, sp
 6f 00 d9 fd  jnz.t  d0, #0, #0x56
-7b 00 f8 43  movh  d4, #0x3f80
-7b 00 00 54  movh  d5, #0x4000
-7b 00 04 64  movh  d6, #0x4040
-7b 00 08 74  movh  d7, #0x4080
 91 00 0a c4  movh.a  a12, #0x40a0
 f4 ac  st.a  [sp], a12
 91 00 0c c4  movh.a  a12, #0x40c0
@@ -556,6 +552,10 @@ b5 ac 38 50  st.a  [sp]#0x178, a12
 d9 cc 32 00  lea  a12, [a12]#0x32
 b5 ac 3c 50  st.a  [sp]#0x17c, a12
 99 24 f0 ef  ld.a  a4, [a2]#-0x50
+7b 00 f8 43  movh  d4, #0x3f80
+7b 00 00 54  movh  d5, #0x4000
+7b 00 04 64  movh  d6, #0x4040
+7b 00 08 74  movh  d7, #0x4080
 19 2f e8 ef  ld.w  d15, [a2]#-0x58
 78 62  st.w  [sp]#0x188, d15
 1d ff 21 fd  j  #0x270
@@ -583,10 +583,6 @@ d9 aa f0 bf  lea  sp, [sp]#-0x110
 99 2c d8 ef  ld.a  a12, [a2]#-0x68
 01 ac 30 04  ge.a  d0, a12, sp
 6f 00 eb fb  jnz.t  d0, #0, #0x56
-82 14  mov  d4, #1
-82 25  mov  d5, #2
-82 36  mov  d6, #3
-82 47  mov  d7, #4
 a0 5c  mov.a  a12, #5
 f4 ac  st.a  [sp], a12
 a0 6c  mov.a  a12, #6
@@ -815,6 +811,10 @@ b5 ac 38 50  st.a  [sp]#0x178, a12
 91 80 24 c4  movh.a  a12, #0x4248
 b5 ac 3c 50  st.a  [sp]#0x17c, a12
 99 24 f0 ef  ld.a  a4, [a2]#-0x50
+82 14  mov  d4, #1
+82 25  mov  d5, #2
+82 36  mov  d6, #3
+82 47  mov  d7, #4
 19 2f e8 ef  ld.w  d15, [a2]#-0x58
 78 62  st.w  [sp]#0x188, d15
 1d ff 33 fb  j  #0x270
@@ -842,10 +842,6 @@ d9 aa f0 bf  lea  sp, [sp]#-0x110
 99 2c d8 ef  ld.a  a12, [a2]#-0x68
 01 ac 30 04  ge.a  d0, a12, sp
 6f 00 fd f9  jnz.t  d0, #0, #0x56
-82 14  mov  d4, #1
-7b 00 f8 53  movh  d5, #0x3f80
-82 26  mov  d6, #2
-7b 00 00 74  movh  d7, #0x4000
 a0 3c  mov.a  a12, #3
 f4 ac  st.a  [sp], a12
 91 00 04 c4  movh.a  a12, #0x4040
@@ -1074,6 +1070,10 @@ b5 ac 38 50  st.a  [sp]#0x178, a12
 91 80 24 c4  movh.a  a12, #0x4248
 b5 ac 3c 50  st.a  [sp]#0x17c, a12
 99 24 f0 ef  ld.a  a4, [a2]#-0x50
+82 14  mov  d4, #1
+7b 00 f8 53  movh  d5, #0x3f80
+82 26  mov  d6, #2
+7b 00 00 74  movh  d7, #0x4000
 19 2f e8 ef  ld.w  d15, [a2]#-0x58
 78 62  st.w  [sp]#0x188, d15
 1d ff 45 f9  j  #0x270
@@ -1101,10 +1101,6 @@ d9 aa f0 bf  lea  sp, [sp]#-0x110
 99 2c d8 ef  ld.a  a12, [a2]#-0x68
 01 ac 30 04  ge.a  d0, a12, sp
 6f 00 0f f8  jnz.t  d0, #0, #0x56
-82 14  mov  d4, #1
-7b 00 f8 53  movh  d5, #0x3f80
-82 26  mov  d6, #2
-7b 00 00 74  movh  d7, #0x4000
 a0 3c  mov.a  a12, #3
 f4 ac  st.a  [sp], a12
 91 00 04 c4  movh.a  a12, #0x4040
@@ -1333,6 +1329,10 @@ b5 ac 38 50  st.a  [sp]#0x178, a12
 91 80 24 c4  movh.a  a12, #0x4248
 b5 ac 3c 50  st.a  [sp]#0x17c, a12
 99 24 f0 ef  ld.a  a4, [a2]#-0x50
+82 14  mov  d4, #1
+7b 00 f8 53  movh  d5, #0x3f80
+82 26  mov  d6, #2
+7b 00 00 74  movh  d7, #0x4000
 19 2f e8 ef  ld.w  d15, [a2]#-0x58
 78 62  st.w  [sp]#0x188, d15
 1d ff 57 f7  j  #0x270
@@ -1360,14 +1360,6 @@ df 05 05 00  jeq  d5, #0, #0x1408
 99 2c d8 ef  ld.a  a12, [a2]#-0x68
 01 ac 30 04  ge.a  d0, a12, sp
 6f 00 22 f6  jnz.t  d0, #0, #0x56
-82 18  mov  d8, #1
-82 29  mov  d9, #2
-82 36  mov  d6, #3
-82 47  mov  d7, #4
-82 5a  mov  d10, #5
-82 6b  mov  d11, #6
-82 7c  mov  d12, #7
-82 00  mov  d0, #0
 a0 8c  mov.a  a12, #8
 b5 ac 28 20  st.a  [sp]#0xa8, a12
 a0 9c  mov.a  a12, #9
@@ -1489,6 +1481,14 @@ b5 ac 04 00  st.a  [sp]#4, a12
 91 00 00 c0  movh.a  a12, #0
 d9 cc 32 00  lea  a12, [a12]#0x32
 f4 ac  st.a  [sp], a12
+82 18  mov  d8, #1
+82 29  mov  d9, #2
+82 36  mov  d6, #3
+82 47  mov  d7, #4
+82 5a  mov  d10, #5
+82 6b  mov  d11, #6
+82 7c  mov  d12, #7
+82 00  mov  d0, #0
 bb e0 01 e0  mov.u  d14, #0x1e
 3f e0 05 80  jlt.u  d0, d14, #0x1606
 82 50  mov  d0, #5
@@ -1521,14 +1521,6 @@ df 05 05 00  jeq  d5, #0, #0x1654
 99 2c d8 ef  ld.a  a12, [a2]#-0x68
 01 ac 30 04  ge.a  d0, a12, sp
 6f 00 fc f4  jnz.t  d0, #0, #0x56
-7b 00 f8 83  movh  d8, #0x3f80
-7b 00 00 94  movh  d9, #0x4000
-7b 00 04 64  movh  d6, #0x4040
-7b 00 08 74  movh  d7, #0x4080
-7b 00 0a a4  movh  d10, #0x40a0
-7b 00 0c b4  movh  d11, #0x40c0
-7b 00 0e c4  movh  d12, #0x40e0
-82 10  mov  d0, #1
 91 00 10 c4  movh.a  a12, #0x4100
 b5 ac 28 20  st.a  [sp]#0xa8, a12
 91 00 11 c4  movh.a  a12, #0x4110
@@ -1615,6 +1607,14 @@ b5 ac 08 00  st.a  [sp]#8, a12
 b5 ac 04 00  st.a  [sp]#4, a12
 91 80 24 c4  movh.a  a12, #0x4248
 f4 ac  st.a  [sp], a12
+7b 00 f8 83  movh  d8, #0x3f80
+7b 00 00 94  movh  d9, #0x4000
+7b 00 04 64  movh  d6, #0x4040
+7b 00 08 74  movh  d7, #0x4080
+7b 00 0a a4  movh  d10, #0x40a0
+7b 00 0c b4  movh  d11, #0x40c0
+7b 00 0e c4  movh  d12, #0x40e0
+82 10  mov  d0, #1
 bb e0 01 e0  mov.u  d14, #0x1e
 7f e0 13 ff  jge.u  d0, d14, #0x1600
 99 2c d0 ef  ld.a  a12, [a2]#-0x70
@@ -1642,14 +1642,6 @@ d9 aa c0 cf  lea  sp, [sp]#-0x100
 99 2c d8 ef  ld.a  a12, [a2]#-0x68
 01 ac 30 04  ge.a  d0, a12, sp
 6f 00 13 f4  jnz.t  d0, #0, #0x56
-7b 00 f8 83  movh  d8, #0x3f80
-7b 00 00 94  movh  d9, #0x4000
-7b 00 04 64  movh  d6, #0x4040
-7b 00 08 74  movh  d7, #0x4080
-7b 00 0a a4  movh  d10, #0x40a0
-7b 00 0c b4  movh  d11, #0x40c0
-7b 00 0e c4  movh  d12, #0x40e0
-82 20  mov  d0, #2
 91 00 10 c4  movh.a  a12, #0x4100
 b5 ac 30 50  st.a  [sp]#0x170, a12
 91 00 11 c4  movh.a  a12, #0x4110
@@ -1871,6 +1863,14 @@ b5 ac 04 00  st.a  [sp]#4, a12
 91 00 00 c0  movh.a  a12, #0
 d9 cc 32 00  lea  a12, [a12]#0x32
 f4 ac  st.a  [sp], a12
+7b 00 f8 83  movh  d8, #0x3f80
+7b 00 00 94  movh  d9, #0x4000
+7b 00 04 64  movh  d6, #0x4040
+7b 00 08 74  movh  d7, #0x4080
+7b 00 0a a4  movh  d10, #0x40a0
+7b 00 0c b4  movh  d11, #0x40c0
+7b 00 0e c4  movh  d12, #0x40e0
+82 20  mov  d0, #2
 bb e0 01 e0  mov.u  d14, #0x1e
 7f e0 2b fd  jge.u  d0, d14, #0x1600
 99 2c d0 ef  ld.a  a12, [a2]#-0x70
@@ -1898,14 +1898,6 @@ d9 aa c0 cf  lea  sp, [sp]#-0x100
 99 2c d8 ef  ld.a  a12, [a2]#-0x68
 01 ac 30 04  ge.a  d0, a12, sp
 6f 00 2b f2  jnz.t  d0, #0, #0x56
-82 18  mov  d8, #1
-82 29  mov  d9, #2
-82 36  mov  d6, #3
-82 47  mov  d7, #4
-82 5a  mov  d10, #5
-82 6b  mov  d11, #6
-82 7c  mov  d12, #7
-82 30  mov  d0, #3
 a0 8c  mov.a  a12, #8
 b5 ac 30 50  st.a  [sp]#0x170, a12
 a0 9c  mov.a  a12, #9
@@ -2127,6 +2119,14 @@ b5 ac 08 00  st.a  [sp]#8, a12
 b5 ac 04 00  st.a  [sp]#4, a12
 91 80 24 c4  movh.a  a12, #0x4248
 f4 ac  st.a  [sp], a12
+82 18  mov  d8, #1
+82 29  mov  d9, #2
+82 36  mov  d6, #3
+82 47  mov  d7, #4
+82 5a  mov  d10, #5
+82 6b  mov  d11, #6
+82 7c  mov  d12, #7
+82 30  mov  d0, #3
 bb e0 01 e0  mov.u  d14, #0x1e
 7f e0 43 fb  jge.u  d0, d14, #0x1600
 99 2c d0 ef  ld.a  a12, [a2]#-0x70
@@ -2154,14 +2154,6 @@ d9 aa c0 cf  lea  sp, [sp]#-0x100
 99 2c d8 ef  ld.a  a12, [a2]#-0x68
 01 ac 30 04  ge.a  d0, a12, sp
 6f 00 43 f0  jnz.t  d0, #0, #0x56
-82 18  mov  d8, #1
-7b 00 f8 93  movh  d9, #0x3f80
-82 26  mov  d6, #2
-7b 00 00 74  movh  d7, #0x4000
-82 3a  mov  d10, #3
-7b 00 04 b4  movh  d11, #0x4040
-82 4c  mov  d12, #4
-82 40  mov  d0, #4
 91 00 08 c4  movh.a  a12, #0x4080
 b5 ac 30 50  st.a  [sp]#0x170, a12
 a0 5c  mov.a  a12, #5
@@ -2383,6 +2375,14 @@ d9 cc 32 00  lea  a12, [a12]#0x32
 b5 ac 04 00  st.a  [sp]#4, a12
 91 80 24 c4  movh.a  a12, #0x4248
 f4 ac  st.a  [sp], a12
+82 18  mov  d8, #1
+7b 00 f8 93  movh  d9, #0x3f80
+82 26  mov  d6, #2
+7b 00 00 74  movh  d7, #0x4000
+82 3a  mov  d10, #3
+7b 00 04 b4  movh  d11, #0x4040
+82 4c  mov  d12, #4
+82 40  mov  d0, #4
 bb e0 01 e0  mov.u  d14, #0x1e
 7f e0 5b f9  jge.u  d0, d14, #0x1600
 99 2c d0 ef  ld.a  a12, [a2]#-0x70
@@ -2410,14 +2410,6 @@ d9 aa c0 cf  lea  sp, [sp]#-0x100
 99 2c d8 ef  ld.a  a12, [a2]#-0x68
 01 ac 30 04  ge.a  d0, a12, sp
 6f 00 5b ee  jnz.t  d0, #0, #0x56
-82 18  mov  d8, #1
-7b 00 f8 93  movh  d9, #0x3f80
-82 26  mov  d6, #2
-7b 00 00 74  movh  d7, #0x4000
-82 3a  mov  d10, #3
-7b 00 04 b4  movh  d11, #0x4040
-82 4c  mov  d12, #4
-82 50  mov  d0, #5
 91 00 08 c4  movh.a  a12, #0x4080
 b5 ac 30 50  st.a  [sp]#0x170, a12
 a0 5c  mov.a  a12, #5
@@ -2639,6 +2631,14 @@ d9 cc 32 00  lea  a12, [a12]#0x32
 b5 ac 04 00  st.a  [sp]#4, a12
 91 80 24 c4  movh.a  a12, #0x4248
 f4 ac  st.a  [sp], a12
+82 18  mov  d8, #1
+7b 00 f8 93  movh  d9, #0x3f80
+82 26  mov  d6, #2
+7b 00 00 74  movh  d7, #0x4000
+82 3a  mov  d10, #3
+7b 00 04 b4  movh  d11, #0x4040
+82 4c  mov  d12, #4
+82 50  mov  d0, #5
 bb e0 01 e0  mov.u  d14, #0x1e
 7f e0 73 f7  jge.u  d0, d14, #0x1600
 99 2c d0 ef  ld.a  a12, [a2]#-0x70
@@ -6254,13 +6254,6 @@ df 05 05 00  jeq  d5, #0, #0x54dc
 99 2c d8 ef  ld.a  a12, [a2]#-0x68
 01 ac 30 04  ge.a  d0, a12, sp
 6f 00 b8 d5  jnz.t  d0, #0, #0x56
-82 18  mov  d8, #1
-82 29  mov  d9, #2
-82 36  mov  d6, #3
-82 47  mov  d7, #4
-82 5a  mov  d10, #5
-82 6b  mov  d11, #6
-82 7c  mov  d12, #7
 a0 8c  mov.a  a12, #8
 b5 ac 28 20  st.a  [sp]#0xa8, a12
 a0 9c  mov.a  a12, #9
@@ -6382,6 +6375,13 @@ b5 ac 04 00  st.a  [sp]#4, a12
 91 00 00 c0  movh.a  a12, #0
 d9 cc 32 00  lea  a12, [a12]#0x32
 f4 ac  st.a  [sp], a12
+82 18  mov  d8, #1
+82 29  mov  d9, #2
+82 36  mov  d6, #3
+82 47  mov  d7, #4
+82 5a  mov  d10, #5
+82 6b  mov  d11, #6
+82 7c  mov  d12, #7
 61 ff 3f e8  fcall  #0x2748
 d9 aa 3c 20  lea  sp, [sp]#0xbc
 00 70  fret  
@@ -6399,13 +6399,6 @@ df 05 05 00  jeq  d5, #0, #0x56f4
 99 2c d8 ef  ld.a  a12, [a2]#-0x68
 01 ac 30 04  ge.a  d0, a12, sp
 6f 00 ac d4  jnz.t  d0, #0, #0x56
-7b 00 f8 83  movh  d8, #0x3f80
-7b 00 00 94  movh  d9, #0x4000
-7b 00 04 64  movh  d6, #0x4040
-7b 00 08 74  movh  d7, #0x4080
-7b 00 0a a4  movh  d10, #0x40a0
-7b 00 0c b4  movh  d11, #0x40c0
-7b 00 0e c4  movh  d12, #0x40e0
 91 00 10 c4  movh.a  a12, #0x4100
 b5 ac 28 20  st.a  [sp]#0xa8, a12
 91 00 11 c4  movh.a  a12, #0x4110
@@ -6492,6 +6485,13 @@ b5 ac 08 00  st.a  [sp]#8, a12
 b5 ac 04 00  st.a  [sp]#4, a12
 91 80 24 c4  movh.a  a12, #0x4248
 f4 ac  st.a  [sp], a12
+7b 00 f8 83  movh  d8, #0x3f80
+7b 00 00 94  movh  d9, #0x4000
+7b 00 04 64  movh  d6, #0x4040
+7b 00 08 74  movh  d7, #0x4080
+7b 00 0a a4  movh  d10, #0x40a0
+7b 00 0c b4  movh  d11, #0x40c0
+7b 00 0e c4  movh  d12, #0x40e0
 61 ff 04 e8  fcall  #0x287c
 d9 aa 3c 20  lea  sp, [sp]#0xbc
 00 70  fret  
@@ -6510,13 +6510,6 @@ d9 aa c0 cf  lea  sp, [sp]#-0x100
 99 2c d8 ef  ld.a  a12, [a2]#-0x68
 01 ac 30 04  ge.a  d0, a12, sp
 6f 00 d5 d3  jnz.t  d0, #0, #0x56
-7b 00 f8 83  movh  d8, #0x3f80
-7b 00 00 94  movh  d9, #0x4000
-7b 00 04 64  movh  d6, #0x4040
-7b 00 08 74  movh  d7, #0x4080
-7b 00 0a a4  movh  d10, #0x40a0
-7b 00 0c b4  movh  d11, #0x40c0
-7b 00 0e c4  movh  d12, #0x40e0
 91 00 10 c4  movh.a  a12, #0x4100
 b5 ac 30 50  st.a  [sp]#0x170, a12
 91 00 11 c4  movh.a  a12, #0x4110
@@ -6738,6 +6731,13 @@ b5 ac 04 00  st.a  [sp]#4, a12
 91 00 00 c0  movh.a  a12, #0
 d9 cc 32 00  lea  a12, [a12]#0x32
 f4 ac  st.a  [sp], a12
+7b 00 f8 83  movh  d8, #0x3f80
+7b 00 00 94  movh  d9, #0x4000
+7b 00 04 64  movh  d6, #0x4040
+7b 00 08 74  movh  d7, #0x4080
+7b 00 0a a4  movh  d10, #0x40a0
+7b 00 0c b4  movh  d11, #0x40c0
+7b 00 0e c4  movh  d12, #0x40e0
 61 ff 1a ed  fcall  #0x3654
 d9 aa 04 60  lea  sp, [sp]#0x184
 00 70  fret  
@@ -6756,13 +6756,6 @@ d9 aa c0 cf  lea  sp, [sp]#-0x100
 99 2c d8 ef  ld.a  a12, [a2]#-0x68
 01 ac 30 04  ge.a  d0, a12, sp
 6f 00 ff d1  jnz.t  d0, #0, #0x56
-82 18  mov  d8, #1
-82 29  mov  d9, #2
-82 36  mov  d6, #3
-82 47  mov  d7, #4
-82 5a  mov  d10, #5
-82 6b  mov  d11, #6
-82 7c  mov  d12, #7
 a0 8c  mov.a  a12, #8
 b5 ac 30 50  st.a  [sp]#0x170, a12
 a0 9c  mov.a  a12, #9
@@ -6984,6 +6977,13 @@ b5 ac 08 00  st.a  [sp]#8, a12
 b5 ac 04 00  st.a  [sp]#4, a12
 91 80 24 c4  movh.a  a12, #0x4248
 f4 ac  st.a  [sp], a12
+82 18  mov  d8, #1
+82 29  mov  d9, #2
+82 36  mov  d6, #3
+82 47  mov  d7, #4
+82 5a  mov  d10, #5
+82 6b  mov  d11, #6
+82 7c  mov  d12, #7
 61 ff ec eb  fcall  #0x37a4
 d9 aa 04 60  lea  sp, [sp]#0x184
 00 70  fret  
@@ -7002,13 +7002,6 @@ d9 aa c0 cf  lea  sp, [sp]#-0x100
 99 2c d8 ef  ld.a  a12, [a2]#-0x68
 01 ac 30 04  ge.a  d0, a12, sp
 6f 00 29 d0  jnz.t  d0, #0, #0x56
-82 18  mov  d8, #1
-7b 00 f8 93  movh  d9, #0x3f80
-82 26  mov  d6, #2
-7b 00 00 74  movh  d7, #0x4000
-82 3a  mov  d10, #3
-7b 00 04 b4  movh  d11, #0x4040
-82 4c  mov  d12, #4
 91 00 08 c4  movh.a  a12, #0x4080
 b5 ac 30 50  st.a  [sp]#0x170, a12
 a0 5c  mov.a  a12, #5
@@ -7230,6 +7223,13 @@ d9 cc 32 00  lea  a12, [a12]#0x32
 b5 ac 04 00  st.a  [sp]#4, a12
 91 80 24 c4  movh.a  a12, #0x4248
 f4 ac  st.a  [sp], a12
+82 18  mov  d8, #1
+7b 00 f8 93  movh  d9, #0x3f80
+82 26  mov  d6, #2
+7b 00 00 74  movh  d7, #0x4000
+82 3a  mov  d10, #3
+7b 00 04 b4  movh  d11, #0x4040
+82 4c  mov  d12, #4
 61 ff 10 f1  fcall  #0x4598
 d9 aa 04 60  lea  sp, [sp]#0x184
 00 70  fret  
@@ -7248,13 +7248,6 @@ d9 aa c0 cf  lea  sp, [sp]#-0x100
 99 2c d8 ef  ld.a  a12, [a2]#-0x68
 01 ac 30 04  ge.a  d0, a12, sp
 6f 00 53 ce  jnz.t  d0, #0, #0x56
-82 18  mov  d8, #1
-7b 00 f8 93  movh  d9, #0x3f80
-82 26  mov  d6, #2
-7b 00 00 74  movh  d7, #0x4000
-82 3a  mov  d10, #3
-7b 00 04 b4  movh  d11, #0x4040
-82 4c  mov  d12, #4
 91 00 08 c4  movh.a  a12, #0x4080
 b5 ac 30 50  st.a  [sp]#0x170, a12
 a0 5c  mov.a  a12, #5
@@ -7476,6 +7469,13 @@ d9 cc 32 00  lea  a12, [a12]#0x32
 b5 ac 04 00  st.a  [sp]#4, a12
 91 80 24 c4  movh.a  a12, #0x4248
 f4 ac  st.a  [sp], a12
+82 18  mov  d8, #1
+7b 00 f8 93  movh  d9, #0x3f80
+82 26  mov  d6, #2
+7b 00 00 74  movh  d7, #0x4000
+82 3a  mov  d10, #3
+7b 00 04 b4  movh  d11, #0x4040
+82 4c  mov  d12, #4
 61 ff da ef  fcall  #0x46d8
 d9 aa 04 60  lea  sp, [sp]#0x184
 00 70  fret  
@@ -7494,14 +7494,6 @@ df 05 05 00  jeq  d5, #0, #0x6750
 99 2c d8 ef  ld.a  a12, [a2]#-0x68
 01 ac 30 04  ge.a  d0, a12, sp
 6f 00 7e cc  jnz.t  d0, #0, #0x56
-82 18  mov  d8, #1
-82 29  mov  d9, #2
-82 36  mov  d6, #3
-82 47  mov  d7, #4
-82 5a  mov  d10, #5
-82 6b  mov  d11, #6
-82 7c  mov  d12, #7
-bb a0 00 00  mov.u  d0, #0xa
 a0 8c  mov.a  a12, #8
 b5 ac 28 20  st.a  [sp]#0xa8, a12
 a0 9c  mov.a  a12, #9
@@ -7623,6 +7615,14 @@ b5 ac 04 00  st.a  [sp]#4, a12
 91 00 00 c0  movh.a  a12, #0
 d9 cc 32 00  lea  a12, [a12]#0x32
 f4 ac  st.a  [sp], a12
+82 18  mov  d8, #1
+82 29  mov  d9, #2
+82 36  mov  d6, #3
+82 47  mov  d7, #4
+82 5a  mov  d10, #5
+82 6b  mov  d11, #6
+82 7c  mov  d12, #7
+bb a0 00 00  mov.u  d0, #0xa
 bb e0 01 e0  mov.u  d14, #0x1e
 7f e0 5d d6  jge.u  d0, d14, #0x1600
 99 2c d0 ef  ld.a  a12, [a2]#-0x70
@@ -7650,14 +7650,6 @@ df 05 05 00  jeq  d5, #0, #0x6990
 99 2c d8 ef  ld.a  a12, [a2]#-0x68
 01 ac 30 04  ge.a  d0, a12, sp
 6f 00 5e cb  jnz.t  d0, #0, #0x56
-7b 00 f8 83  movh  d8, #0x3f80
-7b 00 00 94  movh  d9, #0x4000
-7b 00 04 64  movh  d6, #0x4040
-7b 00 08 74  movh  d7, #0x4080
-7b 00 0a a4  movh  d10, #0x40a0
-7b 00 0c b4  movh  d11, #0x40c0
-7b 00 0e c4  movh  d12, #0x40e0
-bb b0 00 00  mov.u  d0, #0xb
 91 00 10 c4  movh.a  a12, #0x4100
 b5 ac 28 20  st.a  [sp]#0xa8, a12
 91 00 11 c4  movh.a  a12, #0x4110
@@ -7744,6 +7736,14 @@ b5 ac 08 00  st.a  [sp]#8, a12
 b5 ac 04 00  st.a  [sp]#4, a12
 91 80 24 c4  movh.a  a12, #0x4248
 f4 ac  st.a  [sp], a12
+7b 00 f8 83  movh  d8, #0x3f80
+7b 00 00 94  movh  d9, #0x4000
+7b 00 04 64  movh  d6, #0x4040
+7b 00 08 74  movh  d7, #0x4080
+7b 00 0a a4  movh  d10, #0x40a0
+7b 00 0c b4  movh  d11, #0x40c0
+7b 00 0e c4  movh  d12, #0x40e0
+bb b0 00 00  mov.u  d0, #0xb
 bb e0 01 e0  mov.u  d14, #0x1e
 7f e0 74 d5  jge.u  d0, d14, #0x1600
 99 2c d0 ef  ld.a  a12, [a2]#-0x70
@@ -7772,14 +7772,6 @@ d9 aa c0 cf  lea  sp, [sp]#-0x100
 99 2c d8 ef  ld.a  a12, [a2]#-0x68
 01 ac 30 04  ge.a  d0, a12, sp
 6f 00 73 ca  jnz.t  d0, #0, #0x56
-7b 00 f8 83  movh  d8, #0x3f80
-7b 00 00 94  movh  d9, #0x4000
-7b 00 04 64  movh  d6, #0x4040
-7b 00 08 74  movh  d7, #0x4080
-7b 00 0a a4  movh  d10, #0x40a0
-7b 00 0c b4  movh  d11, #0x40c0
-7b 00 0e c4  movh  d12, #0x40e0
-bb c0 00 00  mov.u  d0, #0xc
 91 00 10 c4  movh.a  a12, #0x4100
 b5 ac 30 50  st.a  [sp]#0x170, a12
 91 00 11 c4  movh.a  a12, #0x4110
@@ -8001,6 +7993,14 @@ b5 ac 04 00  st.a  [sp]#4, a12
 91 00 00 c0  movh.a  a12, #0
 d9 cc 32 00  lea  a12, [a12]#0x32
 f4 ac  st.a  [sp], a12
+7b 00 f8 83  movh  d8, #0x3f80
+7b 00 00 94  movh  d9, #0x4000
+7b 00 04 64  movh  d6, #0x4040
+7b 00 08 74  movh  d7, #0x4080
+7b 00 0a a4  movh  d10, #0x40a0
+7b 00 0c b4  movh  d11, #0x40c0
+7b 00 0e c4  movh  d12, #0x40e0
+bb c0 00 00  mov.u  d0, #0xc
 bb e0 01 e0  mov.u  d14, #0x1e
 7f e0 8a d3  jge.u  d0, d14, #0x1600
 99 2c d0 ef  ld.a  a12, [a2]#-0x70
@@ -8029,14 +8029,6 @@ d9 aa c0 cf  lea  sp, [sp]#-0x100
 99 2c d8 ef  ld.a  a12, [a2]#-0x68
 01 ac 30 04  ge.a  d0, a12, sp
 6f 00 89 c8  jnz.t  d0, #0, #0x56
-82 18  mov  d8, #1
-82 29  mov  d9, #2
-82 36  mov  d6, #3
-82 47  mov  d7, #4
-82 5a  mov  d10, #5
-82 6b  mov  d11, #6
-82 7c  mov  d12, #7
-bb d0 00 00  mov.u  d0, #0xd
 a0 8c  mov.a  a12, #8
 b5 ac 30 50  st.a  [sp]#0x170, a12
 a0 9c  mov.a  a12, #9
@@ -8258,6 +8250,14 @@ b5 ac 08 00  st.a  [sp]#8, a12
 b5 ac 04 00  st.a  [sp]#4, a12
 91 80 24 c4  movh.a  a12, #0x4248
 f4 ac  st.a  [sp], a12
+82 18  mov  d8, #1
+82 29  mov  d9, #2
+82 36  mov  d6, #3
+82 47  mov  d7, #4
+82 5a  mov  d10, #5
+82 6b  mov  d11, #6
+82 7c  mov  d12, #7
+bb d0 00 00  mov.u  d0, #0xd
 bb e0 01 e0  mov.u  d14, #0x1e
 7f e0 a0 d1  jge.u  d0, d14, #0x1600
 99 2c d0 ef  ld.a  a12, [a2]#-0x70
@@ -8286,14 +8286,6 @@ d9 aa c0 cf  lea  sp, [sp]#-0x100
 99 2c d8 ef  ld.a  a12, [a2]#-0x68
 01 ac 30 04  ge.a  d0, a12, sp
 6f 00 9f c6  jnz.t  d0, #0, #0x56
-82 18  mov  d8, #1
-7b 00 f8 93  movh  d9, #0x3f80
-82 26  mov  d6, #2
-7b 00 00 74  movh  d7, #0x4000
-82 3a  mov  d10, #3
-7b 00 04 b4  movh  d11, #0x4040
-82 4c  mov  d12, #4
-bb e0 00 00  mov.u  d0, #0xe
 91 00 08 c4  movh.a  a12, #0x4080
 b5 ac 30 50  st.a  [sp]#0x170, a12
 a0 5c  mov.a  a12, #5
@@ -8515,6 +8507,14 @@ d9 cc 32 00  lea  a12, [a12]#0x32
 b5 ac 04 00  st.a  [sp]#4, a12
 91 80 24 c4  movh.a  a12, #0x4248
 f4 ac  st.a  [sp], a12
+82 18  mov  d8, #1
+7b 00 f8 93  movh  d9, #0x3f80
+82 26  mov  d6, #2
+7b 00 00 74  movh  d7, #0x4000
+82 3a  mov  d10, #3
+7b 00 04 b4  movh  d11, #0x4040
+82 4c  mov  d12, #4
+bb e0 00 00  mov.u  d0, #0xe
 bb e0 01 e0  mov.u  d14, #0x1e
 7f e0 b6 cf  jge.u  d0, d14, #0x1600
 99 2c d0 ef  ld.a  a12, [a2]#-0x70
@@ -8543,14 +8543,6 @@ d9 aa c0 cf  lea  sp, [sp]#-0x100
 99 2c d8 ef  ld.a  a12, [a2]#-0x68
 01 ac 30 04  ge.a  d0, a12, sp
 6f 00 b5 c4  jnz.t  d0, #0, #0x56
-82 18  mov  d8, #1
-7b 00 f8 93  movh  d9, #0x3f80
-82 26  mov  d6, #2
-7b 00 00 74  movh  d7, #0x4000
-82 3a  mov  d10, #3
-7b 00 04 b4  movh  d11, #0x4040
-82 4c  mov  d12, #4
-bb f0 00 00  mov.u  d0, #0xf
 91 00 08 c4  movh.a  a12, #0x4080
 b5 ac 30 50  st.a  [sp]#0x170, a12
 a0 5c  mov.a  a12, #5
@@ -8772,6 +8764,14 @@ d9 cc 32 00  lea  a12, [a12]#0x32
 b5 ac 04 00  st.a  [sp]#4, a12
 91 80 24 c4  movh.a  a12, #0x4248
 f4 ac  st.a  [sp], a12
+82 18  mov  d8, #1
+7b 00 f8 93  movh  d9, #0x3f80
+82 26  mov  d6, #2
+7b 00 00 74  movh  d7, #0x4000
+82 3a  mov  d10, #3
+7b 00 04 b4  movh  d11, #0x4040
+82 4c  mov  d12, #4
+bb f0 00 00  mov.u  d0, #0xf
 bb e0 01 e0  mov.u  d14, #0x1e
 7f e0 cc cd  jge.u  d0, d14, #0x1600
 99 2c d0 ef  ld.a  a12, [a2]#-0x70
@@ -8800,9 +8800,6 @@ df 05 05 00  jeq  d5, #0, #0x7ab4
 99 2c d8 ef  ld.a  a12, [a2]#-0x68
 01 ac 30 04  ge.a  d0, a12, sp
 6f 00 cc c2  jnz.t  d0, #0, #0x56
-b7 00 2a 4a  imask  e4, #0, #0x14, #0xa
-7b 00 00 64  movh  d6, #0x4000
-7b 00 08 74  movh  d7, #0x4080
 a0 0c  mov.a  a12, #0
 91 80 00 d4  movh.a  a13, #0x4008
 89 ac c0 09  st.da  [sp]#0, p12
@@ -8867,6 +8864,9 @@ a0 0c  mov.a  a12, #0
 91 e0 03 d4  movh.a  a13, #0x403e
 89 ac c8 29  st.da  [sp]#0x88, p12
 99 24 f0 ef  ld.a  a4, [a2]#-0x50
+b7 00 2a 4a  imask  e4, #0, #0x14, #0xa
+7b 00 00 64  movh  d6, #0x4000
+7b 00 08 74  movh  d7, #0x4080
 19 2f e8 ef  ld.w  d15, [a2]#-0x58
 78 26  st.w  [sp]#0x98, d15
 1d ff 57 c3  j  #0x270
@@ -8894,9 +8894,6 @@ df 05 05 00  jeq  d5, #0, #0x7c08
 99 2c d8 ef  ld.a  a12, [a2]#-0x68
 01 ac 30 04  ge.a  d0, a12, sp
 6f 00 22 c2  jnz.t  d0, #0, #0x56
-b7 00 2a 4a  imask  e4, #0, #0x14, #0xa
-7b 00 00 64  movh  d6, #0x4000
-7b 00 08 74  movh  d7, #0x4080
 a0 0c  mov.a  a12, #0
 91 80 00 d4  movh.a  a13, #0x4008
 89 ac c0 09  st.da  [sp]#0, p12
@@ -8961,6 +8958,9 @@ a0 0c  mov.a  a12, #0
 91 e0 03 d4  movh.a  a13, #0x403e
 89 ac c8 29  st.da  [sp]#0x88, p12
 99 24 f0 ef  ld.a  a4, [a2]#-0x50
+b7 00 2a 4a  imask  e4, #0, #0x14, #0xa
+7b 00 00 64  movh  d6, #0x4000
+7b 00 08 74  movh  d7, #0x4080
 19 2f e8 ef  ld.w  d15, [a2]#-0x58
 78 26  st.w  [sp]#0x98, d15
 1d ff ad c2  j  #0x270
@@ -8988,9 +8988,6 @@ df 05 05 00  jeq  d5, #0, #0x7d5c
 99 2c d8 ef  ld.a  a12, [a2]#-0x68
 01 ac 30 04  ge.a  d0, a12, sp
 6f 00 78 c1  jnz.t  d0, #0, #0x56
-7b 00 f8 43  movh  d4, #0x3f80
-b7 00 21 6f  imask  e6, #0, #0x1e, #1
-7b 00 04 54  movh  d5, #0x4040
 a0 0c  mov.a  a12, #0
 91 00 01 d4  movh.a  a13, #0x4010
 89 ac c0 09  st.da  [sp]#0, p12
@@ -9065,6 +9062,9 @@ a0 0c  mov.a  a12, #0
 91 00 1f c4  movh.a  a12, #0x41f0
 b5 ac 34 20  st.a  [sp]#0xb4, a12
 99 24 f0 ef  ld.a  a4, [a2]#-0x50
+7b 00 f8 43  movh  d4, #0x3f80
+b7 00 21 6f  imask  e6, #0, #0x1e, #1
+7b 00 04 54  movh  d5, #0x4040
 19 2f e8 ef  ld.w  d15, [a2]#-0x58
 78 30  st.w  [sp]#0xc0, d15
 1d ff f9 c1  j  #0x270
@@ -9092,9 +9092,6 @@ df 05 05 00  jeq  d5, #0, #0x7ec4
 99 2c d8 ef  ld.a  a12, [a2]#-0x68
 01 ac 30 04  ge.a  d0, a12, sp
 6f 00 c4 c0  jnz.t  d0, #0, #0x56
-7b 00 f8 43  movh  d4, #0x3f80
-b7 00 21 6f  imask  e6, #0, #0x1e, #1
-7b 00 04 54  movh  d5, #0x4040
 a0 0c  mov.a  a12, #0
 91 00 01 d4  movh.a  a13, #0x4010
 89 ac c0 09  st.da  [sp]#0, p12
@@ -9169,6 +9166,9 @@ a0 0c  mov.a  a12, #0
 91 00 1f c4  movh.a  a12, #0x41f0
 b5 ac 34 20  st.a  [sp]#0xb4, a12
 99 24 f0 ef  ld.a  a4, [a2]#-0x50
+7b 00 f8 43  movh  d4, #0x3f80
+b7 00 21 6f  imask  e6, #0, #0x1e, #1
+7b 00 04 54  movh  d5, #0x4040
 19 2f e8 ef  ld.w  d15, [a2]#-0x58
 78 30  st.w  [sp]#0xc0, d15
 1d ff 45 c1  j  #0x270
@@ -9196,9 +9196,6 @@ df 05 05 00  jeq  d5, #0, #0x802c
 99 2c d8 ef  ld.a  a12, [a2]#-0x68
 01 ac 30 04  ge.a  d0, a12, sp
 6f 00 10 c0  jnz.t  d0, #0, #0x56
-d2 14  mov  e4, #1
-82 26  mov  d6, #2
-82 47  mov  d7, #4
 a0 3c  mov.a  a12, #3
 a0 0d  mov.a  a13, #0
 89 ac c0 09  st.da  [sp]#0, p12
@@ -9278,6 +9275,9 @@ d9 cc 1e 00  lea  a12, [a12]#0x1e
 a0 0d  mov.a  a13, #0
 89 ac c8 29  st.da  [sp]#0x88, p12
 99 24 f0 ef  ld.a  a4, [a2]#-0x50
+d2 14  mov  e4, #1
+82 26  mov  d6, #2
+82 47  mov  d7, #4
 19 2f e8 ef  ld.w  d15, [a2]#-0x58
 78 26  st.w  [sp]#0x98, d15
 1d ff 8c c0  j  #0x270
@@ -9308,10 +9308,6 @@ df 05 05 00  jeq  d5, #0, #0x81a4
 01 ac 30 04  ge.a  d0, a12, sp
 6f 00 04 00  jz.t  d0, #0, #0x81b6
 1d ff 52 bf  j  #0x56
-82 14  mov  d4, #1
-7b 00 00 5f  movh  d5, #0xf000
-82 26  mov  d6, #2
-82 47  mov  d7, #4
 a0 3c  mov.a  a12, #3
 a0 0d  mov.a  a13, #0
 89 ac c0 09  st.da  [sp]#0, p12
@@ -9391,6 +9387,10 @@ d9 cc 1e 00  lea  a12, [a12]#0x1e
 a0 0d  mov.a  a13, #0
 89 ac c8 29  st.da  [sp]#0x88, p12
 99 24 f0 ef  ld.a  a4, [a2]#-0x50
+82 14  mov  d4, #1
+7b 00 00 5f  movh  d5, #0xf000
+82 26  mov  d6, #2
+82 47  mov  d7, #4
 19 2f e8 ef  ld.w  d15, [a2]#-0x58
 78 26  st.w  [sp]#0x98, d15
 1d ff cc bf  j  #0x270
@@ -9421,9 +9421,6 @@ df 05 05 00  jeq  d5, #0, #0x8324
 01 ac 30 04  ge.a  d0, a12, sp
 6f 00 04 00  jz.t  d0, #0, #0x8336
 1d ff 92 be  j  #0x56
-82 14  mov  d4, #1
-d2 26  mov  e6, #2
-82 35  mov  d5, #3
 a0 4c  mov.a  a12, #4
 a0 0d  mov.a  a13, #0
 89 ac c0 09  st.da  [sp]#0, p12
@@ -9513,6 +9510,9 @@ a0 0d  mov.a  a13, #0
 d9 cc 1e 00  lea  a12, [a12]#0x1e
 b5 ac 34 20  st.a  [sp]#0xb4, a12
 99 24 f0 ef  ld.a  a4, [a2]#-0x50
+82 14  mov  d4, #1
+d2 26  mov  e6, #2
+82 35  mov  d5, #3
 19 2f e8 ef  ld.w  d15, [a2]#-0x58
 78 30  st.w  [sp]#0xc0, d15
 1d ff 04 bf  j  #0x270
@@ -9543,9 +9543,6 @@ df 05 05 00  jeq  d5, #0, #0x84b4
 01 ac 30 04  ge.a  d0, a12, sp
 6f 00 04 00  jz.t  d0, #0, #0x84c6
 1d ff ca bd  j  #0x56
-82 14  mov  d4, #1
-d2 26  mov  e6, #2
-82 35  mov  d5, #3
 a0 4c  mov.a  a12, #4
 a0 0d  mov.a  a13, #0
 89 ac c0 09  st.da  [sp]#0, p12
@@ -9635,6 +9632,9 @@ a0 0d  mov.a  a13, #0
 d9 cc 1e 00  lea  a12, [a12]#0x1e
 b5 ac 34 20  st.a  [sp]#0xb4, a12
 99 24 f0 ef  ld.a  a4, [a2]#-0x50
+82 14  mov  d4, #1
+d2 26  mov  e6, #2
+82 35  mov  d5, #3
 19 2f e8 ef  ld.w  d15, [a2]#-0x58
 78 30  st.w  [sp]#0xc0, d15
 1d ff 3c be  j  #0x270

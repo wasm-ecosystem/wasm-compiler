@@ -6,6 +6,7 @@
 
 - Support `return_call` instruction
 - Support `return_call_indirect` instruction
+- Performance improvement: defer emitting some move in `condenseParameter` to reduce spills
 
 ## 4.2.0
 

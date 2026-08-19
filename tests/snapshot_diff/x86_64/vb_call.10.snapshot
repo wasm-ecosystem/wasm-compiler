@@ -95,10 +95,6 @@ e9 03 fe ff ff  jmp  6
 89 b4 24 90 00 00 00  mov  dword ptr [rsp + 0x90], esi
 44 89 8c 24 88 00 00 00  mov  dword ptr [rsp + 0x88], r9d
 48 8d 64 24 60  lea  rsp, [rsp + 0x60]
-8b 6c 24 70  mov  ebp, dword ptr [rsp + 0x70]
-8b 7c 24 68  mov  edi, dword ptr [rsp + 0x68]
-8b 74 24 68  mov  esi, dword ptr [rsp + 0x68]
-44 8b 4c 24 68  mov  r9d, dword ptr [rsp + 0x68]
 f3 44 0f 10 7c 24 68  movss  xmm15, dword ptr [rsp + 0x68]
 f3 44 0f 11 7c 24 20  movss  dword ptr [rsp + 0x20], xmm15
 f3 44 0f 10 7c 24 68  movss  xmm15, dword ptr [rsp + 0x68]
@@ -109,6 +105,10 @@ f3 44 0f 10 7c 24 68  movss  xmm15, dword ptr [rsp + 0x68]
 f3 44 0f 11 7c 24 08  movss  dword ptr [rsp + 8], xmm15
 f3 44 0f 10 7c 24 68  movss  xmm15, dword ptr [rsp + 0x68]
 f3 44 0f 11 3c 24  movss  dword ptr [rsp], xmm15
+8b 6c 24 70  mov  ebp, dword ptr [rsp + 0x70]
+8b 7c 24 68  mov  edi, dword ptr [rsp + 0x68]
+8b 74 24 68  mov  esi, dword ptr [rsp + 0x68]
+44 8b 4c 24 68  mov  r9d, dword ptr [rsp + 0x68]
 e8 40 ff ff ff  call  0x1c0
 48 8d 64 24 48  lea  rsp, [rsp + 0x48]
 c3  ret  

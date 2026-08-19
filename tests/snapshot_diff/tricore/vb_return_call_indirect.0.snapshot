@@ -347,18 +347,18 @@ df 05 05 00  jeq  d5, #0, #0x450
 02 50  mov  d0, d5
 1d ff 9d fe  j  #0x186
 d9 aa 28 10  lea  sp, [sp]#0x68
-82 36  mov  d6, #3
-82 47  mov  d7, #4
-82 5a  mov  d10, #5
-82 6b  mov  d11, #6
-82 7c  mov  d12, #7
-82 20  mov  d0, #2
 a0 8c  mov.a  a12, #8
 b5 ac 08 00  st.a  [sp]#8, a12
 a0 9c  mov.a  a12, #9
 b5 ac 04 00  st.a  [sp]#4, a12
 a0 ac  mov.a  a12, #0xa
 f4 ac  st.a  [sp], a12
+82 36  mov  d6, #3
+82 47  mov  d7, #4
+82 5a  mov  d10, #5
+82 6b  mov  d11, #6
+82 7c  mov  d12, #7
+82 20  mov  d0, #2
 ff 70 78 fe  jge.u  d0, #7, #0x160
 99 2c d0 ef  ld.a  a12, [a2]#-0x70
 01 c0 03 c6  addsc.a  a12, a12, d0, #3

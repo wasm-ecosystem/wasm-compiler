@@ -57,6 +57,10 @@ df 05 05 00  jeq  d5, #0, #0x98
 59 ab 10 20  st.w  [sp]#0x90, d11
 59 ac 08 20  st.w  [sp]#0x88, d12
 d9 aa 38 10  lea  sp, [sp]#0x78
+99 ac 1c 10  ld.a  a12, [sp]#0x5c
+b5 ac 04 00  st.a  [sp]#4, a12
+99 ac 1c 10  ld.a  a12, [sp]#0x5c
+f4 ac  st.a  [sp], a12
 19 a8 20 10  ld.w  d8, [sp]#0x60
 19 a9 1c 10  ld.w  d9, [sp]#0x5c
 19 a6 1c 10  ld.w  d6, [sp]#0x5c
@@ -64,10 +68,6 @@ d9 aa 38 10  lea  sp, [sp]#0x78
 19 aa 1c 10  ld.w  d10, [sp]#0x5c
 19 ab 1c 10  ld.w  d11, [sp]#0x5c
 19 ac 1c 10  ld.w  d12, [sp]#0x5c
-99 ac 1c 10  ld.a  a12, [sp]#0x5c
-b5 ac 04 00  st.a  [sp]#4, a12
-99 ac 1c 10  ld.a  a12, [sp]#0x5c
-f4 ac  st.a  [sp], a12
 61 ff b3 ff  fcall  #0x48
 d9 aa 0c 10  lea  sp, [sp]#0x4c
 00 70  fret  

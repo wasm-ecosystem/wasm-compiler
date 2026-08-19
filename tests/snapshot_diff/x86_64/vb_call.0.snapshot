@@ -91,23 +91,23 @@ vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
 e9 03 fe ff ff  jmp  6
 48 8d 64 24 50  lea  rsp, [rsp + 0x50]
-bd 01 00 00 00  mov  ebp, 1
-bf 02 00 00 00  mov  edi, 2
-be 03 00 00 00  mov  esi, 3
-41 b9 04 00 00 00  mov  r9d, 4
-41 ba 64 00 00 00  mov  r10d, 0x64
-41 81 c2 c8 00 00 00  add  r10d, 0xc8
-44 89 14 24  mov  dword ptr [rsp], r10d
+bd 64 00 00 00  mov  ebp, 0x64
+81 c5 c8 00 00 00  add  ebp, 0xc8
+89 2c 24  mov  dword ptr [rsp], ebp
 c7 44 24 28 05 00 00 00  mov  dword ptr [rsp + 0x28], 5
 c7 44 24 20 06 00 00 00  mov  dword ptr [rsp + 0x20], 6
 c7 44 24 18 07 00 00 00  mov  dword ptr [rsp + 0x18], 7
 c7 44 24 10 08 00 00 00  mov  dword ptr [rsp + 0x10], 8
 c7 44 24 08 09 00 00 00  mov  dword ptr [rsp + 8], 9
-e8 65 ff ff ff  call  0x1c0
+bd 01 00 00 00  mov  ebp, 1
+bf 02 00 00 00  mov  edi, 2
+be 03 00 00 00  mov  esi, 3
+41 b9 04 00 00 00  mov  r9d, 4
+e8 68 ff ff ff  call  0x1c0
 48 8d 64 24 38  lea  rsp, [rsp + 0x38]
 c3  ret  
 00 00  add  byte ptr [rax], al
-78 00 00 00  Size of the function body: 120
+74 00 00 00  Size of the function body: 116
 
 Initial Linear Memory Data
 00 00 00 00  Number of data segments: 0
@@ -149,17 +149,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x2ed
+75 1b  jne  0x2e9
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 fa fe ff ff  call  0x1ec
+e8 fe fe ff ff  call  0x1ec
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x310
+75 10  jne  0x30c
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -190,8 +190,8 @@ WebAssembly Table
 
 More Info
 00 00 00 00  Size of link data: 0
-50 03 00 00  Offset from here for the landing pad function body (0xFFFF'FFFF = undefined, pos: 1c): 848
+4c 03 00 00  Offset from here for the landing pad function body (0xFFFF'FFFF = undefined, pos: 1c): 844
 00 00 00 00  Stacktrace records 0, debugMode: 0
 03 00 00 00  Version of this binary module: 3
-78 03 00 00  Module binary size (excl. this value): 888
+74 03 00 00  Module binary size (excl. this value): 884
 

@@ -85,10 +85,6 @@
 
     ;; CHECK-LABEL: Function[4] Body
     (func $targetHintAsCallerScratchReg32 (result i32)
-
-        ;; X86_64_PASSIVE: mov ebp, 5
-        ;; AARCH64_PASSIVE: mov w19, #5
-        ;; TRICORE: mov d8, #5
         i32.const 5
         
         ;; X86_64_PASSIVE: mov  edi, dword ptr [rbx]
@@ -105,20 +101,27 @@
         ;; AARCH64_PASSIVE: add w8, w8, [[REG1]]
         ;; TRICORE: d9, [[REG1]]
         i32.add
+
+        ;; X86_64_PASSIVE: mov ebp, 5
+        ;; AARCH64_PASSIVE: mov w19, #5
+        ;; TRICORE: mov d8, #5
+
         call $callee-II
     )
 
     ;; CHECK-LABEL: Function[5] Body
     (func $targetHintAsCallerScratchReg64Native (result i64)
-        ;; X86_64_PASSIVE: mov edi, 7
-        ;; AARCH64_PASSIVE: mov x0, #7
-        ;; TRICORE: mov e4, #7
         i64.const 7
         ;; X86_64_PASSIVE: mov  rsi, qword ptr [rbx + 0x64]
         ;; AARCH64_PASSIVE: ldr x1,
         ;; TRICORE: ld.d  e6, [a2]#0x64
         i32.const 100
         i64.load
+
+        ;; X86_64_PASSIVE: mov edi, 7
+        ;; AARCH64_PASSIVE: mov x0, #7
+        ;; TRICORE: mov e4, #7
+
         call $api-II
     )
     ;; CHECK-LABEL: Function[6] Body

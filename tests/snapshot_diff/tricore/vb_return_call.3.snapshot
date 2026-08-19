@@ -76,6 +76,8 @@ df 05 05 00  jeq  d5, #0, #0xe0
 02 50  mov  d0, d5
 1d ff bf ff  j  #0x5a
 d9 aa 28 10  lea  sp, [sp]#0x68
+a0 8c  mov.a  a12, #8
+f4 ac  st.a  [sp], a12
 82 18  mov  d8, #1
 82 29  mov  d9, #2
 82 36  mov  d6, #3
@@ -83,8 +85,6 @@ d9 aa 28 10  lea  sp, [sp]#0x68
 82 5a  mov  d10, #5
 82 6b  mov  d11, #6
 82 7c  mov  d12, #7
-a0 8c  mov.a  a12, #8
-f4 ac  st.a  [sp], a12
 61 ff c5 ff  fcall  #0x80
 58 01  ld.w  d15, [sp]#4
 42 3f  add  d15, d3

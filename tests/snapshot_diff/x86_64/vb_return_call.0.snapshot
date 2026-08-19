@@ -232,14 +232,14 @@ vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
 e9 0b fb ff ff  jmp  6
 48 8d 64 24 50  lea  rsp, [rsp + 0x50]
-be 14 00 00 00  mov  esi, 0x14
-41 b9 1e 00 00 00  mov  r9d, 0x1e
 c7 44 24 28 28 00 00 00  mov  dword ptr [rsp + 0x28], 0x28
 c7 44 24 20 32 00 00 00  mov  dword ptr [rsp + 0x20], 0x32
 c7 44 24 18 3c 00 00 00  mov  dword ptr [rsp + 0x18], 0x3c
 c7 44 24 10 46 00 00 00  mov  dword ptr [rsp + 0x10], 0x46
 c7 44 24 08 50 00 00 00  mov  dword ptr [rsp + 8], 0x50
 c7 04 24 5a 00 00 00  mov  dword ptr [rsp], 0x5a
+be 14 00 00 00  mov  esi, 0x14
+41 b9 1e 00 00 00  mov  r9d, 0x1e
 e8 51 ff ff ff  call  0x490
 48 8d 64 24 48  lea  rsp, [rsp + 0x48]
 c3  ret  

@@ -648,13 +648,23 @@ public:
   /// @return Stack::iterator Iterator to the pushed operand
   Stack::iterator pushOperandsToStack(StackElement const &arg) const;
 
-  using ParamPosFunction = vb::FunctionRef<ParamPos(MachineType)>; ///< Type alias for parameter position function
+  using ParamPosFunction = vb::FunctionRef<ParamPos(MachineType)>;  ///< Type alias for parameter position function
+  using RegUsedAsTarget = std::array<bool, NBackend::totalNumRegs>; ///< Registers used as parameter targets
+  /// @brief Prepare the registers used as parameter targets
+  /// @param sigIndex Signature type index for the function type
+  /// @param isIndirectCall Whether this is an indirect call
+  /// @param paramPosFunc Function to get the parameter position
+  /// @return Registers used as parameter targets
+  RegUsedAsTarget prepareRegUsedAsTarget(uint32_t const sigIndex, bool const isIndirectCall, ParamPosFunction const &paramPosFunc);
+
   /// @brief Condense params with sigIndex
   /// @param sigIndex Signature type index for the function type
   /// @param isIndirectCall Whether this is an indirect call
   /// @param paramPosFunc Function to get the parameter position
+  /// @param regUsedAsTarget Registers used by parameters that have not been condensed
   /// @return Iterator to params base
-  Stack::iterator prepareCallParams(uint32_t const sigIndex, bool const isIndirectCall, ParamPosFunction const &paramPosFunc);
+  Stack::iterator prepareCallParams(uint32_t const sigIndex, bool const isIndirectCall, ParamPosFunction const &paramPosFunc,
+                                    RegUsedAsTarget &regUsedAsTarget);
 
   /// @brief Spill scratch registers that are above function parameter VBs
   /// @param sigIndex  Signature type index for the function type
@@ -774,9 +784,10 @@ private:
   /// @param paramType Type of the parameter
   /// @param currentParamCount Current count of parameters
   /// @param allParamsStart iterator to the first Stack Element of all params
+  /// @param regUsedAsTarget Number of unfinished parameters targeting each register
   /// @return Iterator to the condensed parameter
   Stack::iterator condenseParameter(ParamPos const targetPos, vb::MachineType const paramType, uint32_t const currentParamCount,
-                                    Stack::iterator const allParamsStart);
+                                    Stack::iterator const allParamsStart, RegUsedAsTarget const &regUsedAsTarget);
 };
 
 } // namespace vb

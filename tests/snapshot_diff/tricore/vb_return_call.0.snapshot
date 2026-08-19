@@ -72,8 +72,6 @@ df 05 05 00  jeq  d5, #0, #0xd8
 02 50  mov  d0, d5
 1d ff c3 ff  j  #0x5a
 d9 aa 30 10  lea  sp, [sp]#0x70
-bb 40 06 b0  mov.u  d11, #0x64
-bb 80 0c c0  mov.u  d12, #0xc8
 91 00 00 c0  movh.a  a12, #0
 d9 cc 2c 40  lea  a12, [a12]#0x12c
 b5 ac 08 00  st.a  [sp]#8, a12
@@ -83,6 +81,8 @@ b5 ac 04 00  st.a  [sp]#4, a12
 91 00 00 c0  movh.a  a12, #0
 d9 cc 34 70  lea  a12, [a12]#0x1f4
 f4 ac  st.a  [sp], a12
+bb 40 06 b0  mov.u  d11, #0x64
+bb 80 0c c0  mov.u  d12, #0xc8
 61 ff a1 ff  fcall  #0x48
 d9 aa 04 10  lea  sp, [sp]#0x44
 00 70  fret  
@@ -236,11 +236,6 @@ df 05 05 00  jeq  d5, #0, #0x2ec
 02 50  mov  d0, d5
 1d ff b9 fe  j  #0x5a
 d9 aa 28 10  lea  sp, [sp]#0x68
-bb 40 01 60  mov.u  d6, #0x14
-bb e0 01 70  mov.u  d7, #0x1e
-bb 80 02 a0  mov.u  d10, #0x28
-bb 20 03 b0  mov.u  d11, #0x32
-bb c0 03 c0  mov.u  d12, #0x3c
 91 00 00 c0  movh.a  a12, #0
 d9 cc 06 10  lea  a12, [a12]#0x46
 b5 ac 08 00  st.a  [sp]#8, a12
@@ -250,6 +245,11 @@ b5 ac 04 00  st.a  [sp]#4, a12
 91 00 00 c0  movh.a  a12, #0
 d9 cc 1a 10  lea  a12, [a12]#0x5a
 f4 ac  st.a  [sp], a12
+bb 40 01 60  mov.u  d6, #0x14
+bb e0 01 70  mov.u  d7, #0x1e
+bb 80 02 a0  mov.u  d10, #0x28
+bb 20 03 b0  mov.u  d11, #0x32
+bb c0 03 c0  mov.u  d12, #0x3c
 61 ff ab ff  fcall  #0x27c
 d9 aa 2c 00  lea  sp, [sp]#0x2c
 00 70  fret  
