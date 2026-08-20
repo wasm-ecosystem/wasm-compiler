@@ -385,15 +385,14 @@ public:
   Instruction INSTR(AbstrInstr const &abstrInstr) const VB_NOEXCEPT;
 
   ///
-  /// @brief Efficiently move an immediate value to a general purpose register
-  ///
-  /// Moves irrespective of what this register is currently containing, will not spill another register
+  /// @brief Efficiently move a 32-bit immediate value to a general-purpose register
   ///
   /// @param reg Register to move the immediate to
   /// @param imm Immediate value to move to the register
-  void MOVimm(REG const reg, uint32_t const imm) const;
+  void MOVimm32(REG const reg, uint32_t const imm) const;
 
-  /// @brief Efficiently move a 64-bit immediate value to a general purpose register
+  /// @brief Efficiently move a 64-bit immediate value to an extended general-purpose register
+  ///
   /// @param reg Register to move the immediate to
   /// @param imm Immediate value to move to the register
   void MOVimm64(REG const reg, uint64_t const imm) const;

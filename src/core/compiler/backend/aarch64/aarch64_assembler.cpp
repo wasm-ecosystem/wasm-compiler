@@ -51,6 +51,158 @@ namespace vb {
 namespace aarch64 {
 using Assembler = AArch64_Assembler; ///< Shortcut for AArch64_Assembler
 
+///
+/// @brief Identifies the AArch64 instruction encoding selected for an integer immediate.
+///
+enum class IntegerImmediateEncodingKind : uint8_t {
+  LOGICAL, ///< Logical-immediate MOV encoding.
+  MOVZ,    ///< Move-wide-with-zero MOV encoding.
+  MOVN,    ///< Move-wide-with-not MOV encoding.
+};
+
+///
+/// @brief Describes the selected AArch64 integer-immediate encoding.
+///
+/// @details The encoding kind selects the active data member.
+///
+// coverity[autosar_cpp14_a11_0_1_violation]
+struct IntegerImmediateInfo final {
+  IntegerImmediateEncodingKind kind{IntegerImmediateEncodingKind::MOVZ}; ///< Selected integer-immediate encoding.
+
+  /// @brief Data for the selected integer-immediate encoding.
+  union Data {
+    /// @brief Logical-immediate instruction operand.
+    struct Logical final {
+      uint64_t encoding; ///< Encoded logical-immediate operand.
+    };
+    Logical logical; ///< Logical-immediate instruction operand.
+
+    /// @brief Move-wide instruction operands.
+    struct MoveWide final {
+      uint64_t effectiveImmediate; ///< Raw immediate truncated to the target register width.
+      uint8_t numHalfWordsInReg;   ///< Number of 16-bit halfwords in the target register.
+    };
+    MoveWide moveWide; ///< Move-wide instruction operands.
+  };
+  Data data = {}; ///< Data for the encoding selected by kind.
+};
+
+///
+/// @brief Analyzes the integer encodings available for an immediate.
+///
+/// @details Counts zero and all-one halfwords for MOVZ/MOVN selection and obtains the logical-immediate encoding when one
+/// exists.
+///
+/// @param rawImmediate Raw bit representation of the immediate value.
+/// @param is64 Whether the immediate is a 64-bit value.
+/// @return Integer encoding information used by MOV emission and one-instruction checks.
+///
+static IntegerImmediateInfo analyzeIntegerImmediate(uint64_t const rawImmediate, bool const is64) VB_NOEXCEPT {
+  IntegerImmediateInfo info{};
+  uint64_t const effectiveImmediate{is64 ? rawImmediate : (rawImmediate & static_cast<uint64_t>(UINT32_MAX))};
+  uint8_t const numHalfWordsInReg{is64 ? static_cast<uint8_t>(4U) : static_cast<uint8_t>(2U)};
+  uint8_t numZeroHalfwords{0U};
+  uint8_t numFFFFHalfwords{0U};
+
+  for (uint8_t i{0U}; i < numHalfWordsInReg; i++) {
+    uint64_t const halfword{(effectiveImmediate >> (static_cast<uint64_t>(i) * 16U)) & static_cast<uint64_t>(UINT16_MAX)};
+    if (halfword == 0x0000U) {
+      numZeroHalfwords++;
+    } else if (halfword == 0xFFFFU) {
+      numFFFFHalfwords++;
+    } else {
+      static_cast<void>(0);
+    }
+  }
+
+  uint64_t logicalEncoding{0U};
+  bool const logicalEncodingValid{processLogicalImmediate(effectiveImmediate, is64, logicalEncoding)};
+  if (logicalEncodingValid && ((numZeroHalfwords < (numHalfWordsInReg - 1U)) && (numFFFFHalfwords < (numHalfWordsInReg - 1U)))) {
+    info.kind = IntegerImmediateEncodingKind::LOGICAL;
+    info.data.logical.encoding = logicalEncoding;
+  } else {
+    info.kind = (numZeroHalfwords >= numFFFFHalfwords) ? IntegerImmediateEncodingKind::MOVZ : IntegerImmediateEncodingKind::MOVN;
+    info.data.moveWide.effectiveImmediate = effectiveImmediate;
+    info.data.moveWide.numHalfWordsInReg = numHalfWordsInReg;
+  }
+  return info;
+}
+
+///
+/// @brief Identifies the AArch64 instruction encoding selected for a floating-point immediate.
+///
+enum class FloatImmediateEncodingKind : uint8_t {
+  MODIFIED, ///< FMOV's 8-bit modified-immediate encoding.
+  ZERO,     ///< FMOV from the integer zero register.
+  GPR,      ///< Materialize the raw bit pattern in a general-purpose register, then FMOV it.
+};
+
+///
+/// @brief Describes the selected AArch64 floating-point-immediate encoding.
+///
+/// @details The encoding kind selects the active data member.
+///
+// coverity[autosar_cpp14_a11_0_1_violation]
+struct FloatImmediateInfo final {
+  FloatImmediateEncodingKind kind{FloatImmediateEncodingKind::ZERO}; ///< Selected floating-point-immediate encoding.
+
+  /// @brief Data for the selected floating-point-immediate encoding.
+  union Data {
+    /// @brief FMOV modified-immediate instruction operand.
+    struct Modified final {
+      uint8_t immediate; ///< Encoded FMOV immediate.
+    };
+    Modified modified; ///< FMOV modified-immediate instruction operand.
+
+    /// @brief General-purpose-register materialization operands.
+    struct GeneralPurposeRegister final {
+      uint64_t effectiveImmediate; ///< Raw immediate truncated to the target register width.
+    };
+    GeneralPurposeRegister generalPurposeRegister; ///< General-purpose-register materialization operands.
+  };
+  Data data = {}; ///< Data for the encoding selected by kind.
+};
+
+///
+/// @brief Analyzes the AArch64 encoding selected for a floating-point raw bit pattern.
+///
+/// @details Positive zero is emitted by moving the integer zero register into a floating-point register. Other values
+/// either use the 8-bit FMOV modified-immediate format or are materialized in a general-purpose register first.
+///
+/// @param rawFloatImmediate Raw IEEE-754 bit representation of the immediate value.
+/// @param is64 Whether the immediate is an F64 value.
+/// @return Floating-point encoding information used by floating-point immediate emission.
+///
+static FloatImmediateInfo analyzeFloatImmediate(uint64_t const rawFloatImmediate, bool const is64) VB_NOEXCEPT {
+  FloatImmediateInfo info{};
+  uint64_t const effectiveImmediate{is64 ? rawFloatImmediate : (rawFloatImmediate & static_cast<uint64_t>(UINT32_MAX))};
+  if (effectiveImmediate == 0U) {
+    info.kind = FloatImmediateEncodingKind::ZERO;
+    return info;
+  }
+
+  uint64_t const bitWidth{is64 ? 64_U64 : 32_U64};
+  uint64_t const exponentWidth{is64 ? 11_U64 : 8_U64};
+  uint64_t const fractionStart{(bitWidth - exponentWidth) - 1_U64};
+  uint64_t const rawExponent{(effectiveImmediate >> fractionStart) & ((1_U64 << exponentWidth) - 1U)};
+  uint64_t const rawMantissa{effectiveImmediate & ((1_U64 << fractionStart) - 1U)};
+  uint64_t const rawEncodedExponent{rawExponent >> 2U};
+  bool const exponentCanBeEncoded{(rawEncodedExponent == (1_U64 << (exponentWidth - 3U))) ||
+                                  (rawEncodedExponent == ((1_U64 << (exponentWidth - 3U)) - 1U))};
+  bool const mantissaCanBeEncoded{rawMantissa == ((rawMantissa >> (fractionStart - 4U)) << (fractionStart - 4U))};
+  if (exponentCanBeEncoded && mantissaCanBeEncoded) {
+    uint32_t const modifiedImmediate{static_cast<uint32_t>(((effectiveImmediate >> (fractionStart + exponentWidth)) & 0b1U) << 7U) |
+                                     static_cast<uint32_t>(((effectiveImmediate >> fractionStart) & 0b111U) << 4U) |
+                                     static_cast<uint32_t>((effectiveImmediate >> (fractionStart - 4U)) & 0xFU)};
+    info.kind = FloatImmediateEncodingKind::MODIFIED;
+    info.data.modified.immediate = static_cast<uint8_t>(modifiedImmediate);
+  } else {
+    info.kind = FloatImmediateEncodingKind::GPR;
+    info.data.generalPurposeRegister.effectiveImmediate = effectiveImmediate;
+  }
+  return info;
+}
+
 Assembler::AArch64_Assembler(AArch64_Backend &backend, MemWriter &binary, ModuleInfo &moduleInfo) VB_NOEXCEPT : backend_(backend),
                                                                                                                 binary_(binary),
                                                                                                                 moduleInfo_(moduleInfo),
@@ -426,78 +578,42 @@ void Assembler::emitActionArg(AbstrInstr const actionArg, VariableStorage const 
   instruction();
 }
 
-bool Assembler::FMOVimm(bool const is64, REG const reg, uint64_t const rawFloatImm) const {
-  assert((reg == REG::NONE || !RegUtil::isGPR(reg)) && "Only FPR registers allowed");
+void Assembler::MOVFloatImm(bool const is64, REG const reg, uint64_t const rawFloatImm) const {
+  assert(!RegUtil::isGPR(reg) && "Only FPR registers allowed");
   assert((is64 || rawFloatImm <= UINT32_MAX) && "Imm too large");
+  FloatImmediateInfo const info{analyzeFloatImmediate(rawFloatImm, is64)};
 
-  if (rawFloatImm == 0U) {
-    if (reg != REG::NONE) {
-      INSTR(is64 ? FMOV_dD_xN : FMOV_sD_wN).setD(reg).setN(REG::ZR)();
-    }
-    return true;
+  if (info.kind == FloatImmediateEncodingKind::MODIFIED) {
+    INSTR(is64 ? FMOV_dD_imm8mod_t : FMOV_sD_imm8mod_t).setD(reg).setRawFMOVImm8(static_cast<uint32_t>(info.data.modified.immediate))();
+  } else if (info.kind == FloatImmediateEncodingKind::ZERO) {
+    INSTR(is64 ? FMOV_dD_xN : FMOV_sD_wN).setD(reg).setN(REG::ZR)();
   } else {
-    uint64_t const N{is64 ? 64_U64 : 32_U64};
-    uint64_t const E{is64 ? 11_U64 : 8_U64};
-    uint64_t const F{(N - E) - 1_U64}; // From bits(N) VFPExpandImm(bits(8) imm8)
-    uint64_t const rawExponent{(rawFloatImm >> F) & ((1_U64 << E) - 1U)};
-    uint64_t const rawMantissa{rawFloatImm & ((1_U64 << F) - 1U)};
-    uint64_t const rawEncodedExponent{rawExponent >> 2U};
-    bool const exponentCanBeEncoded{(rawEncodedExponent == (1_U64 << (E - 3U))) ||
-                                    (rawEncodedExponent == ((1_U64 << (E - 3U)) - 1U))}; // Check whether the most significant bit
-                                                                                         // of the exponent is NOT the next (E - 3)
-                                                                                         // bits and those (E - 3) bits are uniform
-    if (!exponentCanBeEncoded) {
-      return false;
-    }
-    bool const mantissaCanBeEncoded{rawMantissa == ((rawMantissa >> (F - 4U)) << (F - 4U))}; // Check whether only the most significant
-                                                                                             // 4 bits of the mantissa are non-zero
-    if (!mantissaCanBeEncoded) {
-      return false;
-    }
-
-    uint64_t rawEncoding{0U};
-    rawEncoding |= ((rawFloatImm >> (F + E)) & 0b1U) << 7U; // Sign
-    rawEncoding |= ((rawFloatImm >> F) & 0b111U) << 4U;     // Exponent
-    rawEncoding |= (rawFloatImm >> (F - 4U)) & 0xFU;        // Mantissa
-
-    if (reg != REG::NONE) {
-      INSTR(is64 ? FMOV_dD_imm8mod_t : FMOV_sD_imm8mod_t).setD(reg).setRawFMOVImm8(static_cast<uint32_t>(rawEncoding))();
-    }
-
-    return true;
+    assert(info.kind == FloatImmediateEncodingKind::GPR && "Invalid floating-point immediate encoding kind");
+    TempRegManager tempRegManager{backend_};
+    REG const intermediateReg{tempRegManager.getTempGPR()};
+    MOVimm(is64, intermediateReg, info.data.generalPurposeRegister.effectiveImmediate);
+    INSTR(is64 ? FMOV_dD_xN : FMOV_sD_wN).setD(reg).setN(intermediateReg)();
+    tempRegManager.recoverTempGPRs();
   }
 }
 
 void Assembler::MOVimm(bool const is64, REG const reg, uint64_t const imm) const {
   assert(RegUtil::isGPR(reg) && "Only GPR registers allowed");
 
-  uint8_t numZeroHalfwords{0U};
-  uint8_t numFFFFHalfwords{0U};
-  uint8_t const numHalfWordsInReg{is64 ? static_cast<uint8_t>(4U) : static_cast<uint8_t>(2U)};
-  for (uint8_t i{0U}; i < numHalfWordsInReg; i++) {
-    uint64_t const halfword{(imm >> (static_cast<uint64_t>(i) * 16U)) & static_cast<uint64_t>(UINT16_MAX)};
-    if (halfword == 0x0000U) {
-      numZeroHalfwords++;
-    } else if (halfword == 0xFFFFU) {
-      numFFFFHalfwords++;
-    } else {
-      static_cast<void>(0);
-    }
+  IntegerImmediateInfo const info{analyzeIntegerImmediate(imm, is64)};
+
+  if (info.kind == IntegerImmediateEncodingKind::LOGICAL) {
+    return INSTR(is64 ? MOV_xD_imm13bitmask_t : MOV_wD_imm12bitmask_t)
+        .setD(reg)
+        .setRawImmBitmask(static_cast<uint32_t>(info.data.logical.encoding))();
   }
 
-  if ((numZeroHalfwords < (numHalfWordsInReg - 1U)) && (numFFFFHalfwords < (numHalfWordsInReg - 1U))) { // Try bitmask encoding
-    uint64_t encoding;
-    if (processLogicalImmediate(imm, is64,
-                                encoding)) { // Bitmask encoding is possible
-      return INSTR(is64 ? MOV_xD_imm13bitmask_t : MOV_wD_imm12bitmask_t).setD(reg).setRawImmBitmask(static_cast<uint32_t>(encoding))();
-    }
-  }
-
+  bool const useMovz{info.kind == IntegerImmediateEncodingKind::MOVZ};
   bool firstHalfwordIsSet{false};
-  for (uint32_t i{0U}; i < numHalfWordsInReg; i++) {
-    uint64_t const halfWordRaw{imm >> (static_cast<uint64_t>(i) * 16ULL)};
+  for (uint32_t i{0U}; i < info.data.moveWide.numHalfWordsInReg; i++) {
+    uint64_t const halfWordRaw{info.data.moveWide.effectiveImmediate >> (static_cast<uint64_t>(i) * 16ULL)};
     SafeUInt<16> const halfword{SafeUInt<16>::max() & static_cast<uint32_t>(halfWordRaw)};
-    if (numZeroHalfwords >= numFFFFHalfwords) { // Use movz
+    if (useMovz) {
       if (halfword.value() != 0x0000U) {
         if (!firstHalfwordIsSet) {
           INSTR(is64 ? MOVZ_xD_imm16ols_t : MOVZ_wD_imm16ols_t).setD(reg).setImm16Ols(halfword, i * 16_U32)();
@@ -505,14 +621,14 @@ void Assembler::MOVimm(bool const is64, REG const reg, uint64_t const imm) const
         } else {
           INSTR(is64 ? MOVK_xD_imm16ols_t : MOVK_wD_imm16ols_t).setD(reg).setImm16Ols(halfword, i * 16_U32)();
         }
-      } else if (numZeroHalfwords == numHalfWordsInReg) {
+      } else if (info.data.moveWide.effectiveImmediate == 0U) {
         assert(i == 0 && "Error");
         INSTR(is64 ? MOVZ_xD_imm16ols_t : MOVZ_wD_imm16ols_t).setD(reg).setImm16Ols(halfword, i * 16_U32)();
         break;
       } else {
         static_cast<void>(0);
       }
-    } else { // Use movn
+    } else {
       SafeUInt<16U> const notHalfWord{SafeUInt<16U>::max() & ~halfword.value()};
 
       if (halfword.value() != 0xFFFFU) {
@@ -522,7 +638,7 @@ void Assembler::MOVimm(bool const is64, REG const reg, uint64_t const imm) const
         } else {
           INSTR(is64 ? MOVK_xD_imm16ols_t : MOVK_wD_imm16ols_t).setD(reg).setImm16Ols(halfword, i * 16_U32)();
         }
-      } else if (numFFFFHalfwords == numHalfWordsInReg) {
+      } else if (info.data.moveWide.effectiveImmediate == (is64 ? UINT64_MAX : static_cast<uint64_t>(UINT32_MAX))) {
         assert(i == 0 && "Error");
         INSTR(is64 ? MOVN_xD_imm16ols_t : MOVN_wD_imm16ols_t).setD(reg).setImm16Ols(notHalfWord, i * 16_U32)();
         break;

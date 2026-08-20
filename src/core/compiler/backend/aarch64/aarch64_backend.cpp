@@ -782,16 +782,7 @@ void Backend::emitMoveFloatImpl(VariableStorage const &dstStorage, VariableStora
     if (srcStorage.type == StorageType::CONSTANT) { // CONSTANT -> REGISTER
       uint64_t const rawConstValue{is64 ? bit_cast<uint64_t>(srcStorage.location.constUnion.f64)
                                         : bit_cast<uint32_t>(srcStorage.location.constUnion.f32)};
-      // Try mov as immediate
-      bool const immMovSuccess{as_.FMOVimm(is64, dstReg, rawConstValue)};
-      if (!immMovSuccess) {
-        REG intermReg{(rawConstValue == 0U) ? REG::ZR : REG::NONE};
-        if (intermReg == REG::NONE) {
-          intermReg = tempRegManager.getTempGPR();
-          as_.MOVimm(is64, intermReg, rawConstValue);
-        }
-        as_.INSTR(is64 ? FMOV_dD_xN : FMOV_sD_wN).setD(dstReg).setN(intermReg)();
-      }
+      as_.MOVFloatImm(is64, dstReg, rawConstValue);
     } else if (srcStorage.type == StorageType::REGISTER) { // REGISTER -> REGISTER
       REG const srcReg{srcStorage.location.reg};
       as_.INSTR(is64 ? FMOV_dD_dN : FMOV_sD_sN).setD(dstReg).setN(srcReg)();

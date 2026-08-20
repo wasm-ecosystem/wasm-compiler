@@ -203,7 +203,7 @@ void Backend::tryPushStacktraceEntry(uint32_t const fncIndex, uint32_t const sto
 
   // Don't write if it's an unknown index. In that case it will be patched later anyway
   if (fncIndex != UnknownIndex) {
-    as_.MOVimm(scratchReg2, fncIndex);
+    as_.MOVimm32(scratchReg2, fncIndex);
   }
 
   // Store both to stack, STD stores even register on the lower address (will store scratchReg and scratchReg2, using
@@ -234,7 +234,7 @@ void Backend::tryPatchFncIndexOfLastStacktraceEntry(uint32_t const fncIndex, REG
   as_.emitLoadDerefOff16sx(addrScrReg, WasmABI::REGS::linMem, SafeInt<16U>::fromConst<-BD::FromEnd::lastFrameRefPtr>());
 
   // Store function index to last entry
-  as_.MOVimm(scratchReg, fncIndex);
+  as_.MOVimm32(scratchReg, fncIndex);
   as_.storeWordDerefARegDisp16sxDReg(scratchReg, addrScrReg, SafeInt<16U>::fromConst<4>());
 }
 
@@ -312,7 +312,7 @@ void Backend::emitStackTraceCollector(uint32_t const stacktraceRecordCount) cons
       .setOff16sx(SafeInt<16U>::fromUnsafe(-BD::FromEnd::getStacktraceArrayBase(stacktraceRecordCount)))();
 
   // Load number of stacktrace entries
-  as_.MOVimm(StackTrace::counterReg, stacktraceRecordCount);
+  as_.MOVimm32(StackTrace::counterReg, stacktraceRecordCount);
   uint32_t const loopStartOffset{output_.size()};
   // Load function index to scratch reg and store in buffer
   as_.loadWordDRegDerefARegDisp16sx(StackTrace::scratchReg, StackTrace::frameRefReg, SafeInt<16U>::fromConst<4>());
@@ -688,7 +688,7 @@ void Backend::emitRawFunctionCall(uint32_t const fncIndex) {
       if (Instruction::fitsAbsDisp24sx2(rawAddr)) {
         as_.INSTR(CALLA_absdisp24sx2).setAbsDisp24sx2(rawAddr)();
       } else {
-        as_.MOVimm(WasmABI::REGS::addrScrReg[0], rawAddr);
+        as_.MOVimm32(WasmABI::REGS::addrScrReg[0], rawAddr);
         as_.INSTR(CALLI_Aa).setAa(WasmABI::REGS::addrScrReg[0])();
       }
     } else {
@@ -1499,7 +1499,7 @@ void Backend::emitIndirectWasmTargetAddress(uint32_t const sigIndex) {
   if (tableIndexInRangeCheck.inRange()) {
     as_.cTRAP(TrapCode::INDIRECTCALL_OUTOFBOUNDS, JumpCondition::u32GeConst4zx(WasmABI::REGS::indirectCallReg, tableIndexInRangeCheck.safeInt()));
   } else {
-    as_.MOVimm(callScrRegs[0], moduleInfo_.tableInitialSize);
+    as_.MOVimm32(callScrRegs[0], moduleInfo_.tableInitialSize);
     as_.cTRAP(TrapCode::INDIRECTCALL_OUTOFBOUNDS, JumpCondition::u32GeReg(WasmABI::REGS::indirectCallReg, callScrRegs[0]));
   }
 
@@ -1521,7 +1521,7 @@ void Backend::emitIndirectWasmTargetAddress(uint32_t const sigIndex) {
   if (indexInRangeCheck.inRange()) {
     as_.cTRAP(TrapCode::INDIRECTCALL_WRONGSIG, JumpCondition::i32NeConst4sx(callScrRegs[0], indexInRangeCheck.safeInt()));
   } else {
-    as_.MOVimm(callScrRegs[1], sigIndex);
+    as_.MOVimm32(callScrRegs[1], sigIndex);
     as_.cTRAP(TrapCode::INDIRECTCALL_WRONGSIG, JumpCondition::i32NeReg(callScrRegs[0], callScrRegs[1]));
   }
 
@@ -1714,11 +1714,11 @@ void Backend::execBuiltinFncCall(BuiltinFunction const builtinFunction) {
       if (tableIndexInRangeCheck.inRange()) {
         inRange = as_.INSTR(JLTU_Da_const4zx_disp15sx2).setDa(fncIdxReg).setConst4zx(tableIndexInRangeCheck.safeInt()).prepJmp();
       } else {
-        as_.MOVimm(genScratchReg, moduleInfo_.tableInitialSize);
+        as_.MOVimm32(genScratchReg, moduleInfo_.tableInitialSize);
         inRange = as_.INSTR(JLTU_Da_Db_disp15sx2).setDa(fncIdxReg).setDb(genScratchReg).prepJmp();
       }
 
-      as_.MOVimm(importScratchReg, 0U);
+      as_.MOVimm32(importScratchReg, 0U);
       RelPatchObj const toEnd{as_.INSTR(J_disp24sx2).prepJmp()};
       inRange.linkToHere();
 
@@ -2061,11 +2061,11 @@ void Backend::executeTableBranch(uint32_t const numBranchTargets, FunctionRef<St
   if (branchTargetsInRangeCheck.inRange()) {
     inRange = as_.INSTR(JLTU_Da_const4zx_disp15sx2).setDa(indexReg).setConst4zx(branchTargetsInRangeCheck.safeInt()).prepJmp();
   } else {
-    as_.MOVimm(scratchRegElem.reg, branchTargetsMax);
+    as_.MOVimm32(scratchRegElem.reg, branchTargetsMax);
     inRange = as_.INSTR(JLTU_Da_Db_disp15sx2).setDa(indexReg).setDb(scratchRegElem.reg).prepJmp();
   }
 
-  as_.MOVimm(indexReg, numBranchTargets);
+  as_.MOVimm32(indexReg, numBranchTargets);
   inRange.linkToHere();
 
   RelPatchObj const toTableStart{as_.loadPCRelAddr(WasmABI::REGS::addrScrReg[0], WasmABI::REGS::addrScrReg[1])};
@@ -2117,7 +2117,7 @@ void Backend::copyValueOfElemToAddrReg(REG const addrReg, StackElement const &el
 
   switch (addrStorage.type) {
   case StorageType::CONSTANT: {
-    as_.MOVimm(addrReg, elem.data.constUnion.u32);
+    as_.MOVimm32(addrReg, elem.data.constUnion.u32);
     break;
   }
   case StorageType::REGISTER: {
@@ -2164,7 +2164,7 @@ void Backend::emitExtensionRequestFunction() {
       as_.INSTR(MOVD_Da_Ab).setDa(NABI::paramRegs[0]).setAb(WasmABI::REGS::memLdStReg)();
       as_.INSTR(MOV_Da_const4sx).setDa(RegUtil::getOtherExtReg(NABI::paramRegs[0])).setConst4sx(SafeInt<4U>::fromConst<0>())(); // paramRegs[1]
 
-      as_.MOVimm(NABI::paramRegs[2], basedataLength);
+      as_.MOVimm32(NABI::paramRegs[2], basedataLength);
 
       as_.INSTR(MOVAA_Aa_Ab).setAa(NABI::addrParamRegs[0]).setAb(WasmABI::REGS::linMem)();
     }
@@ -2935,13 +2935,13 @@ void Backend::executeMemGrow() {
 
   //
   uint32_t const maxMemorySize{moduleInfo_.memoryHasSizeLimit ? moduleInfo_.memoryMaximumSize : (1_U32 << 16_U32)};
-  as_.MOVimm(intermRegElem.reg, maxMemorySize);
+  as_.MOVimm32(intermRegElem.reg, maxMemorySize);
 
   RelPatchObj const noError{as_.INSTR(JGEU_Da_Db_disp15sx2).setDa(intermRegElem.reg).setDb(gpOutputRegElem.reg).prepJmp()};
   //
 
   error.linkToHere();
-  as_.MOVimm(gpOutputRegElem.reg, 0xFF'FF'FF'FFU);
+  as_.MOVimm32(gpOutputRegElem.reg, 0xFF'FF'FF'FFU);
   RelPatchObj const toEnd{as_.INSTR(J_disp24sx2).prepJmp()};
 
   noError.linkToHere();
@@ -2974,12 +2974,14 @@ void Backend::emitMoveImpl(VariableStorage const &dstStorage, VariableStorage co
   if (dstStorage.type == StorageType::REGISTER) { // X -> REGISTER
     REG const dstReg{dstStorage.location.reg};
     if (srcStorage.type == StorageType::CONSTANT) { // CONSTANT -> REGISTER
+      uint64_t const constant{is64
+                                  ? ((machineType == MachineType::F64) ? srcStorage.location.constUnion.rawF64() : srcStorage.location.constUnion.u64)
+                                  : ((machineType == MachineType::F32) ? static_cast<uint64_t>(srcStorage.location.constUnion.rawF32())
+                                                                       : static_cast<uint64_t>(srcStorage.location.constUnion.u32))};
       if (is64) {
-        uint64_t const constant{(machineType == MachineType::F64) ? srcStorage.location.constUnion.rawF64() : srcStorage.location.constUnion.u64};
         as_.MOVimm64(dstReg, constant);
       } else {
-        uint32_t const constant{(machineType == MachineType::F32) ? srcStorage.location.constUnion.rawF32() : srcStorage.location.constUnion.u32};
-        as_.MOVimm(dstReg, constant);
+        as_.MOVimm32(dstReg, static_cast<uint32_t>(constant));
       }
     } else if (srcStorage.type == StorageType::REGISTER) { // REGISTER -> REGISTER
       REG const srcReg{srcStorage.location.reg};
@@ -3011,13 +3013,13 @@ void Backend::emitMoveImpl(VariableStorage const &dstStorage, VariableStorage co
       if (is64) {
         RegDisp<10U> const dstRegDisp{getMemRegDisp<10U>(dstStorage, WasmABI::REGS::addrScrReg[2])};
         uint64_t const constant{(machineType == MachineType::F64) ? srcStorage.location.constUnion.rawF64() : srcStorage.location.constUnion.u64};
-        as_.MOVimm(WasmABI::REGS::addrScrReg[0], static_cast<uint32_t>(constant));
-        as_.MOVimm(WasmABI::REGS::addrScrReg[1], static_cast<uint32_t>(constant >> 32U));
+        as_.MOVimm32(WasmABI::REGS::addrScrReg[0], static_cast<uint32_t>(constant));
+        as_.MOVimm32(WasmABI::REGS::addrScrReg[1], static_cast<uint32_t>(constant >> 32U));
         as_.INSTR(STDA_deref_Ab_off10sx_Pa).setAb(dstRegDisp.reg).setOff10sx(dstRegDisp.disp).setPa(WasmABI::REGS::addrScrReg[0])();
       } else {
         RegDisp<16U> const dstRegDisp{getMemRegDisp<16U>(dstStorage, WasmABI::REGS::addrScrReg[2])};
         uint32_t const constant{(machineType == MachineType::F32) ? srcStorage.location.constUnion.rawF32() : srcStorage.location.constUnion.u32};
-        as_.MOVimm(WasmABI::REGS::addrScrReg[0], static_cast<uint32_t>(constant));
+        as_.MOVimm32(WasmABI::REGS::addrScrReg[0], static_cast<uint32_t>(constant));
         as_.emitStoreDerefOff16sx(dstRegDisp.reg, WasmABI::REGS::addrScrReg[0], dstRegDisp.disp);
       }
     } else if (srcStorage.type == StorageType::REGISTER) { // REGISTER -> MEMORY
@@ -3604,7 +3606,7 @@ StackElement Backend::emitDeferredAction(OPCode const opcode, StackElement *cons
         RegAllocTracker regAllocTracker{};
         regAllocTracker.writeProtRegs = mask(prep.arg0.reg, false) | mask(prep.arg1.reg, false);
         REG const tempReg{common_.reqScratchRegProt(MachineType::I32, targetHint, regAllocTracker, false).reg};
-        as_.MOVimm(tempReg, 0x80'00'00'00U);
+        as_.MOVimm32(tempReg, 0x80'00'00'00U);
         RelPatchObj const dividendNotHighBit{as_.INSTR(JNE_Da_Db_disp15sx2).setDa(prep.arg0.reg).setDb(tempReg).prepJmp()};
 
         RelPatchObj const divisorNotNegOne{
@@ -3613,7 +3615,7 @@ StackElement Backend::emitDeferredAction(OPCode const opcode, StackElement *cons
         if (opcode == OPCode::I32_DIV_S) {
           as_.TRAP(TrapCode::DIV_OVERFLOW);
         } else {
-          as_.MOVimm(targetReg, (opcode == OPCode::I32_REM_U) ? 0x80'00'00'00U : 0U);
+          as_.MOVimm32(targetReg, (opcode == OPCode::I32_REM_U) ? 0x80'00'00'00U : 0U);
         }
 
         RelPatchObj const end{as_.INSTR(J_disp24sx2).prepJmp()};
@@ -3851,7 +3853,7 @@ StackElement Backend::emitDeferredAction(OPCode const opcode, StackElement *cons
         // Dividend not 0x8000'0000'0000'0000
         RelPatchObj const lowDividendNotZero{
             as_.INSTR(JNE_Da_const4sx_disp15sx2).setDa(prep.arg0.reg).setConst4sx(SafeInt<4U>::fromConst<0>()).prepJmp()};
-        as_.MOVimm(tempReg, 0x80'00'00'00U);
+        as_.MOVimm32(tempReg, 0x80'00'00'00U);
         RelPatchObj const highDividendNotHighBit{as_.INSTR(JNE_Da_Db_disp15sx2).setDa(prep.arg0.secReg).setDb(tempReg).prepJmp()};
         //
 
@@ -3865,8 +3867,8 @@ StackElement Backend::emitDeferredAction(OPCode const opcode, StackElement *cons
         if (opcode == OPCode::I64_DIV_S) {
           as_.TRAP(TrapCode::DIV_OVERFLOW);
         } else {
-          as_.MOVimm(prep.dest.reg, 0U);
-          as_.MOVimm(prep.dest.secReg, (opcode == OPCode::I64_REM_U) ? 0x80'00'00'00U : 0U);
+          as_.MOVimm32(prep.dest.reg, 0U);
+          as_.MOVimm32(prep.dest.secReg, (opcode == OPCode::I64_REM_U) ? 0x80'00'00'00U : 0U);
         }
 
         RelPatchObj const end{as_.INSTR(J_disp24sx2).prepJmp()};
@@ -4021,7 +4023,7 @@ StackElement Backend::emitDeferredAction(OPCode const opcode, StackElement *cons
 
       // At least one is NaN, return NAN canonical
 
-      as_.MOVimm(prep.dest.reg, 0x7FC00000U);
+      as_.MOVimm32(prep.dest.reg, 0x7FC00000U);
 
       branchObj.linkToHere();
 
@@ -4178,7 +4180,7 @@ StackElement Backend::emitDeferredAction(OPCode const opcode, StackElement *cons
         RegAllocTracker regAllocTracker{};
         regAllocTracker.writeProtRegs = mask(prep.arg0.reg, false);
         REG const helperReg{common_.reqScratchRegProt(MachineType::F32, targetHint, regAllocTracker, false).reg};
-        as_.MOVimm(helperReg, rawUpperLimits[static_cast<uint32_t>(opcode) - static_cast<uint32_t>(OPCode::I32_TRUNC_F32_S)]);
+        as_.MOVimm32(helperReg, rawUpperLimits[static_cast<uint32_t>(opcode) - static_cast<uint32_t>(OPCode::I32_TRUNC_F32_S)]);
 
         emitCMPF32(helperReg, prep.arg0.reg, helperReg);
         constexpr uint32_t immCond{static_cast<uint32_t>(CMPFFLAGS::GT) | static_cast<uint32_t>(CMPFFLAGS::EQ) |
@@ -4186,7 +4188,7 @@ StackElement Backend::emitDeferredAction(OPCode const opcode, StackElement *cons
         as_.andWordDcDaConst9zx(helperReg, helperReg, SafeUInt<9U>::fromConst<immCond>());
         as_.cTRAP(TrapCode::TRUNC_OVERFLOW, JumpCondition::i32NeConst4sx(helperReg, SafeInt<4U>::fromConst<0>()));
 
-        as_.MOVimm(helperReg, rawLowerLimits[static_cast<uint32_t>(opcode) - static_cast<uint32_t>(OPCode::I32_TRUNC_F32_S)]);
+        as_.MOVimm32(helperReg, rawLowerLimits[static_cast<uint32_t>(opcode) - static_cast<uint32_t>(OPCode::I32_TRUNC_F32_S)]);
 
         emitCMPF32(helperReg, prep.arg0.reg, helperReg);
 
@@ -4300,7 +4302,7 @@ StackElement Backend::emitDeferredAction(OPCode const opcode, StackElement *cons
         RegAllocTracker regAllocTracker{};
         regAllocTracker.writeProtRegs = mask(prep.arg0.reg, false);
         REG const helperReg{common_.reqScratchRegProt(MachineType::F32, targetHint, regAllocTracker, false).reg};
-        as_.MOVimm(helperReg, rawUpperLimits[static_cast<uint32_t>(opcode) - static_cast<uint32_t>(OPCode::I64_TRUNC_F32_S)]);
+        as_.MOVimm32(helperReg, rawUpperLimits[static_cast<uint32_t>(opcode) - static_cast<uint32_t>(OPCode::I64_TRUNC_F32_S)]);
 
         emitCMPF32(helperReg, prep.arg0.reg, helperReg);
         constexpr uint32_t immCond{static_cast<uint32_t>(CMPFFLAGS::GT) | static_cast<uint32_t>(CMPFFLAGS::EQ) |
@@ -4309,7 +4311,7 @@ StackElement Backend::emitDeferredAction(OPCode const opcode, StackElement *cons
         as_.cTRAP(TrapCode::TRUNC_OVERFLOW, JumpCondition::i32NeConst4sx(helperReg, SafeInt<4U>::fromConst<0>()));
 
         // Second Comparison
-        as_.MOVimm(helperReg, rawLowerLimits[static_cast<uint32_t>(opcode) - static_cast<uint32_t>(OPCode::I64_TRUNC_F32_S)]);
+        as_.MOVimm32(helperReg, rawLowerLimits[static_cast<uint32_t>(opcode) - static_cast<uint32_t>(OPCode::I64_TRUNC_F32_S)]);
 
         emitCMPF32(helperReg, prep.arg0.reg, helperReg);
 
@@ -4863,7 +4865,7 @@ void Backend::simpleNativeFncCall(REG const destReg, bool const destIs64, REG co
   if (Instruction::fitsAbsDisp24sx2(rawAddr)) {
     as_.INSTR(CALLA_absdisp24sx2).setAbsDisp24sx2(rawAddr)();
   } else {
-    as_.MOVimm(WasmABI::REGS::addrScrReg[0], rawAddr);
+    as_.MOVimm32(WasmABI::REGS::addrScrReg[0], rawAddr);
     as_.INSTR(CALLI_Aa).setAa(WasmABI::REGS::addrScrReg[0])();
   }
 #endif

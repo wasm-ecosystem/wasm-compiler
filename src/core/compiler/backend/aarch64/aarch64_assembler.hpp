@@ -204,19 +204,16 @@ public:
   }
 
   ///
-  /// @brief Moves an immediate float value (bit_cast to uint64_t) to a floating point register
+  /// @brief Moves an immediate floating-point value to a floating-point register
   ///
-  /// Moves irrespective of what this register is currently containing, will not spill another register.
-  /// Not all immediate values can be directly moved into floating point registers on this architecture. Will not
-  /// produce any machine code, but still confirm whether the move would've been successful in case reg == REG::NONE
+  /// Values with an FMOV modified-immediate encoding are moved directly. Other values are materialized in a temporary
+  /// general-purpose register before being moved to the floating-point register.
   ///
   /// @param is64 Target register size
-  /// @param reg Register to move the immediate to; pass REG::NONE if it should only be confirmed whether it can be
-  /// directly moved, but not emit any machine code
+  /// @param reg Register to move the immediate to
   /// @param rawFloatImm Immediate floating point value to be moved (bit_cast to uint32_t or uint64_t, respectively and
   /// static_cast to uint64_t)
-  /// @return bool Whether the move was successful and machine code has been emitted (if reg != REG::NONE)
-  bool FMOVimm(bool const is64, REG const reg, uint64_t const rawFloatImm) const;
+  void MOVFloatImm(bool const is64, REG const reg, uint64_t const rawFloatImm) const;
 
   ///
   /// @brief Adds a constant value to a general purpose register

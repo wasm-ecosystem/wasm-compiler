@@ -57,6 +57,129 @@ using Assembler = Tricore_Assembler; ///< Shortcut for Tricore_Assembler
 
 namespace BD = Basedata;
 
+///
+/// @brief Identifies the TriCore encoding selected for a 32-bit immediate.
+///
+enum class Immediate32EncodingKind : uint8_t {
+  SIGNED4,     ///< Signed 4-bit MOV immediate encoding.
+  UNSIGNED16,  ///< Unsigned 16-bit MOV immediate encoding.
+  HIGH16,      ///< High 16-bit MOV immediate encoding for a value whose lower halfword is zero.
+  SIGNED16,    ///< Signed 16-bit MOV immediate encoding.
+  MOV16_ADDIH, ///< MOV with signed 16-bit immediate followed by ADDIH materialization.
+};
+
+///
+/// @brief Describes the selected TriCore 32-bit-immediate encoding.
+///
+class Immediate32EncodingInfo final {
+public:
+  Immediate32EncodingKind kind{Immediate32EncodingKind::MOV16_ADDIH}; ///< Selected 32-bit-immediate encoding.
+};
+
+///
+/// @brief Identifies the TriCore encoding selected for a 64-bit immediate.
+///
+enum class Immediate64EncodingKind : uint8_t {
+  SIGNED4,  ///< Signed 4-bit extended-register MOV immediate encoding.
+  SIGNED16, ///< Signed 16-bit extended-register MOV immediate encoding.
+  IMASK,    ///< IMASK encoding.
+  SPLIT32,  ///< Materialize the low and high 32-bit halves separately.
+};
+
+///
+/// @brief Describes the selected TriCore 64-bit-immediate encoding.
+///
+class Immediate64EncodingInfo final {
+public:
+  Immediate64EncodingKind kind{Immediate64EncodingKind::SPLIT32}; ///< Selected 64-bit-immediate encoding.
+
+  /// @brief IMASK instruction operands when kind is IMASK.
+  class Imask final {
+  public:
+    uint32_t value{0U};    ///< Four-bit IMASK value field.
+    uint32_t position{0U}; ///< IMASK bit position field.
+    uint32_t width{0U};    ///< IMASK width field; zero denotes the low-mask form.
+  };
+  Imask imask{}; ///< IMASK instruction operands when kind is IMASK.
+};
+
+///
+/// @brief Analyzes the data-register MOV encoding for a 32-bit immediate.
+///
+/// @details The result considers the signed 4-bit, unsigned 16-bit, high 16-bit, and signed 16-bit MOV forms. The
+/// D15-specific unsigned 8-bit form is selected by the emitter as a shorter representation of UNSIGNED16. Other
+/// values use the MOV16_ADDIH materialization sequence.
+///
+/// @param rawImmediate Raw bit representation of the immediate value.
+/// @return Encoding information used by 32-bit MOV emission.
+///
+static Immediate32EncodingInfo analyzeImmediate32(uint32_t const rawImmediate) VB_NOEXCEPT {
+  Immediate32EncodingInfo info{};
+  int32_t const signedImmediate{bit_cast<int32_t>(rawImmediate)};
+  if (SignedInRangeCheck<4U>::check(signedImmediate).inRange()) {
+    info.kind = Immediate32EncodingKind::SIGNED4;
+  } else if (UnsignedInRangeCheck<16U>::check(rawImmediate).inRange()) {
+    info.kind = Immediate32EncodingKind::UNSIGNED16;
+  } else if ((rawImmediate & 0xFFFFU) == 0U) {
+    info.kind = Immediate32EncodingKind::HIGH16;
+  } else if (SignedInRangeCheck<16U>::check(signedImmediate).inRange()) {
+    info.kind = Immediate32EncodingKind::SIGNED16;
+  } else {
+    info.kind = Immediate32EncodingKind::MOV16_ADDIH;
+  }
+  return info;
+}
+
+///
+/// @brief Analyzes the extended-register MOV encoding for a 64-bit immediate.
+///
+/// @details The result considers signed MOV forms and IMASK. Values without one of these encodings use the SPLIT32
+/// materialization sequence.
+///
+/// @param rawImmediate Raw bit representation of the immediate value.
+/// @return Encoding information used by 64-bit MOV emission.
+///
+static Immediate64EncodingInfo analyzeImmediate64(uint64_t const rawImmediate) VB_NOEXCEPT {
+  Immediate64EncodingInfo info{};
+  int64_t const signedImmediate{bit_cast<int64_t>(rawImmediate)};
+  if (SignedInRangeCheck<4U>::check(signedImmediate).inRange()) {
+    info.kind = Immediate64EncodingKind::SIGNED4;
+  } else if (SignedInRangeCheck<16U>::check(signedImmediate).inRange()) {
+    info.kind = Immediate64EncodingKind::SIGNED16;
+  } else {
+    uint32_t const lower32{static_cast<uint32_t>(rawImmediate)};
+    uint32_t const higher32{static_cast<uint32_t>(rawImmediate >> 32U)};
+    ContinuousBitSequence const higherContinuousOne{ContinuousBitSequence::count(higher32)};
+    uint32_t const posHigh{higherContinuousOne.getPos()};
+    uint32_t const widthHigh{higherContinuousOne.getWidth()};
+    bool const highMaskPositionAndWidthValid{(posHigh != ContinuousBitSequence::invalidPos) && (widthHigh < 32U)};
+    uint32_t const highMaskValue{highMaskPositionAndWidthValid ? ((lower32 >> posHigh) & 0xFU) : 0U};
+    bool const highMaskValueValid{highMaskPositionAndWidthValid && ((highMaskValue << posHigh) == lower32)};
+    if (highMaskPositionAndWidthValid && highMaskValueValid) {
+      info.kind = Immediate64EncodingKind::IMASK;
+      info.imask.value = highMaskValue;
+      info.imask.position = posHigh;
+      info.imask.width = widthHigh;
+    } else if (higher32 == 0U) {
+      ContinuousBitSequence const lowerContinuousOne{ContinuousBitSequence::count(lower32)};
+      uint32_t const posLow{lowerContinuousOne.getPos()};
+      uint32_t const widthLow{lowerContinuousOne.getWidth()};
+      if ((posLow != ContinuousBitSequence::invalidPos) && (widthLow <= 4U)) {
+        info.kind = Immediate64EncodingKind::IMASK;
+        info.imask.value = lower32 >> posLow;
+        info.imask.position = posLow;
+        info.imask.width = 0U;
+      } else {
+        info.kind = Immediate64EncodingKind::SPLIT32;
+      }
+    } else {
+      info.kind = Immediate64EncodingKind::SPLIT32;
+    }
+  }
+
+  return info;
+}
+
 Tricore_Assembler::Tricore_Assembler(Tricore_Backend &backend, MemWriter &binary, ModuleInfo &moduleInfo) VB_NOEXCEPT : backend_(backend),
                                                                                                                         binary_(binary),
                                                                                                                         moduleInfo_(moduleInfo),
@@ -520,25 +643,37 @@ void Assembler::subSp(uint32_t const imm) const {
   }
 }
 
-void Assembler::MOVimm(REG const reg, uint32_t const imm) const {
+void Assembler::MOVimm32(REG const reg, uint32_t const imm) const {
   if (RegUtil::isDATA(reg)) {
-    SignedInRangeCheck<4U> const const4sxChecker{SignedInRangeCheck<4U>::check(bit_cast<int32_t>(imm))};
-    if (const4sxChecker.inRange()) {
-      INSTR(MOV_Da_const4sx).setDa(reg).setConst4sx(const4sxChecker.safeInt())();
-    } else if ((reg == REG::D15) && UnsignedInRangeCheck<8U>::check(imm).inRange()) {
-      INSTR(MOV_D15_const8zx).setConst8zx(SafeUInt<8U>::fromUnsafe(imm))();
-    } else if (UnsignedInRangeCheck<16U>::check(imm).inRange()) {
-      INSTR(MOVU_Dc_const16zx).setDc(reg).setConst16zx(SafeUInt<16U>::fromUnsafe(imm))();
-    } else if ((imm & 0xFFFFU) == 0U) {
-      INSTR(MOVH_Dc_const16).setDc(reg).setConst16(SafeUInt<32U>::fromAny(imm).rightShift<16U>())();
-    } else {
-      // TODO(Xinquan): can be optimized for lower16sx
-      INSTR(MOV_Dc_const16sx).setDc(reg).setConst16sx(Instruction::lower16sx(imm))();
-
-      SafeUInt<16U> const reducedHighPortionToAdd{SafeUInt<32U>::fromAny(imm + 0x8000U).rightShift<16U>()};
-      if (reducedHighPortionToAdd.value() != 0U) {
-        INSTR(ADDIH_Dc_Da_const16).setDc(reg).setDa(reg).setConst16(reducedHighPortionToAdd)();
+    Immediate32EncodingInfo const info{analyzeImmediate32(imm)};
+    int32_t const signedImmediate{bit_cast<int32_t>(imm)};
+    switch (info.kind) {
+    case Immediate32EncodingKind::SIGNED4:
+      INSTR(MOV_Da_const4sx).setDa(reg).setConst4sx(SafeInt<4U>::fromUnsafe(signedImmediate))();
+      return;
+    case Immediate32EncodingKind::UNSIGNED16:
+      if ((reg == REG::D15) && UnsignedInRangeCheck<8U>::check(imm).inRange()) {
+        INSTR(MOV_D15_const8zx).setConst8zx(SafeUInt<8U>::fromUnsafe(imm))();
+      } else {
+        INSTR(MOVU_Dc_const16zx).setDc(reg).setConst16zx(SafeUInt<16U>::fromUnsafe(imm))();
       }
+      return;
+    case Immediate32EncodingKind::HIGH16:
+      INSTR(MOVH_Dc_const16).setDc(reg).setConst16(SafeUInt<16U>::fromUnsafe(imm >> 16U))();
+      return;
+    case Immediate32EncodingKind::SIGNED16:
+      INSTR(MOV_Dc_const16sx).setDc(reg).setConst16sx(Instruction::lower16sx(imm))();
+      return;
+    case Immediate32EncodingKind::MOV16_ADDIH: {
+      INSTR(MOV_Dc_const16sx).setDc(reg).setConst16sx(Instruction::lower16sx(imm))();
+      uint32_t const adjustedHighValue{(imm + 0x8000U) >> 16U};
+      if (adjustedHighValue != 0U) {
+        INSTR(ADDIH_Dc_Da_const16).setDc(reg).setDa(reg).setConst16(SafeUInt<16U>::fromUnsafe(adjustedHighValue))();
+      }
+      return;
+    }
+    default:
+      UNREACHABLE(return, "Invalid TriCore 32-bit immediate encoding kind");
     }
   } else {
     UnsignedInRangeCheck<4U> const rangeCheck{UnsignedInRangeCheck<4U>::check(imm)};
@@ -560,56 +695,31 @@ void Assembler::MOVimm(REG const reg, uint32_t const imm) const {
 }
 
 void Assembler::MOVimm64(REG const reg, uint64_t const imm) const {
-  SignedInRangeCheck<4U> const const4sxChecker{SignedInRangeCheck<4U>::check(static_cast<int64_t>(imm))};
-  if (const4sxChecker.inRange()) {
-    INSTR(MOV_Ea_const4sx).setEa(reg).setConst4sx(const4sxChecker.safeInt())();
+  assert(RegUtil::canBeExtReg(reg) && "Register not usable as extended register");
+  Immediate64EncodingInfo const info{analyzeImmediate64(imm)};
+  int64_t const signedImmediate{bit_cast<int64_t>(imm)};
+  switch (info.kind) {
+  case Immediate64EncodingKind::SIGNED4:
+    INSTR(MOV_Ea_const4sx).setEa(reg).setConst4sx(SafeInt<4U>::fromUnsafe(static_cast<int32_t>(signedImmediate)))();
     return;
-  }
-  SignedInRangeCheck<16U> const const16sxChecker{SignedInRangeCheck<16U>::check(static_cast<int64_t>(imm))};
-  if (const16sxChecker.inRange()) {
-    INSTR(MOV_Ec_const16sx).setEc(reg).setConst16sx(const16sxChecker.safeInt())();
+  case Immediate64EncodingKind::SIGNED16:
+    INSTR(MOV_Ec_const16sx).setEc(reg).setConst16sx(SafeInt<16U>::fromUnsafe(static_cast<int32_t>(signedImmediate)))();
     return;
+  case Immediate64EncodingKind::IMASK:
+    assert((info.imask.position + info.imask.width) <= 32U);
+    INSTR(IMASK_Pos_Width_const4zx)
+        .setDc(reg)
+        .setConst4zx(SafeUInt<4U>::fromUnsafe(info.imask.value))
+        .setPos(SafeUInt<5U>::fromUnsafe(info.imask.position))
+        .setWidth(SafeUInt<5U>::fromUnsafe(info.imask.width))();
+    return;
+  case Immediate64EncodingKind::SPLIT32:
+    MOVimm32(reg, static_cast<uint32_t>(imm));
+    MOVimm32(RegUtil::getOtherExtReg(reg), static_cast<uint32_t>(imm >> 32U));
+    return;
+  default:
+    UNREACHABLE(return, "Invalid TriCore 64-bit immediate encoding kind");
   }
-  uint32_t const lower32{static_cast<uint32_t>(imm)};
-  uint32_t const higher32{static_cast<uint32_t>(imm >> 32LLU)};
-
-  ContinuousBitSequence const higherContinuousOne{ContinuousBitSequence::count(higher32)};
-  uint32_t const posHigh{higherContinuousOne.getPos()};
-  uint32_t const widthHigh{higherContinuousOne.getWidth()};
-
-  if ((posHigh != vb::ContinuousBitSequence::invalidPos) && (widthHigh < 32U)) {
-    SafeUInt<4U> const val{SafeUInt<4U>::fromConst<0xFU>() & (lower32 >> posHigh)};
-    // GCOVR_EXCL_START
-    assert((posHigh + widthHigh) <= 32U);
-    // GCOVR_EXCL_STOP
-
-    if ((val.value() << posHigh) == lower32) {
-      INSTR(IMASK_Pos_Width_const4zx)
-          .setDc(reg)
-          .setConst4zx(val)
-          .setPos(SafeUInt<5U>::fromUnsafe(posHigh))
-          .setWidth(SafeUInt<5U>::fromUnsafe(widthHigh))();
-      return;
-    }
-  }
-
-  if (higher32 == 0U) {
-    ContinuousBitSequence const lowerContinuousOne{ContinuousBitSequence::count(lower32)};
-    uint32_t const posLow{lowerContinuousOne.getPos()};
-    uint32_t const widthLow{lowerContinuousOne.getWidth()};
-    if ((posLow != vb::ContinuousBitSequence::invalidPos) && (widthLow <= 4U)) {
-      // In this case, there is only 4bits 1 in the imm, and the 4bits are all in lower part
-      INSTR(IMASK_Pos_Width_const4zx)
-          .setDc(reg)
-          .setConst4zx(SafeUInt<4U>::fromUnsafe(lower32 >> posLow))
-          .setPos(SafeUInt<5U>::fromUnsafe(posLow))
-          .setWidth(SafeUInt<5U>::fromConst<0U>())();
-      return;
-    }
-  }
-
-  MOVimm(reg, lower32);
-  MOVimm(RegUtil::getOtherExtReg(reg), higher32);
 }
 
 void Assembler::loadDwordERegDerefARegDisp16sx(REG const extReg, REG const addrReg, SafeInt<16U> const disp) const {
@@ -803,7 +913,7 @@ void Assembler::TRAP(TrapCode const trapCode) const {
   if (trapCode != TrapCode::NONE) {
     // mov trapReg trapCode
     lastTrapPosition_.set(trapCode, binary_.size());
-    MOVimm(WasmABI::REGS::trapReg, static_cast<uint32_t>(trapCode));
+    MOVimm32(WasmABI::REGS::trapReg, static_cast<uint32_t>(trapCode));
   }
 
   SignedInRangeCheck<25U> const rangeCheck{SignedInRangeCheck<25U>::check(
