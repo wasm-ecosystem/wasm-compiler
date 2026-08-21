@@ -147,6 +147,25 @@ TEST(ParallelMoveResolverTest, HandlesNoOpMovesAndSimpleLeaf) {
   ASSERT_EQ(result, expected);
 }
 
+TEST(ParallelMoveResolverTest, ReplacesRepeatedStackSourceAfterStackToRegisterMove) {
+  // Once the first copy loads the stack slot, later copies can read the new register value.
+  ParallelMoveResolver resolver{&testCompilerAlloc, &testCompilerFree, nullptr, 2U};
+  VariableStorage const stackSlot{VariableStorage::stackMemory(MachineType::I32, 0U)};
+  VariableStorage const firstTarget{VariableStorage::reg(MachineType::I32, parallelMoveRegs[0])};
+  VariableStorage const secondTarget{VariableStorage::reg(MachineType::I32, parallelMoveRegs[1])};
+
+  resolver.push(firstTarget, stackSlot);
+  resolver.push(secondTarget, stackSlot);
+
+  std::vector<MoveOperation> result;
+  resolver.resolveLinear(ParallelMoveEmitter([&result](VariableStorage const &targetStorage, VariableStorage const &sourceStorage) {
+    result.emplace_back(targetStorage, sourceStorage);
+  }));
+
+  std::vector<MoveOperation> const expected{MoveOperation(firstTarget, stackSlot), MoveOperation(secondTarget, firstTarget)};
+  ASSERT_EQ(result, expected);
+}
+
 TEST(ParallelMoveResolverTest, ResolvesRegisterCycleWithTemp) {
   // Simple two-register cycle: save one source to temp, rotate the other edge, then restore the head.
   ParallelMoveResolver resolver{&testCompilerAlloc, &testCompilerFree, nullptr, 2U};
@@ -255,6 +274,43 @@ TEST(ParallelMoveResolverTest, HandlesNonParallelSourceLeaf) {
                         }));
 
   std::vector<MoveOperation> const expected{MoveOperation(targetReg, constantSource)};
+  ASSERT_EQ(result, expected);
+}
+
+TEST(ParallelMoveResolverTest, PreservesSingleInstructionImmediateSources) {
+  ParallelMoveResolver resolver{&testCompilerAlloc, &testCompilerFree, nullptr, 2U};
+  VariableStorage const firstTarget{VariableStorage::reg(MachineType::I32, parallelMoveRegs[0])};
+  VariableStorage const secondTarget{VariableStorage::reg(MachineType::I32, parallelMoveRegs[1])};
+  VariableStorage const constantSource{VariableStorage::i32Const(0x1234U)};
+
+  resolver.push(firstTarget, constantSource);
+  resolver.push(secondTarget, constantSource);
+
+  std::vector<MoveOperation> result;
+  resolver.resolveLinear(ParallelMoveEmitter([&result](VariableStorage const &targetStorage, VariableStorage const &sourceStorage) {
+    result.emplace_back(targetStorage, sourceStorage);
+  }));
+
+  std::vector<MoveOperation> const expected{MoveOperation(firstTarget, constantSource), MoveOperation(secondTarget, constantSource)};
+  ASSERT_EQ(result, expected);
+}
+
+TEST(ParallelMoveResolverTest, ReplacesMultiInstructionImmediateSources) {
+  ParallelMoveResolver resolver{&testCompilerAlloc, &testCompilerFree, nullptr, 2U};
+  VariableStorage const firstTarget{VariableStorage::reg(MachineType::F64, parallelMoveRegs[0])};
+  VariableStorage const secondTarget{VariableStorage::reg(MachineType::F64, parallelMoveRegs[1])};
+  VariableStorage const constantSource{VariableStorage::f64Const(1.1)};
+  VariableStorage const firstTargetAsSource{VariableStorage::reg(MachineType::F64, parallelMoveRegs[0])};
+
+  resolver.push(firstTarget, constantSource);
+  resolver.push(secondTarget, constantSource);
+
+  std::vector<MoveOperation> result;
+  resolver.resolveLinear(ParallelMoveEmitter([&result](VariableStorage const &targetStorage, VariableStorage const &sourceStorage) {
+    result.emplace_back(targetStorage, sourceStorage);
+  }));
+
+  std::vector<MoveOperation> const expected{MoveOperation(firstTarget, constantSource), MoveOperation(secondTarget, firstTargetAsSource)};
   ASSERT_EQ(result, expected);
 }
 

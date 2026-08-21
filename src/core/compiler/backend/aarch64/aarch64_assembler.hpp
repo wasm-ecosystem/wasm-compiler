@@ -316,6 +316,18 @@ public:
   /// @return MachineType
   static MachineType getMachineTypeFromArgType(ArgType const argType) VB_NOEXCEPT;
 
+  ///
+  /// @brief Checks whether an integer or floating-point immediate can be materialized in one AArch64 instruction
+  ///
+  /// @details Integer values are accepted when they have a logical-immediate, MOVZ, or MOVN encoding. Floating-point values
+  /// are accepted when FMOV can encode their raw IEEE-754 bit pattern, including positive zero.
+  ///
+  /// @param machineType Type of the value represented by rawImmediate
+  /// @param rawImmediate Raw bit representation of the immediate value
+  /// @return bool Whether the immediate can be materialized in one instruction
+  ///
+  static bool isImmediateEncodableInOneInstruction(MachineType const machineType, uint64_t const rawImmediate) VB_NOEXCEPT;
+
 private:
   AArch64_Backend &backend_;                     ///< Reference to the backend instance
   MemWriter &binary_;                            ///< Reference to the output binary
@@ -344,6 +356,143 @@ private:
   /// @param src0 Representation of the first source of the instruction
   /// @param src1 Representation of the second source of the instruction, can be nullptr if the instruction allows
   void emitActionArg(AbstrInstr const actionArg, VariableStorage const &dest, VariableStorage const &src0, VariableStorage const &src1);
+
+  ///
+  /// @brief Identifies the AArch64 instruction encoding selected for an integer immediate.
+  ///
+  enum class IntegerImmediateEncodingKind : uint8_t {
+    LOGICAL, ///< Logical-immediate MOV encoding.
+    MOVZ,    ///< Move-wide-with-zero MOV encoding.
+    MOVN,    ///< Move-wide-with-not MOV encoding.
+  };
+
+  ///
+  /// @brief Describes the selected AArch64 integer-immediate encoding.
+  ///
+  /// @details The encoding kind selects the active data member.
+  ///
+  // coverity[autosar_cpp14_a11_0_1_violation]
+  struct IntegerImmediateInfo final {
+    IntegerImmediateEncodingKind kind{IntegerImmediateEncodingKind::MOVZ}; ///< Selected integer-immediate encoding.
+
+    /// @brief Data for the selected integer-immediate encoding.
+    union Data {
+      /// @brief Logical-immediate instruction operand.
+      struct Logical final {
+        uint64_t encoding; ///< Encoded logical-immediate operand.
+      };
+      Logical logical; ///< Logical-immediate instruction operand.
+
+      /// @brief Move-wide instruction operands.
+      struct MoveWide final {
+        uint64_t effectiveImmediate; ///< Raw immediate truncated to the target register width.
+        uint8_t numHalfWordsInReg;   ///< Number of 16-bit halfwords in the target register.
+      };
+      MoveWide moveWide; ///< Move-wide instruction operands.
+    };
+    Data data = {}; ///< Data for the encoding selected by kind.
+  };
+  ///
+  /// @brief Extracts a 16-bit halfword from an immediate value.
+  ///
+  /// @param immediate Immediate value containing the halfword.
+  /// @param index Zero-based index of the halfword.
+  /// @return The selected halfword in the low 16 bits.
+  ///
+  inline static uint64_t getImmediateHalfword(uint64_t const immediate, uint32_t const index) VB_NOEXCEPT {
+    return (immediate >> (static_cast<uint64_t>(index) * 16U)) & static_cast<uint64_t>(UINT16_MAX);
+  }
+  ///
+  /// @brief Analyzes the integer encodings available for an immediate.
+  ///
+  /// @details Counts zero and all-one halfwords for MOVZ/MOVN selection and obtains the logical-immediate encoding when one
+  /// exists.
+  ///
+  /// @param rawImmediate Raw bit representation of the immediate value.
+  /// @param is64 Whether the immediate is a 64-bit value.
+  /// @return Integer encoding information used by MOV emission and one-instruction checks.
+  ///
+  static IntegerImmediateInfo analyzeIntegerImmediate(uint64_t const rawImmediate, bool const is64) VB_NOEXCEPT;
+  ///
+  /// @brief Checks whether a halfword must be written by a move-wide instruction.
+  ///
+  /// @param kind Move-wide encoding kind that determines the default halfword.
+  /// @param halfword Halfword to check.
+  /// @return Whether the halfword differs from the encoding's default value.
+  ///
+  inline static bool isMoveWideHalfwordWritten(IntegerImmediateEncodingKind const kind, uint64_t const halfword) VB_NOEXCEPT {
+    uint64_t const defaultHalfword{(kind == IntegerImmediateEncodingKind::MOVZ) ? 0U : static_cast<uint64_t>(UINT16_MAX)};
+    return halfword != defaultHalfword;
+  }
+  ///
+  /// @brief Visits the halfwords used to construct a move-wide immediate.
+  ///
+  /// @details Stops when the callback returns false.
+  ///
+  /// @param info Integer immediate encoding information.
+  /// @param callback Callback receiving the halfword index and value.
+  ///
+  inline static void forEachMoveWideHalfword(IntegerImmediateInfo const &info, FunctionRef<bool(uint32_t, uint64_t)> const &callback) VB_NOEXCEPT {
+    for (uint32_t i{0U}; i < info.data.moveWide.numHalfWordsInReg; i++) {
+      if (!callback(i, getImmediateHalfword(info.data.moveWide.effectiveImmediate, i))) {
+        break;
+      }
+    }
+  }
+  ///
+  /// @brief Counts the non-default halfwords in a move-wide immediate.
+  ///
+  /// @param info Integer immediate encoding information.
+  /// @return Number of halfwords that must be written.
+  ///
+  static uint8_t countMoveWideHalfwords(IntegerImmediateInfo const &info) VB_NOEXCEPT;
+
+  ///
+  /// @brief Identifies the AArch64 instruction encoding selected for a floating-point immediate.
+  ///
+  enum class FloatImmediateEncodingKind : uint8_t {
+    MODIFIED, ///< FMOV's 8-bit modified-immediate encoding.
+    ZERO,     ///< FMOV from the integer zero register.
+    GPR,      ///< Materialize the raw bit pattern in a general-purpose register, then FMOV it.
+  };
+
+  ///
+  /// @brief Describes the selected AArch64 floating-point-immediate encoding.
+  ///
+  /// @details The encoding kind selects the active data member.
+  ///
+  // coverity[autosar_cpp14_a11_0_1_violation]
+  struct FloatImmediateInfo final {
+    FloatImmediateEncodingKind kind{FloatImmediateEncodingKind::ZERO}; ///< Selected floating-point-immediate encoding.
+
+    /// @brief Data for the selected floating-point-immediate encoding.
+    union Data {
+      /// @brief FMOV modified-immediate instruction operand.
+      struct Modified final {
+        uint8_t immediate; ///< Encoded FMOV immediate.
+      };
+      Modified modified; ///< FMOV modified-immediate instruction operand.
+
+      /// @brief General-purpose-register materialization operands.
+      struct GeneralPurposeRegister final {
+        uint64_t effectiveImmediate; ///< Raw immediate truncated to the target register width.
+      };
+      GeneralPurposeRegister generalPurposeRegister; ///< General-purpose-register materialization operands.
+    };
+    Data data = {}; ///< Data for the encoding selected by kind.
+  };
+
+  ///
+  /// @brief Analyzes the AArch64 encoding selected for a floating-point raw bit pattern.
+  ///
+  /// @details Positive zero is emitted by moving the integer zero register into a floating-point register. Other values
+  /// either use the 8-bit FMOV modified-immediate format or are materialized in a general-purpose register first.
+  ///
+  /// @param rawFloatImmediate Raw IEEE-754 bit representation of the immediate value.
+  /// @param is64 Whether the immediate is an F64 value.
+  /// @return Floating-point encoding information used by floating-point immediate emission.
+  ///
+  static FloatImmediateInfo analyzeFloatImmediate(uint64_t const rawFloatImmediate, bool const is64) VB_NOEXCEPT;
 };
 
 } // namespace aarch64

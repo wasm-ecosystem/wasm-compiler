@@ -63,15 +63,16 @@ b5 ac 04 00  st.a  [sp]#4, a12
 f4 ac  st.a  [sp], a12
 19 a8 20 10  ld.w  d8, [sp]#0x60
 19 a9 1c 10  ld.w  d9, [sp]#0x5c
-19 a6 1c 10  ld.w  d6, [sp]#0x5c
-19 a7 1c 10  ld.w  d7, [sp]#0x5c
-19 aa 1c 10  ld.w  d10, [sp]#0x5c
-19 ab 1c 10  ld.w  d11, [sp]#0x5c
-19 ac 1c 10  ld.w  d12, [sp]#0x5c
-61 ff b3 ff  fcall  #0x48
+02 96  mov  d6, d9
+02 97  mov  d7, d9
+02 9a  mov  d10, d9
+02 9b  mov  d11, d9
+02 9c  mov  d12, d9
+61 ff b8 ff  fcall  #0x48
 d9 aa 0c 10  lea  sp, [sp]#0x4c
 00 70  fret  
-70 00 00 00  Size of the function body: 112
+00 00  nop  
+68 00 00 00  Size of the function body: 104
 
 Initial Linear Memory Data
 00 00 00 00  Number of data segments: 0
@@ -107,9 +108,9 @@ b5 a6 00 00  st.a  [sp]#0, a6
 b5 a7 14 00  st.a  [sp]#0x14, a7
 99 23 e8 ff  ld.a  a3, [a2]#-0x18
 99 2c d8 ff  ld.a  a12, [a2]#-0x28
-bd 0c 14 80  jnz.a  a12, #0x15c
+bd 0c 14 80  jnz.a  a12, #0x154
 b5 2a d8 ff  st.a  [a2]#-0x28, sp
-5d 00 02 00  jl  #0x140
+5d 00 02 00  jl  #0x138
 d9 bb 2e 10  lea  a11, [a11]#0x6e
 b5 2b dc ff  st.a  [a2]#-0x24, a11
 4d 00 e0 ef  mfcr  d14, #0xfe00
@@ -120,7 +121,7 @@ b5 2c e0 ff  st.a  [a2]#-0x20, a12
 20 18  sub.a  sp, #0x18
 99 2c d8 ef  ld.a  a12, [a2]#-0x68
 01 ac 30 e4  ge.a  d14, a12, sp
-6f 0e 78 ff  jnz.t  d14, #0, #0x56
+6f 0e 7c ff  jnz.t  d14, #0, #0x56
 54 48  ld.w  d8, [a4]
 19 49 08 00  ld.w  d9, [a4]#8
 19 46 10 00  ld.w  d6, [a4]#0x10
@@ -138,12 +139,12 @@ b5 2c e0 ff  st.a  [a2]#-0x20, a12
 78 01  st.w  [sp]#4, d15
 19 4f 18 10  ld.w  d15, [a4]#0x58
 74 af  st.w  [sp], d15
-61 ff 6e ff  fcall  #0x7c
+61 ff 72 ff  fcall  #0x7c
 99 a7 2c 00  ld.a  a7, [sp]#0x2c
 74 72  st.w  [a7], d2
 d9 aa 18 00  lea  sp, [sp]#0x18
 99 2c d8 ff  ld.a  a12, [a2]#-0x28
-7d ca 07 80  jne.a  sp, a12, #0x1c0
+7d ca 07 80  jne.a  sp, a12, #0x1b8
 82 0f  mov  d15, #0
 59 2f d8 ff  st.w  [a2]#-0x28, d15
 59 2f dc ff  st.w  [a2]#-0x24, d15
@@ -171,8 +172,8 @@ WebAssembly Table
 
 More Info
 00 00 00 00  Size of link data: 0
-ff ff ff ff  Offset from here for the landing pad function body (0xFFFF'FFFF = undefined, pos: 21d): 4294967295
+ff ff ff ff  Offset from here for the landing pad function body (0xFFFF'FFFF = undefined, pos: 215): 4294967295
 00 00 00 00  Stacktrace records 0, debugMode: 0
 03 00 00 00  Version of this binary module: 3
-28 02 00 00  Module binary size (excl. this value): 552
+20 02 00 00  Module binary size (excl. this value): 544
 

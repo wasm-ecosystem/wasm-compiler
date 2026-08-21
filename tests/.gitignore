@@ -1,2 +1,3 @@
 testcases/
 testcases.json
+snapshot_diff/*.wasm

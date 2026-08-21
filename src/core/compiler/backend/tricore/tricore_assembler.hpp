@@ -596,6 +596,18 @@ public:
     bool reversed;      ///< Whether the arguments were swapped (only possible if the input sources are set commutative)
   };
 
+  ///
+  /// @brief Checks whether an integer or floating-point immediate can be materialized in one TriCore instruction
+  ///
+  /// @details Floating-point values are analyzed as their raw IEEE-754 bit patterns because TriCore materializes them in
+  /// integer registers before use. The D15-specific unsigned 8-bit form is covered by the general unsigned 16-bit result.
+  ///
+  /// @param machineType Type of the value represented by rawImmediate
+  /// @param rawImmediate Raw bit representation of the immediate value
+  /// @return bool Whether the immediate can be materialized in one instruction
+  ///
+  static bool isImmediateEncodableInOneInstruction(MachineType const machineType, uint64_t const rawImmediate) VB_NOEXCEPT;
+
 private:
   /// @brief Invalid mov cost
   static constexpr uint32_t invalidMovCost{UINT32_MAX};

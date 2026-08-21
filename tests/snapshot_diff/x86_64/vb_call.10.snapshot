@@ -107,13 +107,13 @@ f3 44 0f 10 7c 24 68  movss  xmm15, dword ptr [rsp + 0x68]
 f3 44 0f 11 3c 24  movss  dword ptr [rsp], xmm15
 8b 6c 24 70  mov  ebp, dword ptr [rsp + 0x70]
 8b 7c 24 68  mov  edi, dword ptr [rsp + 0x68]
-8b 74 24 68  mov  esi, dword ptr [rsp + 0x68]
-44 8b 4c 24 68  mov  r9d, dword ptr [rsp + 0x68]
-e8 40 ff ff ff  call  0x1c0
+8b f7  mov  esi, edi
+44 8b cf  mov  r9d, edi
+e8 44 ff ff ff  call  0x1c0
 48 8d 64 24 48  lea  rsp, [rsp + 0x48]
 c3  ret  
 00 00  add  byte ptr [rax], al
-9c 00 00 00  Size of the function body: 156
+98 00 00 00  Size of the function body: 152
 
 Initial Linear Memory Data
 00 00 00 00  Number of data segments: 0
@@ -155,7 +155,7 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x311
+75 1b  jne  0x30d
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 81 00 00 00  lea  r13, [rip + 0x81]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
@@ -182,12 +182,12 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 44 89 6c 24 08  mov  dword ptr [rsp + 8], r13d
 45 8b 6f 58  mov  r13d, dword ptr [r15 + 0x58]
 44 89 2c 24  mov  dword ptr [rsp], r13d
-e8 79 fe ff ff  call  0x1ec
+e8 7d fe ff ff  call  0x1ec
 4c 8b 74 24 60  mov  r14, qword ptr [rsp + 0x60]
 41 89 06  mov  dword ptr [r14], eax
 48 81 c4 40 00 00 00  add  rsp, 0x40
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x398
+75 10  jne  0x394
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -220,8 +220,8 @@ WebAssembly Table
 
 More Info
 00 00 00 00  Size of link data: 0
-f8 03 00 00  Offset from here for the landing pad function body (0xFFFF'FFFF = undefined, pos: 1c): 1016
+f4 03 00 00  Offset from here for the landing pad function body (0xFFFF'FFFF = undefined, pos: 1c): 1012
 00 00 00 00  Stacktrace records 0, debugMode: 0
 03 00 00 00  Version of this binary module: 3
-20 04 00 00  Module binary size (excl. this value): 1056
+1c 04 00 00  Module binary size (excl. this value): 1052
 

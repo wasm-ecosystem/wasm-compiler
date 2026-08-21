@@ -2,6 +2,12 @@
 
 ## 5.0.0-rc1
 
+### Performance improvements
+
+- Reuse repeated stack-based call parameters after loading the value into a register, reducing redundant loads
+
+## 5.0.0-rc0
+
 ### Feature
 
 - Support `return_call` instruction

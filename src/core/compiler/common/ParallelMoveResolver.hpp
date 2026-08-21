@@ -24,6 +24,10 @@
 #include "src/config.hpp"
 #include "src/core/common/FunctionRef.hpp"
 #include "src/core/common/implementationlimits.hpp"
+#include "src/core/compiler/backend/AssemblerAdapter.hpp"
+#include "src/core/compiler/backend/aarch64/aarch64_assembler.hpp"
+#include "src/core/compiler/backend/tricore/tricore_assembler.hpp"
+#include "src/core/compiler/backend/x86_64/x86_64_assembler.hpp"
 #include "src/core/compiler/common/BumpAllocator.hpp"
 #include "src/core/compiler/common/VariableStorage.hpp"
 
@@ -216,13 +220,14 @@ private:
   /// @param moveEmitter Function to emit a move operation from source to target
   bool tryMove(ParallelMoveEmitter const &moveEmitter) VB_THROW {
     for (size_t i{0U}; i < recordsCapacity_; i++) {
-      ParallelMoveRecord const &record{records_[i]};
+      ParallelMoveRecord const record{records_[i]};
       // A move is safe once no other unresolved record still needs the target's current value.
       if (isOperationalRecord(record) && (!targetIsUsedAsSource(record.target))) {
         VariableStorage const resolvedSource{record.source};
         moveEmitter(record.target, record.source);
         unmarkSourceAsUsed(resolvedSource);
         eraseRecordWithExtendPlaceholder(i);
+        storageReplacement(record);
         return true; // must return, because the counts has been modified
       }
     }
@@ -453,6 +458,35 @@ private:
     return (record.target.type != StorageType::INVALID) && (record.targetType != ParallelMoveTargetType::Extend_Placeholder);
   }
 
+  /// @brief Check whether a constant source needs to be encoded into multiple instructions.
+  /// @param sourceStorage Source location to inspect
+  /// @return true when sourceStorage is a one-instruction constant
+  static bool multiInstructionImmediate(VariableStorage const &sourceStorage) VB_NOEXCEPT {
+    if (sourceStorage.type != StorageType::CONSTANT) {
+      // Not immediate at all
+      return false;
+    }
+    uint64_t rawImmediate{0U};
+    switch (sourceStorage.machineType) {
+    case MachineType::I32:
+      rawImmediate = static_cast<uint64_t>(sourceStorage.location.constUnion.u32);
+      break;
+    case MachineType::I64:
+      rawImmediate = sourceStorage.location.constUnion.u64;
+      break;
+    case MachineType::F32:
+      rawImmediate = static_cast<uint64_t>(sourceStorage.location.constUnion.rawF32());
+      break;
+    case MachineType::F64:
+      rawImmediate = sourceStorage.location.constUnion.rawF64();
+      break;
+    case MachineType::INVALID:
+    default:
+      UNREACHABLE(return false, "Invalid constant MachineType");
+    }
+    return !TAssembler::isImmediateEncodableInOneInstruction(sourceStorage.machineType, rawImmediate);
+  }
+
   /// @brief Get the first operational record.
   /// @return Index of the first operational record, or notFound if there is none
   size_t getFirstOperationalRecord() const VB_NOEXCEPT {
@@ -509,6 +543,31 @@ private:
         // Remove the entry by shifting the tail down
         memorySourceMap_[index] = memorySourceMap_[(memorySourceCount_ - 1U)];
         memorySourceCount_--;
+      }
+    }
+  }
+
+  ///
+  /// @brief Replace pending sources with the register populated by a resolved stack-to-register move.
+  ///
+  /// Reusing the register avoids redundant loads from the same stack slot for later pending moves and keeps
+  /// the register and memory source usage maps consistent with the rewritten records.
+  ///
+  /// @param record Resolved move record whose stack source has been copied to its register target
+  void storageReplacement(ParallelMoveRecord const &record) VB_NOEXCEPT {
+    if (record.target.type != StorageType::REGISTER) {
+      return;
+    }
+    StorageType const sourceType{record.source.type};
+    if ((sourceType == StorageType::STACKMEMORY) || ((sourceType == StorageType::LINKDATA) || multiInstructionImmediate(record.source))) {
+      for (size_t i{0U}; i < recordsCapacity_; i++) {
+        ParallelMoveRecord &pendingRecord{records_[i]};
+        bool const sameMachineType{pendingRecord.source.machineType == record.source.machineType};
+        if (isOperationalRecord(pendingRecord) && (pendingRecord.source.inSameLocation(record.source) && sameMachineType)) {
+          unmarkSourceAsUsed(pendingRecord.source);
+          pendingRecord.source = VariableStorage::reg(record.target.location.reg, record.source.machineType);
+          incrementRegisterSource(pendingRecord.source.location.reg);
+        }
       }
     }
   }

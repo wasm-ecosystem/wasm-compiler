@@ -180,6 +180,20 @@ static Immediate64EncodingInfo analyzeImmediate64(uint64_t const rawImmediate) V
   return info;
 }
 
+bool Tricore_Assembler::isImmediateEncodableInOneInstruction(MachineType const machineType, uint64_t const rawImmediate) VB_NOEXCEPT {
+  switch (machineType) {
+  case MachineType::I32:
+  case MachineType::F32:
+    return analyzeImmediate32(static_cast<uint32_t>(rawImmediate)).kind != Immediate32EncodingKind::MOV16_ADDIH;
+  case MachineType::I64:
+  case MachineType::F64:
+    return analyzeImmediate64(rawImmediate).kind != Immediate64EncodingKind::SPLIT32;
+  case MachineType::INVALID:
+  default:
+    return false;
+  }
+}
+
 Tricore_Assembler::Tricore_Assembler(Tricore_Backend &backend, MemWriter &binary, ModuleInfo &moduleInfo) VB_NOEXCEPT : backend_(backend),
                                                                                                                         binary_(binary),
                                                                                                                         moduleInfo_(moduleInfo),

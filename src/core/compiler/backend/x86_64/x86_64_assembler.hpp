@@ -216,6 +216,30 @@ public:
   /// @return Instruction instance that can be emitted
   Instruction INSTR(AbstrInstr const &abstrInstr) const VB_NOEXCEPT;
 
+  ///
+  /// @brief Checks whether an integer or floating-point immediate can be materialized in one x86-64 instruction
+  ///
+  /// @details Every I32 and I64 raw bit pattern has a general-purpose MOV immediate encoding. x86-64 has no scalar
+  /// floating-point immediate-move instruction, so F32 and F64 values are not encodable by this query.
+  ///
+  /// @param machineType Type of the value represented by rawImmediate
+  /// @param rawImmediate Raw bit representation of the immediate value
+  /// @return bool Whether the immediate can be materialized in one instruction
+  ///
+  inline static bool isImmediateEncodableInOneInstruction(MachineType const machineType, uint64_t const rawImmediate) VB_NOEXCEPT {
+    static_cast<void>(rawImmediate);
+    switch (machineType) {
+    case MachineType::I32:
+    case MachineType::I64:
+      return true;
+    case MachineType::F32:
+    case MachineType::F64:
+    case MachineType::INVALID:
+    default:
+      return false;
+    }
+  }
+
 private:
   x86_64_Backend &backend_; ///< Reference to the backend instance
   MemWriter &binary_;       ///< Reference to the output binary

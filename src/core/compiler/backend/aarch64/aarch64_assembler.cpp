@@ -51,61 +51,15 @@ namespace vb {
 namespace aarch64 {
 using Assembler = AArch64_Assembler; ///< Shortcut for AArch64_Assembler
 
-///
-/// @brief Identifies the AArch64 instruction encoding selected for an integer immediate.
-///
-enum class IntegerImmediateEncodingKind : uint8_t {
-  LOGICAL, ///< Logical-immediate MOV encoding.
-  MOVZ,    ///< Move-wide-with-zero MOV encoding.
-  MOVN,    ///< Move-wide-with-not MOV encoding.
-};
-
-///
-/// @brief Describes the selected AArch64 integer-immediate encoding.
-///
-/// @details The encoding kind selects the active data member.
-///
-// coverity[autosar_cpp14_a11_0_1_violation]
-struct IntegerImmediateInfo final {
-  IntegerImmediateEncodingKind kind{IntegerImmediateEncodingKind::MOVZ}; ///< Selected integer-immediate encoding.
-
-  /// @brief Data for the selected integer-immediate encoding.
-  union Data {
-    /// @brief Logical-immediate instruction operand.
-    struct Logical final {
-      uint64_t encoding; ///< Encoded logical-immediate operand.
-    };
-    Logical logical; ///< Logical-immediate instruction operand.
-
-    /// @brief Move-wide instruction operands.
-    struct MoveWide final {
-      uint64_t effectiveImmediate; ///< Raw immediate truncated to the target register width.
-      uint8_t numHalfWordsInReg;   ///< Number of 16-bit halfwords in the target register.
-    };
-    MoveWide moveWide; ///< Move-wide instruction operands.
-  };
-  Data data = {}; ///< Data for the encoding selected by kind.
-};
-
-///
-/// @brief Analyzes the integer encodings available for an immediate.
-///
-/// @details Counts zero and all-one halfwords for MOVZ/MOVN selection and obtains the logical-immediate encoding when one
-/// exists.
-///
-/// @param rawImmediate Raw bit representation of the immediate value.
-/// @param is64 Whether the immediate is a 64-bit value.
-/// @return Integer encoding information used by MOV emission and one-instruction checks.
-///
-static IntegerImmediateInfo analyzeIntegerImmediate(uint64_t const rawImmediate, bool const is64) VB_NOEXCEPT {
+Assembler::IntegerImmediateInfo Assembler::analyzeIntegerImmediate(uint64_t const rawImmediate, bool const is64) VB_NOEXCEPT {
   IntegerImmediateInfo info{};
   uint64_t const effectiveImmediate{is64 ? rawImmediate : (rawImmediate & static_cast<uint64_t>(UINT32_MAX))};
   uint8_t const numHalfWordsInReg{is64 ? static_cast<uint8_t>(4U) : static_cast<uint8_t>(2U)};
   uint8_t numZeroHalfwords{0U};
   uint8_t numFFFFHalfwords{0U};
 
-  for (uint8_t i{0U}; i < numHalfWordsInReg; i++) {
-    uint64_t const halfword{(effectiveImmediate >> (static_cast<uint64_t>(i) * 16U)) & static_cast<uint64_t>(UINT16_MAX)};
+  for (uint32_t i{0U}; i < numHalfWordsInReg; i++) {
+    uint64_t const halfword{getImmediateHalfword(effectiveImmediate, i)};
     if (halfword == 0x0000U) {
       numZeroHalfwords++;
     } else if (halfword == 0xFFFFU) {
@@ -128,52 +82,18 @@ static IntegerImmediateInfo analyzeIntegerImmediate(uint64_t const rawImmediate,
   return info;
 }
 
-///
-/// @brief Identifies the AArch64 instruction encoding selected for a floating-point immediate.
-///
-enum class FloatImmediateEncodingKind : uint8_t {
-  MODIFIED, ///< FMOV's 8-bit modified-immediate encoding.
-  ZERO,     ///< FMOV from the integer zero register.
-  GPR,      ///< Materialize the raw bit pattern in a general-purpose register, then FMOV it.
-};
+uint8_t Assembler::countMoveWideHalfwords(IntegerImmediateInfo const &info) VB_NOEXCEPT {
+  uint8_t count{0U};
+  forEachMoveWideHalfword(info, FunctionRef<bool(uint32_t, uint64_t)>([&count, &info](uint32_t const, uint64_t const halfword) VB_NOEXCEPT -> bool {
+                            if (isMoveWideHalfwordWritten(info.kind, halfword)) {
+                              count++;
+                            }
+                            return true;
+                          }));
+  return count;
+}
 
-///
-/// @brief Describes the selected AArch64 floating-point-immediate encoding.
-///
-/// @details The encoding kind selects the active data member.
-///
-// coverity[autosar_cpp14_a11_0_1_violation]
-struct FloatImmediateInfo final {
-  FloatImmediateEncodingKind kind{FloatImmediateEncodingKind::ZERO}; ///< Selected floating-point-immediate encoding.
-
-  /// @brief Data for the selected floating-point-immediate encoding.
-  union Data {
-    /// @brief FMOV modified-immediate instruction operand.
-    struct Modified final {
-      uint8_t immediate; ///< Encoded FMOV immediate.
-    };
-    Modified modified; ///< FMOV modified-immediate instruction operand.
-
-    /// @brief General-purpose-register materialization operands.
-    struct GeneralPurposeRegister final {
-      uint64_t effectiveImmediate; ///< Raw immediate truncated to the target register width.
-    };
-    GeneralPurposeRegister generalPurposeRegister; ///< General-purpose-register materialization operands.
-  };
-  Data data = {}; ///< Data for the encoding selected by kind.
-};
-
-///
-/// @brief Analyzes the AArch64 encoding selected for a floating-point raw bit pattern.
-///
-/// @details Positive zero is emitted by moving the integer zero register into a floating-point register. Other values
-/// either use the 8-bit FMOV modified-immediate format or are materialized in a general-purpose register first.
-///
-/// @param rawFloatImmediate Raw IEEE-754 bit representation of the immediate value.
-/// @param is64 Whether the immediate is an F64 value.
-/// @return Floating-point encoding information used by floating-point immediate emission.
-///
-static FloatImmediateInfo analyzeFloatImmediate(uint64_t const rawFloatImmediate, bool const is64) VB_NOEXCEPT {
+Assembler::FloatImmediateInfo Assembler::analyzeFloatImmediate(uint64_t const rawFloatImmediate, bool const is64) VB_NOEXCEPT {
   FloatImmediateInfo info{};
   uint64_t const effectiveImmediate{is64 ? rawFloatImmediate : (rawFloatImmediate & static_cast<uint64_t>(UINT32_MAX))};
   if (effectiveImmediate == 0U) {
@@ -201,6 +121,18 @@ static FloatImmediateInfo analyzeFloatImmediate(uint64_t const rawFloatImmediate
     info.data.generalPurposeRegister.effectiveImmediate = effectiveImmediate;
   }
   return info;
+}
+
+bool Assembler::isImmediateEncodableInOneInstruction(MachineType const machineType, uint64_t const rawImmediate) VB_NOEXCEPT {
+  bool const is64{MachineTypeUtil::is64(machineType)};
+
+  if (MachineTypeUtil::isInt(machineType)) {
+    IntegerImmediateInfo const info{analyzeIntegerImmediate(rawImmediate, is64)};
+    return (info.kind == IntegerImmediateEncodingKind::LOGICAL) ? true : (countMoveWideHalfwords(info) <= 1U);
+  } else {
+    FloatImmediateEncodingKind const kind{analyzeFloatImmediate(rawImmediate, is64).kind};
+    return (kind == FloatImmediateEncodingKind::MODIFIED) || (kind == FloatImmediateEncodingKind::ZERO);
+  }
 }
 
 Assembler::AArch64_Assembler(AArch64_Backend &backend, MemWriter &binary, ModuleInfo &moduleInfo) VB_NOEXCEPT : backend_(backend),
@@ -610,11 +542,11 @@ void Assembler::MOVimm(bool const is64, REG const reg, uint64_t const imm) const
 
   bool const useMovz{info.kind == IntegerImmediateEncodingKind::MOVZ};
   bool firstHalfwordIsSet{false};
-  for (uint32_t i{0U}; i < info.data.moveWide.numHalfWordsInReg; i++) {
-    uint64_t const halfWordRaw{info.data.moveWide.effectiveImmediate >> (static_cast<uint64_t>(i) * 16ULL)};
-    SafeUInt<16> const halfword{SafeUInt<16>::max() & static_cast<uint32_t>(halfWordRaw)};
+  // coverity[autosar_cpp14_a8_5_2_violation]
+  auto const emitCB = [this, is64, reg, &info, useMovz, &firstHalfwordIsSet](uint32_t const i, uint64_t const halfwordRaw) -> bool {
+    SafeUInt<16> const halfword{SafeUInt<16>::max() & static_cast<uint32_t>(halfwordRaw)};
     if (useMovz) {
-      if (halfword.value() != 0x0000U) {
+      if (isMoveWideHalfwordWritten(info.kind, static_cast<uint64_t>(halfword.value()))) {
         if (!firstHalfwordIsSet) {
           INSTR(is64 ? MOVZ_xD_imm16ols_t : MOVZ_wD_imm16ols_t).setD(reg).setImm16Ols(halfword, i * 16_U32)();
           firstHalfwordIsSet = true;
@@ -624,14 +556,14 @@ void Assembler::MOVimm(bool const is64, REG const reg, uint64_t const imm) const
       } else if (info.data.moveWide.effectiveImmediate == 0U) {
         assert(i == 0 && "Error");
         INSTR(is64 ? MOVZ_xD_imm16ols_t : MOVZ_wD_imm16ols_t).setD(reg).setImm16Ols(halfword, i * 16_U32)();
-        break;
+        return false;
       } else {
         static_cast<void>(0);
       }
     } else {
       SafeUInt<16U> const notHalfWord{SafeUInt<16U>::max() & ~halfword.value()};
 
-      if (halfword.value() != 0xFFFFU) {
+      if (isMoveWideHalfwordWritten(info.kind, static_cast<uint64_t>(halfword.value()))) {
         if (!firstHalfwordIsSet) {
           INSTR(is64 ? MOVN_xD_imm16ols_t : MOVN_wD_imm16ols_t).setD(reg).setImm16Ols(notHalfWord, i * 16_U32)();
           firstHalfwordIsSet = true;
@@ -641,12 +573,15 @@ void Assembler::MOVimm(bool const is64, REG const reg, uint64_t const imm) const
       } else if (info.data.moveWide.effectiveImmediate == (is64 ? UINT64_MAX : static_cast<uint64_t>(UINT32_MAX))) {
         assert(i == 0 && "Error");
         INSTR(is64 ? MOVN_xD_imm16ols_t : MOVN_wD_imm16ols_t).setD(reg).setImm16Ols(notHalfWord, i * 16_U32)();
-        break;
+        return false;
       } else {
         static_cast<void>(0);
       }
     }
-  }
+    return true;
+  };
+  // coverity[autosar_cpp14_a5_1_4_violation]
+  forEachMoveWideHalfword(info, FunctionRef<bool(uint32_t, uint64_t)>(emitCB));
 }
 
 Assembler::ActionResult Assembler::selectInstr(Span<AbstrInstr const> const &instructions, std::array<VariableStorage, 2U> &inputStorages,
