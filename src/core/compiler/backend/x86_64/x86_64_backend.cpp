@@ -1799,7 +1799,10 @@ void Backend::execBuiltinFncCall(BuiltinFunction const builtinFunction) {
       /// last use of @b identifierReg
 
       // cursor++;
-      as_.INSTR(ADD_rm32_imm32).setM4RM(traceBufferPtrReg, -4).setImm32(1U)();
+      as_.INSTR(INC_rm32).setR4RM(cursorReg)();
+      as_.INSTR(MOV_rm32_r32).setM4RM(traceBufferPtrReg, -4).setR(cursorReg)();
+
+      emitMemoryFence();
 
       isFull.linkToHere();
       nullptrTraceBuffer.linkToHere();
@@ -4028,6 +4031,17 @@ bool Backend::stackElementConflictsWithParamReg(StackElement const &element, REG
     return storage.location.reg == paramReg;
   }
   return false;
+}
+
+void Backend::emitMemoryFence() {
+#ifdef VB_POSIX
+  // on Posix platforms, the system-V ABI guarantees there is a red zone of 128 bytes below the stack pointer, which is not used by signal handlers.
+  // Therefore, we can use a LOCK prefixed instruction to act as a memory fence without clobbering any registers or memory. A lock instruction out of
+  // sp is faster than mfence The reason of using address [sp] is to avoid address conflict with other instructions
+  as_.INSTR(LOCK_OR_rm64_imm8_t).setM4RM(REG::SP, 0).setImm8(0U)();
+#else
+  as_.INSTR(MFENCE)();
+#endif
 }
 
 } // namespace x86_64

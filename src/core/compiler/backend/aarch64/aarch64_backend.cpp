@@ -2226,6 +2226,8 @@ void Backend::execBuiltinFncCall(BuiltinFunction const builtinFunction) {
         as_.INSTR(ADD_xD_xN_xMolsImm6).setD(cursorReg).setN(traceBufferPtrReg).setM(cursorReg).setImm6(SafeUInt<6>::fromConst<3>())();
         as_.INSTR(STP_wT1_wT2_deref_xN_scSImm7_t).setT1(timePointReg).setT2(tempGPR).setN(cursorReg).setSImm7ls2(SafeInt<9>::fromConst<-8>())();
       } /// last use of @b timePointReg
+      // memory fence for sync with trace reader thread
+      as_.INSTR(DMB_ISH_t)();
 
       isFull.linkToHere();
       nullptrTraceBuffer.linkToHere();

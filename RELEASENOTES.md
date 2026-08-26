@@ -1,5 +1,9 @@
 # Wasm Compiler Release Notes
 
+## 4.2.1
+
+- Fix setTraceBuffer may delay taking effect
+
 ## 4.2.0
 
 - Fix BAZEL integration dependency issue
@@ -62,6 +66,7 @@
 
 ## Release v3 known issues
 
+- [Bug fixed by 4.2.1](#4.2.1)
 - [Bug fixed by 4.1.2](#412)
 - [Bug fixed by 4.1.1](#411)
 

@@ -801,6 +801,8 @@ private:
   /// @param import Whether the register is used in an imported function call (NativeABI) or in a Wasm function call (WasmABI)
   /// @return Position of this register in the gpr or fpr array. UINT8_MAX if the register is not a parameter
   uint32_t getParamPos(REG const reg, bool const import) const VB_NOEXCEPT;
+  /// @brief  emit memory fence instruction
+  void emitMemoryFence();
 
   /// @brief Minimal number of registers that should be reserved for condense a vb.
   /// @details Need to keep 2 regs to avoid spill when add mem, mem or select reg, mem, mem.

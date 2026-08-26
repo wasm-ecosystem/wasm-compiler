@@ -124,6 +124,7 @@ doublewords
 Doxyfile
 doxygen
 dpkg
+DTEST
 dvinit
 DVINITU
 dvstep
@@ -269,6 +270,7 @@ MEMORYHELPER
 MEMUTILS
 MEMWRITER
 MFCR
+MFENCE
 MINDF
 MINF
 MINSD
