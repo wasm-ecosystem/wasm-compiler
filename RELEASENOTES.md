@@ -6,6 +6,11 @@
 
 - Reuse repeated stack-based call parameters after loading the value into a register, reducing redundant loads
 
+### Bug fix
+
+- Fix setTraceBuffer may delay taking effect
+- Fix requestInterruption may delay taking effect
+
 ## 5.0.0-rc0
 
 ### Feature
@@ -76,6 +81,7 @@
 
 ## Release v3 known issues
 
+- [Bug fixed by 5.0.0-rc1](#5.0.0-rc1)
 - [Bug fixed by 4.1.2](#412)
 - [Bug fixed by 4.1.1](#411)
 
@@ -133,6 +139,7 @@ Add u32 and u64 type to WasmValue
 
 ## Release v2 known issues
 
+- [Bug fixed by 5.0.0-rc1](#5.0.0-rc1)
 - [Bug fixed by 4.1.1](#411)
 - [Bug fixed by 3.0.10](#3010)
 - [Bug fixed by 3.0.9](#309)

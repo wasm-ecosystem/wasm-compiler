@@ -340,6 +340,9 @@ constexpr AbstrInstr OR_rm32_imm8sx{{0U, REX::NONE, B8F::NONE, OPCodeExt::i1, 0x
 /// @brief OR r/m64, imm8: r/m64 OR imm8 (sign-extended).
 // coverity[autosar_cpp14_m3_4_1_violation]
 constexpr AbstrInstr OR_rm64_imm8sx{{0U, REX::W, B8F::NONE, OPCodeExt::i1, 0x83U}, ArgType::rm64, ArgType::imm8sx_64, false, true};
+/// @brief LOCK OR r/m64, imm8: Atomic r/m64 OR imm8 (sign-extended) with LOCK prefix (0xF0).
+// coverity[autosar_cpp14_m3_4_1_violation]
+constexpr OPCodeTemplate LOCK_OR_rm64_imm8_t{0xF0U, REX::W, B8F::NONE, OPCodeExt::i1, 0x83U};
 /// @brief OR r/m32, imm32: r/m32 OR imm32.
 // coverity[autosar_cpp14_m3_4_1_violation]
 constexpr AbstrInstr OR_rm32_imm32{{0U, REX::NONE, B8F::NONE, OPCodeExt::i1, 0x81U}, ArgType::rm32, ArgType::imm32, false, true};
@@ -527,6 +530,10 @@ constexpr AbstrInstr IMUL_r64_rm64{{0U, REX::W, B8F::NONE, OPCodeExt::R, 0x0FAFU
 /// @brief NEG r/rm64: Two's complement negate r/m64.
 // coverity[autosar_cpp14_m3_4_1_violation]
 constexpr OPCodeTemplate NEG_rm64{0U, REX::W, B8F::NONE, OPCodeExt::i3, 0xF7U};
+
+/// @brief INC r/rm32: Increment r/m32 by 1.
+// coverity[autosar_cpp14_m3_4_1_violation]
+constexpr OPCodeTemplate INC_rm32{0U, REX::NONE, B8F::NONE, OPCodeExt::i0, 0xFFU};
 
 /// @brief CMP r/rm8, imm8: Compare imm8 with r/rm8.
 constexpr OPCodeTemplate CMP_rm8_imm8{0U, REX::NONE, B8F::NONE, OPCodeExt::i7, 0x80U};
@@ -843,6 +850,10 @@ constexpr OPCodeTemplate SAHF_T{0U, REX::NONE, B8F::NONE, OPCodeExt::NONE, 0x9EU
 /// @brief Setcc instruction, takes 8 bit register as operand.
 // coverity[autosar_cpp14_m3_4_1_violation]
 constexpr OPCodeTemplate SETCC_rm8{0U, REX::NONE, B8F::NONE, OPCodeExt::i0, 0x0F90U};
+
+/// @brief MFENCE: Serializes load and store operations.
+// coverity[autosar_cpp14_m3_4_1_violation]
+constexpr OPCodeTemplate MFENCE{0U, REX::NONE, B8F::NONE, OPCodeExt::NONE, 0x0FAEF0U};
 
 /// @brief NOP (1-byte): Single-byte no-operation instruction.
 // coverity[autosar_cpp14_m3_4_1_violation]

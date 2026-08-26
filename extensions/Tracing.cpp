@@ -17,6 +17,7 @@
 #ifndef EXTENSIONS_TRACING_CPP
 #define EXTENSIONS_TRACING_CPP
 
+#include <atomic>
 #include <cassert>
 #include <condition_variable>
 #include <cstddef>
@@ -127,6 +128,9 @@ void TracingExtension::recordOnce(bool const forceSwapOut) {
     if (forceSwapOut || record.needSwapOut()) {
       // set a new clean buffer for the runtime
       it.first->setTraceBuffer(record.swapOut());
+#ifdef VB_WIN32_OR_POSIX
+      std::atomic_thread_fence(std::memory_order_seq_cst);
+#endif
       isSwapOut = true;
     }
   }

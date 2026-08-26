@@ -1074,6 +1074,10 @@ constexpr OPCodeTemplate MSR_NZCV_xT{0xD51B4200U};
 // coverity[autosar_cpp14_m3_4_1_violation]
 constexpr OPCodeTemplate MRS_xT_CNTVCT_EL0{0xD53BE040U};
 
+/// @brief DMB ISH: Data Memory Barrier, Inner Shareable domain, full system access.
+// coverity[autosar_cpp14_m3_4_1_violation]
+constexpr OPCodeTemplate DMB_ISH_t{0xD5033BBFU};
+
 /// @brief Conditional Set sets the destination register to 1 if the condition is TRUE, and otherwise sets it to 0.
 /// The equivalent instruction is CSINC Wd, WZR, WZR, invert(cond).
 /// NOTE: Use setCond(false, ...)
