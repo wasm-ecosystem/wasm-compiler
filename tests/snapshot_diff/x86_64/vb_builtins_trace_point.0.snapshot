@@ -121,7 +121,7 @@ vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
 e9 ab fd ff ff  jmp  6
 eb 04  jmp  0x261
-c8 00 00 00  enter  0, 0
+c8 00 00 00  byte[c8]  
 f3 44 0f 10 3d f3 ff ff ff  movss  xmm15, dword ptr [rip - 0xd]
 e8 93 ff ff ff  call  0x202
 48 8d a4 24 88 00 00 00  lea  rsp, [rsp + 0x88]

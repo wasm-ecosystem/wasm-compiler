@@ -84,8 +84,12 @@ e9 2f fe ff ff  jmp  6
 e8 28 00 00 00  call  0x20c
 f3 0f 11 04 24  movss  dword ptr [rsp], xmm0
 eb 08  jmp  0x1f3
-00 00  add  byte ptr [rax], al
-00 00  add  byte ptr [rax], al
+00 00 00 00  byte[0]  
+00 00 f0 3f  byte[3ff00000]  
+f2 0f 10 05 f0 ff ff ff  movsd  xmm0, qword ptr [rip - 0x10]
+e9 00 00 00 00  jmp  0x200
+48 8d 64 24 08  lea  rsp, [rsp + 8]
+c3  ret  
 00 00  add  byte ptr [rax], al
 48 00 00 00  Size of the function body: 72
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 

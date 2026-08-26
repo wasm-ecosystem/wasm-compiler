@@ -338,10 +338,21 @@ c7 c7 02 00 00 00  mov  edi, 2
 8b 3c be  mov  edi, dword ptr [rsi + rdi*4]
 48 03 f7  add  rsi, rdi
 ff e6  jmp  rsi
-0c 00  or  al, 0
-00 00  add  byte ptr [rax], al
-11 00  adc  dword ptr [rax], eax
-00 00  add  byte ptr [rax], al
+0c 00 00 00  byte[c]  
+11 00 00 00  byte[11]  
+16 00 00 00  byte[16]  
+e9 26 00 00 00  jmp  0x642
+e9 13 00 00 00  jmp  0x634
+e9 00 00 00 00  jmp  0x626
+b8 14 00 00 00  mov  eax, 0x14
+48 8d a4 24 88 00 00 00  lea  rsp, [rsp + 0x88]
+c3  ret  
+b8 0a 00 00 00  mov  eax, 0xa
+48 8d a4 24 88 00 00 00  lea  rsp, [rsp + 0x88]
+c3  ret  
+b8 05 00 00 00  mov  eax, 5
+48 8d a4 24 88 00 00 00  lea  rsp, [rsp + 0x88]
+c3  ret  
 84 00 00 00  Size of the function body: 132
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]

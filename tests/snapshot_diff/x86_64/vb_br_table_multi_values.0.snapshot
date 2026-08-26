@@ -93,9 +93,41 @@ c7 c6 04 00 00 00  mov  esi, 4
 41 8b 34 b1  mov  esi, dword ptr [r9 + rsi*4]
 4c 03 ce  add  r9, rsi
 41 ff e1  jmp  r9
-14 00  adc  al, 0
-00 00  add  byte ptr [rax], al
-19 00  sbb  dword ptr [rax], eax
+14 00 00 00  byte[14]  
+19 00 00 00  byte[19]  
+1e 00 00 00  byte[1e]  
+23 00 00 00  byte[23]  
+28 00 00 00  byte[28]  
+e9 44 00 00 00  jmp  0x272
+e9 2f 00 00 00  jmp  0x262
+e9 1a 00 00 00  jmp  0x252
+e9 05 00 00 00  jmp  0x242
+e9 40 00 00 00  jmp  0x282
+8b f9  mov  edi, ecx
+8b cf  mov  ecx, edi
+83 c1 0a  add  ecx, 0xa
+48 8d a4 24 98 00 00 00  lea  rsp, [rsp + 0x98]
+c3  ret  
+8b f9  mov  edi, ecx
+8b cf  mov  ecx, edi
+83 c1 0b  add  ecx, 0xb
+48 8d a4 24 98 00 00 00  lea  rsp, [rsp + 0x98]
+c3  ret  
+8b f9  mov  edi, ecx
+8b cf  mov  ecx, edi
+83 c1 0c  add  ecx, 0xc
+48 8d a4 24 98 00 00 00  lea  rsp, [rsp + 0x98]
+c3  ret  
+8b f9  mov  edi, ecx
+8b cf  mov  ecx, edi
+83 c1 0d  add  ecx, 0xd
+48 8d a4 24 98 00 00 00  lea  rsp, [rsp + 0x98]
+c3  ret  
+8b f9  mov  edi, ecx
+8b cf  mov  ecx, edi
+83 c1 0e  add  ecx, 0xe
+48 8d a4 24 98 00 00 00  lea  rsp, [rsp + 0x98]
+c3  ret  
 00 00  add  byte ptr [rax], al
 d4 00 00 00  Size of the function body: 212
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
@@ -122,10 +154,14 @@ c7 c7 02 00 00 00  mov  edi, 2
 8b 3c be  mov  edi, dword ptr [rsi + rdi*4]
 48 03 f7  add  rsi, rdi
 ff e6  jmp  rsi
-0c 00  or  al, 0
-00 00  add  byte ptr [rax], al
-11 00  adc  dword ptr [rax], eax
-00 00  add  byte ptr [rax], al
+0c 00 00 00  byte[c]  
+11 00 00 00  byte[11]  
+16 00 00 00  byte[16]  
+e9 b4 ff ff ff  jmp  0x2c0
+e9 05 00 00 00  jmp  0x316
+e9 00 00 00 00  jmp  0x316
+48 8d a4 24 88 00 00 00  lea  rsp, [rsp + 0x88]
+c3  ret  
 88 00 00 00  Size of the function body: 136
 
 Initial Linear Memory Data

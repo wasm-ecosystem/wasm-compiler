@@ -83,14 +83,10 @@ e9 2f fe ff ff  jmp  6
 0f 57 ed  xorps  xmm5, xmm5
 f3 0f 5a e5  cvtss2sd  xmm4, xmm5
 eb 10  jmp  0x1f0
-00 00  add  byte ptr [rax], al
-00 00  add  byte ptr [rax], al
-00 00  add  byte ptr [rax], al
-e0 43  loopne  0x22b
-01 00  add  dword ptr [rax], eax
-00 00  add  byte ptr [rax], al
-00 00  add  byte ptr [rax], al
-e0 c3  loopne  0x1b3
+00 00 00 00  byte[0]  
+00 00 e0 43  byte[43e00000]  
+01 00 00 00  byte[1]  
+00 00 e0 c3  byte[c3e00000]  
 66 0f 2e 25 e8 ff ff ff  ucomisd  xmm4, qword ptr [rip - 0x18]
 73 0c  jae  0x206
 7a 0a  jp  0x206

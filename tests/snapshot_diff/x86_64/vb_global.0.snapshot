@@ -166,9 +166,8 @@ vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
 e9 cf fc ff ff  jmp  6
 eb 04  jmp  0x33d
-00 00  add  byte ptr [rax], al
-40 c0 f3 0f  sal  bl, 0xf
-10 05 f4 ff ff ff  adc  byte ptr [rip - 0xc], al
+00 00 40 c0  byte[c0400000]  
+f3 0f 10 05 f4 ff ff ff  movss  xmm0, dword ptr [rip - 0xc]
 48 8d a4 24 88 00 00 00  lea  rsp, [rsp + 0x88]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -180,10 +179,8 @@ vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
 e9 9b fc ff ff  jmp  6
 eb 08  jmp  0x375
-00 00  add  byte ptr [rax], al
-00 00  add  byte ptr [rax], al
-00 00  add  byte ptr [rax], al
-10 c0  adc  al, al
+00 00 00 00  byte[0]  
+00 00 10 c0  byte[c0100000]  
 f2 0f 10 05 f0 ff ff ff  movsd  xmm0, qword ptr [rip - 0x10]
 48 8d a4 24 88 00 00 00  lea  rsp, [rsp + 0x88]
 c3  ret  
@@ -425,12 +422,10 @@ c7 c5 01 00 00 00  mov  ebp, 1
 8b 2c af  mov  ebp, dword ptr [rdi + rbp*4]
 48 03 fd  add  rdi, rbp
 ff e7  jmp  rdi
-08 00  or  byte ptr [rax], al
-00 00  add  byte ptr [rax], al
-0d 00 00 00 e9  or  eax, 0xe9000000
-05 00 00 00 e9  add  eax, 0xe9000000
-00 00  add  byte ptr [rax], al
-00 00  add  byte ptr [rax], al
+08 00 00 00  byte[8]  
+0d 00 00 00  byte[d]  
+e9 05 00 00 00  jmp  0x799
+e9 00 00 00 00  jmp  0x799
 48 8d a4 24 88 00 00 00  lea  rsp, [rsp + 0x88]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -450,12 +445,10 @@ c7 c5 01 00 00 00  mov  ebp, 1
 8b 2c af  mov  ebp, dword ptr [rdi + rbp*4]
 48 03 fd  add  rdi, rbp
 ff e7  jmp  rdi
-08 00  or  byte ptr [rax], al
-00 00  add  byte ptr [rax], al
-0d 00 00 00 e9  or  eax, 0xe9000000
-05 00 00 00 e9  add  eax, 0xe9000000
-00 00  add  byte ptr [rax], al
-00 00  add  byte ptr [rax], al
+08 00 00 00  byte[8]  
+0d 00 00 00  byte[d]  
+e9 05 00 00 00  jmp  0x7f9
+e9 00 00 00 00  jmp  0x7f9
 48 8d a4 24 88 00 00 00  lea  rsp, [rsp + 0x88]
 c3  ret  
 00 00  add  byte ptr [rax], al

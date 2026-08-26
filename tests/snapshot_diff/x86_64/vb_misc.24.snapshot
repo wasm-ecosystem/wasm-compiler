@@ -84,16 +84,16 @@ bd 01 00 00 00  mov  ebp, 1
 48 85 ed  test  rbp, rbp
 75 14  jne  0x1f5
 eb 08  jmp  0x1eb
-00 00  add  byte ptr [rax], al
-00 00  add  byte ptr [rax], al
-00 00  add  byte ptr [rax], al
-00 40 f2  add  byte ptr [rax - 0xe], al
-0f 10 05 f0 ff ff ff  movups  xmm0, xmmword ptr [rip - 0x10]
+00 00 00 00  byte[0]  
+00 00 00 40  byte[40000000]  
+f2 0f 10 05 f0 ff ff ff  movsd  xmm0, qword ptr [rip - 0x10]
 eb 12  jmp  0x207
 eb 08  jmp  0x1ff
-00 00  add  byte ptr [rax], al
-00 00  add  byte ptr [rax], al
-00 00  add  byte ptr [rax], al
+00 00 00 00  byte[0]  
+00 00 f0 3f  byte[3ff00000]  
+f2 0f 10 05 f0 ff ff ff  movsd  xmm0, qword ptr [rip - 0x10]
+48 8d a4 24 88 00 00 00  lea  rsp, [rsp + 0x88]
+c3  ret  
 50 00 00 00  Size of the function body: 80
 
 Initial Linear Memory Data

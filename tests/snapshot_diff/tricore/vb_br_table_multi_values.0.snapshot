@@ -51,7 +51,36 @@ d9 bc 12 00  lea  a12, [a11]#0x12
 54 d7  ld.w  d7, [a13]
 01 c7 00 c6  addsc.a  a12, a12, d7, #0
 dc 0c  ji  a12
-14 00  ld.bu  d0, [a0]
+14 00 00 00  byte[14]  
+18 00 00 00  byte[18]  
+1c 00 00 00  byte[1c]  
+20 00 00 00  byte[20]  
+24 00 00 00  byte[24]  
+1d 00 1c 00  j  #0xea
+1d 00 14 00  j  #0xde
+1d 00 0c 00  j  #0xd2
+1d 00 04 00  j  #0xc6
+1d 00 1a 00  j  #0xf6
+02 39  mov  d9, d3
+1b a9 00 30  addi  d3, d9, #0xa
+d9 aa 14 20  lea  sp, [sp]#0x94
+00 70  fret  
+02 39  mov  d9, d3
+1b b9 00 30  addi  d3, d9, #0xb
+d9 aa 14 20  lea  sp, [sp]#0x94
+00 70  fret  
+02 39  mov  d9, d3
+1b c9 00 30  addi  d3, d9, #0xc
+d9 aa 14 20  lea  sp, [sp]#0x94
+00 70  fret  
+02 39  mov  d9, d3
+1b d9 00 30  addi  d3, d9, #0xd
+d9 aa 14 20  lea  sp, [sp]#0x94
+00 70  fret  
+02 39  mov  d9, d3
+1b e9 00 30  addi  d3, d9, #0xe
+d9 aa 14 20  lea  sp, [sp]#0x94
+00 70  fret  
 00 00  nop  
 bc 00 00 00  Size of the function body: 188
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
@@ -85,12 +114,9 @@ d9 bc 12 00  lea  a12, [a11]#0x12
 54 d6  ld.w  d6, [a13]
 01 c6 00 c6  addsc.a  a12, a12, d6, #0
 dc 0c  ji  a12
-0c 00  ld.bu  d15, [a0]#0
-00 00  nop  
-10 00  addsc.a  a0, a0, d15, #0
-00 00  nop  
-14 00  ld.bu  d0, [a0]
-00 00  nop  
+0c 00 00 00  byte[c]  
+10 00 00 00  byte[10]  
+14 00 00 00  byte[14]  
 1d ff de ff  j  #0x130
 1d 00 04 00  j  #0x180
 1d 00 02 00  j  #0x180

@@ -59,6 +59,7 @@ def run(case_path: str, args) -> bool:
             continue
 
         compiler = module.Compiler()
+        compiler.enable_dwarf(True)
         # Register import globals for test cases
         compiler.register_global("test", "global_i32", module.WasmType.I32, "666")
         compiler.register_global("test", "global_i64", module.WasmType.I64, "666")

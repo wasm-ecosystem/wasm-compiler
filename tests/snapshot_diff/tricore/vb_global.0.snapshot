@@ -505,10 +505,8 @@ d9 bc 12 00  lea  a12, [a11]#0x12
 54 d9  ld.w  d9, [a13]
 01 c9 00 c6  addsc.a  a12, a12, d9, #0
 dc 0c  ji  a12
-08 00  ld.bu  d0, [a15]#0
-00 00  nop  
-0c 00  ld.bu  d15, [a0]#0
-00 00  nop  
+08 00 00 00  byte[8]  
+0c 00 00 00  byte[c]  
 1d 00 04 00  j  #0x644
 1d 00 02 00  j  #0x644
 d9 aa 04 20  lea  sp, [sp]#0x84
@@ -536,10 +534,8 @@ d9 bc 12 00  lea  a12, [a11]#0x12
 54 d9  ld.w  d9, [a13]
 01 c9 00 c6  addsc.a  a12, a12, d9, #0
 dc 0c  ji  a12
-08 00  ld.bu  d0, [a15]#0
-00 00  nop  
-0c 00  ld.bu  d15, [a0]#0
-00 00  nop  
+08 00 00 00  byte[8]  
+0c 00 00 00  byte[c]  
 1d 00 04 00  j  #0x6a0
 1d 00 02 00  j  #0x6a0
 d9 aa 04 20  lea  sp, [sp]#0x84

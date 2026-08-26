@@ -99,6 +99,7 @@ def load_backend(backend: str):
 
 def create_compiler(module):
     compiler = module.Compiler()
+    compiler.enable_dwarf(True)
     compiler.register_global("spectest", "global_i32", module.WasmType.I32, "666")
     compiler.register_global("spectest", "global_i64", module.WasmType.I64, "666")
     compiler.register_global("spectest", "global_f32", module.WasmType.F32, "666.6")

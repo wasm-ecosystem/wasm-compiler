@@ -91,8 +91,21 @@ vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
 e9 07 fe ff ff  jmp  6
 eb 08  jmp  0x209
-00 00  add  byte ptr [rax], al
-00 00  add  byte ptr [rax], al
+00 00 00 00  byte[0]  
+00 00 f0 3f  byte[3ff00000]  
+f2 0f 10 25 f0 ff ff ff  movsd  xmm4, qword ptr [rip - 0x10]
+eb 04  jmp  0x217
+00 00 00 40  byte[40000000]  
+f3 0f 10 2d f4 ff ff ff  movss  xmm5, dword ptr [rip - 0xc]
+f2 0f 11 a4 24 90 00 00 00  movsd  qword ptr [rsp + 0x90], xmm4
+f3 0f 11 ac 24 88 00 00 00  movss  dword ptr [rsp + 0x88], xmm5
+48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
+66 49 0f 7e ed  movq  r13, xmm5
+f2 0f 10 ec  movsd  xmm5, xmm4
+66 49 0f 6e e5  movq  xmm4, r13
+e8 74 ff ff ff  call  0x1c0
+48 8d 64 24 18  lea  rsp, [rsp + 0x18]
+c3  ret  
 00 00  add  byte ptr [rax], al
 6c 00 00 00  Size of the function body: 108
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 

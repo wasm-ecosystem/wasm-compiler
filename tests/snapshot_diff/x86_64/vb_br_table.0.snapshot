@@ -90,15 +90,27 @@ c7 c7 03 00 00 00  mov  edi, 3
 8b 3c be  mov  edi, dword ptr [rsi + rdi*4]
 48 03 f7  add  rsi, rdi
 ff e6  jmp  rsi
-10 00  adc  byte ptr [rax], al
+10 00 00 00  byte[10]  
+15 00 00 00  byte[15]  
+1a 00 00 00  byte[1a]  
+1f 00 00 00  byte[1f]  
+e9 0f 00 00 00  jmp  0x226
+e9 16 00 00 00  jmp  0x232
+e9 1d 00 00 00  jmp  0x23e
+e9 24 00 00 00  jmp  0x24a
+83 c0 0a  add  eax, 0xa
+48 8d a4 24 88 00 00 00  lea  rsp, [rsp + 0x88]
+c3  ret  
+83 c0 14  add  eax, 0x14
+48 8d a4 24 88 00 00 00  lea  rsp, [rsp + 0x88]
+c3  ret  
+83 c0 1e  add  eax, 0x1e
+48 8d a4 24 88 00 00 00  lea  rsp, [rsp + 0x88]
+c3  ret  
+83 c0 28  add  eax, 0x28
+48 8d a4 24 88 00 00 00  lea  rsp, [rsp + 0x88]
+c3  ret  
 00 00  add  byte ptr [rax], al
-15 00 00 00 1a  adc  eax, 0x1a000000
-00 00  add  byte ptr [rax], al
-00 1f  add  byte ptr [rdi], bl
-00 00  add  byte ptr [rax], al
-00 e9  add  cl, ch
-0f 00 00  sldt  word ptr [rax]
-00 e9  add  cl, ch
 98 00 00 00  Size of the function body: 152
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
@@ -116,16 +128,91 @@ c7 c7 10 00 00 00  mov  edi, 0x10
 8b 3c be  mov  edi, dword ptr [rsi + rdi*4]
 48 03 f7  add  rsi, rdi
 ff e6  jmp  rsi
-44 00 00  add  byte ptr [rax], r8b
-00 49 00  add  byte ptr [rcx], cl
-00 00  add  byte ptr [rax], al
-4e 00 00  add  byte ptr [rax], r8b
-00 53 00  add  byte ptr [rbx], dl
-00 00  add  byte ptr [rax], al
-58  pop  rax
-00 00  add  byte ptr [rax], al
-00 5d 00  add  byte ptr [rbp], bl
-00 00  add  byte ptr [rax], al
+44 00 00 00  byte[44]  
+49 00 00 00  byte[49]  
+4e 00 00 00  byte[4e]  
+53 00 00 00  byte[53]  
+58 00 00 00  byte[58]  
+5d 00 00 00  byte[5d]  
+62 00 00 00  byte[62]  
+67 00 00 00  byte[67]  
+6c 00 00 00  byte[6c]  
+71 00 00 00  byte[71]  
+76 00 00 00  byte[76]  
+7b 00 00 00  byte[7b]  
+80 00 00 00  byte[80]  
+85 00 00 00  byte[85]  
+8a 00 00 00  byte[8a]  
+8f 00 00 00  byte[8f]  
+94 00 00 00  byte[94]  
+e9 50 00 00 00  jmp  0x337
+e9 57 00 00 00  jmp  0x343
+e9 5e 00 00 00  jmp  0x34f
+e9 65 00 00 00  jmp  0x35b
+e9 6c 00 00 00  jmp  0x367
+e9 73 00 00 00  jmp  0x373
+e9 7a 00 00 00  jmp  0x37f
+e9 81 00 00 00  jmp  0x38b
+e9 88 00 00 00  jmp  0x397
+e9 8f 00 00 00  jmp  0x3a3
+e9 96 00 00 00  jmp  0x3af
+e9 9d 00 00 00  jmp  0x3bb
+e9 a4 00 00 00  jmp  0x3c7
+e9 ab 00 00 00  jmp  0x3d3
+e9 b2 00 00 00  jmp  0x3df
+e9 b9 00 00 00  jmp  0x3eb
+e9 c0 00 00 00  jmp  0x3f7
+83 c0 00  add  eax, 0
+48 8d a4 24 88 00 00 00  lea  rsp, [rsp + 0x88]
+c3  ret  
+83 c0 01  add  eax, 1
+48 8d a4 24 88 00 00 00  lea  rsp, [rsp + 0x88]
+c3  ret  
+83 c0 02  add  eax, 2
+48 8d a4 24 88 00 00 00  lea  rsp, [rsp + 0x88]
+c3  ret  
+83 c0 03  add  eax, 3
+48 8d a4 24 88 00 00 00  lea  rsp, [rsp + 0x88]
+c3  ret  
+83 c0 04  add  eax, 4
+48 8d a4 24 88 00 00 00  lea  rsp, [rsp + 0x88]
+c3  ret  
+83 c0 05  add  eax, 5
+48 8d a4 24 88 00 00 00  lea  rsp, [rsp + 0x88]
+c3  ret  
+83 c0 06  add  eax, 6
+48 8d a4 24 88 00 00 00  lea  rsp, [rsp + 0x88]
+c3  ret  
+83 c0 07  add  eax, 7
+48 8d a4 24 88 00 00 00  lea  rsp, [rsp + 0x88]
+c3  ret  
+83 c0 08  add  eax, 8
+48 8d a4 24 88 00 00 00  lea  rsp, [rsp + 0x88]
+c3  ret  
+83 c0 09  add  eax, 9
+48 8d a4 24 88 00 00 00  lea  rsp, [rsp + 0x88]
+c3  ret  
+83 c0 0a  add  eax, 0xa
+48 8d a4 24 88 00 00 00  lea  rsp, [rsp + 0x88]
+c3  ret  
+83 c0 0b  add  eax, 0xb
+48 8d a4 24 88 00 00 00  lea  rsp, [rsp + 0x88]
+c3  ret  
+83 c0 0c  add  eax, 0xc
+48 8d a4 24 88 00 00 00  lea  rsp, [rsp + 0x88]
+c3  ret  
+83 c0 0d  add  eax, 0xd
+48 8d a4 24 88 00 00 00  lea  rsp, [rsp + 0x88]
+c3  ret  
+83 c0 0e  add  eax, 0xe
+48 8d a4 24 88 00 00 00  lea  rsp, [rsp + 0x88]
+c3  ret  
+83 c0 0f  add  eax, 0xf
+48 8d a4 24 88 00 00 00  lea  rsp, [rsp + 0x88]
+c3  ret  
+83 c0 10  add  eax, 0x10
+48 8d a4 24 88 00 00 00  lea  rsp, [rsp + 0x88]
+c3  ret  
 a8 01 00 00  Size of the function body: 424
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
@@ -143,30 +230,81 @@ c7 c7 0e 00 00 00  mov  edi, 0xe
 8b 3c be  mov  edi, dword ptr [rsi + rdi*4]
 48 03 f7  add  rsi, rdi
 ff e6  jmp  rsi
-3c 00  cmp  al, 0
-00 00  add  byte ptr [rax], al
-41 00 00  add  byte ptr [r8], al
-00 46 00  add  byte ptr [rsi], al
-00 00  add  byte ptr [rax], al
-4b 00 00  add  byte ptr [r8], al
-00 50 00  add  byte ptr [rax], dl
-00 00  add  byte ptr [rax], al
-55  push  rbp
-00 00  add  byte ptr [rax], al
-00 5a 00  add  byte ptr [rdx], bl
-00 00  add  byte ptr [rax], al
-5f  pop  rdi
-00 00  add  byte ptr [rax], al
-00 64 00 00  add  byte ptr [rax + rax], ah
-00 69 00  add  byte ptr [rcx], ch
-00 00  add  byte ptr [rax], al
-6e  outsb  dx, byte ptr [rsi]
-00 00  add  byte ptr [rax], al
-00 73 00  add  byte ptr [rbx], dh
-00 00  add  byte ptr [rax], al
-78 00  js  0x47c
-00 00  add  byte ptr [rax], al
-7d 00  jge  0x480
+3c 00 00 00  byte[3c]  
+41 00 00 00  byte[41]  
+46 00 00 00  byte[46]  
+4b 00 00 00  byte[4b]  
+50 00 00 00  byte[50]  
+55 00 00 00  byte[55]  
+5a 00 00 00  byte[5a]  
+5f 00 00 00  byte[5f]  
+64 00 00 00  byte[64]  
+69 00 00 00  byte[69]  
+6e 00 00 00  byte[6e]  
+73 00 00 00  byte[73]  
+78 00 00 00  byte[78]  
+7d 00 00 00  byte[7d]  
+82 00 00 00  byte[82]  
+e9 46 00 00 00  jmp  0x4d1
+e9 4d 00 00 00  jmp  0x4dd
+e9 54 00 00 00  jmp  0x4e9
+e9 5b 00 00 00  jmp  0x4f5
+e9 62 00 00 00  jmp  0x501
+e9 69 00 00 00  jmp  0x50d
+e9 70 00 00 00  jmp  0x519
+e9 77 00 00 00  jmp  0x525
+e9 7e 00 00 00  jmp  0x531
+e9 85 00 00 00  jmp  0x53d
+e9 8c 00 00 00  jmp  0x549
+e9 93 00 00 00  jmp  0x555
+e9 9a 00 00 00  jmp  0x561
+e9 a1 00 00 00  jmp  0x56d
+e9 a8 00 00 00  jmp  0x579
+83 c0 00  add  eax, 0
+48 8d a4 24 88 00 00 00  lea  rsp, [rsp + 0x88]
+c3  ret  
+83 c0 01  add  eax, 1
+48 8d a4 24 88 00 00 00  lea  rsp, [rsp + 0x88]
+c3  ret  
+83 c0 02  add  eax, 2
+48 8d a4 24 88 00 00 00  lea  rsp, [rsp + 0x88]
+c3  ret  
+83 c0 03  add  eax, 3
+48 8d a4 24 88 00 00 00  lea  rsp, [rsp + 0x88]
+c3  ret  
+83 c0 04  add  eax, 4
+48 8d a4 24 88 00 00 00  lea  rsp, [rsp + 0x88]
+c3  ret  
+83 c0 05  add  eax, 5
+48 8d a4 24 88 00 00 00  lea  rsp, [rsp + 0x88]
+c3  ret  
+83 c0 06  add  eax, 6
+48 8d a4 24 88 00 00 00  lea  rsp, [rsp + 0x88]
+c3  ret  
+83 c0 07  add  eax, 7
+48 8d a4 24 88 00 00 00  lea  rsp, [rsp + 0x88]
+c3  ret  
+83 c0 08  add  eax, 8
+48 8d a4 24 88 00 00 00  lea  rsp, [rsp + 0x88]
+c3  ret  
+83 c0 09  add  eax, 9
+48 8d a4 24 88 00 00 00  lea  rsp, [rsp + 0x88]
+c3  ret  
+83 c0 0a  add  eax, 0xa
+48 8d a4 24 88 00 00 00  lea  rsp, [rsp + 0x88]
+c3  ret  
+83 c0 0b  add  eax, 0xb
+48 8d a4 24 88 00 00 00  lea  rsp, [rsp + 0x88]
+c3  ret  
+83 c0 0c  add  eax, 0xc
+48 8d a4 24 88 00 00 00  lea  rsp, [rsp + 0x88]
+c3  ret  
+83 c0 0d  add  eax, 0xd
+48 8d a4 24 88 00 00 00  lea  rsp, [rsp + 0x88]
+c3  ret  
+83 c0 0e  add  eax, 0xe
+48 8d a4 24 88 00 00 00  lea  rsp, [rsp + 0x88]
+c3  ret  
 00 00  add  byte ptr [rax], al
 80 01 00 00  Size of the function body: 384
 

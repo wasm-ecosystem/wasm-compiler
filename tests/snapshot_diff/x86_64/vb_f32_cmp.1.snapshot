@@ -82,15 +82,14 @@ vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B
 e9 2f fe ff ff  jmp  6
 0f 57 e4  xorps  xmm4, xmm4
 eb 04  jmp  0x1e0
-00 00  add  byte ptr [rax], al
-c8 42 f3 0f  enter  -0xcbe, 0xf
-10 2d f4 ff ff ff  adc  byte ptr [rip - 0xc], ch
+00 00 c8 42  byte[42c80000]  
+f3 0f 10 2d f4 ff ff ff  movss  xmm5, dword ptr [rip - 0xc]
 0f 2e ec  ucomiss  xmm5, xmm4
 7b 0e  jnp  0x1fb
 f3 0f 10 2d 02 00 00 00  movss  xmm5, dword ptr [rip + 2]
 eb 11  jmp  0x208
-00 00  add  byte ptr [rax], al
-c0 7f 75 05  sar  byte ptr [rdi + 0x75], 5
+00 00 c0 7f  byte[7fc00000]  
+75 05  jne  0x202
 0f 56 ec  orps  xmm5, xmm4
 eb 06  jmp  0x208
 76 04  jbe  0x208

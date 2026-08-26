@@ -93,13 +93,11 @@ e9 0b fe ff ff  jmp  6
 e8 b8 ff ff ff  call  0x1c0
 b8 01 00 00 00  mov  eax, 1
 eb 04  jmp  0x213
-00 00  add  byte ptr [rax], al
-80 3f f3  cmp  byte ptr [rdi], 0xf3
-0f 10 25 f4 ff ff ff  movups  xmm4, xmmword ptr [rip - 0xc]
+00 00 80 3f  byte[3f800000]  
+f3 0f 10 25 f4 ff ff ff  movss  xmm4, dword ptr [rip - 0xc]
 eb 04  jmp  0x221
-00 00  add  byte ptr [rax], al
-00 40 f3  add  byte ptr [rax - 0xd], al
-0f 10 2d f4 ff ff ff  movups  xmm5, xmmword ptr [rip - 0xc]
+00 00 00 40  byte[40000000]  
+f3 0f 10 2d f4 ff ff ff  movss  xmm5, dword ptr [rip - 0xc]
 0f 2e e5  ucomiss  xmm4, xmm5
 7a 02  jp  0x230
 74 0a  je  0x23a

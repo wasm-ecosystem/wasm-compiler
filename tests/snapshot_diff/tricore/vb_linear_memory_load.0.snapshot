@@ -712,12 +712,9 @@ d9 bc 12 00  lea  a12, [a11]#0x12
 54 d9  ld.w  d9, [a13]
 01 c9 00 c6  addsc.a  a12, a12, d9, #0
 dc 0c  ji  a12
-0c 00  ld.bu  d15, [a0]#0
-00 00  nop  
-10 00  addsc.a  a0, a0, d15, #0
-00 00  nop  
-14 00  ld.bu  d0, [a0]
-00 00  nop  
+0c 00 00 00  byte[c]  
+10 00 00 00  byte[10]  
+14 00 00 00  byte[14]  
 1d 00 10 00  j  #0x87a
 1d 00 09 00  j  #0x870
 1d 00 02 00  j  #0x866

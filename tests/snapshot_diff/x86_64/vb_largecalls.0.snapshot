@@ -192,23 +192,39 @@ c7 84 24 38 01 00 00 00 00 40 42  mov  dword ptr [rsp + 0x138], 0x42400000
 c7 84 24 40 01 00 00 00 00 44 42  mov  dword ptr [rsp + 0x140], 0x42440000
 c7 84 24 48 01 00 00 00 00 48 42  mov  dword ptr [rsp + 0x148], 0x42480000
 eb 04  jmp  0x5aa
-00 00  add  byte ptr [rax], al
-80 3f f3  cmp  byte ptr [rdi], 0xf3
-0f 10 05 f4 ff ff ff  movups  xmm0, xmmword ptr [rip - 0xc]
+00 00 80 3f  byte[3f800000]  
+f3 0f 10 05 f4 ff ff ff  movss  xmm0, dword ptr [rip - 0xc]
 eb 04  jmp  0x5b8
-00 00  add  byte ptr [rax], al
-00 40 f3  add  byte ptr [rax - 0xd], al
-0f 10 0d f4 ff ff ff  movups  xmm1, xmmword ptr [rip - 0xc]
+00 00 00 40  byte[40000000]  
+f3 0f 10 0d f4 ff ff ff  movss  xmm1, dword ptr [rip - 0xc]
 eb 04  jmp  0x5c6
-00 00  add  byte ptr [rax], al
-40 40 f3 0f 10 15 f4 ff ff ff  movss  xmm2, dword ptr [rip - 0xc]
+00 00 40 40  byte[40400000]  
+f3 0f 10 15 f4 ff ff ff  movss  xmm2, dword ptr [rip - 0xc]
 eb 04  jmp  0x5d4
-00 00  add  byte ptr [rax], al
-80 40 f3 0f  add  byte ptr [rax - 0xd], 0xf
-10 1d f4 ff ff ff  adc  byte ptr [rip - 0xc], bl
+00 00 80 40  byte[40800000]  
+f3 0f 10 1d f4 ff ff ff  movss  xmm3, dword ptr [rip - 0xc]
 eb 04  jmp  0x5e2
+00 00 a0 40  byte[40a00000]  
+f3 0f 10 25 f4 ff ff ff  movss  xmm4, dword ptr [rip - 0xc]
+eb 04  jmp  0x5f0
+00 00 c0 40  byte[40c00000]  
+f3 0f 10 2d f4 ff ff ff  movss  xmm5, dword ptr [rip - 0xc]
+eb 04  jmp  0x5fe
+00 00 e0 40  byte[40e00000]  
+f3 0f 10 35 f4 ff ff ff  movss  xmm6, dword ptr [rip - 0xc]
+eb 04  jmp  0x60c
+00 00 00 41  byte[41000000]  
+f3 0f 10 3d f4 ff ff ff  movss  xmm7, dword ptr [rip - 0xc]
+48 8b 7b b8  mov  rdi, qword ptr [rbx - 0x48]
+b8 0e 00 00 00  mov  eax, 0xe
+e9 e4 f9 ff ff  jmp  6
+80 7b f8 00  cmp  byte ptr [rbx - 8], 0
+74 09  je  0x631
+0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
+e9 d5 f9 ff ff  jmp  6
+48 8d a4 24 58 01 00 00  lea  rsp, [rsp + 0x158]
+c3  ret  
 00 00  add  byte ptr [rax], al
-a0 40 f3 0f 10 25 f4 ff ff  movabs  al, byte ptr [0xfffff425100ff340]
 54 02 00 00  Size of the function body: 596
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
@@ -306,23 +322,44 @@ c7 84 24 a8 02 00 00 32 00 00 00  mov  dword ptr [rsp + 0x2a8], 0x32
 f2 44 0f 10 7b b8  movsd  xmm15, qword ptr [rbx - 0x48]
 f2 44 0f 11 bc 24 b0 02 00 00  movsd  qword ptr [rsp + 0x2b0], xmm15
 eb 04  jmp  0x9f6
-00 00  add  byte ptr [rax], al
-80 3f f3  cmp  byte ptr [rdi], 0xf3
-0f 10 05 f4 ff ff ff  movups  xmm0, xmmword ptr [rip - 0xc]
+00 00 80 3f  byte[3f800000]  
+f3 0f 10 05 f4 ff ff ff  movss  xmm0, dword ptr [rip - 0xc]
 eb 04  jmp  0xa04
-00 00  add  byte ptr [rax], al
-00 40 f3  add  byte ptr [rax - 0xd], al
-0f 10 0d f4 ff ff ff  movups  xmm1, xmmword ptr [rip - 0xc]
+00 00 00 40  byte[40000000]  
+f3 0f 10 0d f4 ff ff ff  movss  xmm1, dword ptr [rip - 0xc]
 eb 04  jmp  0xa12
-00 00  add  byte ptr [rax], al
-40 40 f3 0f 10 15 f4 ff ff ff  movss  xmm2, dword ptr [rip - 0xc]
+00 00 40 40  byte[40400000]  
+f3 0f 10 15 f4 ff ff ff  movss  xmm2, dword ptr [rip - 0xc]
 eb 04  jmp  0xa20
-00 00  add  byte ptr [rax], al
-80 40 f3 0f  add  byte ptr [rax - 0xd], 0xf
-10 1d f4 ff ff ff  adc  byte ptr [rip - 0xc], bl
+00 00 80 40  byte[40800000]  
+f3 0f 10 1d f4 ff ff ff  movss  xmm3, dword ptr [rip - 0xc]
 eb 04  jmp  0xa2e
+00 00 a0 40  byte[40a00000]  
+f3 0f 10 25 f4 ff ff ff  movss  xmm4, dword ptr [rip - 0xc]
+eb 04  jmp  0xa3c
+00 00 c0 40  byte[40c00000]  
+f3 0f 10 2d f4 ff ff ff  movss  xmm5, dword ptr [rip - 0xc]
+eb 04  jmp  0xa4a
+00 00 e0 40  byte[40e00000]  
+f3 0f 10 35 f4 ff ff ff  movss  xmm6, dword ptr [rip - 0xc]
+eb 04  jmp  0xa58
+00 00 00 41  byte[41000000]  
+f3 0f 10 3d f4 ff ff ff  movss  xmm7, dword ptr [rip - 0xc]
+bf 01 00 00 00  mov  edi, 1
+be 02 00 00 00  mov  esi, 2
+ba 03 00 00 00  mov  edx, 3
+b9 04 00 00 00  mov  ecx, 4
+41 b8 05 00 00 00  mov  r8d, 5
+41 b9 06 00 00 00  mov  r9d, 6
+b8 0e 00 00 00  mov  eax, 0xe
+e9 7c f5 ff ff  jmp  6
+80 7b f8 00  cmp  byte ptr [rbx - 8], 0
+74 09  je  0xa99
+0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
+e9 6d f5 ff ff  jmp  6
+48 8d a4 24 b8 02 00 00  lea  rsp, [rsp + 0x2b8]
+c3  ret  
 00 00  add  byte ptr [rax], al
-a0 40 f3 0f 10 25 f4 ff ff  movabs  al, byte ptr [0xfffff425100ff340]
 64 04 00 00  Size of the function body: 1124
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
@@ -426,23 +463,38 @@ b9 04 00 00 00  mov  ecx, 4
 41 b8 05 00 00 00  mov  r8d, 5
 41 b9 06 00 00 00  mov  r9d, 6
 eb 04  jmp  0xe7e
-00 00  add  byte ptr [rax], al
-80 3f f3  cmp  byte ptr [rdi], 0xf3
-0f 10 05 f4 ff ff ff  movups  xmm0, xmmword ptr [rip - 0xc]
+00 00 80 3f  byte[3f800000]  
+f3 0f 10 05 f4 ff ff ff  movss  xmm0, dword ptr [rip - 0xc]
 eb 04  jmp  0xe8c
-00 00  add  byte ptr [rax], al
-00 40 f3  add  byte ptr [rax - 0xd], al
-0f 10 0d f4 ff ff ff  movups  xmm1, xmmword ptr [rip - 0xc]
+00 00 00 40  byte[40000000]  
+f3 0f 10 0d f4 ff ff ff  movss  xmm1, dword ptr [rip - 0xc]
 eb 04  jmp  0xe9a
-00 00  add  byte ptr [rax], al
-40 40 f3 0f 10 15 f4 ff ff ff  movss  xmm2, dword ptr [rip - 0xc]
+00 00 40 40  byte[40400000]  
+f3 0f 10 15 f4 ff ff ff  movss  xmm2, dword ptr [rip - 0xc]
 eb 04  jmp  0xea8
-00 00  add  byte ptr [rax], al
-80 40 f3 0f  add  byte ptr [rax - 0xd], 0xf
-10 1d f4 ff ff ff  adc  byte ptr [rip - 0xc], bl
+00 00 80 40  byte[40800000]  
+f3 0f 10 1d f4 ff ff ff  movss  xmm3, dword ptr [rip - 0xc]
 eb 04  jmp  0xeb6
+00 00 a0 40  byte[40a00000]  
+f3 0f 10 25 f4 ff ff ff  movss  xmm4, dword ptr [rip - 0xc]
+eb 04  jmp  0xec4
+00 00 c0 40  byte[40c00000]  
+f3 0f 10 2d f4 ff ff ff  movss  xmm5, dword ptr [rip - 0xc]
+eb 04  jmp  0xed2
+00 00 e0 40  byte[40e00000]  
+f3 0f 10 35 f4 ff ff ff  movss  xmm6, dword ptr [rip - 0xc]
+eb 04  jmp  0xee0
+00 00 00 41  byte[41000000]  
+f3 0f 10 3d f4 ff ff ff  movss  xmm7, dword ptr [rip - 0xc]
+b8 0e 00 00 00  mov  eax, 0xe
+e9 14 f1 ff ff  jmp  6
+80 7b f8 00  cmp  byte ptr [rbx - 8], 0
+74 09  je  0xf01
+0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
+e9 05 f1 ff ff  jmp  6
+48 8d a4 24 b8 02 00 00  lea  rsp, [rsp + 0x2b8]
+c3  ret  
 00 00  add  byte ptr [rax], al
-a0 40 f3 0f 10 25 f4 ff ff  movabs  al, byte ptr [0xfffff425100ff340]
 64 04 00 00  Size of the function body: 1124
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
@@ -541,28 +593,43 @@ f2 44 0f 10 7b b8  movsd  xmm15, qword ptr [rbx - 0x48]
 f2 44 0f 11 bc 24 b0 02 00 00  movsd  qword ptr [rsp + 0x2b0], xmm15
 bf 01 00 00 00  mov  edi, 1
 eb 04  jmp  0x12cb
-00 00  add  byte ptr [rax], al
-80 3f f3  cmp  byte ptr [rdi], 0xf3
-0f 10 05 f4 ff ff ff  movups  xmm0, xmmword ptr [rip - 0xc]
+00 00 80 3f  byte[3f800000]  
+f3 0f 10 05 f4 ff ff ff  movss  xmm0, dword ptr [rip - 0xc]
 be 02 00 00 00  mov  esi, 2
 eb 04  jmp  0x12de
-00 00  add  byte ptr [rax], al
-00 40 f3  add  byte ptr [rax - 0xd], al
-0f 10 0d f4 ff ff ff  movups  xmm1, xmmword ptr [rip - 0xc]
+00 00 00 40  byte[40000000]  
+f3 0f 10 0d f4 ff ff ff  movss  xmm1, dword ptr [rip - 0xc]
 ba 03 00 00 00  mov  edx, 3
 eb 04  jmp  0x12f1
-00 00  add  byte ptr [rax], al
-40 40 f3 0f 10 15 f4 ff ff ff  movss  xmm2, dword ptr [rip - 0xc]
+00 00 40 40  byte[40400000]  
+f3 0f 10 15 f4 ff ff ff  movss  xmm2, dword ptr [rip - 0xc]
 b9 04 00 00 00  mov  ecx, 4
 eb 04  jmp  0x1304
-00 00  add  byte ptr [rax], al
-80 40 f3 0f  add  byte ptr [rax - 0xd], 0xf
-10 1d f4 ff ff ff  adc  byte ptr [rip - 0xc], bl
+00 00 80 40  byte[40800000]  
+f3 0f 10 1d f4 ff ff ff  movss  xmm3, dword ptr [rip - 0xc]
 41 b8 05 00 00 00  mov  r8d, 5
 eb 04  jmp  0x1318
+00 00 a0 40  byte[40a00000]  
+f3 0f 10 25 f4 ff ff ff  movss  xmm4, dword ptr [rip - 0xc]
+41 b9 06 00 00 00  mov  r9d, 6
+eb 04  jmp  0x132c
+00 00 c0 40  byte[40c00000]  
+f3 0f 10 2d f4 ff ff ff  movss  xmm5, dword ptr [rip - 0xc]
+eb 04  jmp  0x133a
+00 00 e0 40  byte[40e00000]  
+f3 0f 10 35 f4 ff ff ff  movss  xmm6, dword ptr [rip - 0xc]
+eb 04  jmp  0x1348
+00 00 00 41  byte[41000000]  
+f3 0f 10 3d f4 ff ff ff  movss  xmm7, dword ptr [rip - 0xc]
+b8 0e 00 00 00  mov  eax, 0xe
+e9 ac ec ff ff  jmp  6
+80 7b f8 00  cmp  byte ptr [rbx - 8], 0
+74 09  je  0x1369
+0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
+e9 9d ec ff ff  jmp  6
+48 8d a4 24 b8 02 00 00  lea  rsp, [rsp + 0x2b8]
+c3  ret  
 00 00  add  byte ptr [rax], al
-a0 40 f3 0f 10 25 f4 ff ff  movabs  al, byte ptr [0xfffff425100ff340]
-ff 41 b9  inc  dword ptr [rcx - 0x47]
 64 04 00 00  Size of the function body: 1124
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
@@ -661,28 +728,43 @@ f2 44 0f 10 7b b8  movsd  xmm15, qword ptr [rbx - 0x48]
 f2 44 0f 11 bc 24 b0 02 00 00  movsd  qword ptr [rsp + 0x2b0], xmm15
 bf 01 00 00 00  mov  edi, 1
 eb 04  jmp  0x1733
-00 00  add  byte ptr [rax], al
-80 3f f3  cmp  byte ptr [rdi], 0xf3
-0f 10 05 f4 ff ff ff  movups  xmm0, xmmword ptr [rip - 0xc]
+00 00 80 3f  byte[3f800000]  
+f3 0f 10 05 f4 ff ff ff  movss  xmm0, dword ptr [rip - 0xc]
 be 02 00 00 00  mov  esi, 2
 eb 04  jmp  0x1746
-00 00  add  byte ptr [rax], al
-00 40 f3  add  byte ptr [rax - 0xd], al
-0f 10 0d f4 ff ff ff  movups  xmm1, xmmword ptr [rip - 0xc]
+00 00 00 40  byte[40000000]  
+f3 0f 10 0d f4 ff ff ff  movss  xmm1, dword ptr [rip - 0xc]
 ba 03 00 00 00  mov  edx, 3
 eb 04  jmp  0x1759
-00 00  add  byte ptr [rax], al
-40 40 f3 0f 10 15 f4 ff ff ff  movss  xmm2, dword ptr [rip - 0xc]
+00 00 40 40  byte[40400000]  
+f3 0f 10 15 f4 ff ff ff  movss  xmm2, dword ptr [rip - 0xc]
 b9 04 00 00 00  mov  ecx, 4
 eb 04  jmp  0x176c
-00 00  add  byte ptr [rax], al
-80 40 f3 0f  add  byte ptr [rax - 0xd], 0xf
-10 1d f4 ff ff ff  adc  byte ptr [rip - 0xc], bl
+00 00 80 40  byte[40800000]  
+f3 0f 10 1d f4 ff ff ff  movss  xmm3, dword ptr [rip - 0xc]
 41 b8 05 00 00 00  mov  r8d, 5
 eb 04  jmp  0x1780
+00 00 a0 40  byte[40a00000]  
+f3 0f 10 25 f4 ff ff ff  movss  xmm4, dword ptr [rip - 0xc]
+41 b9 06 00 00 00  mov  r9d, 6
+eb 04  jmp  0x1794
+00 00 c0 40  byte[40c00000]  
+f3 0f 10 2d f4 ff ff ff  movss  xmm5, dword ptr [rip - 0xc]
+eb 04  jmp  0x17a2
+00 00 e0 40  byte[40e00000]  
+f3 0f 10 35 f4 ff ff ff  movss  xmm6, dword ptr [rip - 0xc]
+eb 04  jmp  0x17b0
+00 00 00 41  byte[41000000]  
+f3 0f 10 3d f4 ff ff ff  movss  xmm7, dword ptr [rip - 0xc]
+b8 0e 00 00 00  mov  eax, 0xe
+e9 44 e8 ff ff  jmp  6
+80 7b f8 00  cmp  byte ptr [rbx - 8], 0
+74 09  je  0x17d1
+0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
+e9 35 e8 ff ff  jmp  6
+48 8d a4 24 b8 02 00 00  lea  rsp, [rsp + 0x2b8]
+c3  ret  
 00 00  add  byte ptr [rax], al
-a0 40 f3 0f 10 25 f4 ff ff  movabs  al, byte ptr [0xfffff425100ff340]
-ff 41 b9  inc  dword ptr [rcx - 0x47]
 64 04 00 00  Size of the function body: 1124
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
@@ -818,20 +900,17 @@ c7 44 24 10 00 00 40 42  mov  dword ptr [rsp + 0x10], 0x42400000
 c7 44 24 08 00 00 44 42  mov  dword ptr [rsp + 8], 0x42440000
 c7 04 24 00 00 48 42  mov  dword ptr [rsp], 0x42480000
 eb 04  jmp  0x1c32
-00 00  add  byte ptr [rax], al
-80 3f f3  cmp  byte ptr [rdi], 0xf3
-0f 10 25 f4 ff ff ff  movups  xmm4, xmmword ptr [rip - 0xc]
+00 00 80 3f  byte[3f800000]  
+f3 0f 10 25 f4 ff ff ff  movss  xmm4, dword ptr [rip - 0xc]
 eb 04  jmp  0x1c40
-00 00  add  byte ptr [rax], al
-00 40 f3  add  byte ptr [rax - 0xd], al
-0f 10 2d f4 ff ff ff  movups  xmm5, xmmword ptr [rip - 0xc]
+00 00 00 40  byte[40000000]  
+f3 0f 10 2d f4 ff ff ff  movss  xmm5, dword ptr [rip - 0xc]
 eb 04  jmp  0x1c4e
-00 00  add  byte ptr [rax], al
-40 40 f3 0f 10 35 f4 ff ff ff  movss  xmm6, dword ptr [rip - 0xc]
+00 00 40 40  byte[40400000]  
+f3 0f 10 35 f4 ff ff ff  movss  xmm6, dword ptr [rip - 0xc]
 eb 04  jmp  0x1c5c
-00 00  add  byte ptr [rax], al
-80 40 f3 0f  add  byte ptr [rax - 0xd], 0xf
-10 3d f4 ff ff ff  adc  byte ptr [rip - 0xc], bh
+00 00 80 40  byte[40800000]  
+f3 0f 10 3d f4 ff ff ff  movss  xmm7, dword ptr [rip - 0xc]
 ba 01 00 00 00  mov  edx, 1
 81 fa 1e 00 00 00  cmp  edx, 0x1e
 72 0a  jb  0x1c7b
@@ -955,20 +1034,17 @@ c7 44 24 10 30 00 00 00  mov  dword ptr [rsp + 0x10], 0x30
 c7 44 24 08 31 00 00 00  mov  dword ptr [rsp + 8], 0x31
 c7 04 24 32 00 00 00  mov  dword ptr [rsp], 0x32
 eb 04  jmp  0x20b4
-00 00  add  byte ptr [rax], al
-80 3f f3  cmp  byte ptr [rdi], 0xf3
-0f 10 25 f4 ff ff ff  movups  xmm4, xmmword ptr [rip - 0xc]
+00 00 80 3f  byte[3f800000]  
+f3 0f 10 25 f4 ff ff ff  movss  xmm4, dword ptr [rip - 0xc]
 eb 04  jmp  0x20c2
-00 00  add  byte ptr [rax], al
-00 40 f3  add  byte ptr [rax - 0xd], al
-0f 10 2d f4 ff ff ff  movups  xmm5, xmmword ptr [rip - 0xc]
+00 00 00 40  byte[40000000]  
+f3 0f 10 2d f4 ff ff ff  movss  xmm5, dword ptr [rip - 0xc]
 eb 04  jmp  0x20d0
-00 00  add  byte ptr [rax], al
-40 40 f3 0f 10 35 f4 ff ff ff  movss  xmm6, dword ptr [rip - 0xc]
+00 00 40 40  byte[40400000]  
+f3 0f 10 35 f4 ff ff ff  movss  xmm6, dword ptr [rip - 0xc]
 eb 04  jmp  0x20de
-00 00  add  byte ptr [rax], al
-80 40 f3 0f  add  byte ptr [rax - 0xd], 0xf
-10 3d f4 ff ff ff  adc  byte ptr [rip - 0xc], bh
+00 00 80 40  byte[40800000]  
+f3 0f 10 3d f4 ff ff ff  movss  xmm7, dword ptr [rip - 0xc]
 bd 01 00 00 00  mov  ebp, 1
 bf 02 00 00 00  mov  edi, 2
 be 03 00 00 00  mov  esi, 3
@@ -1099,20 +1175,17 @@ bf 02 00 00 00  mov  edi, 2
 be 03 00 00 00  mov  esi, 3
 41 b9 04 00 00 00  mov  r9d, 4
 eb 04  jmp  0x255d
-00 00  add  byte ptr [rax], al
-80 3f f3  cmp  byte ptr [rdi], 0xf3
-0f 10 25 f4 ff ff ff  movups  xmm4, xmmword ptr [rip - 0xc]
+00 00 80 3f  byte[3f800000]  
+f3 0f 10 25 f4 ff ff ff  movss  xmm4, dword ptr [rip - 0xc]
 eb 04  jmp  0x256b
-00 00  add  byte ptr [rax], al
-00 40 f3  add  byte ptr [rax - 0xd], al
-0f 10 2d f4 ff ff ff  movups  xmm5, xmmword ptr [rip - 0xc]
+00 00 00 40  byte[40000000]  
+f3 0f 10 2d f4 ff ff ff  movss  xmm5, dword ptr [rip - 0xc]
 eb 04  jmp  0x2579
-00 00  add  byte ptr [rax], al
-40 40 f3 0f 10 35 f4 ff ff ff  movss  xmm6, dword ptr [rip - 0xc]
+00 00 40 40  byte[40400000]  
+f3 0f 10 35 f4 ff ff ff  movss  xmm6, dword ptr [rip - 0xc]
 eb 04  jmp  0x2587
-00 00  add  byte ptr [rax], al
-80 40 f3 0f  add  byte ptr [rax - 0xd], 0xf
-10 3d f4 ff ff ff  adc  byte ptr [rip - 0xc], bh
+00 00 80 40  byte[40800000]  
+f3 0f 10 3d f4 ff ff ff  movss  xmm7, dword ptr [rip - 0xc]
 ba 03 00 00 00  mov  edx, 3
 81 fa 1e 00 00 00  cmp  edx, 0x1e
 72 0a  jb  0x25a6
@@ -1236,23 +1309,20 @@ c7 44 24 08 32 00 00 00  mov  dword ptr [rsp + 8], 0x32
 c7 04 24 00 00 48 42  mov  dword ptr [rsp], 0x42480000
 bd 01 00 00 00  mov  ebp, 1
 eb 04  jmp  0x29e1
-00 00  add  byte ptr [rax], al
-80 3f f3  cmp  byte ptr [rdi], 0xf3
-0f 10 25 f4 ff ff ff  movups  xmm4, xmmword ptr [rip - 0xc]
+00 00 80 3f  byte[3f800000]  
+f3 0f 10 25 f4 ff ff ff  movss  xmm4, dword ptr [rip - 0xc]
 bf 02 00 00 00  mov  edi, 2
 eb 04  jmp  0x29f4
-00 00  add  byte ptr [rax], al
-00 40 f3  add  byte ptr [rax - 0xd], al
-0f 10 2d f4 ff ff ff  movups  xmm5, xmmword ptr [rip - 0xc]
+00 00 00 40  byte[40000000]  
+f3 0f 10 2d f4 ff ff ff  movss  xmm5, dword ptr [rip - 0xc]
 be 03 00 00 00  mov  esi, 3
 eb 04  jmp  0x2a07
-00 00  add  byte ptr [rax], al
-40 40 f3 0f 10 35 f4 ff ff ff  movss  xmm6, dword ptr [rip - 0xc]
+00 00 40 40  byte[40400000]  
+f3 0f 10 35 f4 ff ff ff  movss  xmm6, dword ptr [rip - 0xc]
 41 b9 04 00 00 00  mov  r9d, 4
 eb 04  jmp  0x2a1b
-00 00  add  byte ptr [rax], al
-80 40 f3 0f  add  byte ptr [rax - 0xd], 0xf
-10 3d f4 ff ff ff  adc  byte ptr [rip - 0xc], bh
+00 00 80 40  byte[40800000]  
+f3 0f 10 3d f4 ff ff ff  movss  xmm7, dword ptr [rip - 0xc]
 ba 04 00 00 00  mov  edx, 4
 81 fa 1e 00 00 00  cmp  edx, 0x1e
 72 0a  jb  0x2a3a
@@ -1376,23 +1446,20 @@ c7 44 24 08 32 00 00 00  mov  dword ptr [rsp + 8], 0x32
 c7 04 24 00 00 48 42  mov  dword ptr [rsp], 0x42480000
 bd 01 00 00 00  mov  ebp, 1
 eb 04  jmp  0x2e75
-00 00  add  byte ptr [rax], al
-80 3f f3  cmp  byte ptr [rdi], 0xf3
-0f 10 25 f4 ff ff ff  movups  xmm4, xmmword ptr [rip - 0xc]
+00 00 80 3f  byte[3f800000]  
+f3 0f 10 25 f4 ff ff ff  movss  xmm4, dword ptr [rip - 0xc]
 bf 02 00 00 00  mov  edi, 2
 eb 04  jmp  0x2e88
-00 00  add  byte ptr [rax], al
-00 40 f3  add  byte ptr [rax - 0xd], al
-0f 10 2d f4 ff ff ff  movups  xmm5, xmmword ptr [rip - 0xc]
+00 00 00 40  byte[40000000]  
+f3 0f 10 2d f4 ff ff ff  movss  xmm5, dword ptr [rip - 0xc]
 be 03 00 00 00  mov  esi, 3
 eb 04  jmp  0x2e9b
-00 00  add  byte ptr [rax], al
-40 40 f3 0f 10 35 f4 ff ff ff  movss  xmm6, dword ptr [rip - 0xc]
+00 00 40 40  byte[40400000]  
+f3 0f 10 35 f4 ff ff ff  movss  xmm6, dword ptr [rip - 0xc]
 41 b9 04 00 00 00  mov  r9d, 4
 eb 04  jmp  0x2eaf
-00 00  add  byte ptr [rax], al
-80 40 f3 0f  add  byte ptr [rax - 0xd], 0xf
-10 3d f4 ff ff ff  adc  byte ptr [rip - 0xc], bh
+00 00 80 40  byte[40800000]  
+f3 0f 10 3d f4 ff ff ff  movss  xmm7, dword ptr [rip - 0xc]
 ba 05 00 00 00  mov  edx, 5
 81 fa 1e 00 00 00  cmp  edx, 0x1e
 72 0a  jb  0x2ece
@@ -1887,20 +1954,17 @@ c7 44 24 10 00 00 40 42  mov  dword ptr [rsp + 0x10], 0x42400000
 c7 44 24 08 00 00 44 42  mov  dword ptr [rsp + 8], 0x42440000
 c7 04 24 00 00 48 42  mov  dword ptr [rsp], 0x42480000
 eb 04  jmp  0x3ce6
-00 00  add  byte ptr [rax], al
-80 3f f3  cmp  byte ptr [rdi], 0xf3
-0f 10 25 f4 ff ff ff  movups  xmm4, xmmword ptr [rip - 0xc]
+00 00 80 3f  byte[3f800000]  
+f3 0f 10 25 f4 ff ff ff  movss  xmm4, dword ptr [rip - 0xc]
 eb 04  jmp  0x3cf4
-00 00  add  byte ptr [rax], al
-00 40 f3  add  byte ptr [rax - 0xd], al
-0f 10 2d f4 ff ff ff  movups  xmm5, xmmword ptr [rip - 0xc]
+00 00 00 40  byte[40000000]  
+f3 0f 10 2d f4 ff ff ff  movss  xmm5, dword ptr [rip - 0xc]
 eb 04  jmp  0x3d02
-00 00  add  byte ptr [rax], al
-40 40 f3 0f 10 35 f4 ff ff ff  movss  xmm6, dword ptr [rip - 0xc]
+00 00 40 40  byte[40400000]  
+f3 0f 10 35 f4 ff ff ff  movss  xmm6, dword ptr [rip - 0xc]
 eb 04  jmp  0x3d10
-00 00  add  byte ptr [rax], al
-80 40 f3 0f  add  byte ptr [rax - 0xd], 0xf
-10 3d f4 ff ff ff  adc  byte ptr [rip - 0xc], bh
+00 00 80 40  byte[40800000]  
+f3 0f 10 3d f4 ff ff ff  movss  xmm7, dword ptr [rip - 0xc]
 e8 6f f3 ff ff  call  0x308c
 48 8d a4 24 78 01 00 00  lea  rsp, [rsp + 0x178]
 c3  ret  
@@ -2006,20 +2070,17 @@ c7 44 24 10 30 00 00 00  mov  dword ptr [rsp + 0x10], 0x30
 c7 44 24 08 31 00 00 00  mov  dword ptr [rsp + 8], 0x31
 c7 04 24 32 00 00 00  mov  dword ptr [rsp], 0x32
 eb 04  jmp  0x4114
-00 00  add  byte ptr [rax], al
-80 3f f3  cmp  byte ptr [rdi], 0xf3
-0f 10 25 f4 ff ff ff  movups  xmm4, xmmword ptr [rip - 0xc]
+00 00 80 3f  byte[3f800000]  
+f3 0f 10 25 f4 ff ff ff  movss  xmm4, dword ptr [rip - 0xc]
 eb 04  jmp  0x4122
-00 00  add  byte ptr [rax], al
-00 40 f3  add  byte ptr [rax - 0xd], al
-0f 10 2d f4 ff ff ff  movups  xmm5, xmmword ptr [rip - 0xc]
+00 00 00 40  byte[40000000]  
+f3 0f 10 2d f4 ff ff ff  movss  xmm5, dword ptr [rip - 0xc]
 eb 04  jmp  0x4130
-00 00  add  byte ptr [rax], al
-40 40 f3 0f 10 35 f4 ff ff ff  movss  xmm6, dword ptr [rip - 0xc]
+00 00 40 40  byte[40400000]  
+f3 0f 10 35 f4 ff ff ff  movss  xmm6, dword ptr [rip - 0xc]
 eb 04  jmp  0x413e
-00 00  add  byte ptr [rax], al
-80 40 f3 0f  add  byte ptr [rax - 0xd], 0xf
-10 3d f4 ff ff ff  adc  byte ptr [rip - 0xc], bh
+00 00 80 40  byte[40800000]  
+f3 0f 10 3d f4 ff ff ff  movss  xmm7, dword ptr [rip - 0xc]
 bd 01 00 00 00  mov  ebp, 1
 bf 02 00 00 00  mov  edi, 2
 be 03 00 00 00  mov  esi, 3
@@ -2133,20 +2194,17 @@ bf 02 00 00 00  mov  edi, 2
 be 03 00 00 00  mov  esi, 3
 41 b9 04 00 00 00  mov  r9d, 4
 eb 04  jmp  0x456d
-00 00  add  byte ptr [rax], al
-80 3f f3  cmp  byte ptr [rdi], 0xf3
-0f 10 25 f4 ff ff ff  movups  xmm4, xmmword ptr [rip - 0xc]
+00 00 80 3f  byte[3f800000]  
+f3 0f 10 25 f4 ff ff ff  movss  xmm4, dword ptr [rip - 0xc]
 eb 04  jmp  0x457b
-00 00  add  byte ptr [rax], al
-00 40 f3  add  byte ptr [rax - 0xd], al
-0f 10 2d f4 ff ff ff  movups  xmm5, xmmword ptr [rip - 0xc]
+00 00 00 40  byte[40000000]  
+f3 0f 10 2d f4 ff ff ff  movss  xmm5, dword ptr [rip - 0xc]
 eb 04  jmp  0x4589
-00 00  add  byte ptr [rax], al
-40 40 f3 0f 10 35 f4 ff ff ff  movss  xmm6, dword ptr [rip - 0xc]
+00 00 40 40  byte[40400000]  
+f3 0f 10 35 f4 ff ff ff  movss  xmm6, dword ptr [rip - 0xc]
 eb 04  jmp  0x4597
-00 00  add  byte ptr [rax], al
-80 40 f3 0f  add  byte ptr [rax - 0xd], 0xf
-10 3d f4 ff ff ff  adc  byte ptr [rip - 0xc], bh
+00 00 80 40  byte[40800000]  
+f3 0f 10 3d f4 ff ff ff  movss  xmm7, dword ptr [rip - 0xc]
 e8 2c ee ff ff  call  0x33d0
 48 8d a4 24 e8 02 00 00  lea  rsp, [rsp + 0x2e8]
 c3  ret  
@@ -2253,23 +2311,20 @@ c7 44 24 08 32 00 00 00  mov  dword ptr [rsp + 8], 0x32
 c7 04 24 00 00 48 42  mov  dword ptr [rsp], 0x42480000
 bd 01 00 00 00  mov  ebp, 1
 eb 04  jmp  0x49a1
-00 00  add  byte ptr [rax], al
-80 3f f3  cmp  byte ptr [rdi], 0xf3
-0f 10 25 f4 ff ff ff  movups  xmm4, xmmword ptr [rip - 0xc]
+00 00 80 3f  byte[3f800000]  
+f3 0f 10 25 f4 ff ff ff  movss  xmm4, dword ptr [rip - 0xc]
 bf 02 00 00 00  mov  edi, 2
 eb 04  jmp  0x49b4
-00 00  add  byte ptr [rax], al
-00 40 f3  add  byte ptr [rax - 0xd], al
-0f 10 2d f4 ff ff ff  movups  xmm5, xmmword ptr [rip - 0xc]
+00 00 00 40  byte[40000000]  
+f3 0f 10 2d f4 ff ff ff  movss  xmm5, dword ptr [rip - 0xc]
 be 03 00 00 00  mov  esi, 3
 eb 04  jmp  0x49c7
-00 00  add  byte ptr [rax], al
-40 40 f3 0f 10 35 f4 ff ff ff  movss  xmm6, dword ptr [rip - 0xc]
+00 00 40 40  byte[40400000]  
+f3 0f 10 35 f4 ff ff ff  movss  xmm6, dword ptr [rip - 0xc]
 41 b9 04 00 00 00  mov  r9d, 4
 eb 04  jmp  0x49db
-00 00  add  byte ptr [rax], al
-80 40 f3 0f  add  byte ptr [rax - 0xd], 0xf
-10 3d f4 ff ff ff  adc  byte ptr [rip - 0xc], bh
+00 00 80 40  byte[40800000]  
+f3 0f 10 3d f4 ff ff ff  movss  xmm7, dword ptr [rip - 0xc]
 e8 bc eb ff ff  call  0x35a4
 48 8d a4 24 e8 02 00 00  lea  rsp, [rsp + 0x2e8]
 c3  ret  
@@ -2376,23 +2431,20 @@ c7 44 24 08 32 00 00 00  mov  dword ptr [rsp + 8], 0x32
 c7 04 24 00 00 48 42  mov  dword ptr [rsp], 0x42480000
 bd 01 00 00 00  mov  ebp, 1
 eb 04  jmp  0x4de5
-00 00  add  byte ptr [rax], al
-80 3f f3  cmp  byte ptr [rdi], 0xf3
-0f 10 25 f4 ff ff ff  movups  xmm4, xmmword ptr [rip - 0xc]
+00 00 80 3f  byte[3f800000]  
+f3 0f 10 25 f4 ff ff ff  movss  xmm4, dword ptr [rip - 0xc]
 bf 02 00 00 00  mov  edi, 2
 eb 04  jmp  0x4df8
-00 00  add  byte ptr [rax], al
-00 40 f3  add  byte ptr [rax - 0xd], al
-0f 10 2d f4 ff ff ff  movups  xmm5, xmmword ptr [rip - 0xc]
+00 00 00 40  byte[40000000]  
+f3 0f 10 2d f4 ff ff ff  movss  xmm5, dword ptr [rip - 0xc]
 be 03 00 00 00  mov  esi, 3
 eb 04  jmp  0x4e0b
-00 00  add  byte ptr [rax], al
-40 40 f3 0f 10 35 f4 ff ff ff  movss  xmm6, dword ptr [rip - 0xc]
+00 00 40 40  byte[40400000]  
+f3 0f 10 35 f4 ff ff ff  movss  xmm6, dword ptr [rip - 0xc]
 41 b9 04 00 00 00  mov  r9d, 4
 eb 04  jmp  0x4e1f
-00 00  add  byte ptr [rax], al
-80 40 f3 0f  add  byte ptr [rax - 0xd], 0xf
-10 3d f4 ff ff ff  adc  byte ptr [rip - 0xc], bh
+00 00 80 40  byte[40800000]  
+f3 0f 10 3d f4 ff ff ff  movss  xmm7, dword ptr [rip - 0xc]
 e8 e8 e8 ff ff  call  0x3714
 48 8d a4 24 e8 02 00 00  lea  rsp, [rsp + 0x2e8]
 c3  ret  
@@ -2532,20 +2584,17 @@ c7 44 24 10 00 00 40 42  mov  dword ptr [rsp + 0x10], 0x42400000
 c7 44 24 08 00 00 44 42  mov  dword ptr [rsp + 8], 0x42440000
 c7 04 24 00 00 48 42  mov  dword ptr [rsp], 0x42480000
 eb 04  jmp  0x528e
-00 00  add  byte ptr [rax], al
-80 3f f3  cmp  byte ptr [rdi], 0xf3
-0f 10 25 f4 ff ff ff  movups  xmm4, xmmword ptr [rip - 0xc]
+00 00 80 3f  byte[3f800000]  
+f3 0f 10 25 f4 ff ff ff  movss  xmm4, dword ptr [rip - 0xc]
 eb 04  jmp  0x529c
-00 00  add  byte ptr [rax], al
-00 40 f3  add  byte ptr [rax - 0xd], al
-0f 10 2d f4 ff ff ff  movups  xmm5, xmmword ptr [rip - 0xc]
+00 00 00 40  byte[40000000]  
+f3 0f 10 2d f4 ff ff ff  movss  xmm5, dword ptr [rip - 0xc]
 eb 04  jmp  0x52aa
-00 00  add  byte ptr [rax], al
-40 40 f3 0f 10 35 f4 ff ff ff  movss  xmm6, dword ptr [rip - 0xc]
+00 00 40 40  byte[40400000]  
+f3 0f 10 35 f4 ff ff ff  movss  xmm6, dword ptr [rip - 0xc]
 eb 04  jmp  0x52b8
-00 00  add  byte ptr [rax], al
-80 40 f3 0f  add  byte ptr [rax - 0xd], 0xf
-10 3d f4 ff ff ff  adc  byte ptr [rip - 0xc], bh
+00 00 80 40  byte[40800000]  
+f3 0f 10 3d f4 ff ff ff  movss  xmm7, dword ptr [rip - 0xc]
 ba 0b 00 00 00  mov  edx, 0xb
 81 fa 1e 00 00 00  cmp  edx, 0x1e
 72 0a  jb  0x52d7
@@ -2669,20 +2718,17 @@ c7 44 24 10 30 00 00 00  mov  dword ptr [rsp + 0x10], 0x30
 c7 44 24 08 31 00 00 00  mov  dword ptr [rsp + 8], 0x31
 c7 04 24 32 00 00 00  mov  dword ptr [rsp], 0x32
 eb 04  jmp  0x5710
-00 00  add  byte ptr [rax], al
-80 3f f3  cmp  byte ptr [rdi], 0xf3
-0f 10 25 f4 ff ff ff  movups  xmm4, xmmword ptr [rip - 0xc]
+00 00 80 3f  byte[3f800000]  
+f3 0f 10 25 f4 ff ff ff  movss  xmm4, dword ptr [rip - 0xc]
 eb 04  jmp  0x571e
-00 00  add  byte ptr [rax], al
-00 40 f3  add  byte ptr [rax - 0xd], al
-0f 10 2d f4 ff ff ff  movups  xmm5, xmmword ptr [rip - 0xc]
+00 00 00 40  byte[40000000]  
+f3 0f 10 2d f4 ff ff ff  movss  xmm5, dword ptr [rip - 0xc]
 eb 04  jmp  0x572c
-00 00  add  byte ptr [rax], al
-40 40 f3 0f 10 35 f4 ff ff ff  movss  xmm6, dword ptr [rip - 0xc]
+00 00 40 40  byte[40400000]  
+f3 0f 10 35 f4 ff ff ff  movss  xmm6, dword ptr [rip - 0xc]
 eb 04  jmp  0x573a
-00 00  add  byte ptr [rax], al
-80 40 f3 0f  add  byte ptr [rax - 0xd], 0xf
-10 3d f4 ff ff ff  adc  byte ptr [rip - 0xc], bh
+00 00 80 40  byte[40800000]  
+f3 0f 10 3d f4 ff ff ff  movss  xmm7, dword ptr [rip - 0xc]
 bd 01 00 00 00  mov  ebp, 1
 bf 02 00 00 00  mov  edi, 2
 be 03 00 00 00  mov  esi, 3
@@ -2813,20 +2859,17 @@ bf 02 00 00 00  mov  edi, 2
 be 03 00 00 00  mov  esi, 3
 41 b9 04 00 00 00  mov  r9d, 4
 eb 04  jmp  0x5bb9
-00 00  add  byte ptr [rax], al
-80 3f f3  cmp  byte ptr [rdi], 0xf3
-0f 10 25 f4 ff ff ff  movups  xmm4, xmmword ptr [rip - 0xc]
+00 00 80 3f  byte[3f800000]  
+f3 0f 10 25 f4 ff ff ff  movss  xmm4, dword ptr [rip - 0xc]
 eb 04  jmp  0x5bc7
-00 00  add  byte ptr [rax], al
-00 40 f3  add  byte ptr [rax - 0xd], al
-0f 10 2d f4 ff ff ff  movups  xmm5, xmmword ptr [rip - 0xc]
+00 00 00 40  byte[40000000]  
+f3 0f 10 2d f4 ff ff ff  movss  xmm5, dword ptr [rip - 0xc]
 eb 04  jmp  0x5bd5
-00 00  add  byte ptr [rax], al
-40 40 f3 0f 10 35 f4 ff ff ff  movss  xmm6, dword ptr [rip - 0xc]
+00 00 40 40  byte[40400000]  
+f3 0f 10 35 f4 ff ff ff  movss  xmm6, dword ptr [rip - 0xc]
 eb 04  jmp  0x5be3
-00 00  add  byte ptr [rax], al
-80 40 f3 0f  add  byte ptr [rax - 0xd], 0xf
-10 3d f4 ff ff ff  adc  byte ptr [rip - 0xc], bh
+00 00 80 40  byte[40800000]  
+f3 0f 10 3d f4 ff ff ff  movss  xmm7, dword ptr [rip - 0xc]
 ba 0d 00 00 00  mov  edx, 0xd
 81 fa 1e 00 00 00  cmp  edx, 0x1e
 72 0a  jb  0x5c02
@@ -2950,23 +2993,20 @@ c7 44 24 08 32 00 00 00  mov  dword ptr [rsp + 8], 0x32
 c7 04 24 00 00 48 42  mov  dword ptr [rsp], 0x42480000
 bd 01 00 00 00  mov  ebp, 1
 eb 04  jmp  0x603d
-00 00  add  byte ptr [rax], al
-80 3f f3  cmp  byte ptr [rdi], 0xf3
-0f 10 25 f4 ff ff ff  movups  xmm4, xmmword ptr [rip - 0xc]
+00 00 80 3f  byte[3f800000]  
+f3 0f 10 25 f4 ff ff ff  movss  xmm4, dword ptr [rip - 0xc]
 bf 02 00 00 00  mov  edi, 2
 eb 04  jmp  0x6050
-00 00  add  byte ptr [rax], al
-00 40 f3  add  byte ptr [rax - 0xd], al
-0f 10 2d f4 ff ff ff  movups  xmm5, xmmword ptr [rip - 0xc]
+00 00 00 40  byte[40000000]  
+f3 0f 10 2d f4 ff ff ff  movss  xmm5, dword ptr [rip - 0xc]
 be 03 00 00 00  mov  esi, 3
 eb 04  jmp  0x6063
-00 00  add  byte ptr [rax], al
-40 40 f3 0f 10 35 f4 ff ff ff  movss  xmm6, dword ptr [rip - 0xc]
+00 00 40 40  byte[40400000]  
+f3 0f 10 35 f4 ff ff ff  movss  xmm6, dword ptr [rip - 0xc]
 41 b9 04 00 00 00  mov  r9d, 4
 eb 04  jmp  0x6077
-00 00  add  byte ptr [rax], al
-80 40 f3 0f  add  byte ptr [rax - 0xd], 0xf
-10 3d f4 ff ff ff  adc  byte ptr [rip - 0xc], bh
+00 00 80 40  byte[40800000]  
+f3 0f 10 3d f4 ff ff ff  movss  xmm7, dword ptr [rip - 0xc]
 ba 0e 00 00 00  mov  edx, 0xe
 81 fa 1e 00 00 00  cmp  edx, 0x1e
 72 0a  jb  0x6096
@@ -3090,23 +3130,20 @@ c7 44 24 08 32 00 00 00  mov  dword ptr [rsp + 8], 0x32
 c7 04 24 00 00 48 42  mov  dword ptr [rsp], 0x42480000
 bd 01 00 00 00  mov  ebp, 1
 eb 04  jmp  0x64d1
-00 00  add  byte ptr [rax], al
-80 3f f3  cmp  byte ptr [rdi], 0xf3
-0f 10 25 f4 ff ff ff  movups  xmm4, xmmword ptr [rip - 0xc]
+00 00 80 3f  byte[3f800000]  
+f3 0f 10 25 f4 ff ff ff  movss  xmm4, dword ptr [rip - 0xc]
 bf 02 00 00 00  mov  edi, 2
 eb 04  jmp  0x64e4
-00 00  add  byte ptr [rax], al
-00 40 f3  add  byte ptr [rax - 0xd], al
-0f 10 2d f4 ff ff ff  movups  xmm5, xmmword ptr [rip - 0xc]
+00 00 00 40  byte[40000000]  
+f3 0f 10 2d f4 ff ff ff  movss  xmm5, dword ptr [rip - 0xc]
 be 03 00 00 00  mov  esi, 3
 eb 04  jmp  0x64f7
-00 00  add  byte ptr [rax], al
-40 40 f3 0f 10 35 f4 ff ff ff  movss  xmm6, dword ptr [rip - 0xc]
+00 00 40 40  byte[40400000]  
+f3 0f 10 35 f4 ff ff ff  movss  xmm6, dword ptr [rip - 0xc]
 41 b9 04 00 00 00  mov  r9d, 4
 eb 04  jmp  0x650b
-00 00  add  byte ptr [rax], al
-80 40 f3 0f  add  byte ptr [rax - 0xd], 0xf
-10 3d f4 ff ff ff  adc  byte ptr [rip - 0xc], bh
+00 00 80 40  byte[40800000]  
+f3 0f 10 3d f4 ff ff ff  movss  xmm7, dword ptr [rip - 0xc]
 ba 0f 00 00 00  mov  edx, 0xf
 81 fa 1e 00 00 00  cmp  edx, 0x1e
 72 0a  jb  0x652a
@@ -3166,8 +3203,41 @@ c7 84 24 a0 00 00 00 00 00 e8 41  mov  dword ptr [rsp + 0xa0], 0x41e80000
 c7 84 24 a8 00 00 00 00 00 00 00  mov  dword ptr [rsp + 0xa8], 0
 c7 84 24 ac 00 00 00 00 00 3e 40  mov  dword ptr [rsp + 0xac], 0x403e0000
 eb 08  jmp  0x669d
-00 00  add  byte ptr [rax], al
-00 00  add  byte ptr [rax], al
+00 00 00 00  byte[0]  
+00 00 f0 3f  byte[3ff00000]  
+f2 0f 10 05 f0 ff ff ff  movsd  xmm0, qword ptr [rip - 0x10]
+eb 04  jmp  0x66ab
+00 00 00 40  byte[40000000]  
+f3 0f 10 0d f4 ff ff ff  movss  xmm1, dword ptr [rip - 0xc]
+eb 08  jmp  0x66bd
+00 00 00 00  byte[0]  
+00 00 08 40  byte[40080000]  
+f2 0f 10 15 f0 ff ff ff  movsd  xmm2, qword ptr [rip - 0x10]
+eb 04  jmp  0x66cb
+00 00 80 40  byte[40800000]  
+f3 0f 10 1d f4 ff ff ff  movss  xmm3, dword ptr [rip - 0xc]
+eb 04  jmp  0x66d9
+00 00 a0 40  byte[40a00000]  
+f3 0f 10 25 f4 ff ff ff  movss  xmm4, dword ptr [rip - 0xc]
+eb 08  jmp  0x66eb
+00 00 00 00  byte[0]  
+00 00 18 40  byte[40180000]  
+f2 0f 10 2d f0 ff ff ff  movsd  xmm5, qword ptr [rip - 0x10]
+eb 04  jmp  0x66f9
+00 00 e0 40  byte[40e00000]  
+f3 0f 10 35 f4 ff ff ff  movss  xmm6, dword ptr [rip - 0xc]
+eb 04  jmp  0x6707
+00 00 00 41  byte[41000000]  
+f3 0f 10 3d f4 ff ff ff  movss  xmm7, dword ptr [rip - 0xc]
+48 8b 7b b8  mov  rdi, qword ptr [rbx - 0x48]
+b8 0e 00 00 00  mov  eax, 0xe
+e9 e9 98 ff ff  jmp  6
+80 7b f8 00  cmp  byte ptr [rbx - 8], 0
+74 09  je  0x672c
+0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
+e9 da 98 ff ff  jmp  6
+48 8d a4 24 b8 00 00 00  lea  rsp, [rsp + 0xb8]
+c3  ret  
 00 00  add  byte ptr [rax], al
 c0 01 00 00  Size of the function body: 448
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
@@ -3207,8 +3277,41 @@ c7 84 24 a0 00 00 00 00 00 e8 41  mov  dword ptr [rsp + 0xa0], 0x41e80000
 c7 84 24 a8 00 00 00 00 00 00 00  mov  dword ptr [rsp + 0xa8], 0
 c7 84 24 ac 00 00 00 00 00 3e 40  mov  dword ptr [rsp + 0xac], 0x403e0000
 eb 08  jmp  0x6861
-00 00  add  byte ptr [rax], al
-00 00  add  byte ptr [rax], al
+00 00 00 00  byte[0]  
+00 00 f0 3f  byte[3ff00000]  
+f2 0f 10 05 f0 ff ff ff  movsd  xmm0, qword ptr [rip - 0x10]
+eb 04  jmp  0x686f
+00 00 00 40  byte[40000000]  
+f3 0f 10 0d f4 ff ff ff  movss  xmm1, dword ptr [rip - 0xc]
+eb 08  jmp  0x6881
+00 00 00 00  byte[0]  
+00 00 08 40  byte[40080000]  
+f2 0f 10 15 f0 ff ff ff  movsd  xmm2, qword ptr [rip - 0x10]
+eb 04  jmp  0x688f
+00 00 80 40  byte[40800000]  
+f3 0f 10 1d f4 ff ff ff  movss  xmm3, dword ptr [rip - 0xc]
+eb 04  jmp  0x689d
+00 00 a0 40  byte[40a00000]  
+f3 0f 10 25 f4 ff ff ff  movss  xmm4, dword ptr [rip - 0xc]
+eb 08  jmp  0x68af
+00 00 00 00  byte[0]  
+00 00 18 40  byte[40180000]  
+f2 0f 10 2d f0 ff ff ff  movsd  xmm5, qword ptr [rip - 0x10]
+eb 04  jmp  0x68bd
+00 00 e0 40  byte[40e00000]  
+f3 0f 10 35 f4 ff ff ff  movss  xmm6, dword ptr [rip - 0xc]
+eb 04  jmp  0x68cb
+00 00 00 41  byte[41000000]  
+f3 0f 10 3d f4 ff ff ff  movss  xmm7, dword ptr [rip - 0xc]
+48 8b 7b b8  mov  rdi, qword ptr [rbx - 0x48]
+b8 0e 00 00 00  mov  eax, 0xe
+e9 25 97 ff ff  jmp  6
+80 7b f8 00  cmp  byte ptr [rbx - 8], 0
+74 09  je  0x68f0
+0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
+e9 16 97 ff ff  jmp  6
+48 8d a4 24 b8 00 00 00  lea  rsp, [rsp + 0xb8]
+c3  ret  
 00 00  add  byte ptr [rax], al
 c0 01 00 00  Size of the function body: 448
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
@@ -3256,46 +3359,34 @@ c7 84 24 a0 00 00 00 00 00 00 00  mov  dword ptr [rsp + 0xa0], 0
 c7 84 24 a4 00 00 00 00 00 3d 40  mov  dword ptr [rsp + 0xa4], 0x403d0000
 c7 84 24 a8 00 00 00 00 00 f0 41  mov  dword ptr [rsp + 0xa8], 0x41f00000
 eb 04  jmp  0x6a67
-00 00  add  byte ptr [rax], al
-80 3f f3  cmp  byte ptr [rdi], 0xf3
-0f 10 05 f4 ff ff ff  movups  xmm0, xmmword ptr [rip - 0xc]
+00 00 80 3f  byte[3f800000]  
+f3 0f 10 05 f4 ff ff ff  movss  xmm0, dword ptr [rip - 0xc]
 eb 08  jmp  0x6a79
-00 00  add  byte ptr [rax], al
-00 00  add  byte ptr [rax], al
-00 00  add  byte ptr [rax], al
-00 40 f2  add  byte ptr [rax - 0xe], al
-0f 10 0d f0 ff ff ff  movups  xmm1, xmmword ptr [rip - 0x10]
+00 00 00 00  byte[0]  
+00 00 00 40  byte[40000000]  
+f2 0f 10 0d f0 ff ff ff  movsd  xmm1, qword ptr [rip - 0x10]
 eb 04  jmp  0x6a87
-00 00  add  byte ptr [rax], al
-40 40 f3 0f 10 15 f4 ff ff ff  movss  xmm2, dword ptr [rip - 0xc]
+00 00 40 40  byte[40400000]  
+f3 0f 10 15 f4 ff ff ff  movss  xmm2, dword ptr [rip - 0xc]
 eb 08  jmp  0x6a99
-00 00  add  byte ptr [rax], al
-00 00  add  byte ptr [rax], al
-00 00  add  byte ptr [rax], al
-10 40 f2  adc  byte ptr [rax - 0xe], al
-0f 10 1d f0 ff ff ff  movups  xmm3, xmmword ptr [rip - 0x10]
+00 00 00 00  byte[0]  
+00 00 10 40  byte[40100000]  
+f2 0f 10 1d f0 ff ff ff  movsd  xmm3, qword ptr [rip - 0x10]
 eb 08  jmp  0x6aab
-00 00  add  byte ptr [rax], al
-00 00  add  byte ptr [rax], al
-00 00  add  byte ptr [rax], al
-14 40  adc  al, 0x40
+00 00 00 00  byte[0]  
+00 00 14 40  byte[40140000]  
 f2 0f 10 25 f0 ff ff ff  movsd  xmm4, qword ptr [rip - 0x10]
 eb 04  jmp  0x6ab9
-00 00  add  byte ptr [rax], al
-c0 40 f3 0f  rol  byte ptr [rax - 0xd], 0xf
-10 2d f4 ff ff ff  adc  byte ptr [rip - 0xc], ch
+00 00 c0 40  byte[40c00000]  
+f3 0f 10 2d f4 ff ff ff  movss  xmm5, dword ptr [rip - 0xc]
 eb 08  jmp  0x6acb
-00 00  add  byte ptr [rax], al
-00 00  add  byte ptr [rax], al
-00 00  add  byte ptr [rax], al
-1c 40  sbb  al, 0x40
+00 00 00 00  byte[0]  
+00 00 1c 40  byte[401c0000]  
 f2 0f 10 35 f0 ff ff ff  movsd  xmm6, qword ptr [rip - 0x10]
 eb 08  jmp  0x6add
-00 00  add  byte ptr [rax], al
-00 00  add  byte ptr [rax], al
-00 00  add  byte ptr [rax], al
-20 40 f2  and  byte ptr [rax - 0xe], al
-0f 10 3d f0 ff ff ff  movups  xmm7, xmmword ptr [rip - 0x10]
+00 00 00 00  byte[0]  
+00 00 20 40  byte[40200000]  
+f2 0f 10 3d f0 ff ff ff  movsd  xmm7, qword ptr [rip - 0x10]
 48 8b 7b b8  mov  rdi, qword ptr [rbx - 0x48]
 b8 0e 00 00 00  mov  eax, 0xe
 e9 13 95 ff ff  jmp  6
@@ -3351,46 +3442,34 @@ c7 84 24 a0 00 00 00 00 00 00 00  mov  dword ptr [rsp + 0xa0], 0
 c7 84 24 a4 00 00 00 00 00 3d 40  mov  dword ptr [rsp + 0xa4], 0x403d0000
 c7 84 24 a8 00 00 00 00 00 f0 41  mov  dword ptr [rsp + 0xa8], 0x41f00000
 eb 04  jmp  0x6c77
-00 00  add  byte ptr [rax], al
-80 3f f3  cmp  byte ptr [rdi], 0xf3
-0f 10 05 f4 ff ff ff  movups  xmm0, xmmword ptr [rip - 0xc]
+00 00 80 3f  byte[3f800000]  
+f3 0f 10 05 f4 ff ff ff  movss  xmm0, dword ptr [rip - 0xc]
 eb 08  jmp  0x6c89
-00 00  add  byte ptr [rax], al
-00 00  add  byte ptr [rax], al
-00 00  add  byte ptr [rax], al
-00 40 f2  add  byte ptr [rax - 0xe], al
-0f 10 0d f0 ff ff ff  movups  xmm1, xmmword ptr [rip - 0x10]
+00 00 00 00  byte[0]  
+00 00 00 40  byte[40000000]  
+f2 0f 10 0d f0 ff ff ff  movsd  xmm1, qword ptr [rip - 0x10]
 eb 04  jmp  0x6c97
-00 00  add  byte ptr [rax], al
-40 40 f3 0f 10 15 f4 ff ff ff  movss  xmm2, dword ptr [rip - 0xc]
+00 00 40 40  byte[40400000]  
+f3 0f 10 15 f4 ff ff ff  movss  xmm2, dword ptr [rip - 0xc]
 eb 08  jmp  0x6ca9
-00 00  add  byte ptr [rax], al
-00 00  add  byte ptr [rax], al
-00 00  add  byte ptr [rax], al
-10 40 f2  adc  byte ptr [rax - 0xe], al
-0f 10 1d f0 ff ff ff  movups  xmm3, xmmword ptr [rip - 0x10]
+00 00 00 00  byte[0]  
+00 00 10 40  byte[40100000]  
+f2 0f 10 1d f0 ff ff ff  movsd  xmm3, qword ptr [rip - 0x10]
 eb 08  jmp  0x6cbb
-00 00  add  byte ptr [rax], al
-00 00  add  byte ptr [rax], al
-00 00  add  byte ptr [rax], al
-14 40  adc  al, 0x40
+00 00 00 00  byte[0]  
+00 00 14 40  byte[40140000]  
 f2 0f 10 25 f0 ff ff ff  movsd  xmm4, qword ptr [rip - 0x10]
 eb 04  jmp  0x6cc9
-00 00  add  byte ptr [rax], al
-c0 40 f3 0f  rol  byte ptr [rax - 0xd], 0xf
-10 2d f4 ff ff ff  adc  byte ptr [rip - 0xc], ch
+00 00 c0 40  byte[40c00000]  
+f3 0f 10 2d f4 ff ff ff  movss  xmm5, dword ptr [rip - 0xc]
 eb 08  jmp  0x6cdb
-00 00  add  byte ptr [rax], al
-00 00  add  byte ptr [rax], al
-00 00  add  byte ptr [rax], al
-1c 40  sbb  al, 0x40
+00 00 00 00  byte[0]  
+00 00 1c 40  byte[401c0000]  
 f2 0f 10 35 f0 ff ff ff  movsd  xmm6, qword ptr [rip - 0x10]
 eb 08  jmp  0x6ced
-00 00  add  byte ptr [rax], al
-00 00  add  byte ptr [rax], al
-00 00  add  byte ptr [rax], al
-20 40 f2  and  byte ptr [rax - 0xe], al
-0f 10 3d f0 ff ff ff  movups  xmm7, xmmword ptr [rip - 0x10]
+00 00 00 00  byte[0]  
+00 00 20 40  byte[40200000]  
+f2 0f 10 3d f0 ff ff ff  movsd  xmm7, qword ptr [rip - 0x10]
 48 8b 7b b8  mov  rdi, qword ptr [rbx - 0x48]
 b8 0e 00 00 00  mov  eax, 0xe
 e9 03 93 ff ff  jmp  6

@@ -104,12 +104,50 @@ be 00 00 00 00  mov  esi, 0
 b8 2c 32 17 28  mov  eax, 0x2817322c
 b9 47 1a 00 00  mov  ecx, 0x1a47
 eb 10  jmp  0x280
-00 00  add  byte ptr [rax], al
-00 00  add  byte ptr [rax], al
-00 00  add  byte ptr [rax], al
-f0 41 00 00  lock add  byte ptr [r8], al
-00 00  add  byte ptr [rax], al
-00 00  add  byte ptr [rax], al
+00 00 00 00  byte[0]  
+00 00 f0 41  byte[41f00000]  
+00 00 00 00  byte[0]  
+00 00 f0 bf  byte[bff00000]  
+f2 0f 10 ec  movsd  xmm5, xmm4
+66 0f 2e 2d e4 ff ff ff  ucomisd  xmm5, qword ptr [rip - 0x1c]
+73 0c  jae  0x29a
+7a 0a  jp  0x29a
+66 0f 2e 2d e0 ff ff ff  ucomisd  xmm5, qword ptr [rip - 0x20]
+77 0a  ja  0x2a4
+b8 0b 00 00 00  mov  eax, 0xb
+e9 62 fd ff ff  jmp  6
+66 0f 3a 0b ed 03  roundsd  xmm5, xmm5, 3
+f2 48 0f 2d d5  cvtsd2si  rdx, xmm5
+44 8b c2  mov  r8d, edx
+89 44 24 70  mov  dword ptr [rsp + 0x70], eax
+41 8b c0  mov  eax, r8d
+48 89 4c 24 68  mov  qword ptr [rsp + 0x68], rcx
+b9 07 00 00 00  mov  ecx, 7
+33 d2  xor  edx, edx
+f7 f1  div  ecx
+83 fa 00  cmp  edx, 0
+8b 44 24 70  mov  eax, dword ptr [rsp + 0x70]
+48 8b 4c 24 68  mov  rcx, qword ptr [rsp + 0x68]
+48 c7 44 24 78 57 00 00 00  mov  qword ptr [rsp + 0x78], 0x57
+f2 0f 11 a4 24 d0 00 00 00  movsd  qword ptr [rsp + 0xd0], xmm4
+89 ac 24 c8 00 00 00  mov  dword ptr [rsp + 0xc8], ebp
+89 bc 24 c0 00 00 00  mov  dword ptr [rsp + 0xc0], edi
+89 b4 24 b8 00 00 00  mov  dword ptr [rsp + 0xb8], esi
+44 89 8c 24 b0 00 00 00  mov  dword ptr [rsp + 0xb0], r9d
+44 89 94 24 a8 00 00 00  mov  dword ptr [rsp + 0xa8], r10d
+44 89 9c 24 a0 00 00 00  mov  dword ptr [rsp + 0xa0], r11d
+44 89 a4 24 98 00 00 00  mov  dword ptr [rsp + 0x98], r12d
+44 89 ac 24 90 00 00 00  mov  dword ptr [rsp + 0x90], r13d
+44 89 b4 24 88 00 00 00  mov  dword ptr [rsp + 0x88], r14d
+44 89 bc 24 80 00 00 00  mov  dword ptr [rsp + 0x80], r15d
+0f 85 12 00 00 00  jne  0x34a
+8b 44 24 70  mov  eax, dword ptr [rsp + 0x70]
+48 8b 4c 24 68  mov  rcx, qword ptr [rsp + 0x68]
+48 c7 44 24 78 57 00 00 00  mov  qword ptr [rsp + 0x78], 0x57
+f2 44 0f 10 7c 24 78  movsd  xmm15, qword ptr [rsp + 0x78]
+f2 44 0f 11 bc 24 30 01 00 00  movsd  qword ptr [rsp + 0x130], xmm15
+48 8d a4 24 28 01 00 00  lea  rsp, [rsp + 0x128]
+c3  ret  
 a4 01 00 00  Size of the function body: 420
 
 Initial Linear Memory Data

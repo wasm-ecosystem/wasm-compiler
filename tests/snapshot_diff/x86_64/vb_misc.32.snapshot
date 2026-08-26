@@ -81,8 +81,8 @@ vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
 e9 2f fe ff ff  jmp  6
 eb 04  jmp  0x1dd
-05 00 00 00 f3  add  eax, 0xf3000000
-0f 10 05 f4 ff ff ff  movups  xmm0, xmmword ptr [rip - 0xc]
+05 00 00 00  byte[5]  
+f3 0f 10 05 f4 ff ff ff  movss  xmm0, dword ptr [rip - 0xc]
 48 8d a4 24 88 00 00 00  lea  rsp, [rsp + 0x88]
 c3  ret  
 00 00  add  byte ptr [rax], al

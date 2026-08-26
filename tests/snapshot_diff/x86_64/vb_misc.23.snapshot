@@ -84,14 +84,12 @@ bd 01 00 00 00  mov  ebp, 1
 48 85 ed  test  rbp, rbp
 75 10  jne  0x1f1
 eb 04  jmp  0x1e7
-00 00  add  byte ptr [rax], al
-00 40 f3  add  byte ptr [rax - 0xd], al
-0f 10 05 f4 ff ff ff  movups  xmm0, xmmword ptr [rip - 0xc]
+00 00 00 40  byte[40000000]  
+f3 0f 10 05 f4 ff ff ff  movss  xmm0, dword ptr [rip - 0xc]
 eb 0e  jmp  0x1ff
 eb 04  jmp  0x1f7
-00 00  add  byte ptr [rax], al
-80 3f f3  cmp  byte ptr [rdi], 0xf3
-0f 10 05 f4 ff ff ff  movups  xmm0, xmmword ptr [rip - 0xc]
+00 00 80 3f  byte[3f800000]  
+f3 0f 10 05 f4 ff ff ff  movss  xmm0, dword ptr [rip - 0xc]
 48 8d a4 24 88 00 00 00  lea  rsp, [rsp + 0x88]
 c3  ret  
 48 00 00 00  Size of the function body: 72

@@ -88,19 +88,108 @@ bd 20 00 00 00  mov  ebp, 0x20
 bf 40 00 00 00  mov  edi, 0x40
 be 20 00 00 00  mov  esi, 0x20
 eb 08  jmp  0x20d
-29 5c 8f c2  sub  dword ptr [rdi + rcx*4 - 0x3e], ebx
-f5  cmc  
-28 50 40  sub  byte ptr [rax + 0x40], dl
+29 5c 8f c2  byte[c28f5c29]  
+f5 28 50 40  byte[405028f5]  
 f2 0f 10 25 f0 ff ff ff  movsd  xmm4, qword ptr [rip - 0x10]
 eb 04  jmp  0x21b
-ae  scasb  al, byte ptr [rdi]
-47 01 42 f3  add  dword ptr [r10 - 0xd], r8d
-0f 10 2d f4 ff ff ff  movups  xmm5, xmmword ptr [rip - 0xc]
+ae 47 01 42  byte[420147ae]  
+f3 0f 10 2d f4 ff ff ff  movss  xmm5, dword ptr [rip - 0xc]
 41 b9 80 00 00 00  mov  r9d, 0x80
 eb 08  jmp  0x233
-00 00  add  byte ptr [rax], al
-00 00  add  byte ptr [rax], al
-00 10  add  byte ptr [rax], dl
+00 00 00 00  byte[0]  
+00 10 60 40  byte[40601000]  
+f2 0f 10 35 f0 ff ff ff  movsd  xmm6, qword ptr [rip - 0x10]
+ba 00 00 00 00  mov  edx, 0
+81 fa 01 00 00 00  cmp  edx, 1
+72 0a  jb  0x252
+b8 05 00 00 00  mov  eax, 5
+e9 b4 fd ff ff  jmp  6
+4c 8b 6b 80  mov  r13, qword ptr [rbx - 0x80]
+4d 8d 6c d5 00  lea  r13, [r13 + rdx*8]
+41 81 7d 04 00 00 00 00  cmp  dword ptr [r13 + 4], 0
+74 0a  je  0x26f
+b8 06 00 00 00  mov  eax, 6
+e9 97 fd ff ff  jmp  6
+45 8b 75 00  mov  r14d, dword ptr [r13]
+41 81 fe 00 00 00 00  cmp  r14d, 0
+75 0a  jne  0x286
+b8 0e 00 00 00  mov  eax, 0xe
+e9 80 fd ff ff  jmp  6
+4c 8b ab 78 ff ff ff  mov  r13, qword ptr [rbx - 0x88]
+4d 03 ee  add  r13, r14
+41 ff d5  call  r13
+89 44 24 10  mov  dword ptr [rsp + 0x10], eax
+48 89 4c 24 08  mov  qword ptr [rsp + 8], rcx
+f2 0f 11 04 24  movsd  qword ptr [rsp], xmm0
+48 8d 64 24 d0  lea  rsp, [rsp - 0x30]
+f3 0f 11 4c 24 28  movss  dword ptr [rsp + 0x28], xmm1
+48 81 7c 24 70 0a 02 00 00  cmp  qword ptr [rsp + 0x70], 0x20a
+0f 84 0b 00 00 00  je  0x2c6
+b8 0a 00 00 00  mov  eax, 0xa
+48 8d 64 24 78  lea  rsp, [rsp + 0x78]
+c3  ret  
+81 7c 24 68 09 01 00 00  cmp  dword ptr [rsp + 0x68], 0x109
+0f 84 0b 00 00 00  je  0x2df
+b8 09 00 00 00  mov  eax, 9
+48 8d 64 24 78  lea  rsp, [rsp + 0x78]
+c3  ret  
+81 7c 24 60 88 00 00 00  cmp  dword ptr [rsp + 0x60], 0x88
+0f 84 0b 00 00 00  je  0x2f8
+b8 08 00 00 00  mov  eax, 8
+48 8d 64 24 78  lea  rsp, [rsp + 0x78]
+c3  ret  
+eb 08  jmp  0x302
+00 00 00 00  byte[0]  
+00 00 61 40  byte[40610000]  
+f2 0f 10 25 f0 ff ff ff  movsd  xmm4, qword ptr [rip - 0x10]
+66 0f 2e 64 24 58  ucomisd  xmm4, qword ptr [rsp + 0x58]
+7a 06  jp  0x318
+0f 84 0b 00 00 00  je  0x323
+b8 07 00 00 00  mov  eax, 7
+48 8d 64 24 78  lea  rsp, [rsp + 0x78]
+c3  ret  
+48 81 7c 24 50 86 00 00 00  cmp  qword ptr [rsp + 0x50], 0x86
+0f 84 0b 00 00 00  je  0x33d
+b8 06 00 00 00  mov  eax, 6
+48 8d 64 24 78  lea  rsp, [rsp + 0x78]
+c3  ret  
+eb 04  jmp  0x343
+ae 47 17 42  byte[421747ae]  
+f3 0f 10 25 f4 ff ff ff  movss  xmm4, dword ptr [rip - 0xc]
+0f 2e 64 24 28  ucomiss  xmm4, dword ptr [rsp + 0x28]
+7a 06  jp  0x358
+0f 84 0b 00 00 00  je  0x363
+b8 05 00 00 00  mov  eax, 5
+48 8d 64 24 78  lea  rsp, [rsp + 0x78]
+c3  ret  
+eb 08  jmp  0x36d
+c3 f5 28 5c  byte[5c28f5c3]  
+8f 42 51 40  byte[4051428f]  
+f2 0f 10 25 f0 ff ff ff  movsd  xmm4, qword ptr [rip - 0x10]
+66 0f 2e 64 24 30  ucomisd  xmm4, qword ptr [rsp + 0x30]
+7a 06  jp  0x383
+0f 84 0b 00 00 00  je  0x38e
+b8 04 00 00 00  mov  eax, 4
+48 8d 64 24 78  lea  rsp, [rsp + 0x78]
+c3  ret  
+83 7c 24 48 23  cmp  dword ptr [rsp + 0x48], 0x23
+0f 84 0b 00 00 00  je  0x3a4
+b8 03 00 00 00  mov  eax, 3
+48 8d 64 24 78  lea  rsp, [rsp + 0x78]
+c3  ret  
+48 83 7c 24 38 42  cmp  qword ptr [rsp + 0x38], 0x42
+0f 84 0b 00 00 00  je  0x3bb
+b8 02 00 00 00  mov  eax, 2
+48 8d 64 24 78  lea  rsp, [rsp + 0x78]
+c3  ret  
+83 7c 24 40 21  cmp  dword ptr [rsp + 0x40], 0x21
+0f 84 0b 00 00 00  je  0x3d1
+b8 01 00 00 00  mov  eax, 1
+48 8d 64 24 78  lea  rsp, [rsp + 0x78]
+c3  ret  
+b8 00 00 00 00  mov  eax, 0
+48 8d 64 24 78  lea  rsp, [rsp + 0x78]
+c3  ret  
 1c 02 00 00  Size of the function body: 540
 
 Initial Linear Memory Data

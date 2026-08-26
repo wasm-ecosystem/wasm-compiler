@@ -91,17 +91,35 @@ f2 0f 11 a4 24 90 00 00 00  movsd  qword ptr [rsp + 0x90], xmm4
 44 89 8c 24 80 00 00 00  mov  dword ptr [rsp + 0x80], r9d
 0f 84 13 00 00 00  je  0x235
 eb 04  jmp  0x228
-00 00  add  byte ptr [rax], al
-80 3f f3  cmp  byte ptr [rdi], 0xf3
-0f 10 05 f4 ff ff ff  movups  xmm0, xmmword ptr [rip - 0xc]
+00 00 80 3f  byte[3f800000]  
+f3 0f 10 05 f4 ff ff ff  movss  xmm0, dword ptr [rip - 0xc]
 e9 0e 00 00 00  jmp  0x243
 eb 04  jmp  0x23b
-00 00  add  byte ptr [rax], al
-00 40 f3  add  byte ptr [rax - 0xd], al
-0f 10 05 f4 ff ff ff  movups  xmm0, xmmword ptr [rip - 0xc]
+00 00 00 40  byte[40000000]  
+f3 0f 10 05 f4 ff ff ff  movss  xmm0, dword ptr [rip - 0xc]
 eb 04  jmp  0x249
+00 00 80 bf  byte[bf800000]  
+f3 0f 10 2d f4 ff ff ff  movss  xmm5, dword ptr [rip - 0xc]
+0f 2e c5  ucomiss  xmm0, xmm5
+c7 84 24 b0 00 00 00 00 00 00 00  mov  dword ptr [rsp + 0xb0], 0
+40 0f 93 84 24 b0 00 00 00  setae  byte ptr [rsp + 0xb0]
+48 8b 44 24 78  mov  rax, qword ptr [rsp + 0x78]
+48 ba 00 00 00 00 00 00 00 80  movabs  rdx, 0x8000000000000000
+48 3b c2  cmp  rax, rdx
+75 12  jne  0x28e
+48 83 bc 24 b0 00 00 00 ff  cmp  qword ptr [rsp + 0xb0], -1
+75 07  jne  0x28e
+ba 00 00 00 00  mov  edx, 0
+eb 0a  jmp  0x298
+48 99  cqo  
+48 f7 bc 24 b0 00 00 00  idiv  qword ptr [rsp + 0xb0]
+49 ba 1b 0e 36 56 5b 35 0f 47  movabs  r10, 0x470f355b56360e1b
+4c 39 d2  cmp  rdx, r10
+c7 84 24 b0 00 00 00 00 00 00 00  mov  dword ptr [rsp + 0xb0], 0
+40 0f 94 84 24 b0 00 00 00  sete  byte ptr [rsp + 0xb0]
+48 8d a4 24 a8 00 00 00  lea  rsp, [rsp + 0xa8]
+c3  ret  
 00 00  add  byte ptr [rax], al
-80 bf f3 0f 10 2d f4  cmp  byte ptr [rdi + 0x2d100ff3], 0xf4
 04 01 00 00  Size of the function body: 260
 
 Initial Linear Memory Data

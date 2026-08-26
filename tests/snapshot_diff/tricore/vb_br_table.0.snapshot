@@ -48,10 +48,26 @@ d9 bc 12 00  lea  a12, [a11]#0x12
 54 d6  ld.w  d6, [a13]
 01 c6 00 c6  addsc.a  a12, a12, d6, #0
 dc 0c  ji  a12
-10 00  addsc.a  a0, a0, d15, #0
-00 00  nop  
-14 00  ld.bu  d0, [a0]
-00 00  nop  
+10 00 00 00  byte[10]  
+14 00 00 00  byte[14]  
+18 00 00 00  byte[18]  
+1c 00 00 00  byte[1c]  
+1d 00 08 00  j  #0xb4
+1d 00 0b 00  j  #0xbe
+1d 00 0e 00  j  #0xc8
+1d 00 11 00  j  #0xd2
+1b a2 00 20  addi  d2, d2, #0xa
+d9 aa 14 20  lea  sp, [sp]#0x94
+00 70  fret  
+1b 42 01 20  addi  d2, d2, #0x14
+d9 aa 14 20  lea  sp, [sp]#0x94
+00 70  fret  
+1b e2 01 20  addi  d2, d2, #0x1e
+d9 aa 14 20  lea  sp, [sp]#0x94
+00 70  fret  
+1b 82 02 20  addi  d2, d2, #0x28
+d9 aa 14 20  lea  sp, [sp]#0x94
+00 70  fret  
 94 00 00 00  Size of the function body: 148
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 20 94  sub.a  sp, #0x94
@@ -76,27 +92,91 @@ d9 bc 12 00  lea  a12, [a11]#0x12
 54 d6  ld.w  d6, [a13]
 01 c6 00 c6  addsc.a  a12, a12, d6, #0
 dc 0c  ji  a12
-44 00  ld.w  d0, [a0+]
-00 00  nop  
-48 00  ld.w  d0, [a15]#0
-00 00  nop  
-4c 00  ld.w  d15, [a0]#0
-00 00  nop  
-50 00  addsc.a  a0, a0, d15, #1
-00 00  nop  
-54 00  ld.w  d0, [a0]
-00 00  nop  
-58 00  ld.w  d15, [sp]#0
-00 00  nop  
-5c 00  call  #0x140
-00 00  nop  
-60 00  mov.a  a0, d0
-00 00  nop  
-64 00  st.w  [a0+], d0
-00 00  nop  
-68 00  st.w  [a15]#0, d0
-00 00  nop  
-6c 00  st.w  [a0]#0, d15
+44 00 00 00  byte[44]  
+48 00 00 00  byte[48]  
+4c 00 00 00  byte[4c]  
+50 00 00 00  byte[50]  
+54 00 00 00  byte[54]  
+58 00 00 00  byte[58]  
+5c 00 00 00  byte[5c]  
+60 00 00 00  byte[60]  
+64 00 00 00  byte[64]  
+68 00 00 00  byte[68]  
+6c 00 00 00  byte[6c]  
+70 00 00 00  byte[70]  
+74 00 00 00  byte[74]  
+78 00 00 00  byte[78]  
+7c 00 00 00  byte[7c]  
+80 00 00 00  byte[80]  
+84 00 00 00  byte[84]  
+1d 00 22 00  j  #0x1b0
+1d 00 24 00  j  #0x1b8
+1d 00 26 00  j  #0x1c0
+1d 00 28 00  j  #0x1c8
+1d 00 2a 00  j  #0x1d0
+1d 00 2c 00  j  #0x1d8
+1d 00 2e 00  j  #0x1e0
+1d 00 30 00  j  #0x1e8
+1d 00 32 00  j  #0x1f0
+1d 00 35 00  j  #0x1fa
+1d 00 38 00  j  #0x204
+1d 00 3b 00  j  #0x20e
+1d 00 3e 00  j  #0x218
+1d 00 41 00  j  #0x222
+1d 00 44 00  j  #0x22c
+1d 00 47 00  j  #0x236
+1d 00 4a 00  j  #0x240
+c2 02  add  d2, #0
+d9 aa 14 20  lea  sp, [sp]#0x94
+00 70  fret  
+c2 12  add  d2, #1
+d9 aa 14 20  lea  sp, [sp]#0x94
+00 70  fret  
+c2 22  add  d2, #2
+d9 aa 14 20  lea  sp, [sp]#0x94
+00 70  fret  
+c2 32  add  d2, #3
+d9 aa 14 20  lea  sp, [sp]#0x94
+00 70  fret  
+c2 42  add  d2, #4
+d9 aa 14 20  lea  sp, [sp]#0x94
+00 70  fret  
+c2 52  add  d2, #5
+d9 aa 14 20  lea  sp, [sp]#0x94
+00 70  fret  
+c2 62  add  d2, #6
+d9 aa 14 20  lea  sp, [sp]#0x94
+00 70  fret  
+c2 72  add  d2, #7
+d9 aa 14 20  lea  sp, [sp]#0x94
+00 70  fret  
+1b 82 00 20  addi  d2, d2, #8
+d9 aa 14 20  lea  sp, [sp]#0x94
+00 70  fret  
+1b 92 00 20  addi  d2, d2, #9
+d9 aa 14 20  lea  sp, [sp]#0x94
+00 70  fret  
+1b a2 00 20  addi  d2, d2, #0xa
+d9 aa 14 20  lea  sp, [sp]#0x94
+00 70  fret  
+1b b2 00 20  addi  d2, d2, #0xb
+d9 aa 14 20  lea  sp, [sp]#0x94
+00 70  fret  
+1b c2 00 20  addi  d2, d2, #0xc
+d9 aa 14 20  lea  sp, [sp]#0x94
+00 70  fret  
+1b d2 00 20  addi  d2, d2, #0xd
+d9 aa 14 20  lea  sp, [sp]#0x94
+00 70  fret  
+1b e2 00 20  addi  d2, d2, #0xe
+d9 aa 14 20  lea  sp, [sp]#0x94
+00 70  fret  
+1b f2 00 20  addi  d2, d2, #0xf
+d9 aa 14 20  lea  sp, [sp]#0x94
+00 70  fret  
+1b 02 01 20  addi  d2, d2, #0x10
+d9 aa 14 20  lea  sp, [sp]#0x94
+00 70  fret  
 00 00  nop  
 6c 01 00 00  Size of the function body: 364
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
@@ -121,31 +201,81 @@ d9 bc 12 00  lea  a12, [a11]#0x12
 54 d6  ld.w  d6, [a13]
 01 c6 00 c6  addsc.a  a12, a12, d6, #0
 dc 0c  ji  a12
-3c 00  j  #0x294
-00 00  nop  
-40 00  mov.aa  a0, a0
-00 00  nop  
-44 00  ld.w  d0, [a0+]
-00 00  nop  
-48 00  ld.w  d0, [a15]#0
-00 00  nop  
-4c 00  ld.w  d15, [a0]#0
-00 00  nop  
-50 00  addsc.a  a0, a0, d15, #1
-00 00  nop  
-54 00  ld.w  d0, [a0]
-00 00  nop  
-58 00  ld.w  d15, [sp]#0
-00 00  nop  
-5c 00  call  #0x2b4
-00 00  nop  
-60 00  mov.a  a0, d0
-00 00  nop  
-64 00  st.w  [a0+], d0
-00 00  nop  
-68 00  st.w  [a15]#0, d0
-00 00  nop  
-6c 00  st.w  [a0]#0, d15
+3c 00 00 00  byte[3c]  
+40 00 00 00  byte[40]  
+44 00 00 00  byte[44]  
+48 00 00 00  byte[48]  
+4c 00 00 00  byte[4c]  
+50 00 00 00  byte[50]  
+54 00 00 00  byte[54]  
+58 00 00 00  byte[58]  
+5c 00 00 00  byte[5c]  
+60 00 00 00  byte[60]  
+64 00 00 00  byte[64]  
+68 00 00 00  byte[68]  
+6c 00 00 00  byte[6c]  
+70 00 00 00  byte[70]  
+74 00 00 00  byte[74]  
+1d 00 1e 00  j  #0x30c
+1d 00 20 00  j  #0x314
+1d 00 22 00  j  #0x31c
+1d 00 24 00  j  #0x324
+1d 00 26 00  j  #0x32c
+1d 00 28 00  j  #0x334
+1d 00 2a 00  j  #0x33c
+1d 00 2c 00  j  #0x344
+1d 00 2e 00  j  #0x34c
+1d 00 31 00  j  #0x356
+1d 00 34 00  j  #0x360
+1d 00 37 00  j  #0x36a
+1d 00 3a 00  j  #0x374
+1d 00 3d 00  j  #0x37e
+1d 00 40 00  j  #0x388
+c2 02  add  d2, #0
+d9 aa 14 20  lea  sp, [sp]#0x94
+00 70  fret  
+c2 12  add  d2, #1
+d9 aa 14 20  lea  sp, [sp]#0x94
+00 70  fret  
+c2 22  add  d2, #2
+d9 aa 14 20  lea  sp, [sp]#0x94
+00 70  fret  
+c2 32  add  d2, #3
+d9 aa 14 20  lea  sp, [sp]#0x94
+00 70  fret  
+c2 42  add  d2, #4
+d9 aa 14 20  lea  sp, [sp]#0x94
+00 70  fret  
+c2 52  add  d2, #5
+d9 aa 14 20  lea  sp, [sp]#0x94
+00 70  fret  
+c2 62  add  d2, #6
+d9 aa 14 20  lea  sp, [sp]#0x94
+00 70  fret  
+c2 72  add  d2, #7
+d9 aa 14 20  lea  sp, [sp]#0x94
+00 70  fret  
+1b 82 00 20  addi  d2, d2, #8
+d9 aa 14 20  lea  sp, [sp]#0x94
+00 70  fret  
+1b 92 00 20  addi  d2, d2, #9
+d9 aa 14 20  lea  sp, [sp]#0x94
+00 70  fret  
+1b a2 00 20  addi  d2, d2, #0xa
+d9 aa 14 20  lea  sp, [sp]#0x94
+00 70  fret  
+1b b2 00 20  addi  d2, d2, #0xb
+d9 aa 14 20  lea  sp, [sp]#0x94
+00 70  fret  
+1b c2 00 20  addi  d2, d2, #0xc
+d9 aa 14 20  lea  sp, [sp]#0x94
+00 70  fret  
+1b d2 00 20  addi  d2, d2, #0xd
+d9 aa 14 20  lea  sp, [sp]#0x94
+00 70  fret  
+1b e2 00 20  addi  d2, d2, #0xe
+d9 aa 14 20  lea  sp, [sp]#0x94
+00 70  fret  
 00 00  nop  
 44 01 00 00  Size of the function body: 324
 
