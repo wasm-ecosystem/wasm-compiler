@@ -1,5 +1,11 @@
 # Wasm Compiler Release Notes
 
+## 4.2.2
+
+- x86_64 backend:
+  avoid unnecessary stack push and pop during builtin.tracePoint
+- Fix builtin.tracePoint didn't check stack fence on active protection mode
+
 ## 4.2.1
 
 - Fix setTraceBuffer may delay taking effect

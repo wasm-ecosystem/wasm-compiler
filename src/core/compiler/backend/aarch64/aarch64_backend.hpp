@@ -913,6 +913,13 @@ private:
   void restoreFromJobMemoryPtrPtr(uint32_t const spOffset) const;
 #endif
 
+#if ACTIVE_STACK_OVERFLOW_CHECK
+  /// @brief check the new stack frame size against the stack fence
+  /// @param newAlignedStackFrameSize the new aligned stack frame size
+  /// @param tempRegAllocTracker the temporary register allocation tracker to preserve scratch regs, because the checking needs scratch reg
+  /// @param presFlags whether to preserve CPU flags during the stack fence check
+  void checkStackFence(uint32_t const newAlignedStackFrameSize, RegAllocTracker &tempRegAllocTracker, bool const presFlags);
+#endif
   ///
   /// @brief Return type of getMemRegDisp, representing a base register and a displacement
 

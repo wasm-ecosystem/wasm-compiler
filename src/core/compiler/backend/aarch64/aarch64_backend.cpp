@@ -869,62 +869,68 @@ StackElement Backend::reqSpillTarget(StackElement const &source, RegMask const p
     as_.setStackFrameSize(newAlignedStackFrameSize);
 
 #if ACTIVE_STACK_OVERFLOW_CHECK
-    if (moduleInfo_.currentState.checkedStackFrameSize < newAlignedStackFrameSize) {
-      moduleInfo_.currentState.checkedStackFrameSize = newAlignedStackFrameSize;
-      REG scratchReg = common_.reqFreeScratchRegProt(MachineType::I32, tempRegAllocTracker);
-      bool const haveFreeRegister = scratchReg != REG::NONE;
-
-      static_assert(BD::FromEnd::spillSize >= 8, "Spill region not large enough");
-      if (!haveFreeRegister) {
-        as_.INSTR(STUR_xT_deref_xN_unscSImm9_t)
-            .setT(callScrRegs[0])
-            .setN(WasmABI::REGS::linMem)
-            .setUnscSImm9(SafeInt<9>::fromConst<-BD::FromEnd::spillRegion>())();
-        scratchReg = callScrRegs[0];
-      }
-
-      if (!presFlags) {
-        as_.checkStackFence(scratchReg); // SP change
-      } else {
-        REG flagStorageReg = common_.reqFreeScratchRegProt(MachineType::I64, tempRegAllocTracker);
-        bool const haveFreeFlagRegister = flagStorageReg != REG::NONE;
-        if (!haveFreeFlagRegister) {
-          as_.INSTR(STUR_xT_deref_xN_unscSImm9_t)
-              .setT(callScrRegs[1])
-              .setN(WasmABI::REGS::linMem)
-              .setUnscSImm9(SafeInt<9>::fromConst<-BD::FromEnd::spillRegion + 8>())();
-          flagStorageReg = callScrRegs[1];
-        }
-
-        // Store the CPU flags because they will be clobbered by checkStackFence
-        as_.INSTR(MRS_xT_NZCV).setT(flagStorageReg)();
-
-        as_.checkStackFence(scratchReg); // SP change
-
-        // Restore the CPU flags
-        as_.INSTR(MSR_NZCV_xT).setT(flagStorageReg)();
-
-        if (!haveFreeFlagRegister) {
-          as_.INSTR(LDUR_xT_deref_xN_unscSImm9_t)
-              .setT(callScrRegs[1])
-              .setN(WasmABI::REGS::linMem)
-              .setUnscSImm9(SafeInt<9>::fromConst<-BD::FromEnd::spillRegion + 8>())();
-        }
-      }
-
-      if (!haveFreeRegister) {
-        as_.INSTR(LDUR_xT_deref_xN_unscSImm9_t)
-            .setT(callScrRegs[0])
-            .setN(WasmABI::REGS::linMem)
-            .setUnscSImm9(SafeInt<9>::fromConst<-BD::FromEnd::spillRegion>())();
-      }
-    }
+    checkStackFence(newAlignedStackFrameSize, tempRegAllocTracker, presFlags);
 #endif
   }
   StackElement const tempStackElement{
       StackElement::tempResult(type, VariableStorage::stackMemory(type, newOffset), moduleInfo_.getStackMemoryReferencePosition())};
   return tempStackElement;
 }
+
+#if ACTIVE_STACK_OVERFLOW_CHECK
+void Backend::checkStackFence(uint32_t const newAlignedStackFrameSize, RegAllocTracker &tempRegAllocTracker, bool const presFlags) {
+  if (moduleInfo_.currentState.checkedStackFrameSize < newAlignedStackFrameSize) {
+    moduleInfo_.currentState.checkedStackFrameSize = newAlignedStackFrameSize;
+    REG scratchReg = common_.reqFreeScratchRegProt(MachineType::I32, tempRegAllocTracker);
+    bool const haveFreeRegister = scratchReg != REG::NONE;
+
+    static_assert(BD::FromEnd::spillSize >= 8, "Spill region not large enough");
+    if (!haveFreeRegister) {
+      as_.INSTR(STUR_xT_deref_xN_unscSImm9_t)
+          .setT(callScrRegs[0])
+          .setN(WasmABI::REGS::linMem)
+          .setUnscSImm9(SafeInt<9>::fromConst<-BD::FromEnd::spillRegion>())();
+      scratchReg = callScrRegs[0];
+    }
+
+    if (!presFlags) {
+      as_.checkStackFence(scratchReg); // SP change
+    } else {
+      REG flagStorageReg = common_.reqFreeScratchRegProt(MachineType::I64, tempRegAllocTracker);
+      bool const haveFreeFlagRegister = flagStorageReg != REG::NONE;
+      if (!haveFreeFlagRegister) {
+        as_.INSTR(STUR_xT_deref_xN_unscSImm9_t)
+            .setT(callScrRegs[1])
+            .setN(WasmABI::REGS::linMem)
+            .setUnscSImm9(SafeInt<9>::fromConst<-BD::FromEnd::spillRegion + 8>())();
+        flagStorageReg = callScrRegs[1];
+      }
+
+      // Store the CPU flags because they will be clobbered by checkStackFence
+      as_.INSTR(MRS_xT_NZCV).setT(flagStorageReg)();
+
+      as_.checkStackFence(scratchReg); // SP change
+
+      // Restore the CPU flags
+      as_.INSTR(MSR_NZCV_xT).setT(flagStorageReg)();
+
+      if (!haveFreeFlagRegister) {
+        as_.INSTR(LDUR_xT_deref_xN_unscSImm9_t)
+            .setT(callScrRegs[1])
+            .setN(WasmABI::REGS::linMem)
+            .setUnscSImm9(SafeInt<9>::fromConst<-BD::FromEnd::spillRegion + 8>())();
+      }
+    }
+
+    if (!haveFreeRegister) {
+      as_.INSTR(LDUR_xT_deref_xN_unscSImm9_t)
+          .setT(callScrRegs[0])
+          .setN(WasmABI::REGS::linMem)
+          .setUnscSImm9(SafeInt<9>::fromConst<-BD::FromEnd::spillRegion>())();
+    }
+  }
+}
+#endif
 
 void Backend::tryPushStacktraceAndDebugEntry(uint32_t const fncIndex, SafeUInt<12U> const storeOffsetFromSP, uint32_t const offsetToStartOfFrame,
                                              uint32_t const bytecodePosOfLastParsedInstruction, REG const scratchReg, REG const scratchReg2,
@@ -2235,12 +2241,19 @@ void Backend::execBuiltinFncCall(BuiltinFunction const builtinFunction) {
       as_.INSTR(RET_xN_t).setN(REG::LR)();
       mainCode.linkToHere();
     };
-
+    ensureTracePointHandlerExistAndInRange();
     bool const needPushTempReg1And2ToStack{!moduleInfo_.getReferenceToLastOccurrenceOnStack(tmpReg1).isEmpty() ||
                                            !moduleInfo_.getReferenceToLastOccurrenceOnStack(tmpReg2).isEmpty()};
 
     constexpr uint32_t stackSize{8U * 4U};
-    as_.INSTR(SUB_xD_xN_imm12zxols12).setD(REG::SP).setN(REG::SP).setImm12zx(SafeUInt<12U>::fromConst<stackSize>())();
+    uint32_t const origStackFrameSize{moduleInfo_.fnc.stackFrameSize};
+    uint32_t const newAlignedSize{as_.alignStackFrameSize(origStackFrameSize + stackSize)};
+    as_.setStackFrameSize(newAlignedSize);
+#if ACTIVE_STACK_OVERFLOW_CHECK
+    RegAllocTracker tempRegAllocTracker{};
+    tempRegAllocTracker.writeProtRegs = mask(tempGPR);
+    checkStackFence(newAlignedSize, tempRegAllocTracker, false);
+#endif
 
     constexpr uint32_t tmpReg3And4Offset{16U};
     constexpr uint32_t tmpReg1And2Offset{tmpReg3And4Offset + 16U};
@@ -2254,7 +2267,6 @@ void Backend::execBuiltinFncCall(BuiltinFunction const builtinFunction) {
     }
     as_.INSTR(STP_xT1_xT2_deref_xN_scSImm7_t).setT1(tmpReg3).setT2(REG::LR).setN(REG::SP).setSImm7ls3(SafeInt<10>::fromConst<tmpReg3And4Offset>())();
 
-    ensureTracePointHandlerExistAndInRange();
     as_.INSTR(BL_imm26sxls2_t)
         .setImm19o26ls2BranchPlaceHolder()
         .prepJmp()
@@ -2268,7 +2280,9 @@ void Backend::execBuiltinFncCall(BuiltinFunction const builtinFunction) {
           .setSImm7ls3(SafeInt<10>::fromConst<tmpReg1And2Offset>())();
     }
     as_.INSTR(LDP_xT1_xT2_deref_xN_scSImm7_t).setT1(tmpReg3).setT2(REG::LR).setN(REG::SP).setSImm7ls3(SafeInt<10>::fromConst<tmpReg3And4Offset>())();
-    as_.INSTR(ADD_xD_xN_imm12zxols12).setD(REG::SP).setN(REG::SP).setImm12zx(SafeUInt<12U>::fromConst<stackSize>())();
+
+    as_.setStackFrameSize(origStackFrameSize);
+
     tempRegManagerForIdentifier.recoverTempGPRs();
     break;
   }
