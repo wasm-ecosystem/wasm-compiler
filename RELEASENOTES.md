@@ -5,11 +5,14 @@
 ### Performance improvements
 
 - Reuse repeated stack-based call parameters after loading the value into a register, reducing redundant loads
+- x86_64 backend:
+  avoid unnecessary stack push and pop during builtin.tracePoint
 
 ### Bug fix
 
 - Fix setTraceBuffer may delay taking effect
 - Fix requestInterruption may delay taking effect
+- Fix builtin.tracePoint didn't check stack fence on active protection mode
 
 ## 5.0.0-rc0
 
@@ -81,7 +84,6 @@
 
 ## Release v3 known issues
 
-- [Bug fixed by 5.0.0-rc1](#5.0.0-rc1)
 - [Bug fixed by 4.1.2](#412)
 - [Bug fixed by 4.1.1](#411)
 

@@ -2036,16 +2036,14 @@ void Backend::execBuiltinFncCall(BuiltinFunction const builtinFunction) {
     common_.removeReference(identifierElement);
     static_cast<void>(stack_.erase(identifierElement));
 
+    constexpr REG tmpReg1{REG::A};
+    constexpr REG tmpReg2{REG::D};
+    constexpr REG tmpReg3{REG::C};
+
     if (moduleInfo_.helperFunctionBinaryPositions.builtinTracePointHandler == 0xFFFFFFFFU) {
       RelPatchObj const mainCode{as_.prepareJMP(true, CC::NONE)};
 
       moduleInfo_.helperFunctionBinaryPositions.builtinTracePointHandler = output_.size();
-      constexpr REG tmpReg1{REG::A};
-      constexpr REG tmpReg2{REG::D};
-      constexpr REG tmpReg3{REG::C};
-      as_.INSTR(PUSH_r64_t).setR(tmpReg1)();
-      as_.INSTR(PUSH_r64_t).setR(tmpReg2)();
-      as_.INSTR(PUSH_r64_t).setR(tmpReg3)();
 
       constexpr REG rdtscLowReg{tmpReg1};
       as_.INSTR(RDTSC)(); // Read time-stamp counter into RDX:RAX
@@ -2079,18 +2077,44 @@ void Backend::execBuiltinFncCall(BuiltinFunction const builtinFunction) {
       isFull.linkToHere();
       nullptrTraceBuffer.linkToHere();
 
-      as_.INSTR(POP_r64_t).setR(tmpReg3)();
-      as_.INSTR(POP_r64_t).setR(tmpReg2)();
-      as_.INSTR(POP_r64_t).setR(tmpReg1)();
-
       as_.INSTR(RET_t)();
 
       mainCode.linkToHere();
     }
 
+    uint32_t const origStackFrameSize{moduleInfo_.fnc.stackFrameSize};
+
+    constexpr std::array<REG, 3U> tmpRegs{{tmpReg1, tmpReg2, tmpReg3}};
+    std::array<REG, 3U> savedRegs{{REG::NONE, REG::NONE, REG::NONE}};
+    uint32_t numSavedRegs{0U};
+
+    for (size_t i{0U}; i < tmpRegs.size(); ++i) {
+      Stack::iterator const lastElem{moduleInfo_.getReferenceToLastOccurrenceOnStack(tmpRegs[i])};
+      if (!lastElem.isEmpty()) {
+        savedRegs[numSavedRegs] = tmpRegs[i];
+        numSavedRegs++;
+      }
+    }
+
+    updateStackFrameSizeHelper(as_.alignStackFrameSize(origStackFrameSize + (numSavedRegs * 8U)));
+
+    int32_t cursor{1};
+    for (uint32_t i{0U}; i < numSavedRegs; ++i) {
+      as_.INSTR(MOV_rm64_r64).setM4RM(REG::SP, cursor * 8).setR(savedRegs[i])();
+      cursor++;
+    }
+
     as_.INSTR(CALL_rel32_t).setRel32(0x00)();
     RelPatchObj const branchObj{RelPatchObj(false, output_.size(), output_)};
     branchObj.linkToBinaryPos(moduleInfo_.helperFunctionBinaryPositions.builtinTracePointHandler);
+
+    cursor = static_cast<int32_t>(numSavedRegs);
+    for (int32_t i{static_cast<int32_t>(numSavedRegs) - 1}; i >= 0; i--) {
+      as_.INSTR(MOV_r64_rm64).setR(savedRegs[static_cast<size_t>(i)]).setM4RM(REG::SP, cursor * 8)();
+      cursor--;
+    }
+
+    updateStackFrameSizeHelper(origStackFrameSize);
     break;
   }
   // GCOVR_EXCL_START
