@@ -2,6 +2,10 @@
 
 ## 5.0.0-rc1
 
+### Feature
+
+- Support customer wasm module identifier. Also used for tracing identifier
+
 ### Performance improvements
 
 - Reuse repeated stack-based call parameters after loading the value into a register, reducing redundant loads

@@ -19,8 +19,8 @@
 #include "src/core/runtime/Runtime.hpp"
 #include "src/extensions/Extension.hpp"
 
-void vb::extension::registerRuntime(vb::Runtime &runtime) {
-  traceExtension.registerRuntime(runtime);
+void vb::extension::registerRuntime(vb::Runtime &runtime, uint64_t const moduleId) {
+  traceExtension.registerRuntime(runtime, moduleId);
 }
 
 void vb::extension::unregisterRuntime(vb::Runtime &runtime) {

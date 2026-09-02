@@ -255,7 +255,7 @@ TestResult SingleCaseTest::testFromStream(TestLoader *loader, bool const enableD
 #else
         debugBuild = enableDebugMode;
 #endif
-        wasmModule = std::make_unique<WasmModule>(logger, debugBuild);
+        wasmModule = std::make_unique<WasmModule>(logger, debugBuild, 0ULL);
         auto moduleCommand = static_cast<ModuleCommand *>(command.get()); // NOLINT(cppcoreguidelines-pro-type-static-cast-downcast)
         Span<const uint8_t> const &bytecode = moduleCommand->getByteCode();
 

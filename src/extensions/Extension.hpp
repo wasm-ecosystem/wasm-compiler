@@ -23,7 +23,8 @@ namespace vb {
 namespace extension {
 /// @brief register a runtime with the tracing extension
 /// @param runtime the runtime to register
-void registerRuntime(Runtime &runtime);
+/// @param moduleId the module ID of the runtime
+void registerRuntime(Runtime &runtime, uint64_t moduleId);
 /// @brief unregister a runtime from the tracing extension
 /// @param runtime the runtime to unregister
 void unregisterRuntime(Runtime &runtime);

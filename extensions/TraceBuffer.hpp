@@ -84,6 +84,15 @@ public:
 class TraceRecorder final {
 public:
   TraceRecorder() = default;
+  /// @brief constructor with moduleId
+  explicit TraceRecorder(uint64_t const moduleId) noexcept : moduleId_{moduleId} {
+  }
+
+  /// @brief get moduleId
+  uint64_t getModuleId() const noexcept {
+    return moduleId_;
+  }
+
   /// @brief push current buffer to completed record buffer deque
   Span<uint32_t> swapOut() {
     buffers_.emplace_back(std::move(lastBuffer_));
@@ -106,6 +115,7 @@ public:
   }
 
 private:
+  uint64_t moduleId_{0ULL};
   TraceBuffer currentBuffer_{TraceBuffer::InitState::Uninitialized}; // immutable
   TraceBuffer lastBuffer_{TraceBuffer::InitState::Uninitialized};    // immutable
   std::deque<TraceBuffer> buffers_;                                  // mutable

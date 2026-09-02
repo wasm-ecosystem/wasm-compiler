@@ -53,7 +53,7 @@ std::vector<uint8_t> const testModule = vb::test::WabtCmd::loadWasmFromWat(watSt
 vb::Span<const uint8_t> const bytecode = vb::Span<const uint8_t>(testModule.data(), testModule.size());
 
 constexpr size_t magicSize = 16U;
-constexpr size_t identifier = sizeof(uint64_t);    // 8 bytes for identifier
+constexpr size_t identifier = sizeof(uint64_t);    // 8 bytes for moduleId
 constexpr size_t timePointSize = sizeof(uint32_t); // 4 bytes for time point
 constexpr size_t traceIdSize = sizeof(uint32_t);   // 4 bytes for traceId
 struct TraceRecorderTest : public ::testing::Test {
@@ -62,6 +62,12 @@ struct TraceRecorderTest : public ::testing::Test {
   void TearDown() override {
     vb::extension::traceExtension.~TracingExtension();
     new (&vb::extension::traceExtension) vb::extension::TracingExtension{nullptr, 0};
+  }
+
+  static uint64_t getModuleId(std::string const &trace, size_t index) {
+    uint64_t id{0ULL};
+    std::memcpy(&id, &trace[magicSize + index * (identifier + timePointSize + traceIdSize)], identifier);
+    return id;
   }
 
   static uint32_t getTraceId(std::string const &trace, size_t index) {
@@ -80,7 +86,8 @@ TEST_F(TraceRecorderTest, Disabled) {
   new (&vb::extension::traceExtension) vb::extension::TracingExtension{nullptr, 0};
   {
     vb::WasmModule::initEnvironment(&malloc, &realloc, &free);
-    vb::WasmModule wasmModule{logger};
+    vb::WasmModule wasmModule{logger, 10ULL};
+    EXPECT_EQ(wasmModule.getModuleId(), 10ULL);
     wasmModule.initFromBytecode(bytecode, {}, true);
     wasmModule.start(getStackTop());
     wasmModule.callExportedFunctionWithName<0>(getStackTop(), "_start");
@@ -95,7 +102,8 @@ TEST_F(TraceRecorderTest, Enabled) {
   new (&vb::extension::traceExtension) vb::extension::TracingExtension{std::move(traceStream), 100};
   {
     vb::WasmModule::initEnvironment(&malloc, &realloc, &free);
-    vb::WasmModule wasmModule{logger};
+    vb::WasmModule wasmModule{logger, 0x123456789ABCDEF0ULL};
+    EXPECT_EQ(wasmModule.getModuleId(), 0x123456789ABCDEF0ULL);
     wasmModule.initFromBytecode(bytecode, {}, true);
     wasmModule.start(getStackTop());
     wasmModule.callExportedFunctionWithName<0>(getStackTop(), "_start");
@@ -105,8 +113,11 @@ TEST_F(TraceRecorderTest, Enabled) {
 
   EXPECT_EQ(getTraceCount(trace), 3U);
   EXPECT_EQ(trace.substr(0, 16), "___WARP_TRACE___");
+  EXPECT_EQ(getModuleId(trace, 0U), 0x123456789ABCDEF0ULL);
   EXPECT_EQ(getTraceId(trace, 0U), 100U);
+  EXPECT_EQ(getModuleId(trace, 1U), 0x123456789ABCDEF0ULL);
   EXPECT_EQ(getTraceId(trace, 1U), 200U);
+  EXPECT_EQ(getModuleId(trace, 2U), 0x123456789ABCDEF0ULL);
   EXPECT_EQ(getTraceId(trace, 2U), 300U);
 }
 
@@ -118,13 +129,13 @@ TEST_F(TraceRecorderTest, MultipleRuntime) {
   {
     vb::WasmModule::initEnvironment(&malloc, &realloc, &free);
     {
-      vb::WasmModule m1{logger};
+      vb::WasmModule m1{logger, 101ULL};
       m1.initFromBytecode(bytecode, {}, true);
       m1.start(getStackTop());
       m1.callExportedFunctionWithName<0>(getStackTop(), "_start");
     }
     {
-      vb::WasmModule m2{logger};
+      vb::WasmModule m2{logger, 202ULL};
       m2.initFromBytecode(bytecode, {}, true);
       m2.start(getStackTop());
       m2.callExportedFunctionWithName<0>(getStackTop(), "_start");
@@ -134,6 +145,12 @@ TEST_F(TraceRecorderTest, MultipleRuntime) {
   std::string const trace = ss->str();
 
   EXPECT_EQ(getTraceCount(trace), 6U);
+  EXPECT_EQ(getModuleId(trace, 0U), 101ULL);
+  EXPECT_EQ(getModuleId(trace, 1U), 101ULL);
+  EXPECT_EQ(getModuleId(trace, 2U), 101ULL);
+  EXPECT_EQ(getModuleId(trace, 3U), 202ULL);
+  EXPECT_EQ(getModuleId(trace, 4U), 202ULL);
+  EXPECT_EQ(getModuleId(trace, 5U), 202ULL);
 }
 
 TEST_F(TraceRecorderTest, WithMaxItems) {
@@ -143,7 +160,7 @@ TEST_F(TraceRecorderTest, WithMaxItems) {
   new (&vb::extension::traceExtension) vb::extension::TracingExtension{std::move(traceStream), 2};
   {
     vb::WasmModule::initEnvironment(&malloc, &realloc, &free);
-    vb::WasmModule wasmModule{logger};
+    vb::WasmModule wasmModule{logger, 55ULL};
     wasmModule.initFromBytecode(bytecode, {}, true);
     wasmModule.start(getStackTop());
     wasmModule.callExportedFunctionWithName<0>(getStackTop(), "_start");
@@ -151,7 +168,9 @@ TEST_F(TraceRecorderTest, WithMaxItems) {
   }
   std::string const trace = ss->str();
   EXPECT_EQ(getTraceCount(trace), 2U);
+  EXPECT_EQ(getModuleId(trace, 0U), 55ULL);
   EXPECT_EQ(getTraceId(trace, 0U), 100U);
+  EXPECT_EQ(getModuleId(trace, 1U), 55ULL);
   EXPECT_EQ(getTraceId(trace, 1U), 200U);
 }
 

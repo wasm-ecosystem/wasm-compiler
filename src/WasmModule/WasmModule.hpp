@@ -115,7 +115,13 @@ public:
 
   /// @brief Constructor
   /// @param logger The logger for the module
-  explicit inline WasmModule(ILogger &logger) VB_NOEXCEPT : WasmModule{UINT64_MAX, logger, false, nullptr, 10U} {
+  inline explicit WasmModule(ILogger &logger) VB_NOEXCEPT : WasmModule{logger, 0ULL} {
+  }
+
+  /// @brief Constructor
+  /// @param logger The logger for the module
+  /// @param moduleId Module ID for identification
+  inline WasmModule(ILogger &logger, uint64_t const moduleId) VB_NOEXCEPT : WasmModule{UINT64_MAX, logger, false, nullptr, 10U, moduleId} {
   }
 
   /// @brief Constructor
@@ -125,20 +131,34 @@ public:
   /// @param ctx Custom context
   /// @param stackRecordCount The number of stack records to keep
   inline WasmModule(uint64_t const maxRam, ILogger &logger, bool const debugBuild, void *const ctx, uint8_t const stackRecordCount) VB_NOEXCEPT
-      : logger_{logger},
-        maxRam_{maxRam},
-        ctx_{ctx},
+      : WasmModule{maxRam, logger, debugBuild, ctx, stackRecordCount, 0ULL} {
+  }
+
+  /// @brief Constructor with full parameters
+  /// @param maxRam Max RAM size for the module in bytes
+  /// @param logger The logger for the module
+  /// @param debugBuild If true, the module will be compiled in debug mode
+  /// @param ctx Custom context
+  /// @param stackRecordCount The number of stack records to keep
+  /// @param moduleId Module ID for identification
+  inline WasmModule(uint64_t const maxRam, ILogger &logger, bool const debugBuild, void *const ctx, uint8_t const stackRecordCount,
+                    uint64_t const moduleId) VB_NOEXCEPT : logger_{logger},
+                                                           maxRam_{maxRam},
+                                                           ctx_{ctx},
 #if LINEAR_MEMORY_BOUNDS_CHECKS
-        runtimeMemoryManager_{&runtimeMemoryAllocFncRaw, this},
+                                                           runtimeMemoryManager_{&runtimeMemoryAllocFncRaw, this},
 #endif
-        debugBuild_{debugBuild},
-        stackRecordCount_{stackRecordCount} {
+                                                           debugBuild_{debugBuild},
+                                                           stackRecordCount_{stackRecordCount},
+                                                           moduleId_{moduleId} {
   }
 
   /// @brief Constructor with default Wasm Linear memory control
   /// @param logger The logger for the module
   /// @param debugBuild If true, the module will be compiled in debug mode
-  inline WasmModule(ILogger &logger, bool const debugBuild) VB_NOEXCEPT : WasmModule{UINT64_MAX, logger, debugBuild, nullptr, 10U} {
+  /// @param moduleId Module ID for identification
+  inline WasmModule(ILogger &logger, bool const debugBuild, uint64_t const moduleId) VB_NOEXCEPT
+      : WasmModule{UINT64_MAX, logger, debugBuild, nullptr, 10U, moduleId} {
   }
 
   // Delete copy constructor and assignment operator
@@ -447,6 +467,12 @@ public:
     ctx_ = ctx;
   }
 
+  /// @brief Get the module ID
+  /// @return uint64_t The module ID
+  inline uint64_t getModuleId() const VB_NOEXCEPT {
+    return moduleId_;
+  }
+
 #if ENABLE_ADVANCED_APIS
   /// @brief Load the WebAssembly module from bytecode
   /// @param bytecode The bytecode of the WebAssembly module
@@ -621,6 +647,7 @@ private:
   bool debugBuild_;                    ///< Debug mode flag
   Span<uint8_t const> rawDebugSymbol_; ///< Raw debug symbol
   uint8_t stackRecordCount_;           ///< Number of Wasm function stack record in backtrace
+  uint64_t const moduleId_;            ///< Module ID for identification and tracing
 };
 } // namespace vb
 

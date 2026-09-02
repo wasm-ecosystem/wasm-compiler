@@ -328,7 +328,7 @@ void WasmModule::setupRuntime(Span<uint8_t const> const &compiledBinary, Span<Na
 #endif
 
 #if ENABLE_EXTENSIONS
-  extension::registerRuntime(runtime_);
+  extension::registerRuntime(runtime_, moduleId_);
 #endif
 
   sendDebugSymbolToDebugger(rawDebugSymbol);

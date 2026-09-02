@@ -49,12 +49,12 @@ class TracingExtension final {
   class TraceGroupWithIdentifier {
   public:
     /// @brief constructor
-    TraceGroupWithIdentifier(Runtime const &runtime, std::deque<TraceBuffer> &&traceGroup) noexcept
-        : identifier_(&runtime), traceGroup_(std::move(traceGroup)) {
+    TraceGroupWithIdentifier(uint64_t const moduleId, std::deque<TraceBuffer> &&traceGroup) noexcept
+        : moduleId_(moduleId), traceGroup_(std::move(traceGroup)) {
     }
-    /// @brief see @b identifier_
-    uint64_t getIdentifier() const noexcept {
-      return static_cast<uint64_t>(pToNum(identifier_));
+    /// @brief see @b moduleId_
+    uint64_t getModuleId() const noexcept {
+      return moduleId_;
     }
     /// @brief see @b traceGroup_
     std::deque<TraceBuffer> const &getTraceGroups() const noexcept {
@@ -62,7 +62,7 @@ class TracingExtension final {
     }
 
   private:
-    void const *identifier_;             ///< Identifier of the trace group, we use runtime ptr as identifier
+    uint64_t moduleId_;                  ///< Module ID of the trace group
     std::deque<TraceBuffer> traceGroup_; ///< trace in the group
   };
 
@@ -80,7 +80,7 @@ public:
 
   /// @brief register runtime
   /// @note it will stop recoding temporarily and restart recording.
-  void registerRuntime(Runtime &runtime);
+  void registerRuntime(Runtime &runtime, uint64_t const moduleId);
   /// @brief unregister runtime
   /// @note it will stop recoding temporarily and restart recording.
   void unregisterRuntime(Runtime &runtime);
