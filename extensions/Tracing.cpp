@@ -113,7 +113,7 @@ void TracingExtension::putRecordDataToRecordedRecords() {
         continue;
       }
       notify = true;
-      recordedTraces_.emplace_back(*it.first, std::move(buffers));
+      recordedTraces_.emplace_back(it.second.getModuleId(), std::move(buffers));
     }
     lock.unlock();
     if (notify) {
@@ -152,7 +152,7 @@ void TracingExtension::writeOnce() {
   }
   for (TraceGroupWithIdentifier const &recordGroup : collectedTraces) {
     for (TraceBuffer const &records : recordGroup.getTraceGroups()) {
-      uint64_t const id = recordGroup.getIdentifier();
+      uint64_t const id = recordGroup.getModuleId();
       for (size_t i = 0U; i < records.getSize(); i++) {
         TraceItems const item = records.getTraceItem(i);
         if (leftItems_ == 0) {
@@ -169,14 +169,14 @@ void TracingExtension::writeOnce() {
   }
 }
 
-void TracingExtension::registerRuntime(Runtime &runtime) {
+void TracingExtension::registerRuntime(Runtime &runtime, uint64_t const moduleId) {
   if (!isEnabled_) {
     return;
   }
   std::lock_guard<std::mutex> const operationLock{globalOperationsMutex_};
   // To avoid race condition, we stop recording before modifying the registered runtimes.
   recordRunner_.pause({});
-  registeredRuntimes_.insert(std::make_pair(&runtime, TraceRecorder{}));
+  registeredRuntimes_[&runtime] = TraceRecorder{moduleId};
   // force to init the record thread
   recordOnce(true);
   recordRunner_.resume();

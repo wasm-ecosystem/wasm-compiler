@@ -26,10 +26,10 @@ The tracing file format:
 
 ```
 0x00 - 0x0f: ___WARP_TRACE___
-0x10 - 0x1f: wasm identifier[u64] time point[u32] trace id[u32]
-0x20 - 0x2f: wasm identifier[u64] time point[u32] trace id[u32]
+0x10 - 0x1f: wasm module id[u64] time point[u32] trace id[u32]
+0x20 - 0x2f: wasm module id[u64] time point[u32] trace id[u32]
 ...
-0x?0 - 0x?f: wasm identifier[u64] time point[u32] trace id[u32]
+0x?0 - 0x?f: wasm module id[u64] time point[u32] trace id[u32]
 ```
 
 ### Design

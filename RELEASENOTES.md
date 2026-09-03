@@ -1,5 +1,11 @@
 # Wasm Compiler Release Notes
 
+## 4.2.3
+
+- Support customer wasm module identifier. Also used for tracing identifier
+- aarch64_backend:
+  - Fix timestamp corruption of first trace item in AArch64 tracing backend
+
 ## 4.2.2
 
 - x86_64 backend:

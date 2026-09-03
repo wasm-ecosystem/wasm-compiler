@@ -55,12 +55,12 @@ cc_library(
     ),
     hdrs = [":headers"],
     copts = compile_options,
-    defines = compile_defines,
+    defines = compile_defines + extension_defines,
     features = compile_features,
     # see https://stackoverflow.com/questions/63468630/bazel-how-to-add-prefix-to-dependency
     include_prefix = "wasm-compiler/src",
     visibility = ["//visibility:private"],
-    deps = [
+    deps = extension_deps + [
         "//thirdparty:berkeley-softfloat-3-headers",
     ],
 )
