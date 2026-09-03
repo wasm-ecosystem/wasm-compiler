@@ -17,6 +17,7 @@
 - Fix setTraceBuffer may delay taking effect
 - Fix requestInterruption may delay taking effect
 - Fix builtin.tracePoint didn't check stack fence on active protection mode
+- Fix timestamp corruption of first trace item in AArch64 tracing backend
 
 ## 5.0.0-rc0
 

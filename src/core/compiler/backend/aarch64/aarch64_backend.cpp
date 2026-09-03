@@ -2418,7 +2418,7 @@ void Backend::execBuiltinFncCall(BuiltinFunction const builtinFunction) {
 
       // cursor++;
       as_.INSTR(ADD_wD_wN_imm12zxols12).setD(cursorReg).setN(cursorReg).setImm12zx(SafeUInt<12U>::fromConst<1U>())();
-      as_.INSTR(STUR_xT_deref_xN_unscSImm9_t).setT(cursorReg).setN(traceBufferPtrReg).setUnscSImm9(SafeInt<9>::fromConst<-4>())();
+      as_.INSTR(STUR_wT_deref_xN_unscSImm9_t).setT(cursorReg).setN(traceBufferPtrReg).setUnscSImm9(SafeInt<9>::fromConst<-4>())();
 
       // traceBufferPtrReg[cursor] <- timePointReg, identifier
       {

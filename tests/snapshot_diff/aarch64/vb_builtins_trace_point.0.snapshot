@@ -91,7 +91,7 @@ ab 03 5c f8  ldur  x11, [x29, #-0x40]
 3f 01 0a 6b  cmp  w9, w10
 e2 00 00 54  b.hs  0x174
 29 05 00 11  add  w9, w9, #1
-69 c1 1f f8  stur  x9, [x11, #-4]
+69 c1 1f b8  stur  w9, [x11, #-4]
 4a e0 3b d5  mrs  x10, CNTVCT_EL0
 69 0d 09 8b  add  x9, x11, x9, lsl #3
 2a 6d 3f 29  stp  w10, w27, [x9, #-8]
