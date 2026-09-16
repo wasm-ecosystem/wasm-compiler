@@ -34,7 +34,6 @@ def run_wast2json(wast_path: Path, output_path: Path) -> None:
     result = subprocess.run(
         [
             "wast2json",
-            "--enable-tail-call",
             "-o",
             str(output_path),
             str(wast_path),

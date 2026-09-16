@@ -17,9 +17,7 @@ import subprocess
 
 
 def convert_wat_to_wasm(wat_file, wasm_file):
-    subprocess.run(
-        ["wat2wasm", "--enable-tail-call", wat_file, "-o", wasm_file], check=True
-    )
+    subprocess.run(["wat2wasm", wat_file, "-o", wasm_file], check=True)
 
 
 def read_wasm_file(wasm_file):
@@ -107,7 +105,6 @@ def main():
     # Run wasm-interp
     wasm_interp_command = [
         "wasm-interp",
-        "--enable-tail-call",
         "--dummy-import-func",
         "--run-all-exports",
         wasm_file,

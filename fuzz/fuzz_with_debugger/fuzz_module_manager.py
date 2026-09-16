@@ -105,7 +105,6 @@ class FuzzModuleManager:
         refOutBytes = subprocess.check_output(
             [
                 self.__execPrefix + "wasm-interp",
-                "--enable-tail-call",
                 "--run-all-exports",
                 "--dummy-import-func",
                 self.__targetWasmPath,

@@ -124,7 +124,7 @@ int main(int argc, char *argv[]) {
 
           std::cout << "Generating corpus from " << wastPath.filename() << "... ";
           std::ostringstream shellCommand;
-          shellCommand << "wast2json --disable-bulk-memory --enable-tail-call -o " << outputJSONPath << " " << wastPath.string();
+          shellCommand << "wast2json --disable-bulk-memory -o " << outputJSONPath << " " << wastPath.string();
           [[maybe_unused]] int const res = system(shellCommand.str().c_str());
           std::cout << "Done\n";
           fs::remove(outputJSONPath);
