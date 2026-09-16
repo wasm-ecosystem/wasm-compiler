@@ -151,12 +151,8 @@ jobs:
           echo "${{ github.workspace }}\Smartcode\ctc\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
       - name: Install wabt
-        shell: powershell
-        run: |
-          $ErrorActionPreference = 'Stop'
-          Invoke-WebRequest -Uri "https://github.com/WebAssembly/wabt/releases/download/1.0.41/wabt-1.0.41-windows-x64.tar.gz" -OutFile "wabt.tar.gz"
-          tar -xzf wabt.tar.gz
-          echo "${{ github.workspace }}\wabt-1.0.41\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+        shell: bash
+        run: ./.github/scripts/install_wabt.sh
 
       - name: Install Bazel
         shell: powershell

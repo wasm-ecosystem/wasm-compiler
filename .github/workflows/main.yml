@@ -293,11 +293,8 @@ jobs:
         with:
           submodules: true
       - name: Install wabt
-        run: |
-          aria2c https://github.com/WebAssembly/wabt/releases/download/1.0.41/wabt-1.0.41-windows-x64.tar.gz
-          tar -xzf wabt-1.0.41-windows-x64.tar.gz
-          mv wabt-1.0.41 C:\wabt-1.0.41
-          echo "C:\wabt-1.0.41\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+        shell: bash
+        run: ./.github/scripts/install_wabt.sh
       - name: Install Google Test
         run: |
           vcpkg install gtest:x64-windows
@@ -328,11 +325,8 @@ jobs:
         with:
           submodules: true
       - name: Install wabt
-        run: |
-          aria2c https://github.com/WebAssembly/wabt/releases/download/1.0.41/wabt-1.0.41-windows-x64.tar.gz
-          tar -xzf wabt-1.0.41-windows-x64.tar.gz
-          mv wabt-1.0.41 C:\wabt-1.0.41
-          echo "C:\wabt-1.0.41\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+        shell: bash
+        run: ./.github/scripts/install_wabt.sh
       - name: Install Google Test ARM64
         run: |
           vcpkg install gtest:arm64-windows
@@ -362,12 +356,9 @@ jobs:
           distribution: "temurin"
           java-version: "17"
 
-      - name: install wabt
-        run: |
-          set -ex
-          wget -q https://github.com/WebAssembly/wabt/releases/download/1.0.41/wabt-1.0.41-linux-x64.tar.gz
-          tar -xzf wabt-1.0.41-linux-x64.tar.gz
-          echo "$PWD/wabt-1.0.41/bin" >> $GITHUB_PATH
+      - name: Install wabt
+        shell: bash
+        run: ./.github/scripts/install_wabt.sh
 
       - name: Setup Android NDK
         run: |
@@ -436,10 +427,13 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: true
+      - name: Install wabt
+        shell: bash
+        run: ./.github/scripts/install_wabt.sh
       - name: Install dependencies
         run: |
           export HOMEBREW_NO_AUTO_UPDATE=1
-          brew install cmake googletest wabt llvm
+          brew install cmake googletest llvm
           echo "/opt/homebrew/opt/llvm/bin" >> $GITHUB_PATH
       - name: Build and test
         run: |
