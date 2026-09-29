@@ -1,5 +1,9 @@
 # Wasm Compiler Release Notes
 
+## 4.2.4
+
+- Fix ReferenceChainVisitor accessibility for C++14/C++17 compatibility
+
 ## 4.2.3
 
 - Support customer wasm module identifier. Also used for tracing identifier

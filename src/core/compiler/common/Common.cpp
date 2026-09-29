@@ -383,7 +383,8 @@ Stack::iterator Common::condenseMultipleValentBlocksWithTargetHintBelow(Stack::i
 }
 
 bool Common::checkIfEnforcedTargetIsOnlyInArgs(Span<Stack::iterator> const &args, StackElement const *const enforcedTarget) const VB_NOEXCEPT {
-  return checkIfEnforcedTargetIsOnlyInArgs<BasicReferenceChainVisitor>(args, enforcedTarget, compiler_.moduleInfo_, BasicReferenceChainVisitor{});
+  BasicReferenceChainVisitor const visitor;
+  return checkIfEnforcedTargetIsOnlyInArgs<BasicReferenceChainVisitor>(args, enforcedTarget, compiler_.moduleInfo_, visitor);
 }
 
 Stack::iterator Common::condenseValentBlockBelow(Stack::iterator const belowIt, StackElement const *const enforcedTarget) const {
