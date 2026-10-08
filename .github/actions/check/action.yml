@@ -48,7 +48,7 @@ runs:
       run: |
         set -ex
         apt-get update
-        apt-get install -y --no-install-recommends doxygen graphviz clang-format
+        DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends doxygen graphviz clang-format
         npm install -g cspell
 
     - name: cspell
