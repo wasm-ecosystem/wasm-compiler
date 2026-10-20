@@ -97,7 +97,7 @@ public:
   /// @tparam Binary type with data() and size() method
   /// @param binary
   /// @return ExecutableMemory
-  /// @throws std::bad_alloc executable memory allocation failed
+  /// @throws RuntimeError executable memory allocation failed
   ///
   template <typename Binary> static inline ExecutableMemory make_executable_copy(Binary const &binary) VB_THROW {
     return make_executable_copy(binary.data(), binary.size());
@@ -109,7 +109,7 @@ public:
   /// @param data The start address of memory to copy
   /// @param size The size of memory to copy
   /// @return ExecutableMemory
-  /// @throws std::bad_alloc executable memory allocation failed
+  /// @throws RuntimeError executable memory allocation failed
   ///
   static inline ExecutableMemory make_executable_copy(uint8_t const *const data, size_t const size) {
     return ExecutableMemory(data, size);
@@ -131,7 +131,7 @@ private:
   ///
   /// @param data start address of source JIT code
   /// @param size of JIT code
-  /// @throws std::bad_alloc executable memory allocation failed
+  /// @throws RuntimeError executable memory allocation failed
   ///
   ExecutableMemory(uint8_t const *const data, size_t const size);
 
@@ -141,7 +141,7 @@ private:
   /// @param data
   ///
   /// s This function will alloc memory -> copy memory -> set executable memory as executable
-  /// @throws std::bad_alloc executable memory allocation failed
+  /// @throws RuntimeError executable memory allocation failed
   ///
 
   void init(uint8_t const *const data);

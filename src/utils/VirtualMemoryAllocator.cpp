@@ -19,7 +19,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <exception>
-#include <new>
 
 #include "LinearMemoryAllocator.hpp"
 #include "MemUtils.hpp"
@@ -33,14 +32,16 @@
 #endif
 
 namespace vb {
-
+// coverity[autosar_cpp14_m15_3_4_violation]
+// coverity[autosar_cpp14_a15_4_2_violation]
+// coverity[autosar_cpp14_a15_5_3_violation]
 VirtualMemoryAllocator::VirtualMemoryAllocator() VB_NOEXCEPT : VirtualMemoryAllocator(0U) {
 }
 
 // coverity[autosar_cpp14_a12_1_1_violation] Fake positive
 // coverity[autosar_cpp14_a12_6_1_violation]
-VirtualMemoryAllocator::VirtualMemoryAllocator(size_t const totalSize) VB_NOEXCEPT : committedSize_(0U),
-                                                                                     totalSize_(MemUtils::roundUpToOSMemoryPageSize(totalSize)) {
+VirtualMemoryAllocator::VirtualMemoryAllocator(size_t const totalSize)
+    : committedSize_(0U), totalSize_(MemUtils::roundUpToOSMemoryPageSize(totalSize)) {
   if (totalSize_ > 0U) {
     // Actually allocate something
     data_ = pCast<uint8_t *>(MemUtils::allocVirtualMemory(totalSize_));
@@ -77,7 +78,7 @@ size_t VirtualMemoryAllocator::resize(size_t const size) {
   assert(size % MemUtils::getOSMemoryPageSize() == 0 && "Size must be a multiple of OS page size");
 
   if (size > totalSize_) {
-    throw std::bad_alloc();
+    throw RuntimeError(ErrorCode::Could_not_extend_memory);
   }
 
   if (size > committedSize_) {

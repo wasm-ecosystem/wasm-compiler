@@ -21,13 +21,13 @@
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
-#include <new>
 #include <string>
 
 #include "MemUtils.hpp"
 #include "OSAPIChecker.hpp"
 
 #include "src/config.hpp"
+#include "src/core/common/VbExceptions.hpp"
 
 #ifdef VB_WIN32_OR_POSIX
 #include <iostream>
@@ -48,8 +48,6 @@
 #ifdef __QNX__
 #include <fcntl.h>
 #include <sys/procfs.h>
-
-#include "src/core/common/VbExceptions.hpp"
 #endif
 
 #elif defined(VB_WIN32)
@@ -166,7 +164,7 @@ static void *alignedReduce(void *const ptr, size_t const size, size_t const alig
   return realloc(ptr, size);
 }
 
-/// @brief wrapper of mmap, throw std::bad_alloc when mmap failed
+/// @brief wrapper of mmap, throw RuntimeError when mmap failed
 /// @param addr bypass to mmap
 /// @param length bypass to mmap
 /// @param port bypass to mmap
@@ -174,7 +172,7 @@ static void *alignedReduce(void *const ptr, size_t const size, size_t const alig
 /// @param fd bypass to mmap
 /// @param offset bypass to mmap
 /// @return result of mmap when mmap success
-/// @throw throw std::bad_alloc when mmap failed
+/// @throw RuntimeError when mmap failed
 static uint8_t *wrapperMmap(void *const addr, size_t const length, int32_t const port, int32_t const flags, int32_t const fd, off_t const offset) {
   // coverity[autosar_cpp14_a16_2_3_violation]
   void *const ptr{mmap(addr, length, port, flags, fd, offset)};
@@ -184,7 +182,8 @@ static uint8_t *wrapperMmap(void *const addr, size_t const length, int32_t const
   if (ptr != MAP_FAILED) {
     return pCast<uint8_t *>(ptr);
   } else {
-    throw std::bad_alloc();
+    // coverity[autosar_cpp14_a15_0_2_violation]
+    throw RuntimeError(ErrorCode::Memory_allocation_failed);
   }
 }
 
@@ -329,7 +328,7 @@ uint8_t *allocAlignedMemory(size_t size, size_t const alignment) {
   uint8_t *const codeStart{pCast<uint8_t *>(allocRawAlignedMemory(alignment, size))};
 
   if (codeStart == nullptr) {
-    throw std::bad_alloc();
+    throw RuntimeError(ErrorCode::Memory_allocation_failed);
   }
 
   return codeStart;
@@ -351,7 +350,8 @@ uint8_t *reallocAlignedMemory(uint8_t *oldCodeStart, size_t const oldSize, size_
   } else {
     static_cast<void>(0);
   }
-
+  // coverity[autosar_cpp14_a15_1_4_violation]
+  // coverity[autosar_cpp14_a15_0_2_violation]
   newCodeStart = allocAlignedMemory(newSize, alignment);
 
   if (oldCodeStart != nullptr) {

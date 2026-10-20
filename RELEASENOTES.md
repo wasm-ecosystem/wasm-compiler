@@ -19,6 +19,7 @@
 - Fix builtin.tracePoint didn't check stack fence on active protection mode
 - Fix timestamp corruption of first trace item in AArch64 tracing backend
 - Fix getContextPC is not enabled when passive stack overflow protection only
+- Fix memory allocation failure handling and runtime initialization exception safety
 
 ## 5.0.0-rc0
 

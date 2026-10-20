@@ -150,6 +150,7 @@ public:
   /// @param module Input binary; executable produced by the compiler
   /// @param memoryManager Memory manager object; e.g. an instance of ActiveMemoryManager
   /// @param ctx Custom context for import functions
+  /// @throws RuntimeError Module validation, memory initialization or dynamic linking failed
   template <typename Binary>
   Runtime(Binary const &module, IMemoryManager &memoryManager, void *const ctx)
       : Runtime(Span<uint8_t const>{module.data(), module.size()}, memoryManager, Span<NativeSymbol const>{}, ctx) {
@@ -166,6 +167,7 @@ public:
   /// @param memoryManager Memory manager object; e.g. an instance of ActiveMemoryManager
   /// @param ctx Custom context for callback functions
   /// @param dynamicallyLinkedSymbols List of host functions that should be linked dynamically
+  /// @throws RuntimeError Module validation, memory initialization or dynamic linking failed
   template <typename Binary, typename SymbolList>
   Runtime(Binary const &module, IMemoryManager &memoryManager, SymbolList const &dynamicallyLinkedSymbols, void *const ctx)
       : Runtime(Span<uint8_t const>{module.data(), module.size()}, memoryManager,
@@ -181,6 +183,7 @@ public:
   /// @param dynamicallyLinkedSymbols List of host functions that should be linked dynamically
   /// @param ctx Custom context
   /// @param defaultDynamicallyLinkedSymbols Default import symbols injected by the runtime
+  /// @throws RuntimeError Module validation, memory initialization or dynamic linking failed
   Runtime(Span<uint8_t const> const &module, IMemoryManager &memoryManager, Span<NativeSymbol const> const &dynamicallyLinkedSymbols, void *const ctx,
           Span<NativeSymbol const> const &defaultDynamicallyLinkedSymbols = Span<NativeSymbol const>()) VB_THROW : disabled_(false),
                                                                                                                    queuedStartFncOffset_(0U),
@@ -205,6 +208,7 @@ public:
   /// @param module Input binary; executable produced by the compiler
   /// @param memoryManager Memory manager object; e.g. an instance of LinearMemoryAllocator
   /// @param ctx Custom context for import functions
+  /// @throws RuntimeError Module validation, memory initialization or dynamic linking failed
   template <typename Binary>
   Runtime(Binary const &module, IMemoryManager &memoryManager, void *const ctx)
       : Runtime(Span<uint8_t const>{module.data(), module.size()}, memoryManager, Span<NativeSymbol const>{}, ctx) {
@@ -221,6 +225,7 @@ public:
   /// @param memoryManager Memory manager object; e.g. an instance of LinearMemoryAllocator
   /// @param dynamicallyLinkedSymbols List of host functions that should be linked dynamically
   /// @param ctx Custom context for import functions
+  /// @throws RuntimeError Module validation, memory initialization or dynamic linking failed
   template <typename Binary, typename SymbolList>
   Runtime(Binary const &module, IMemoryManager &memoryManager, SymbolList const &dynamicallyLinkedSymbols, void *const ctx)
       : Runtime(Span<uint8_t const>{module.data(), module.size()}, memoryManager,
@@ -237,6 +242,7 @@ public:
   /// @param dynamicallyLinkedSymbols List of host functions that should be linked dynamically
   /// @param ctx Custom context for import functions
   /// @param defaultDynamicallyLinkedSymbols Default import symbols injected by the runtime
+  /// @throws RuntimeError Module validation, memory initialization or dynamic linking failed
   Runtime(Span<uint8_t const> const &module, IMemoryManager &memoryManager, Span<NativeSymbol const> const &dynamicallyLinkedSymbols, void *const ctx,
           Span<NativeSymbol const> const &defaultDynamicallyLinkedSymbols = Span<NativeSymbol const>()) VB_THROW : disabled_(false),
                                                                                                                    queuedStartFncOffset_(0U),

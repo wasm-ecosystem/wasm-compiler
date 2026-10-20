@@ -31,15 +31,16 @@ namespace vb {
 class VirtualMemoryAllocator final {
 public:
   ///
-  /// @brief Construct a new VirtualMemoryAllocator
+  /// @brief Construct an empty allocator without reserving virtual memory
   ///
   VirtualMemoryAllocator() VB_NOEXCEPT;
   ///
-  /// @brief Construct a new Virtual Memory Allocator
+  /// @brief Reserve virtual memory without committing it
   ///
   /// @param totalSize The virtual memory size to be reserved from OS
+  /// @throws RuntimeError Virtual memory reservation failed on POSIX systems
   ///
-  explicit VirtualMemoryAllocator(size_t const totalSize) VB_NOEXCEPT;
+  explicit VirtualMemoryAllocator(size_t const totalSize);
   VirtualMemoryAllocator(VirtualMemoryAllocator &) = delete;
   ///
   /// @brief Move constructor
@@ -111,7 +112,7 @@ public:
   ///
   /// @param size The new size. This size must be aligned to OS page size
   /// @return size_t finally committed size. The size should be equals to given size if commit success
-  /// @throws std::runtime_error Virtual memory commit failed
+  /// @throws RuntimeError Requested size exceeds the reservation, or committing or un-committing memory failed
   ///
   size_t resize(size_t const size);
   ///
@@ -119,7 +120,7 @@ public:
   ///
   /// @param recommendSize recommend size/minimal required size
   /// @return size_t The finally committed size
-  /// @throws std::runtime_error Virtual memory commit failed
+  /// @throws RuntimeError Aligned size exceeds the reservation, or committing or un-committing memory failed
   ///
   size_t roundUpResize(size_t const recommendSize);
   ///

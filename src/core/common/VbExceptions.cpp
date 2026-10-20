@@ -340,6 +340,9 @@ RuntimeError::operator const char *() const VB_NOEXCEPT {
   case (Code::Cannot_keep_STACKSIZE_LEFT_BEFORE_NATIVE_CALL_free_before_native_call__Stack_fence_too_high_): {
     return "Cannot keep STACKSIZE_LEFT_BEFORE_NATIVE_CALL free before native call. Stack fence too high.";
   }
+  case (Code::Memory_allocation_failed): {
+    return "Memory allocation failed";
+  }
   case (Code::Memory_reallocation_failed): {
     return "Memory reallocation failed";
   }
