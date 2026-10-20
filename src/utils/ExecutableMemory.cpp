@@ -18,7 +18,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <iostream>
-#include <new>
 #include <ostream>
 #include <utility>
 
@@ -26,6 +25,7 @@
 #include "MemUtils.hpp"
 
 #include "src/config.hpp"
+#include "src/core/common/VbExceptions.hpp"
 #ifdef __linux__
 #include <unistd.h>
 #endif
@@ -64,7 +64,7 @@ void ExecutableMemory::init(uint8_t const *const data) {
     fd_ = mmapMemory.fd;
     MemUtils::memcpyAndClearInstrCache(readWriteMemory, data, size_);
   } else {
-    throw std::bad_alloc(); // GCOVR_EXCL_LINE
+    throw RuntimeError(ErrorCode::Memory_allocation_failed); // GCOVR_EXCL_LINE
   }
 
 #ifdef __linux__

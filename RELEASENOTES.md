@@ -1,5 +1,10 @@
 # Wasm Compiler Release Notes
 
+## 4.2.5
+
+- Fix getContextPC is not enabled when passive stack overflow protection only
+- Fix memory allocation failure handling and runtime initialization exception safety
+
 ## 4.2.4
 
 - Fix ReferenceChainVisitor accessibility for C++14/C++17 compatibility

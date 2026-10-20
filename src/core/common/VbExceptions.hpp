@@ -169,6 +169,8 @@ public:
     // Validation stack specific error codes
     validateAndDrop__Stack_frame_underflow,
     Validation_failed,
+
+    Memory_allocation_failed,
   };
 
   ///

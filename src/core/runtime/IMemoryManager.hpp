@@ -67,6 +67,7 @@ public:
   ///
   /// @param basedataSize Size of the module's basedata section in the job memory (Part before the linear memory starts)
   /// @param initialLinMemPages Initial allowed linear memory size in Wasm pages
+  /// @throws RuntimeError Initial memory reservation or allocation failed
   virtual void init(uint32_t const basedataSize, uint32_t const initialLinMemPages) = 0;
 
   ///

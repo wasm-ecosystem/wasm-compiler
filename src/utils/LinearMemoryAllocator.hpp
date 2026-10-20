@@ -72,7 +72,7 @@ public:
   ~LinearMemoryAllocator() override = default;
 
   /// @brief see @b IMemoryManager
-  /// @throws std::runtime_error allocate initial memory failed
+  /// @throws RuntimeError Reserving or committing initial memory failed
   void init(uint32_t const basedataSize, uint32_t const initialLinMemPages) override;
 
   /// @brief see @b IMemoryManager
@@ -107,7 +107,7 @@ public:
 
   /// @brief Set the Memory Limit
   /// @param memoryLimit new memory limit in bytes
-  /// @throws std::runtime_error new memory limit is less than already used memory
+  /// @throws RuntimeError new memory limit is less than already used memory
   void setMemoryLimit(uint64_t const memoryLimit);
 
   /// @brief get max desired RAM on memory extend failed
@@ -125,7 +125,7 @@ private:
   /// @param newPagedSize new total size to commit
   /// @return true commit success
   /// @return false new size is larger than memory limit, commit failed.
-  /// @throws std::runtime_error commit memory failed
+  /// @throws RuntimeError Requested size exceeds the reservation, or committing or un-committing memory failed
   ///
   bool commit(size_t const newPagedSize);
 

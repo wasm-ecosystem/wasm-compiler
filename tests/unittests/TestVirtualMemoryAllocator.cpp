@@ -20,6 +20,7 @@
 #include "src/config.hpp"
 
 #ifndef JIT_TARGET_TRICORE
+#include "src/core/common/VbExceptions.hpp"
 #include "src/utils/MemUtils.hpp"
 #include "src/utils/VirtualMemoryAllocator.hpp"
 
@@ -53,7 +54,7 @@ TEST(TestVirtualMemoryAllocator, testResize) {
   data[size_request1 + 1U] = 1U;
 
   // NOLINTNEXTLINE(cppcoreguidelines-avoid-goto)
-  EXPECT_THROW({ allocator.resize(totalSize * 2U); }, std::bad_alloc);
+  EXPECT_THROW({ allocator.resize(totalSize * 2U); }, vb::RuntimeError);
 }
 
 // NOLINTNEXTLINE(cert-err58-cpp, cppcoreguidelines-special-member-functions)

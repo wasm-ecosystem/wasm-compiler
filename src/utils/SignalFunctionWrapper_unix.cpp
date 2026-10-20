@@ -138,7 +138,7 @@ static void setReturnFromSignalHandler(ucontext_t *const uc, void const *const p
 #endif
 }
 
-#if !LINEAR_MEMORY_BOUNDS_CHECKS
+#if !LINEAR_MEMORY_BOUNDS_CHECKS || !ACTIVE_STACK_OVERFLOW_CHECK
 
 ///
 /// @brief Get value of PC register

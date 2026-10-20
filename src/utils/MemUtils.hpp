@@ -37,7 +37,7 @@ size_t getOSMemoryPageSize() VB_NOEXCEPT;
 /// @param size memory size to allocate
 /// @param alignment
 /// @return address of allocated memory. The pointer can't be nullptr
-/// @throws std::bad_alloc memory allocation failed
+/// @throws RuntimeError memory allocation failed
 ///
 uint8_t *allocAlignedMemory(size_t size, size_t const alignment);
 ///
@@ -48,7 +48,7 @@ uint8_t *allocAlignedMemory(size_t size, size_t const alignment);
 /// @param newSize new size
 /// @param alignment
 /// @return address of new allocated memory. The pointer can't be nullptr
-/// @throws std::bad_alloc memory allocation failed
+/// @throws RuntimeError memory allocation failed
 ///
 uint8_t *reallocAlignedMemory(uint8_t *oldCodeStart, size_t const oldSize, size_t newSize, size_t const alignment);
 ///
@@ -113,7 +113,7 @@ struct MmapMemory final {
 /// @brief Allocate page aligned memory
 ///
 /// @param size size of to be allocated memory
-/// @throw std::bad_alloc memory allocation failed
+/// @throw RuntimeError memory allocation failed
 /// @return MmapMemory
 ///
 MmapMemory allocPagedMemory(size_t const size);
@@ -144,7 +144,7 @@ size_t roundDownToOSMemoryPageSize(size_t const size) VB_NOEXCEPT;
 ///
 /// @param size Size to be mapped
 /// @param fd The file descriptor of to be mapped file
-/// @throw std::bad_alloc memory allocation failed
+/// @throw RuntimeError memory allocation failed
 /// @return start address of the mapped read executable memory. May return nullptr is memory map failed
 ///
 uint8_t *mapRXMemory(size_t const size, int32_t const fd);
@@ -169,8 +169,8 @@ StackInfo getStackInfo();
 /// @brief allocate virtual memory by OS API
 ///
 /// @param size memory size which must be aligned to OS page size
-/// @throw std::bad_alloc memory allocation failed
-/// @return Start address of allocated memory. May return nullptr is allocation failed
+/// @throw RuntimeError Virtual memory reservation failed on POSIX systems
+/// @return Start address of reserved memory. May return nullptr if reservation failed on Windows
 ///
 void *allocVirtualMemory(size_t const size);
 ///
@@ -185,7 +185,7 @@ void freeVirtualMemory(void *const ptr, size_t const size) VB_NOEXCEPT;
 ///
 /// @param ptr Start address of memory to be committed
 /// @param size Size of memory to be committed
-/// @throws std::runtime_error memory commit failed
+/// @throws RuntimeError memory commit failed
 ///
 void commitVirtualMemory(void *const ptr, size_t const size);
 ///
@@ -193,7 +193,7 @@ void commitVirtualMemory(void *const ptr, size_t const size);
 ///
 /// @param ptr Start address of memory to be uncommitted
 /// @param size Size of memory to be uncommitted
-/// @throws std::runtime_error memory uncommit failed
+/// @throws RuntimeError memory uncommit failed
 ///
 void uncommitVirtualMemory(void *const ptr, size_t const size);
 
