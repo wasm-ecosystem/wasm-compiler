@@ -37,7 +37,6 @@ static_assert(false, "OS not supported");
 #endif
 
 namespace vb {
-#if !LINEAR_MEMORY_BOUNDS_CHECKS
 
 ///
 /// @brief Set the function parameters after signal handler returns
@@ -96,7 +95,6 @@ static void *getContextPC(PEXCEPTION_POINTERS &pExceptionInfo) VB_NOEXCEPT {
   static_assert(false, "Architecture not supported");
 #endif
 }
-#endif
 thread_local SignalWrapperErrorCode SignalFunctionWrapperWin::error_ = SignalWrapperErrorCode::NONE;
 
 #if !ACTIVE_STACK_OVERFLOW_CHECK
