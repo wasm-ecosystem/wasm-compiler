@@ -7,6 +7,7 @@
 - Fix getContextPC is not enabled when passive stack overflow protection only
 - Fix memory allocation failure handling and runtime initialization exception safety
 - Fix x86_64 tail-call argument corruption when swapping mixed 32-bit and 64-bit values
+- Fix incorrect zero-extension of memory-backed i32 values in x86_64 `i64.extend_i32_u`
 
 ## 5.0.0-rc1
 
@@ -97,6 +98,7 @@
 
 ## Release v3 known issues
 
+- [Bug fixed by 5.0.0-rc2](#5.0.0-rc2)
 - [Bug fixed by 4.1.2](#412)
 - [Bug fixed by 4.1.1](#411)
 
@@ -154,6 +156,7 @@ Add u32 and u64 type to WasmValue
 
 ## Release v2 known issues
 
+- [Bug fixed by 5.0.0-rc2](#5.0.0-rc2)
 - [Bug fixed by 5.0.0-rc1](#5.0.0-rc1)
 - [Bug fixed by 4.1.1](#411)
 - [Bug fixed by 3.0.10](#3010)
