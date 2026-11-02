@@ -40,12 +40,12 @@
 
 #if CXX_TARGET == JIT_TARGET
 
-static void *allocFnc(uint32_t size, void *ctx) noexcept {
+static void *allocFnc(uint32_t size, void *const ctx) noexcept {
   static_cast<void>(ctx);
   return malloc(static_cast<size_t>(size));
 }
 
-static void freeFnc(void *ptr, void *ctx) noexcept {
+static void freeFnc(void *const ptr, void *const ctx) noexcept {
   static_cast<void>(ctx);
   free(ptr);
 }

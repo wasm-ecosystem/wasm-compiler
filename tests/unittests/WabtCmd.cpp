@@ -226,7 +226,7 @@ std::vector<uint8_t> WabtCmd::parseHexDump(const std::string &hexDump) {
         const char *const hexStart = line.c_str() + cursor;
         const char *const hexEnd = hexStart + 2U;
         uint8_t hexValue;
-        auto errorCode = std::from_chars(hexStart, hexEnd, hexValue, 16);
+        auto const errorCode = std::from_chars(hexStart, hexEnd, hexValue, 16);
 
         if (errorCode.ec != std::errc()) {
           std::cerr << "Conversion failed" << std::endl;

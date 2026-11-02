@@ -30,7 +30,7 @@
 
 namespace vb {
 
-TestData loadWasmFile(std::filesystem::path &path) {
+TestData loadWasmFile(std::filesystem::path const &path) {
   std::ifstream wasmFile{path, std::ios_base::binary};
   wasmFile.exceptions(
       static_cast<std::ios_base::iostate>(static_cast<uint32_t>(std::ifstream::failbit) | static_cast<uint32_t>(std::ifstream::badbit)));
@@ -80,7 +80,7 @@ TestResult processWast(std::filesystem::path const &base, std::filesystem::path 
 
   SingleCaseTest testcase(wastPath.filename().string());
 
-  auto wasmBinaryMapping = std::make_shared<vb::TestDataMapping>();
+  auto const wasmBinaryMapping = std::make_shared<vb::TestDataMapping>();
   for (auto &command : testJson["commands"]) {
     std::string const type = command["type"];
     if (type == "module" || type == "assert_invalid" || type == "assert_malformed") {
@@ -116,7 +116,7 @@ vb::TestResult runTests(char const *const path, bool const enableDebugMode, bool
         std::terminate();
       }
       if (std::filesystem::is_directory(currentPath)) {
-        auto it = std::filesystem::directory_iterator(currentPath);
+        auto const it = std::filesystem::directory_iterator(currentPath);
         for (auto &x : it) {
           std::filesystem::path const p = x.path();
           if (x.is_directory() && p.parent_path().stem() == "proposals") {

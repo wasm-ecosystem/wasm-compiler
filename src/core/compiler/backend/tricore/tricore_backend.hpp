@@ -579,9 +579,9 @@ public:
 
   /// @brief Select a default data register for breaking a pending parallel-move cycle.
   /// @param moveResolver Resolver whose remaining records describe the still-pending cycle sources
-  /// @param sourceStorage Source storage at the cycle head; its machine type is preserved in the returned storage
-  /// @return Data-register storage with the same machine type as @p sourceStorage that does not conflict with unresolved sources
-  static VariableStorage selectDefaultParallelMoveTemp(ParallelMoveResolver const &moveResolver, VariableStorage const &sourceStorage) VB_NOEXCEPT;
+  /// @param machineType Required temporary storage type; 64-bit types require a data-register pair
+  /// @return Data-register storage of @p machineType that does not conflict with unresolved sources
+  static VariableStorage selectDefaultParallelMoveTemp(ParallelMoveResolver const &moveResolver, MachineType const machineType) VB_NOEXCEPT;
 
 private:
   /// @brief Widths of certain entries on the stack

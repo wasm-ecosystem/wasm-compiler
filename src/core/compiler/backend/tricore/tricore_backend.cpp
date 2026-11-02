@@ -1222,7 +1222,7 @@ void Backend::execReturnCall(uint32_t const fncIndex) {
       moveResolver.resolveCycle(ParallelMoveEmitter(moveEmitter),
                                 // coverity[autosar_cpp14_a5_1_9_violation]
                                 ParallelMoveTempProvider{[&moveResolver](VariableStorage const &sourceStorage) VB_THROW -> VariableStorage {
-                                  return selectDefaultParallelMoveTemp(moveResolver, sourceStorage);
+                                  return selectDefaultParallelMoveTemp(moveResolver, sourceStorage.machineType);
                                 }});
     }
 
@@ -1430,7 +1430,7 @@ void Backend::execReturnCallIndirect(uint32_t const sigIndex, uint32_t const tab
       // coverity[autosar_cpp14_a5_1_4_violation]
       moveResolver.resolveCycle(ParallelMoveEmitter(moveEmitter),
                                 ParallelMoveTempProvider{[&moveResolver](VariableStorage const &sourceStorage) VB_THROW -> VariableStorage {
-                                  return selectDefaultParallelMoveTemp(moveResolver, sourceStorage);
+                                  return selectDefaultParallelMoveTemp(moveResolver, sourceStorage.machineType);
                                 }});
     }
 
@@ -5444,8 +5444,7 @@ bool Backend::stackElementConflictsWithParamReg(StackElement const &element, REG
   return false;
 }
 
-VariableStorage Backend::selectDefaultParallelMoveTemp(ParallelMoveResolver const &moveResolver, VariableStorage const &sourceStorage) VB_NOEXCEPT {
-  MachineType const machineType{sourceStorage.machineType};
+VariableStorage Backend::selectDefaultParallelMoveTemp(ParallelMoveResolver const &moveResolver, MachineType const machineType) VB_NOEXCEPT {
   // Free scratch regs may be reused as move temps once they are not part of the unresolved cycle sources.
   Span<REG const> const staticScratchRegs{
       vb::Span<REG const>(WasmABI::dr.data(), WasmABI::dr.size()).subspan(static_cast<size_t>(WasmABI::scratchRegStart))};

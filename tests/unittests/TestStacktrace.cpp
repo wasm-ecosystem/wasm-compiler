@@ -36,12 +36,12 @@ using namespace vb;
 
 namespace stacktrace {
 
-void *allocFnc(uint32_t size, void *ctx) noexcept {
+void *allocFnc(uint32_t size, void *const ctx) noexcept {
   static_cast<void>(ctx);
   return malloc(static_cast<size_t>(size));
 }
 
-void freeFnc(void *ptr, void *ctx) noexcept {
+void freeFnc(void *const ptr, void *const ctx) noexcept {
   static_cast<void>(ctx);
   free(ptr);
 }
@@ -186,7 +186,7 @@ TEST(TestStacktrace, stacktracePersistsIfRetrievedMultipleTimes) {
   Runtime runtime = test::createRuntime(executableMemory);
 
   std::vector<uint32_t> stacktrace;
-  auto updateStacktrace = [&runtime, &stacktrace]() {
+  auto const updateStacktrace = [&runtime, &stacktrace]() {
     stacktrace.clear();
     runtime.iterateStacktraceRecords(FunctionRef<void(uint32_t)>([&stacktrace](uint32_t const fncIndex) {
       stacktrace.push_back(fncIndex);
@@ -302,7 +302,7 @@ TEST(TestStacktrace, stacktraceIsCorrect) {
   Runtime runtime = test::createRuntime(executableMemory);
 
   std::vector<uint32_t> stacktrace;
-  auto updateStacktrace = [&runtime, &stacktrace]() {
+  auto const updateStacktrace = [&runtime, &stacktrace]() {
     stacktrace.clear();
     runtime.iterateStacktraceRecords(FunctionRef<void(uint32_t)>([&stacktrace](uint32_t const fncIndex) {
       stacktrace.push_back(fncIndex);
@@ -356,7 +356,7 @@ TEST(TestStacktrace, truncatedStacktraceIsCorrect) {
   Runtime runtime = test::createRuntime(executableMemory);
 
   std::vector<uint32_t> stacktrace;
-  auto updateStacktrace = [&runtime, &stacktrace]() {
+  auto const updateStacktrace = [&runtime, &stacktrace]() {
     stacktrace.clear();
     runtime.iterateStacktraceRecords(FunctionRef<void(uint32_t)>([&stacktrace](uint32_t const fncIndex) {
       stacktrace.push_back(fncIndex);

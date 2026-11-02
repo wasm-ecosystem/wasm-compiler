@@ -80,7 +80,7 @@ std::string JsonLoader::getText() {
 
 Span<const uint8_t> JsonModuleCommand::getByteCode() {
   std::string const filename = jsonLoader_.command_["filename"];
-  auto it = testDataMapping_->find(filename);
+  auto const it = testDataMapping_->find(filename);
   assert(it != testDataMapping_->end());
   return it->second.m_memObj;
 }
@@ -111,7 +111,7 @@ Span<const uint8_t> JsonInvalidCommand::getByteCode() {
   if (filename.substr(filename.size() - 5, 5) != ".wasm") {
     return Span<const uint8_t>();
   }
-  auto it = testDataMapping_->find(filename);
+  auto const it = testDataMapping_->find(filename);
   if (it == testDataMapping_->end()) {
     throw std::runtime_error(filename.c_str());
   }
@@ -122,7 +122,7 @@ std::unique_ptr<Command> JsonTestLoader::getNextCommand() {
   if (commandsIt_ == commandsRef_.end()) {
     return nullptr;
   }
-  auto commandsIt = commandsIt_;
+  auto const commandsIt = commandsIt_;
   commandsIt_++;
   auto const type = str2commandType((*commandsIt)["type"]);
   switch (type) {
@@ -174,11 +174,11 @@ void JsonTestLoader::reorderCommands(nlohmann::json const &commandsRef) {
       if (ignores.find(name) != ignores.end()) {
         continue;
       }
-      auto it = std::find(moduleNames.begin(), moduleNames.end(), name);
+      auto const it = std::find(moduleNames.begin(), moduleNames.end(), name);
       if (it == moduleNames.end()) {
         throw std::runtime_error("cannot find module: " + name);
       }
-      auto distance = static_cast<std::size_t>(std::distance(moduleNames.begin(), it));
+      auto const distance = static_cast<std::size_t>(std::distance(moduleNames.begin(), it));
       orderedCommands[distance].emplace_back(command);
     } else if (command.contains("type") && command.contains("name") && command["type"] == "register" && command["name"].is_string()) {
       ignores.emplace(command["name"]);

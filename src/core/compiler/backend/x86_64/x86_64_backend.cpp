@@ -725,6 +725,7 @@ void Backend::execReturnCall(uint32_t const fncIndex) {
       assert(targetStorage.machineType == sourceStorage.machineType && "Only supports same-type swaps");
       // GCOVR_EXCL_STOP
 
+      MachineType const moveHelperType{swapContains64 ? MachineType::I64 : MachineType::I32};
       bool const isGPR{MachineTypeUtil::isInt(targetStorage.machineType)};
       if (isGPR) {
         if (sourceStorage.type == StorageType::REGISTER) {
@@ -743,17 +744,21 @@ void Backend::execReturnCall(uint32_t const fncIndex) {
               .setR(targetStorage.location.reg)();
         } else {
           if (moveHelper == REG::NONE) {
-            moveHelper = selectDefaultParallelMoveTemp(moveResolver, sourceStorage).location.reg;
+            moveHelper = selectDefaultParallelMoveTemp(moveResolver, moveHelperType).location.reg;
           }
           RegDisp const sourceRegDisp{getMemRegDisp(sourceStorage)};
           RegDisp const targetRegDisp{getMemRegDisp(targetStorage)};
           as_.INSTR(swapContains64 ? MOV_r64_rm64 : MOV_r32_rm32).setR(moveHelper).setM4RM(sourceRegDisp.reg, sourceRegDisp.disp)();
-          emitMoveImpl(sourceStorage, targetStorage, false);
+          if (swapContains64) {
+            emitMoveWithCastTo64(sourceStorage, targetStorage, false, false);
+          } else {
+            emitMoveImpl(sourceStorage, targetStorage, false);
+          }
           as_.INSTR(swapContains64 ? MOV_rm64_r64 : MOV_rm32_r32).setM4RM(targetRegDisp.reg, targetRegDisp.disp).setR(moveHelper)();
         }
       } else {
         if (moveHelper == REG::NONE) {
-          moveHelper = selectDefaultParallelMoveTemp(moveResolver, sourceStorage).location.reg;
+          moveHelper = selectDefaultParallelMoveTemp(moveResolver, moveHelperType).location.reg;
         }
         if (sourceStorage.type == StorageType::REGISTER) {
           as_.INSTR(swapContains64 ? MOVQ_rm64_rf : MOVD_rm32_rf).setR4RM(moveHelper).setR(sourceStorage.location.reg)();
@@ -762,7 +767,11 @@ void Backend::execReturnCall(uint32_t const fncIndex) {
           as_.INSTR(swapContains64 ? MOV_r64_rm64 : MOV_r32_rm32).setR(moveHelper).setM4RM(sourceRegDisp.reg, sourceRegDisp.disp)();
         }
 
-        emitMoveImpl(sourceStorage, targetStorage, false);
+        if (swapContains64) {
+          emitMoveWithCastTo64(sourceStorage, targetStorage, false, false);
+        } else {
+          emitMoveImpl(sourceStorage, targetStorage, false);
+        }
 
         if (targetStorage.type == StorageType::REGISTER) {
           as_.INSTR(swapContains64 ? MOVQ_rf_rm64 : MOVD_rf_rm32).setR(targetStorage.location.reg).setR4RM(moveHelper)();
@@ -783,7 +792,7 @@ void Backend::execReturnCall(uint32_t const fncIndex) {
         // coverity[autosar_cpp14_a8_5_2_violation]
         // coverity[autosar_cpp14_a5_1_9_violation]
         auto const selectParallelMoveTemp = [&moveResolver](VariableStorage const &sourceStorage) VB_THROW -> VariableStorage {
-          return selectDefaultParallelMoveTemp(moveResolver, sourceStorage);
+          return selectDefaultParallelMoveTemp(moveResolver, sourceStorage.machineType);
         };
         moveResolver.resolveCycle(ParallelMoveEmitter(moveEmitter), ParallelMoveTempProvider{selectParallelMoveTemp});
       }
@@ -870,7 +879,7 @@ void Backend::execReturnCallIndirect(uint32_t const sigIndex, uint32_t const tab
     if (moveResolver.getRecordsCount() != 0U) {
       // coverity[autosar_cpp14_a8_5_2_violation]
       auto const tempProvider = [&moveResolver](VariableStorage const &sourceStorage) VB_THROW -> VariableStorage {
-        return selectDefaultParallelMoveTemp(moveResolver, sourceStorage);
+        return selectDefaultParallelMoveTemp(moveResolver, sourceStorage.machineType);
       };
       // coverity[autosar_cpp14_a5_1_4_violation]
       moveResolver.resolveCycle(ParallelMoveEmitter(moveEmitter), ParallelMoveTempProvider(tempProvider));
@@ -4213,6 +4222,16 @@ uint32_t Backend::getParamPos(REG const reg, bool const import) const VB_NOEXCEP
   }
 }
 
+// coverity[autosar_cpp14_a8_4_7_violation]
+void Backend::emitMoveWithCastTo64(VariableStorage targetStorage, VariableStorage sourceStorage, bool const unconditional,
+                                   bool const preserveFlags) const {
+  assert(targetStorage.machineType == sourceStorage.machineType);
+  assert(targetStorage.type != StorageType::CONSTANT);
+  targetStorage.machineType = MachineTypeUtil::isInt(targetStorage.machineType) ? MachineType::I64 : MachineType::F64;
+  sourceStorage.machineType = targetStorage.machineType;
+  emitMoveImpl(targetStorage, sourceStorage, unconditional, preserveFlags);
+}
+
 void Backend::emitMoveIntWithCastTo32(VariableStorage &targetStorage, VariableStorage const &sourceStorage, bool const unconditional,
                                       bool const preserveFlags) const {
   // GCOVR_EXCL_START
@@ -4329,8 +4348,7 @@ bool Backend::stackElementConflictsWithParamReg(StackElement const &element, REG
   return false;
 }
 
-VariableStorage Backend::selectDefaultParallelMoveTemp(ParallelMoveResolver const &moveResolver, VariableStorage const &sourceStorage) VB_NOEXCEPT {
-  MachineType const machineType{sourceStorage.machineType};
+VariableStorage Backend::selectDefaultParallelMoveTemp(ParallelMoveResolver const &moveResolver, MachineType const machineType) VB_NOEXCEPT {
   // free scratch regs may be reused as move temps that not yet emitted but the stackRef is cleaned and thus won't cause conflicts
   bool const isInt{MachineTypeUtil::isInt(machineType)};
   uint32_t const offsetStaticScratchRegs{(isInt ? NBackend::WasmABI::numGPR : NBackend::WasmABI::numFPR) - NBackend::WasmABI::resScratchRegsGPR};

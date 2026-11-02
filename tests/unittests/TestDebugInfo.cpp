@@ -89,12 +89,12 @@ static const char *const watStr = R"(
 )
 )";
 
-static void *allocFnc(uint32_t size, void *ctx) noexcept {
+static void *allocFnc(uint32_t size, void *const ctx) noexcept {
   static_cast<void>(ctx);
   return malloc(static_cast<size_t>(size));
 }
 
-static void freeFnc(void *ptr, void *ctx) noexcept {
+static void freeFnc(void *const ptr, void *const ctx) noexcept {
   static_cast<void>(ctx);
   free(ptr);
 }
@@ -298,7 +298,7 @@ static inline void direct(void *const ctx) {
 
 // NOLINTNEXTLINE(cert-err58-cpp, cppcoreguidelines-special-member-functions)
 TEST(TestDebugInfo, debugInfoIsCorrect) {
-  auto staticallyLinkedSymbols =
+  auto const staticallyLinkedSymbols =
       vb::make_array(STATIC_LINK("env", "from_a", from_a), STATIC_LINK("env", "from_b", from_b), STATIC_LINK("env", "direct", direct));
 
   vb::Compiler compiler = vb::Compiler(memoryFnc, allocFnc, freeFnc, nullptr, memoryFnc, true);

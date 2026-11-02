@@ -44,12 +44,12 @@ std::vector<uint8_t> const testModule = vb::test::WabtCmd::loadWasmFromWat(watSt
 
 Span<const uint8_t> const bytecode = Span<const uint8_t>(testModule.data(), testModule.size());
 
-void *allocFnc(uint32_t size, void *ctx) noexcept {
+void *allocFnc(uint32_t size, void *const ctx) noexcept {
   static_cast<void>(ctx);
   return malloc(static_cast<size_t>(size));
 }
 
-void freeFnc(void *ptr, void *ctx) noexcept {
+void freeFnc(void *const ptr, void *const ctx) noexcept {
   static_cast<void>(ctx);
   free(ptr);
 }

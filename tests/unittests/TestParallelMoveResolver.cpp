@@ -367,6 +367,80 @@ TEST(ParallelMoveResolverTest, ResolvesRegisterCycleWithSwap) {
   ASSERT_EQ(swaps, expectedSwaps);
 }
 
+TEST(ParallelMoveResolverTest, PreservesMixedWidthSwapOperands) {
+  for (MachineType const narrowType : {MachineType::I32, MachineType::F32}) {
+    for (bool const wideFirst : {false, true}) {
+      ParallelMoveResolver resolver{&testCompilerAlloc, &testCompilerFree, nullptr, 2U};
+      MachineType const wideType{MachineTypeUtil::isInt(narrowType) ? MachineType::I64 : MachineType::F64};
+      VariableStorage const firstNarrowSlot{VariableStorage::stackMemory(narrowType, 0U)};
+      VariableStorage const secondNarrowSlot{VariableStorage::stackMemory(narrowType, 8U)};
+      VariableStorage const firstWideSlot{VariableStorage::stackMemory(wideType, 0U)};
+      VariableStorage const secondWideSlot{VariableStorage::stackMemory(wideType, 8U)};
+      VariableStorage const firstTarget{wideFirst ? secondWideSlot : firstNarrowSlot};
+      VariableStorage const firstSource{wideFirst ? firstWideSlot : secondNarrowSlot};
+      VariableStorage const secondTarget{wideFirst ? firstNarrowSlot : secondWideSlot};
+      VariableStorage const secondSource{wideFirst ? secondNarrowSlot : firstWideSlot};
+
+      resolver.push(firstTarget, firstSource);
+      resolver.push(secondTarget, secondSource);
+
+      std::vector<MoveOperation> moves;
+      std::vector<SwapOperation> swaps;
+      auto const moveEmitter = [&moves](VariableStorage const &targetStorage, VariableStorage const &sourceStorage) {
+        moves.emplace_back(targetStorage, sourceStorage);
+      };
+      auto const swapEmitter = [&swaps](VariableStorage const &targetStorage, VariableStorage const &sourceStorage, bool const contains64) {
+        swaps.emplace_back(targetStorage, sourceStorage, contains64);
+      };
+      resolver.resolveLinear(ParallelMoveEmitter(moveEmitter));
+      resolver.resolveCycle(ParallelMoveEmitter(moveEmitter), SwapEmitter(swapEmitter));
+
+      std::vector<SwapOperation> const expectedSwaps{SwapOperation(firstTarget, firstSource, true)};
+      EXPECT_TRUE(moves.empty());
+      EXPECT_EQ(swaps, expectedSwaps);
+      EXPECT_EQ(resolver.getRecordsCount(), 0U);
+    }
+  }
+}
+
+TEST(ParallelMoveResolverTest, ResolvesMixedWidthFanOutBeforeSwap) {
+  for (MachineType const narrowType : {MachineType::I32, MachineType::F32}) {
+    ParallelMoveResolver resolver{&testCompilerAlloc, &testCompilerFree, nullptr, 3U};
+    MachineType const wideType{MachineTypeUtil::isInt(narrowType) ? MachineType::I64 : MachineType::F64};
+    VariableStorage const leafTarget{VariableStorage::reg(narrowType, parallelMoveRegs[0])};
+    VariableStorage const firstNarrowReg{VariableStorage::reg(narrowType, parallelMoveRegs[1])};
+    VariableStorage const secondNarrowReg{VariableStorage::reg(narrowType, parallelMoveRegs[2])};
+    VariableStorage const firstWideReg{VariableStorage::reg(wideType, parallelMoveRegs[1])};
+    VariableStorage const secondWideReg{VariableStorage::reg(wideType, parallelMoveRegs[2])};
+
+    resolver.push(leafTarget, secondNarrowReg);
+    resolver.push(firstNarrowReg, secondNarrowReg);
+    resolver.push(secondWideReg, firstWideReg);
+
+    std::vector<MoveOperation> moves;
+    std::vector<SwapOperation> swaps;
+    auto const moveEmitter = [&moves](VariableStorage const &targetStorage, VariableStorage const &sourceStorage) {
+      moves.emplace_back(targetStorage, sourceStorage);
+    };
+    auto const swapEmitter = [&swaps](VariableStorage const &targetStorage, VariableStorage const &sourceStorage, bool const contains64) {
+      swaps.emplace_back(targetStorage, sourceStorage, contains64);
+    };
+    resolver.resolveLinear(ParallelMoveEmitter(moveEmitter));
+
+    std::vector<MoveOperation> const expectedMoves{MoveOperation(leafTarget, secondNarrowReg)};
+    EXPECT_EQ(moves, expectedMoves);
+    EXPECT_TRUE(swaps.empty());
+    EXPECT_EQ(resolver.getRecordsCount(), 2U);
+
+    resolver.resolveCycle(ParallelMoveEmitter(moveEmitter), SwapEmitter(swapEmitter));
+
+    std::vector<SwapOperation> const expectedSwaps{SwapOperation(firstNarrowReg, secondNarrowReg, true)};
+    EXPECT_EQ(moves, expectedMoves);
+    EXPECT_EQ(swaps, expectedSwaps);
+    EXPECT_EQ(resolver.getRecordsCount(), 0U);
+  }
+}
+
 TEST(ParallelMoveResolverTest, ResolvesRegisterStackCycleWithSwap) {
   // Mixed register/stack cycle can also be represented by one semantic swap.
   ParallelMoveResolver resolver{&testCompilerAlloc, &testCompilerFree, nullptr, 2U};

@@ -100,7 +100,7 @@ TEST_F(TestFunctionInfo, ValidateEmptyParameters) {
   EXPECT_THROW((info.validateParameterTypes<int32_t, int32_t>()), RuntimeError);
 }
 
-Span<const char> operator""_span(const char *str, std::size_t len) {
+Span<const char> operator""_span(const char *const str, std::size_t const len) {
   return Span<const char>{str, len};
 }
 

@@ -40,7 +40,7 @@ vb::TestResult runTests(char const *const path, bool const enableDebugMode, bool
     std::cout << "Executing spectest: " << testcaseIt.key() << "\n";
 
     vb::SingleCaseTest testcase{testcaseIt.key()};
-    auto wasmBinaryMapping = std::make_shared<vb::TestDataMapping>();
+    auto const wasmBinaryMapping = std::make_shared<vb::TestDataMapping>();
     for (auto wasmBinaryIt = testcaseIt->begin(); wasmBinaryIt != testcaseIt->end(); wasmBinaryIt++) {
       if (wasmBinaryIt.key() == "wast_json") {
         continue;

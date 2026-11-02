@@ -563,9 +563,9 @@ public:
 
   /// @brief Select a default scratch register for breaking a pending parallel-move cycle.
   /// @param moveResolver Resolver whose remaining records describe the still-pending cycle sources
-  /// @param sourceStorage Source storage at the cycle head; its machine type selects the GPR or FPR scratch set
-  /// @return Register storage with the same machine type as @p sourceStorage that is not still used as an unresolved source
-  static VariableStorage selectDefaultParallelMoveTemp(ParallelMoveResolver const &moveResolver, VariableStorage const &sourceStorage) VB_NOEXCEPT;
+  /// @param machineType Required temporary storage type; selects the GPR or FPR scratch set
+  /// @return Register storage of @p machineType that is not still used as an unresolved source
+  static VariableStorage selectDefaultParallelMoveTemp(ParallelMoveResolver const &moveResolver, MachineType const machineType) VB_NOEXCEPT;
 
 private:
   /// @brief Widths of certain entries on the stack
@@ -882,6 +882,13 @@ private:
   /// @param preserveFlags Whether to preserve CPU flags
   void emitMoveIntWithCastTo32(VariableStorage &targetStorage, VariableStorage const &sourceStorage, bool const unconditional,
                                bool const preserveFlags) const;
+
+  /// @brief Emit a move with local storage descriptors reinterpreted as 64-bit.
+  /// @param targetStorage Target variable storage
+  /// @param sourceStorage Source variable storage
+  /// @param unconditional Whether the move is unconditional
+  /// @param preserveFlags Whether to preserve CPU flags
+  void emitMoveWithCastTo64(VariableStorage targetStorage, VariableStorage sourceStorage, bool const unconditional, bool const preserveFlags) const;
 };
 
 } // namespace x86_64

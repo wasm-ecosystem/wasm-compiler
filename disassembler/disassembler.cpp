@@ -464,44 +464,44 @@ std::string DisassemblerImpl::disassemble(uint8_t const *const binaryData, size_
     return stepPtr - binaryData;
   };
 
-  auto consumeGenericU32 = [&stepPtr, &outputBuffer, &getCurrentOffset](std::string const &description) -> uint32_t {
+  auto const consumeGenericU32 = [&stepPtr, &outputBuffer, &getCurrentOffset](std::string const &description) -> uint32_t {
     NumericTypeResult<uint32_t> const res = consumeNumericType<uint32_t>(stepPtr, description, false, false, true);
     pushString(res.output, outputBuffer, getCurrentOffset());
     return res.value;
   };
-  auto consumeU32 = [&stepPtr, &outputBuffer, &getCurrentOffset](std::string const &description) -> uint32_t {
+  auto const consumeU32 = [&stepPtr, &outputBuffer, &getCurrentOffset](std::string const &description) -> uint32_t {
     NumericTypeResult<uint32_t> const res = consumeNumericType<uint32_t>(stepPtr, description, false);
     pushString(res.output, outputBuffer, getCurrentOffset());
     return res.value;
   };
-  auto consumeU8 = [&stepPtr, &outputBuffer, &getCurrentOffset](std::string const &description, bool printAsHex = false) -> uint8_t {
+  auto const consumeU8 = [&stepPtr, &outputBuffer, &getCurrentOffset](std::string const &description, bool printAsHex = false) -> uint8_t {
     NumericTypeResult<uint8_t> const res = consumeNumericType<uint8_t>(stepPtr, description, false, printAsHex);
     pushString(res.output, outputBuffer, getCurrentOffset());
     return res.value;
   };
-  auto consumeU64 = [&stepPtr, &outputBuffer, &getCurrentOffset](std::string const &description) -> uint64_t {
+  auto const consumeU64 = [&stepPtr, &outputBuffer, &getCurrentOffset](std::string const &description) -> uint64_t {
     NumericTypeResult<uint64_t> const res = consumeNumericType<uint64_t>(stepPtr, description, false);
     pushString(res.output, outputBuffer, getCurrentOffset());
     return res.value;
   };
-  auto consumeF32 = [&stepPtr, &outputBuffer, &getCurrentOffset](std::string const &description) -> float {
+  auto const consumeF32 = [&stepPtr, &outputBuffer, &getCurrentOffset](std::string const &description) -> float {
     NumericTypeResult<float> const res = consumeNumericType<float>(stepPtr, description, false);
     pushString(res.output, outputBuffer, getCurrentOffset());
     return res.value;
   };
-  auto consumeF64 = [&stepPtr, &outputBuffer, &getCurrentOffset](std::string const &description) -> double {
+  auto const consumeF64 = [&stepPtr, &outputBuffer, &getCurrentOffset](std::string const &description) -> double {
     NumericTypeResult<double> const res = consumeNumericType<double>(stepPtr, description, false);
     pushString(res.output, outputBuffer, getCurrentOffset());
     return res.value;
   };
-  auto consumeChar = [&stepPtr, &outputBuffer, &getCurrentOffset](std::string const &description) -> char {
+  auto const consumeChar = [&stepPtr, &outputBuffer, &getCurrentOffset](std::string const &description) -> char {
     MultiStringOutput const res = consumeString(stepPtr, description, 1, 0);
     assert((res.hasTwoStrings == false) && "Char cannot have two strings");
     pushString(res.first, outputBuffer, getCurrentOffset());
     return readFromPtr<char>(stepPtr);
   };
-  auto consumeBin = [this, &stepPtr, &outputBuffer, &getCurrentOffset](uint32_t size, std::string const &description, uint8_t paddingPow2 = 2,
-                                                                       bool isMachineCode = false) {
+  auto const consumeBin = [this, &stepPtr, &outputBuffer, &getCurrentOffset](uint32_t size, std::string const &description, uint8_t paddingPow2 = 2,
+                                                                             bool isMachineCode = false) {
     size_t const baseAddress = static_cast<size_t>(getCurrentOffset()) - size;
     MultiStringOutput const res = consumeBinary(stepPtr, description, size, paddingPow2, isMachineCode, baseAddress);
     if (res.hasTwoStrings) {
@@ -509,14 +509,14 @@ std::string DisassemblerImpl::disassemble(uint8_t const *const binaryData, size_
     }
     pushString(res.first, outputBuffer, getCurrentOffset());
   };
-  auto consumeStr = [&stepPtr, &outputBuffer, &getCurrentOffset](uint32_t size, std::string const &description, uint8_t paddingPow2 = 2) {
+  auto const consumeStr = [&stepPtr, &outputBuffer, &getCurrentOffset](uint32_t size, std::string const &description, uint8_t paddingPow2 = 2) {
     MultiStringOutput const res = consumeString(stepPtr, description, size, paddingPow2);
     if (res.hasTwoStrings) {
       pushString(res.second, outputBuffer);
     }
     pushString(res.first, outputBuffer, getCurrentOffset());
   };
-  auto printSectionInfo = [&outputBuffer](std::string sectionName, bool newline = true) {
+  auto const printSectionInfo = [&outputBuffer](std::string sectionName, bool newline = true) {
     std::stringstream buffer;
     buffer << TtyControl::UnderLine;
     buffer << sectionName;
@@ -526,19 +526,19 @@ std::string DisassemblerImpl::disassemble(uint8_t const *const binaryData, size_
       outputBuffer.push_back("");
     };
   };
-  auto getFinalOutput = [&outputBuffer]() -> std::string {
+  auto const getFinalOutput = [&outputBuffer]() -> std::string {
     std::stringstream finalOutputStream;
     for (const auto &it : std::ranges::reverse_view(outputBuffer)) {
       finalOutputStream << it << "\n";
     }
     return finalOutputStream.str();
   };
-  auto toHex = [](uint32_t value) -> std::string {
+  auto const toHex = [](uint32_t value) -> std::string {
     std::stringstream buffer;
     buffer << std::hex << value;
     return buffer.str();
   };
-  auto toDec = [](uint32_t value) -> std::string {
+  auto const toDec = [](uint32_t value) -> std::string {
     std::stringstream buffer;
     buffer << value;
     return buffer.str();
@@ -750,7 +750,7 @@ std::string DisassemblerImpl::disassembleDebugMap(uint8_t const *const binaryDat
     return stepPtr - binaryData;
   };
 
-  auto consumeU32 = [&stepPtr, &outputBuffer, &getCurrentOffset](std::string const &description) -> uint32_t {
+  auto const consumeU32 = [&stepPtr, &outputBuffer, &getCurrentOffset](std::string const &description) -> uint32_t {
     auto const currentOffset = getCurrentOffset();
     NumericTypeResult<uint32_t> const res = consumeNumericType<uint32_t>(stepPtr, description, true);
     pushString(res.output, outputBuffer, currentOffset);
@@ -761,13 +761,13 @@ std::string DisassemblerImpl::disassembleDebugMap(uint8_t const *const binaryDat
     uint32_t value1 = 0;
     uint32_t value2 = 0;
   };
-  auto consumeDualU32 = [&stepPtr, &outputBuffer, &getCurrentOffset](std::string const &description) -> DualU32 {
+  auto const consumeDualU32 = [&stepPtr, &outputBuffer, &getCurrentOffset](std::string const &description) -> DualU32 {
     auto const currentOffset = getCurrentOffset();
     DualNumericTypeResult<uint32_t> const res = consumeDualNumericType<uint32_t>(stepPtr, description, true);
     pushString(res.output, outputBuffer, currentOffset);
     return {res.value1, res.value2};
   };
-  auto getFinalOutput = [&outputBuffer]() -> std::string {
+  auto const getFinalOutput = [&outputBuffer]() -> std::string {
     std::stringstream finalOutputStream;
     // Add newlines
     size_t const numBufferedLines = outputBuffer.size();

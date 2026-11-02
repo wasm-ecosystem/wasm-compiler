@@ -6,6 +6,7 @@
 
 - Fix getContextPC is not enabled when passive stack overflow protection only
 - Fix memory allocation failure handling and runtime initialization exception safety
+- Fix x86_64 tail-call argument corruption when swapping mixed 32-bit and 64-bit values
 
 ## 5.0.0-rc1
 

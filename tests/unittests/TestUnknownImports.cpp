@@ -64,12 +64,12 @@ void import1(void *const ctx) noexcept {
 
 auto const staticallyLinkedSymbols = make_array(STATIC_LINK("env", "import1", import1));
 
-void *allocFnc(uint32_t size, void *ctx) noexcept {
+void *allocFnc(uint32_t size, void *const ctx) noexcept {
   static_cast<void>(ctx);
   return malloc(static_cast<size_t>(size));
 }
 
-void freeFnc(void *ptr, void *ctx) noexcept {
+void freeFnc(void *const ptr, void *const ctx) noexcept {
   static_cast<void>(ctx);
   free(ptr);
 }
