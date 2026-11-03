@@ -776,3 +776,19 @@
   )
   "type mismatch"
 )
+
+(module
+  (func (export "extend-i32-u-in-memory") (param i32 i64 i64 i64 i64 i32) (result i32)
+    local.get 1
+    i64.const 0
+    i64.ne
+    i64.extend_i32_u
+    i64.const 107
+    i64.gt_u
+    local.tee 5
+  )
+)
+(assert_return
+  (invoke "extend-i32-u-in-memory"
+    (i32.const 0) (i64.const 1) (i64.const 0) (i64.const 0) (i64.const 0) (i32.const 0))
+  (i32.const 0))

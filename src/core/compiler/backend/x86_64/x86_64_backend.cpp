@@ -3377,22 +3377,18 @@ StackElement Backend::emitDeferredAction(OPCode const opcode, StackElement *cons
       if (arg0Ptr->type == StackType::CONSTANT_I32) {
         StackElement const newElement{StackElement::i64Const(static_cast<uint64_t>(arg0Ptr->data.constUnion.u32))};
         return newElement;
+      }
+
+      VariableStorage sourceStorage{moduleInfo_.getStorage(*arg0Ptr)};
+      sourceStorage.machineType = MachineType::I32;
+      RegAllocTracker regAllocTracker{};
+      if (isWritableScratchReg(arg0Ptr)) {
+        return StackElement::scratchReg(arg0Ptr->data.variableData.location.reg, StackType::I64);
       } else {
-        VariableStorage const targetHintStorage{(targetHint != nullptr) ? moduleInfo_.getStorage(*targetHint) : VariableStorage{}};
-        VariableStorage const sourceStorage{moduleInfo_.getStorage(*arg0Ptr)};
-        if (!targetHintStorage.inSameLocation(sourceStorage)) {
-          RegAllocTracker regAllocTracker{};
-          if (isWritableScratchReg(arg0Ptr)) {
-            return StackElement::scratchReg(arg0Ptr->data.variableData.location.reg, StackType::I64);
-          } else {
-            RegElement const targetElem{common_.reqScratchRegProt(MachineType::I64, targetHint, regAllocTracker, false)};
-            VariableStorage const dummyTarget{VariableStorage::reg(MachineType::I32, targetElem.reg)}; // "Reinterpret"
-            emitMoveIntImpl(dummyTarget, sourceStorage, false);
-            return targetElem.elem;
-          }
-        } else {
-          return common_.getResultStackElement(arg0Ptr, MachineType::I64);
-        }
+        RegElement const targetElem{common_.reqScratchRegProt(MachineType::I64, targetHint, regAllocTracker, false)};
+        VariableStorage const dummyTarget{VariableStorage::reg(MachineType::I32, targetElem.reg)}; // "Reinterpret"
+        emitMoveIntImpl(dummyTarget, sourceStorage, false);
+        return targetElem.elem;
       }
     }
     case OPCode::I32_EXTEND8_S:

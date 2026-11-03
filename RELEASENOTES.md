@@ -1,5 +1,9 @@
 # Wasm Compiler Release Notes
 
+## 4.2.6
+
+- Fix incorrect zero-extension of memory-backed i32 values in x86_64 `i64.extend_i32_u`
+
 ## 4.2.5
 
 - Fix getContextPC is not enabled when passive stack overflow protection only
@@ -87,6 +91,7 @@
 
 ## Release v3 known issues
 
+- [Bug fixed by 4.2.6](#4.2.6)
 - [Bug fixed by 4.2.1](#4.2.1)
 - [Bug fixed by 4.1.2](#412)
 - [Bug fixed by 4.1.1](#411)
@@ -145,6 +150,7 @@ Add u32 and u64 type to WasmValue
 
 ## Release v2 known issues
 
+- [Bug fixed by 4.2.6](#4.2.6)
 - [Bug fixed by 4.1.1](#411)
 - [Bug fixed by 3.0.10](#3010)
 - [Bug fixed by 3.0.9](#309)
