@@ -243,6 +243,7 @@ The other way is binding for all target. It is helpful for tooling dev and resea
 ### Binding Native Target Only
 
 ```bash
+sudo apt install python3-dev
 python3 -m venv venv # create venv
 export CMAKE_ARGS=... # additional cmake args
 pip3 install ./binding
