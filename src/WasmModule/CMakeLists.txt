@@ -19,8 +19,15 @@ endif()
 
 target_include_directories(${LibName} PUBLIC "$<BUILD_INTERFACE:${WASM_COMPILER_INCLUDE_ROOT}>")
 
-EnableClangTidyMSVS(${LibName})
-
 if(ENABLE_EXTENSIONS_INTERNAL)
-    target_link_libraries(${LibName} PUBLIC vb_extensions)
+    file(GLOB EXTENSION_SRC_FILES "${WASM_COMPILER_INCLUDE_ROOT}/extensions/*.cpp")
+    add_library(vb_extension_objects OBJECT ${EXTENSION_SRC_FILES})
+    set_target_properties(vb_extension_objects PROPERTIES CXX_STANDARD 20)
+    if(BUILD_SHARED_LIBS)
+        set_target_properties(vb_extension_objects PROPERTIES POSITION_INDEPENDENT_CODE ON)
+    endif()
+    target_sources(${LibName} PRIVATE $<TARGET_OBJECTS:vb_extension_objects>)
+    EnableClangTidyMSVS(vb_extension_objects)
 endif()
+
+EnableClangTidyMSVS(${LibName})

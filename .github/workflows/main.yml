@@ -83,7 +83,7 @@ jobs:
           - buildType: "gccRelease"
             buildArgs: "-DENABLE_WERROR=1  -DENABLE_COVERAGE=1 -DCMAKE_BUILD_TYPE:STRING=Release"
           - buildType: "clangDebug"
-            buildArgs: "-DENABLE_WERROR=1  -DCMAKE_BUILD_TYPE:STRING=Debug -DCMAKE_C_COMPILER=clang -DENABLE_COVERAGE=1 -DENABLE_CLANG_TIDY=1"
+            buildArgs: "-DENABLE_WERROR=1  -DCMAKE_BUILD_TYPE:STRING=Debug -DCMAKE_C_COMPILER=clang -DENABLE_COVERAGE=1 -DENABLE_CLANG_TIDY=1 -DBUILD_SHARED_LIBS=ON"
           - buildType: "clangRelease"
             buildArgs: "-DENABLE_WERROR=1 -DCMAKE_C_COMPILER=clang -DENABLE_COVERAGE=1 -DCMAKE_BUILD_TYPE:STRING=Release"
     steps:

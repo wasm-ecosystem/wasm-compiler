@@ -253,10 +253,6 @@ endif()
 #
 add_subdirectory(src)
 
-if(ENABLE_EXTENSIONS_INTERNAL)
-	add_subdirectory(extensions)
-endif()
-
 if(ENABLE_SPECTEST_INTERNAL)
 	if(TEST_VARIANTS_INTERNAL)
 		add_definitions(-DTEST_VARIANTS=1)

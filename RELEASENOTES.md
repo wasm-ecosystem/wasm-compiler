@@ -1,5 +1,9 @@
 # Wasm Compiler Release Notes
 
+## 4.2.7
+
+- Fix cmake shared library build failed by removing cmake target vb_extensions to resolve cyclic dependencies
+
 ## 4.2.6
 
 - Fix incorrect zero-extension of memory-backed i32 values in x86_64 `i64.extend_i32_u`

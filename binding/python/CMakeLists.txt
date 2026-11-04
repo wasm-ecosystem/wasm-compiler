@@ -6,5 +6,5 @@ target_link_libraries(vb_warp PRIVATE
   vb_libruntime
   vb_libutils
   vb_lib_disassembler
-  vb_extensions
+  vb_libWasmModule
 )
