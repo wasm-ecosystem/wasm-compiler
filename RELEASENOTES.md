@@ -8,6 +8,7 @@
 - Fix memory allocation failure handling and runtime initialization exception safety
 - Fix x86_64 tail-call argument corruption when swapping mixed 32-bit and 64-bit values
 - Fix incorrect zero-extension of memory-backed i32 values in x86_64 `i64.extend_i32_u`
+- Fix cmake shared library build failed by removing cmake target vb_extensions to resolve cyclic dependencies
 
 ## 5.0.0-rc1
 
