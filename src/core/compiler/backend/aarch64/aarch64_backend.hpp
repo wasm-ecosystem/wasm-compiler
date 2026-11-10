@@ -632,6 +632,12 @@ public:
   /// global
   void iterateScratchRegsAndGlobals(FunctionRef<void(StackElement const &)> const &lambda) const;
 
+  ///
+  /// @brief Spill scratch registers and non-imported globals with stack references, skipping unreferenced elements
+  ///
+  /// @param below Spill occurrences before this iterator in the current frame; an empty iterator spills all occurrences
+  void spillScratchRegsAndGlobals(Stack::iterator const below) const;
+
   /// @brief Update new stackFrame size. Check overflow if needed
   /// @param newAlignedStackFrameSize aligned new stackFrame size
   void updateStackFrameSizeHelper(uint32_t const newAlignedStackFrameSize);

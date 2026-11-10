@@ -465,6 +465,12 @@ public:
   /// global
   void iterateScratchRegsAndGlobals(FunctionRef<void(StackElement const &)> const &lambda) const;
 
+  ///
+  /// @brief Spill scratch registers and non-imported globals with stack references, skipping unreferenced elements
+  ///
+  /// @param below Spill occurrences before this iterator in the current frame; an empty iterator spills all occurrences
+  void spillScratchRegsAndGlobals(Stack::iterator const below);
+
 #if BUILTIN_FUNCTIONS
   ///
   /// @brief Consumes the input valent blocks (or StackElements) from the compiler's stack and emits machine code that

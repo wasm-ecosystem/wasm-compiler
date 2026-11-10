@@ -5240,12 +5240,34 @@ void Backend::spillAllVariables(Stack::iterator const below) {
   for (uint32_t i{0U}; i < moduleInfo_.fnc.numLocals; i++) {
     spillFromStack(StackElement::local(i), RegMask::none(), true, false, below);
   }
-  // coverity[autosar_cpp14_a8_5_2_violation]
-  auto const spillFromStackCallback = [this, below](StackElement const &element) {
-    spillFromStack(element, RegMask::none(), true, false, below);
-  };
-  // coverity[autosar_cpp14_a5_1_4_violation]
-  iterateScratchRegsAndGlobals(FunctionRef<void(StackElement const &)>(spillFromStackCallback));
+  spillScratchRegsAndGlobals(below);
+}
+
+void Backend::spillScratchRegsAndGlobals(Stack::iterator const below) {
+  // Keep the reference checks here, before reading the occurrence's machine type and constructing StackElement.
+  // Checking only in spillFromStackImpl would also make unreferenced elements enter the backend spill path
+  // and pay argument setup and function entry/exit overhead. Guard relocation caused a substantial
+  // compilation-time regression in the AArch64 benchmark.
+  for (uint32_t regPos{getNumStaticallyAllocatedDr()}; regPos < WasmABI::dr.size(); regPos++) {
+    REG const reg{WasmABI::dr[regPos]};
+    Stack::iterator const refToLastOccurrence{moduleInfo_.getReferenceToLastOccurrenceOnStack(reg)};
+    if (!refToLastOccurrence.isEmpty()) {
+      MachineType const type{moduleInfo_.getMachineType(refToLastOccurrence.raw())};
+      spillFromStack(StackElement::scratchReg(reg, MachineTypeUtil::toStackTypeFlag(type) | StackType::SCRATCHREGISTER), RegMask::none(), true, false,
+                     below);
+    }
+  }
+
+  uint32_t const globalBase{moduleInfo_.referenceMap[static_cast<uint32_t>(StackType::GLOBAL)] + moduleInfo_.numImportedGlobals};
+  Stack::iterator const *references{moduleInfo_.referencesToLastOccurrenceOnStack.getPtr()};
+  for (uint32_t i{0U}; i < moduleInfo_.numNonImportedGlobals; i++) {
+    // setupReferenceMap initializes this table before function compilation.
+    // coverity[autosar_cpp14_a5_3_2_violation] NOLINTNEXTLINE(clang-analyzer-core.CallAndMessage)
+    if (!references[globalBase + i].isEmpty()) {
+      spillFromStack(StackElement::nonImportGlobal(i, moduleInfo_.numImportedGlobals), RegMask::none(), true, false, below);
+      references = moduleInfo_.referencesToLastOccurrenceOnStack.getPtr();
+    }
+  }
 }
 
 void Backend::iterateScratchRegsAndGlobals(FunctionRef<void(StackElement const &)> const &lambda) const {

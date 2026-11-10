@@ -1540,9 +1540,6 @@ void Common::spillScratchRegsOutOfCallParams(uint32_t const sigIndex, bool const
   uint32_t const numParams{compiler_.moduleInfo_.getNumParamsForSignature(sigIndex)};
   uint32_t const numVBsToSkip{isIndirectCall ? (numParams + 1U) : numParams};
   Stack::iterator const spillBase{skipValentBlock(numVBsToSkip)};
-  // coverity[autosar_cpp14_a5_1_4_violation]
-  compiler_.backend_.iterateScratchRegsAndGlobals(FunctionRef<void(StackElement const &)>([this, spillBase](StackElement const &element) {
-    compiler_.backend_.spillFromStack(element, RegMask::none(), true, false, spillBase, Stack::iterator{});
-  }));
+  compiler_.backend_.spillScratchRegsAndGlobals(spillBase);
 }
 } // namespace vb

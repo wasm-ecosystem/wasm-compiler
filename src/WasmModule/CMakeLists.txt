@@ -4,8 +4,8 @@ aux_source_directory(${CMAKE_CURRENT_LIST_DIR} SRC_FILES)
 
 add_library(${LibName} ${SRC_FILES})
 target_link_libraries(${LibName} PUBLIC
-    vb_libcompiler
     vb_libruntime
+    vb_libcompiler
 )
 
 if(BACKEND_INTERNAL STREQUAL "tricore")

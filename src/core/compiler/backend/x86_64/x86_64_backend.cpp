@@ -609,9 +609,7 @@ void Backend::spillAllVariables(Stack::iterator const below) const {
     spillFromStack(StackElement::local(i), RegMask::none(), true, false, below);
   }
 
-  iterateScratchRegsAndGlobals(FunctionRef<void(StackElement const &)>([this, below](StackElement const &element) {
-    spillFromStack(element, RegMask::none(), true, false, below);
-  }));
+  spillScratchRegsAndGlobals(below);
 }
 
 #if INTERRUPTION_REQUEST
@@ -625,6 +623,36 @@ void Backend::checkForInterruptionRequest() const {
   relPatchObj.linkToHere();
 }
 #endif
+
+void Backend::spillScratchRegsAndGlobals(Stack::iterator const below) const {
+  // Keep the reference checks here, before constructing StackElement and calling the out-of-line spillFromStackImpl.
+  // Moving them into spillFromStackImpl makes every unreferenced register/global pay argument setup and function
+  // entry/exit overhead, even when it returns immediately; an AArch64 benchmark showed a substantial regression.
+  for (uint32_t regPos{moduleInfo_.getNumStaticallyAllocatedGPRs()}; regPos < WasmABI::gpr.size(); regPos++) {
+    REG const reg{WasmABI::gpr[regPos]};
+    if (!moduleInfo_.getReferenceToLastOccurrenceOnStack(reg).isEmpty()) {
+      common_.spillFromStackImpl(StackElement::scratchReg(reg, StackType::SANULL), RegMask::none(), true, false, below, Stack::iterator{});
+    }
+  }
+  for (uint32_t regPos{moduleInfo_.getNumStaticallyAllocatedFPRs()}; regPos < WasmABI::fpr.size(); regPos++) {
+    REG const reg{WasmABI::fpr[regPos]};
+    if (!moduleInfo_.getReferenceToLastOccurrenceOnStack(reg).isEmpty()) {
+      common_.spillFromStackImpl(StackElement::scratchReg(reg, StackType::SANULL), RegMask::none(), true, false, below, Stack::iterator{});
+    }
+  }
+
+  uint32_t const globalBase{moduleInfo_.referenceMap[static_cast<uint32_t>(StackType::GLOBAL)] + moduleInfo_.numImportedGlobals};
+  Stack::iterator const *references{moduleInfo_.referencesToLastOccurrenceOnStack.getPtr()};
+  for (uint32_t i{0U}; i < moduleInfo_.numNonImportedGlobals; i++) {
+    // setupReferenceMap initializes this table before function compilation.
+    // coverity[autosar_cpp14_a5_3_2_violation] NOLINTNEXTLINE(clang-analyzer-core.CallAndMessage)
+    if (!references[globalBase + i].isEmpty()) {
+      common_.spillFromStackImpl(StackElement::nonImportGlobal(i, moduleInfo_.numImportedGlobals), RegMask::none(), true, false, below,
+                                 Stack::iterator{});
+      references = moduleInfo_.referencesToLastOccurrenceOnStack.getPtr();
+    }
+  }
+}
 
 void Backend::iterateScratchRegsAndGlobals(FunctionRef<void(StackElement const &)> const &lambda) const {
   for (uint32_t regPos{moduleInfo_.getNumStaticallyAllocatedGPRs()}; regPos < WasmABI::gpr.size(); regPos++) {
