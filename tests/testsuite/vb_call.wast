@@ -475,3 +475,57 @@
   )
   (i32.const 8)
 )
+
+(module
+
+  (func (;4;) (param i32 i32) 
+   
+  )
+
+  (func $e  (result i32)
+    (local i32)
+    i32.const 1
+    local.set 0
+
+    local.get 0
+
+    call $x
+    i32.const 1
+    i32.add
+    i32.const 10
+    call 0
+   
+    
+   )
+
+  (func $x  (result i32)
+    i32.const 1)
+
+  (global (;0;) (mut i32) (i32.const 100))
+
+
+  (export "func" (func $e))
+)
+(assert_return (invoke "func") (i32.const 1))
+
+
+(module
+	(func $add (param i32 i32) (result i32)
+		local.get 0
+		local.get 1
+		i32.add)
+
+	(func (export "test") (result i32)
+		(local i32 i32)
+		i32.const 42
+		local.set 1
+    
+		local.get 1
+
+		i32.const 3
+		i32.const 4
+		call $add
+		i32.eqz  
+		call $add)
+  )
+(assert_return (invoke "test") (i32.const 42))
