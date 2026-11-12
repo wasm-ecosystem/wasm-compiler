@@ -5,13 +5,13 @@ import re
 import shutil
 import subprocess
 import sys
-import tempfile
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
 TESTSUITE_DIR = ROOT / "tests" / "testsuite"
 SNAPSHOT_DIR = ROOT / "tests" / "snapshot_diff"
+WASM_DIR = SNAPSHOT_DIR / "_wasm"
 BACKENDS = ("x86_64", "aarch64", "tricore")
 SNAPSHOT_SUFFIX = ".snapshot"
 POSITION_RE = re.compile(r"^[0-9A-Fa-f]+[ \t]{2,}")
@@ -46,9 +46,10 @@ def run_wast2json(wast_path: Path, output_path: Path) -> None:
         raise SnapshotError(f"wast2json failed for {wast_path}: {details}")
 
 
-def generate_wasm_files(output_dir: Path) -> None:
+def generate_wasm_files(output_dir: Path) -> list[str]:
     for wast_path in sorted(TESTSUITE_DIR.glob("*.wast")):
         run_wast2json(wast_path, output_dir / f"{wast_path.stem}.json")
+    return get_module_wasm_names(output_dir)
 
 
 def get_module_wasm_names(wasm_dir: Path) -> list[str]:
@@ -63,30 +64,6 @@ def get_module_wasm_names(wasm_dir: Path) -> list[str]:
             if filename and filename.endswith(".wasm"):
                 names.add(filename)
     return sorted(names)
-
-
-def get_wasm_files(wasm_dir: Path) -> dict[str, Path]:
-    return {path.name: path for path in sorted(wasm_dir.glob("*.wasm"))}
-
-
-def compare_wasm_files(generated_dir: Path) -> None:
-    generated = get_wasm_files(generated_dir)
-    checked_in = get_wasm_files(SNAPSHOT_DIR)
-    if set(generated) != set(checked_in):
-        missing = sorted(set(generated) - set(checked_in))
-        extra = sorted(set(checked_in) - set(generated))
-        raise SnapshotError(f"wasm file set differs: missing={missing}, extra={extra}")
-    for name, generated_path in generated.items():
-        if generated_path.read_bytes() != checked_in[name].read_bytes():
-            raise SnapshotError(f"wasm file differs from snapshot: {name}")
-
-
-def update_wasm_files(generated_dir: Path) -> None:
-    SNAPSHOT_DIR.mkdir(parents=True, exist_ok=True)
-    for path in SNAPSHOT_DIR.glob("*.wasm"):
-        path.unlink()
-    for name, generated_path in get_wasm_files(generated_dir).items():
-        shutil.copyfile(generated_path, SNAPSHOT_DIR / name)
 
 
 def load_backend(backend: str):
@@ -179,64 +156,31 @@ def update_backend_snapshots(
             get_snapshot_path(backend, wasm_name).write_bytes(snapshot)
 
 
-def run_backend(backend: str, wasm_dir: Path, update: bool) -> None:
-    module_names = get_module_wasm_names(wasm_dir)
+def run_backend(
+    backend: str, wasm_dir: Path, module_names: list[str], update: bool
+) -> None:
     if update:
         update_backend_snapshots(backend, wasm_dir, module_names)
     else:
         compare_backend_snapshots(backend, wasm_dir, module_names)
 
 
-def run(update: bool, update_wasm: bool) -> None:
-    with tempfile.TemporaryDirectory(prefix="wasm-snapshot-") as temporary_dir:
-        wasm_dir = Path(temporary_dir)
-        generate_wasm_files(wasm_dir)
-        if update or update_wasm:
-            update_wasm_files(wasm_dir)
-        else:
-            compare_wasm_files(wasm_dir)
+def run(update: bool) -> None:
+    shutil.rmtree(WASM_DIR, ignore_errors=True)
+    WASM_DIR.mkdir(parents=True, exist_ok=True)
+    module_names = generate_wasm_files(WASM_DIR)
 
-        if update_wasm:
-            return
-
-        for backend in BACKENDS:
-            command = [
-                sys.executable,
-                str(Path(__file__).resolve()),
-                "--backend",
-                backend,
-                "--wasm-dir",
-                str(wasm_dir),
-            ]
-            if update:
-                command.append("-u")
-            subprocess.run(command, check=True)
+    for backend in BACKENDS:
+        run_backend(backend, WASM_DIR, module_names, update)
 
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    update_group = parser.add_mutually_exclusive_group()
-    update_group.add_argument("-u", "--update", action="store_true")
-    update_group.add_argument(
-        "--update-wasm",
-        action="store_true",
-        help="update the checked-in wasm file set without updating backend snapshots",
-    )
-    parser.add_argument("--backend", choices=BACKENDS)
-    parser.add_argument("--wasm-dir", type=Path)
+    parser.add_argument("-u", "--update", action="store_true")
     args = parser.parse_args()
 
     try:
-        if args.backend is not None:
-            if args.update_wasm:
-                parser.error("--update-wasm cannot be used with --backend")
-            if args.wasm_dir is None:
-                parser.error("--wasm-dir is required with --backend")
-            run_backend(args.backend, args.wasm_dir, args.update)
-        else:
-            if args.wasm_dir is not None:
-                parser.error("--wasm-dir requires --backend")
-            run(args.update, args.update_wasm)
+        run(args.update)
     except (OSError, SnapshotError, subprocess.CalledProcessError) as error:
         print(f"snapshot check failed: {error}", file=sys.stderr)
         return 1
