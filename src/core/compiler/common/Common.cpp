@@ -177,7 +177,9 @@ bool Common::storageOverlaps(VariableStorage const &first, VariableStorage const
 
 void Common::spillStorageFromStack(VariableStorage const &storageToOverwrite, RegMask const protRegs, bool const forceToStack, bool const presFlags,
                                    Stack::iterator const pExcludedZoneBottom, Stack::iterator const pExcludedZoneTop) const {
-  assert(storageToOverwrite.isParallelMoveLocation() && "Write destination must have addressable storage");
+  assert((((storageToOverwrite.type == StorageType::REGISTER) || (storageToOverwrite.type == StorageType::STACKMEMORY)) ||
+          (storageToOverwrite.type == StorageType::LINKDATA)) &&
+         "Write destination must have addressable storage");
 
   StackElement newElement{StackElement::invalid()};
   // coverity[autosar_cpp14_a8_5_2_violation]

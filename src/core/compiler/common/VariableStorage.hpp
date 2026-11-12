@@ -92,6 +92,8 @@ public:
       return location.reg == other.location.reg;
     } else if (type == StorageType::STACKMEMORY) {
       return location.stackFramePosition == other.location.stackFramePosition;
+    } else if (type == StorageType::STACK_REG) {
+      return (location.reg == other.location.reg) && (location.stackFramePosition == other.location.stackFramePosition);
     } else if (type == StorageType::LINKDATA) {
       return location.linkDataOffset == other.location.linkDataOffset;
     } else {
@@ -255,23 +257,30 @@ public:
     return (type == StorageType::STACKMEMORY) || (type == StorageType::LINKDATA);
   }
 
-  /// @brief Checks whether this location kind is supported by the generic parallel move resolver
-  bool isParallelMoveLocation() const VB_NOEXCEPT {
-    switch (type) {
-    case StorageType::REGISTER:
-    case StorageType::STACKMEMORY:
-    case StorageType::LINKDATA:
-      return true;
-    default:
-      return false;
-    }
-  }
-
   /// @brief Returns true when two storages partially or fully overlap.
   /// @param other Storage location to compare against.
   /// @return True if both storages denote overlapping bytes in the same location class.
   bool overlapsWith(VariableStorage const &other) const VB_NOEXCEPT {
-    if (!isParallelMoveLocation() || !other.isParallelMoveLocation()) {
+    bool const thisIsStackReg{type == StorageType::STACK_REG};
+    bool const otherIsStackReg{other.type == StorageType::STACK_REG};
+    if (thisIsStackReg || otherIsStackReg) {
+      bool const thisHasRegister{(type == StorageType::REGISTER) || thisIsStackReg};
+      bool const otherHasRegister{(other.type == StorageType::REGISTER) || otherIsStackReg};
+      if (thisHasRegister && otherHasRegister) {
+        if (location.reg == other.location.reg) {
+          return true;
+        }
+      }
+
+      bool const thisHasStack{(type == StorageType::STACKMEMORY) || thisIsStackReg};
+      bool const otherHasStack{(other.type == StorageType::STACKMEMORY) || otherIsStackReg};
+      if (thisHasStack && otherHasStack) {
+        uint32_t const thisBegin{location.stackFramePosition};
+        uint32_t const thisEnd{(thisBegin + MachineTypeUtil::getSize(machineType)) - 1U};
+        uint32_t const otherBegin{other.location.stackFramePosition};
+        uint32_t const otherEnd{(otherBegin + MachineTypeUtil::getSize(other.machineType)) - 1U};
+        return (thisBegin <= otherEnd) && (otherBegin <= thisEnd);
+      }
       return false;
     }
 

@@ -30,6 +30,41 @@ TEST(TestVariableStorage, OverlapsWithComparesRegistersByLocationOnly) {
   ASSERT_FALSE(sameRegI32.overlapsWith(otherReg));
 }
 
+TEST(TestVariableStorage, OverlapsWithChecksBothLocationsForStackReg) {
+  VariableStorage stackReg{};
+  stackReg.type = StorageType::STACK_REG;
+  stackReg.machineType = MachineType::I32;
+  stackReg.location.reg = firstTestReg;
+
+  VariableStorage stackRegI64{};
+  stackRegI64.type = StorageType::STACK_REG;
+  stackRegI64.machineType = MachineType::I64;
+  stackRegI64.location.stackFramePosition = 0U;
+
+  VariableStorage stackRegI32At4{};
+  stackRegI32At4.type = StorageType::STACK_REG;
+  stackRegI32At4.machineType = MachineType::I32;
+  stackRegI32At4.location.stackFramePosition = 4U;
+
+  VariableStorage const sameReg{VariableStorage::reg(MachineType::I32, firstTestReg)};
+  VariableStorage const otherReg{VariableStorage::reg(MachineType::I32, secondTestReg)};
+  VariableStorage const overlappingStack{VariableStorage::stackMemory(MachineType::I32, 4U)};
+  VariableStorage const disjointStack{VariableStorage::stackMemory(MachineType::I32, 8U)};
+
+  ASSERT_TRUE(stackReg.overlapsWith(sameReg));
+  ASSERT_TRUE(sameReg.overlapsWith(stackReg));
+  ASSERT_FALSE(stackReg.overlapsWith(otherReg));
+  ASSERT_FALSE(otherReg.overlapsWith(stackReg));
+
+  ASSERT_TRUE(stackRegI64.overlapsWith(overlappingStack));
+  ASSERT_TRUE(overlappingStack.overlapsWith(stackRegI64));
+  ASSERT_FALSE(stackRegI64.overlapsWith(disjointStack));
+  ASSERT_FALSE(disjointStack.overlapsWith(stackRegI64));
+
+  ASSERT_TRUE(stackRegI64.overlapsWith(stackRegI32At4));
+  ASSERT_TRUE(stackRegI32At4.overlapsWith(stackRegI64));
+}
+
 TEST(TestVariableStorage, OverlapsWithHandlesStackMemoryBoundaries) {
   VariableStorage const i32At0{VariableStorage::stackMemory(MachineType::I32, 0U)};
   VariableStorage const i64At0{VariableStorage::stackMemory(MachineType::I64, 0U)};
