@@ -448,8 +448,8 @@ public:
   /// @param args argument list
   /// @param enforcedTarget Enforced target to compare
   /// @return bool Whether this enforced target is only among the (up to 2) input operands
-  inline bool checkIfEnforcedTargetIsOnlyInArgs(Span<Stack::iterator> const &args, StackElement const *const enforcedTarget) const VB_NOEXCEPT {
-    return common_.checkIfEnforcedTargetIsOnlyInArgs(args, enforcedTarget);
+  inline bool checkIfEnforceTargetCanOverwrite(Span<Stack::iterator> const &args, StackElement const *const enforcedTarget) const VB_NOEXCEPT {
+    return common_.checkIfEnforceTargetCanOverwrite(args, enforcedTarget);
   }
 
 #if BUILTIN_FUNCTIONS
@@ -489,6 +489,14 @@ public:
   /// @return RegMask Protected register mask where the input element's representation is protected
   inline RegMask mask(StackElement const *const elementPtr) const VB_NOEXCEPT {
     return moduleInfo_.maskForElement(elementPtr);
+  }
+
+  /// @brief Check whether two storage locations overlap.
+  /// @param first First storage
+  /// @param second Second storage
+  /// @return Whether the locations overlap
+  inline bool storageOverlaps(VariableStorage const &first, VariableStorage const &second) const VB_NOEXCEPT {
+    return first.overlapsWith(second);
   }
 
   ///

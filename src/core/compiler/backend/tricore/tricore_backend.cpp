@@ -3422,13 +3422,13 @@ void Backend::spillFromStack(StackElement const &source, RegMask protRegs, bool 
   }
 }
 
-bool Backend::checkIfEnforcedTargetIsOnlyInArgs(Span<Stack::iterator> const &args, StackElement const *const enforcedTarget) const VB_NOEXCEPT {
+bool Backend::checkIfEnforceTargetCanOverwrite(Span<Stack::iterator> const &args, StackElement const *const enforcedTarget) const VB_NOEXCEPT {
   if (enforcedTarget == nullptr) {
     return true;
   }
   bool const isScrReg{enforcedTarget->getBaseType() == StackType::SCRATCHREGISTER};
   if (!isScrReg) {
-    return common_.checkIfEnforcedTargetIsOnlyInArgs(args, enforcedTarget);
+    return common_.checkIfEnforceTargetCanOverwrite(args, enforcedTarget);
   } else {
     bool const is64{(enforcedTarget->type == StackType::SCRATCHREGISTER_I64) || (enforcedTarget->type == StackType::SCRATCHREGISTER_F64)};
     REG const enforcedReg{enforcedTarget->data.variableData.location.reg};
@@ -3436,16 +3436,16 @@ bool Backend::checkIfEnforcedTargetIsOnlyInArgs(Span<Stack::iterator> const &arg
     if (is64) {
       assert(canBeExtendedReg && "Must be extendable");
       StackElement const otherElem{StackElement::scratchReg(RegUtil::getOtherExtReg(enforcedReg), StackType::SCRATCHREGISTER)};
-      return common_.checkIfEnforcedTargetIsOnlyInArgs(args, enforcedTarget) && common_.checkIfEnforcedTargetIsOnlyInArgs(args, &otherElem);
+      return common_.checkIfEnforceTargetCanOverwrite(args, enforcedTarget) && common_.checkIfEnforceTargetCanOverwrite(args, &otherElem);
     } else {
       if (canBeExtendedReg) {
-        return common_.checkIfEnforcedTargetIsOnlyInArgs(args, enforcedTarget);
+        return common_.checkIfEnforceTargetCanOverwrite(args, enforcedTarget);
       } else {
         StackElement const otherElem{StackElement::scratchReg(RegUtil::getOtherExtReg(enforcedReg), StackType::SCRATCHREGISTER)};
         ERegReferenceChainVisitor const visitor{moduleInfo_};
-        return common_.checkIfEnforcedTargetIsOnlyInArgs(args, enforcedTarget) &&
+        return common_.checkIfEnforceTargetCanOverwrite(args, enforcedTarget) &&
                // only check for e[n] and d[n+1] conflicts
-               common_.checkIfEnforcedTargetIsOnlyInArgs(args, &otherElem, moduleInfo_, visitor);
+               common_.checkIfEnforceTargetCanOverwrite(args, &otherElem, moduleInfo_, visitor);
       }
     }
   }
@@ -3466,6 +3466,34 @@ RegMask Backend::mask(VariableStorage const &storage) const VB_NOEXCEPT {
     return mask(reg, MachineTypeUtil::is64(storage.machineType));
   }
   return RegMask::none();
+}
+
+bool Backend::storageOverlaps(VariableStorage const &first, VariableStorage const &second) const VB_NOEXCEPT {
+  if ((first.type == StorageType::REGISTER) && (second.type == StorageType::REGISTER)) {
+    if (first.location.reg == second.location.reg) {
+      return true;
+    }
+
+    if (MachineTypeUtil::is64(second.machineType)) {
+      // GCOVR_EXCL_START
+      assert(RegUtil::canBeExtReg(second.location.reg));
+      // GCOVR_EXCL_STOP
+      if (first.location.reg == RegUtil::getOtherExtReg(second.location.reg)) {
+        return true;
+      }
+    }
+
+    if (MachineTypeUtil::is64(first.machineType)) {
+      // GCOVR_EXCL_START
+      assert(RegUtil::canBeExtReg(first.location.reg));
+      // GCOVR_EXCL_STOP
+      if (RegUtil::getOtherExtReg(first.location.reg) == second.location.reg) {
+        return true;
+      }
+    }
+    return false;
+  }
+  return first.overlapsWith(second);
 }
 
 RegMask Backend::mask(REG const reg, bool const is64) const VB_NOEXCEPT {
@@ -5432,38 +5460,12 @@ bool Backend::stackElementConflictsWithParamReg(StackElement const &element, REG
 
   if (paramIs64 && (paramTypeInCaller == StackType::LOCAL)) {
     // This case happens when native call, the target hint is 64bit which is used by caller local
-    // current checkIfEnforcedTargetIsOnlyInArgs can't handle this case, so always regard this case as conflict
+    // current checkIfEnforceTargetCanOverwrite can't handle this case, so always regard this case as conflict
     return true;
-  } else {
-    VariableStorage const storage{moduleInfo_.getStorage(element)};
-    if (storage.type == StorageType::REGISTER) {
-      if (storage.location.reg == paramReg) {
-        return true;
-      }
-
-      if (paramIs64) {
-        // GCOVR_EXCL_START
-        assert(RegUtil::canBeExtReg(paramReg));
-        // GCOVR_EXCL_STOP
-        if (storage.location.reg == RegUtil::getOtherExtReg(paramReg)) {
-          return true;
-        }
-      }
-
-      bool const stackElementIs64{MachineTypeUtil::is64(moduleInfo_.getMachineType(&element))};
-      if (stackElementIs64) {
-        // GCOVR_EXCL_START
-        assert(RegUtil::canBeExtReg(storage.location.reg));
-        // GCOVR_EXCL_STOP
-        REG const otherReg{RegUtil::getOtherExtReg(storage.location.reg)};
-        if (otherReg == paramReg) {
-          return true;
-        }
-      }
-    }
   }
 
-  return false;
+  VariableStorage const storage{moduleInfo_.getStorage(element)};
+  return storageOverlaps(storage, VariableStorage::reg(machineType, paramReg));
 }
 
 VariableStorage Backend::selectDefaultParallelMoveTemp(ParallelMoveResolver const &moveResolver, MachineType const machineType) VB_NOEXCEPT {

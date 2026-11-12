@@ -171,6 +171,55 @@ void Common::spillFromStackImpl(StackElement const &source, RegMask const protRe
   }
 }
 
+bool Common::storageOverlaps(VariableStorage const &first, VariableStorage const &second) const VB_NOEXCEPT {
+  return compiler_.backend_.storageOverlaps(first, second);
+}
+
+void Common::spillStorageFromStack(VariableStorage const &storageToOverwrite, RegMask const protRegs, bool const forceToStack, bool const presFlags,
+                                   Stack::iterator const pExcludedZoneBottom, Stack::iterator const pExcludedZoneTop) const {
+  assert(storageToOverwrite.isParallelMoveLocation() && "Write destination must have addressable storage");
+
+  StackElement newElement{StackElement::invalid()};
+  // coverity[autosar_cpp14_a8_5_2_violation]
+  auto const visitor = [this, &storageToOverwrite, &newElement, protRegs, forceToStack, presFlags](Stack::iterator const begin,
+                                                                                                   Stack::iterator const end) {
+    for (Stack::iterator it{begin}; it != end; it++) {
+      StackType const baseType{it->getBaseType()};
+      bool const isSpillableType{((baseType == StackType::LOCAL) || (baseType == StackType::GLOBAL)) ||
+                                 ((baseType == StackType::SCRATCHREGISTER) || (baseType == StackType::TEMP_RESULT))};
+      if (isSpillableType) {
+        VariableStorage const sourceStorage{compiler_.moduleInfo_.getStorage(*it)};
+        if (storageOverlaps(storageToOverwrite, sourceStorage)) {
+          if (newElement.type == StackType::INVALID) {
+            StackElement const spillTarget{compiler_.backend_.reqSpillTarget(*it, protRegs, forceToStack, presFlags)};
+#if ENABLE_EXTENSIONS
+            if (compiler_.getAnalytics() != nullptr) {
+              compiler_.getAnalytics()->incrementSpillCount(spillTarget.getBaseType() == StackType::SCRATCHREGISTER);
+            }
+#endif
+            VariableStorage const currentSourceStorage{compiler_.moduleInfo_.getStorage(*it)};
+            VariableStorage const spillStorage{compiler_.moduleInfo_.getStorage(spillTarget)};
+            compiler_.backend_.emitMoveImpl(spillStorage, currentSourceStorage, false, presFlags);
+            newElement = spillTarget;
+          }
+          replaceAndUpdateReference(it, newElement);
+        }
+      }
+    }
+  };
+
+  if ((!pExcludedZoneBottom.isEmpty()) || (!pExcludedZoneTop.isEmpty())) {
+    if (!pExcludedZoneBottom.isEmpty()) {
+      visitor(getCurrentFrameBase(), pExcludedZoneBottom);
+    }
+    if (!pExcludedZoneTop.isEmpty()) {
+      visitor(pExcludedZoneTop, compiler_.stack_.end());
+    }
+  } else {
+    visitor(getCurrentFrameBase(), compiler_.stack_.end());
+  }
+}
+
 void Common::loadReturnValues(Stack::iterator const returnValuesBase, uint32_t const numReturnValues, StackElement const *const targetBlockElem,
                               bool const presFlags) const {
   static_cast<void>(numReturnValues);
@@ -382,9 +431,9 @@ Stack::iterator Common::condenseMultipleValentBlocksWithTargetHintBelow(Stack::i
   return resultBase;
 }
 
-bool Common::checkIfEnforcedTargetIsOnlyInArgs(Span<Stack::iterator> const &args, StackElement const *const enforcedTarget) const VB_NOEXCEPT {
+bool Common::checkIfEnforceTargetCanOverwrite(Span<Stack::iterator> const &args, StackElement const *const enforcedTarget) const VB_NOEXCEPT {
   BasicReferenceChainVisitor const visitor;
-  return checkIfEnforcedTargetIsOnlyInArgs<BasicReferenceChainVisitor>(args, enforcedTarget, compiler_.moduleInfo_, visitor);
+  return checkIfEnforceTargetCanOverwrite<BasicReferenceChainVisitor>(args, enforcedTarget, compiler_.moduleInfo_, visitor);
 }
 
 Stack::iterator Common::condenseValentBlockBelow(Stack::iterator const belowIt, StackElement const *const enforcedTarget) const {
@@ -460,7 +509,7 @@ void Common::condenseValentBlockBasic(Stack::iterator const rootNode, StackEleme
         param = param->sibling;
       }
 
-      bool const propagateTargetHint{compiler_.backend_.checkIfEnforcedTargetIsOnlyInArgs(
+      bool const propagateTargetHint{compiler_.backend_.checkIfEnforceTargetCanOverwrite(
           Span<Stack::iterator>{args.data(), static_cast<size_t>(instructionArity)}, recommendedTargetHint)};
       StackElement const *const targetHint{propagateTargetHint ? recommendedTargetHint : nullptr};
       StackElement const result{evaluateInstruction(instructionPtr, args[0], args[1], args[2], targetHint)};
@@ -511,7 +560,7 @@ void Common::condenseScratchRegBelow(Stack::iterator const rootNode, StackElemen
       }
 
       if (needCondense) {
-        bool const propagateTargetHint{compiler_.backend_.checkIfEnforcedTargetIsOnlyInArgs(
+        bool const propagateTargetHint{compiler_.backend_.checkIfEnforceTargetCanOverwrite(
             Span<Stack::iterator>{args.data(), static_cast<size_t>(instructionArity)}, recommendedTargetHint)};
         StackElement const *const targetHint{propagateTargetHint ? recommendedTargetHint : nullptr};
         StackElement const result{evaluateInstruction(instructionPtr, args[0], args[1], args[2], targetHint)};
@@ -538,7 +587,8 @@ Common::ConditionResult Common::condenseValentBlockCoreBelow(bool const comparis
 
   if (enforcedTarget != nullptr) {
     assert(!enforcedTarget->isStackMemory() && "TEMPSTACK not allowed as enforced target");
-    compiler_.backend_.spillFromStack(*enforcedTarget, RegMask::none(), false, false, findBaseOfValentBlockBelow(belowIt), belowIt);
+    VariableStorage const storageToOverwrite{compiler_.moduleInfo_.getStorage(*enforcedTarget)};
+    spillStorageFromStack(storageToOverwrite, RegMask::none(), false, false, findBaseOfValentBlockBelow(belowIt), belowIt);
   }
 
   // coverity[autosar_cpp14_a5_3_2_violation]
@@ -594,7 +644,7 @@ Common::ConditionResult Common::condenseWithTargetHint(bool const comparison, St
         static_cast<void>(compiler_.stack_.erase(instructionPtr));
         break;
       } else {
-        bool const propagateTargetHint{compiler_.backend_.checkIfEnforcedTargetIsOnlyInArgs(
+        bool const propagateTargetHint{compiler_.backend_.checkIfEnforceTargetCanOverwrite(
             Span<Stack::iterator>{args.data(), static_cast<size_t>(instructionArity)}, recommendedTargetHint)};
         StackElement const *const targetHint{propagateTargetHint ? recommendedTargetHint : nullptr};
         StackElement const result{evaluateInstruction(instructionPtr, args[0], args[1], args[2], targetHint)};

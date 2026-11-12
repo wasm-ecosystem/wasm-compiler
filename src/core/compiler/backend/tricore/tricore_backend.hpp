@@ -455,7 +455,7 @@ public:
   /// @param args argument list
   /// @param enforcedTarget Enforced target to compare
   /// @return bool Whether this enforced target is only among the (up to 2) input operands
-  bool checkIfEnforcedTargetIsOnlyInArgs(Span<Stack::iterator> const &args, StackElement const *const enforcedTarget) const VB_NOEXCEPT;
+  bool checkIfEnforceTargetCanOverwrite(Span<Stack::iterator> const &args, StackElement const *const enforcedTarget) const VB_NOEXCEPT;
 
   ///
   /// @brief Iterate over all GPR and FPR scratch register and globals
@@ -514,6 +514,12 @@ public:
   /// @param storage Reference to the input VariableStorage
   /// @return RegMask Protected register mask where the input element's representation is protected
   RegMask mask(VariableStorage const &storage) const VB_NOEXCEPT;
+
+  /// @brief Check storage overlap, including extended-register pairs.
+  /// @param first First storage
+  /// @param second Second storage
+  /// @return Whether the locations overlap
+  bool storageOverlaps(VariableStorage const &first, VariableStorage const &second) const VB_NOEXCEPT;
 
   ///
   /// @brief Creates a RegMask from an input register

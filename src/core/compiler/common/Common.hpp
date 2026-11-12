@@ -206,6 +206,23 @@ public:
                           Stack::iterator const pExcludedZoneBottom = Stack::iterator(),
                           Stack::iterator const pExcludedZoneTop = Stack::iterator()) const;
 
+  /// @brief Preserve live values whose current storage overlaps a write destination.
+  /// @param storageToOverwrite Storage that will be overwritten
+  /// @param protRegs Registers that cannot be used as spill destinations
+  /// @param forceToStack Whether to disallow register spill destinations
+  /// @param presFlags Whether to preserve CPU flags
+  /// @param pExcludedZoneBottom Inclusive start of the excluded compiler-stack range
+  /// @param pExcludedZoneTop Exclusive end of the excluded compiler-stack range
+  void spillStorageFromStack(VariableStorage const &storageToOverwrite, RegMask const protRegs, bool const forceToStack, bool const presFlags,
+                             Stack::iterator const pExcludedZoneBottom = Stack::iterator(),
+                             Stack::iterator const pExcludedZoneTop = Stack::iterator()) const;
+
+  /// @brief Delegate storage-overlap checks to the backend.
+  /// @param first First storage
+  /// @param second Second storage
+  /// @return Whether the storage locations overlap
+  bool storageOverlaps(VariableStorage const &first, VariableStorage const &second) const VB_NOEXCEPT;
+
   ///
   /// @brief Get the base (iterator to the bottommost StackElement) of the current frame
   /// The frame can be either defined by a structural instruction (BLOCK, LOOP, IFBLOCK) or the function frame
@@ -383,45 +400,52 @@ public:
   }
 
   ///
-  /// @brief Check if a given enforced target is only among the input operands and can thus be assumed to be writable
-  /// without destroying any relevant/important information
+  /// @brief Check whether the enforced target can be overwritten by the current instruction.
   ///
-  /// @param args argument list
-  /// @param enforcedTarget Enforced target to compare
-  /// @return bool Whether this enforced target is only among the (up to 2) input operands
-  bool checkIfEnforcedTargetIsOnlyInArgs(Span<Stack::iterator> const &args, StackElement const *const enforcedTarget) const VB_NOEXCEPT;
+  /// In general, storage still referenced elsewhere on the stack cannot be overwritten. The target can be overwritten
+  /// when its only live use is as an operand of the current instruction.
+  ///
+  /// @param args Operands of the current instruction
+  /// @param enforcedTarget Enforced target to check
+  /// @return Whether the enforced target can be overwritten
+  bool checkIfEnforceTargetCanOverwrite(Span<Stack::iterator> const &args, StackElement const *const enforcedTarget) const VB_NOEXCEPT;
 
   ///
-  /// @brief Check if a given enforced target is only among the input operands and can thus be assumed to be writable
-  /// without destroying any relevant/important information
+  /// @brief Check enforced-target storage occurrences with the given visitor.
+  /// @details An occurrence outside @p args prevents overwriting only if its storage overlaps the target storage.
   /// @tparam VisitorT Type of the visitor to use for walking occurrences
-  /// @param args argument list
-  /// @param enforcedTarget Enforced target to compare
+  /// @param args Operands of the current instruction
+  /// @param enforcedTarget Enforced target to check
   /// @param moduleInfo Module information needed to get references
   /// @param visitor Visitor to use for walking occurrences
-  /// @return bool Whether this enforced target is only among the (up to 2) input operands
+  /// @return Whether the enforced target can be overwritten
   template <typename VisitorT>
-  bool checkIfEnforcedTargetIsOnlyInArgs(Span<Stack::iterator> const &args, StackElement const *const enforcedTarget, ModuleInfo const &moduleInfo,
-                                         // coverity[autosar_cpp14_a8_4_7_violation]
-                                         VisitorT const &visitor) const VB_NOEXCEPT {
+  bool checkIfEnforceTargetCanOverwrite(Span<Stack::iterator> const &args, StackElement const *const enforcedTarget, ModuleInfo const &moduleInfo,
+                                        // coverity[autosar_cpp14_a8_4_7_violation]
+                                        VisitorT const &visitor) const VB_NOEXCEPT {
     if (enforcedTarget == nullptr) {
       return true;
     }
 
     Stack::iterator const currentOccurrenceElement{moduleInfo.getReferenceToLastOccurrenceOnStack(*enforcedTarget)};
-    bool onlyInArgs{true};
+    VariableStorage const targetStorage{moduleInfo.getStorage(*enforcedTarget)};
+    bool canOverwrite{true};
     // coverity[autosar_cpp14_a8_5_2_violation]
     // coverity[autosar_cpp14_a5_1_9_violation]
-    auto const checker = [&args, &onlyInArgs](Stack::iterator const occ) VB_NOEXCEPT -> bool {
-      if (!args.contains(occ)) {
-        onlyInArgs = false;
-        return false; // stop walking
+    auto const checker = [this, &args, &canOverwrite, &moduleInfo, targetStorage](Stack::iterator const occ) VB_NOEXCEPT -> bool {
+      if (args.contains(occ)) {
+        return true;
+      }
+      VariableStorage const occurrenceStorage{moduleInfo.getStorage(*occ)};
+      if (storageOverlaps(targetStorage, occurrenceStorage)) {
+        canOverwrite = false;
+        return false;
       }
       return true; // continue walking
     };
     // coverity[autosar_cpp14_a5_1_4_violation]
     visitor.walk(currentOccurrenceElement, vb::FunctionRef<bool(Stack::iterator const &)>(checker));
-    return onlyInArgs;
+    return canOverwrite;
   }
 
   ///
