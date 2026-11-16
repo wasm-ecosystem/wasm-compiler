@@ -529,3 +529,22 @@
 		call $add)
   )
 (assert_return (invoke "test") (i32.const 42))
+
+(module
+  (func $id (param i32) (result i32)
+    local.get 0)
+  (func (export "test") (result i32)
+    (local i32)
+    i32.const 42
+    local.set 0
+    local.get 0
+    i32.const 3
+    call $id
+    i32.const -16711936
+    i32.and
+    i32.const 8
+    i32.rotl
+    call $id
+    i32.add))
+
+(assert_return (invoke "test") (i32.const 42))
