@@ -217,6 +217,18 @@ public:
                              Stack::iterator const pExcludedZoneBottom = Stack::iterator(),
                              Stack::iterator const pExcludedZoneTop = Stack::iterator()) const;
 
+  /// @brief Preserve overlapping storage during call-operand condensation.
+  /// @param storageToOverwrite Storage that will be overwritten
+  /// @param protRegs Registers that cannot be used as spill destinations
+  /// @param forceToStack Whether to disallow register spill destinations
+  /// @param presFlags Whether to preserve CPU flags
+  /// @param pExcludedZoneBottom Inclusive start of the excluded compiler-stack range
+  /// @param pExcludedZoneTop Exclusive end of the excluded compiler-stack range
+  /// @param condenseEdge Stable edge below call operands; occurrences at or below it are excluded
+  void spillStorageFromStack(VariableStorage const &storageToOverwrite, RegMask const protRegs, bool const forceToStack, bool const presFlags,
+                             Stack::iterator const pExcludedZoneBottom, Stack::iterator const pExcludedZoneTop,
+                             Stack::iterator const condenseEdge) const;
+
   /// @brief Delegate storage-overlap checks to the backend.
   /// @param first First storage
   /// @param second Second storage
@@ -297,6 +309,14 @@ public:
   /// this valent block condensation should be stored
   /// @return Stack::iterator Iterator to the bottommost element, i.e. the result of this StackElement
   Stack::iterator condenseValentBlockBelow(Stack::iterator const belowIt, StackElement const *const enforcedTarget = nullptr) const;
+
+  /// @brief Condense a call operand without preserving LOCAL registers outside the call operands.
+  /// @param belowIt Iterator immediately above the valent block
+  /// @param enforcedTarget Optional enforced result storage
+  /// @param condenseEdge Stable edge immediately below all call operands
+  /// @return Iterator to the condensed result
+  Stack::iterator condenseValentBlockBelow(Stack::iterator const belowIt, StackElement const *const enforcedTarget,
+                                           Stack::iterator const condenseEdge) const;
 
   ///
   /// @brief Condense the current valent block on the stack if it contains an instruction with side effects
@@ -410,6 +430,14 @@ public:
   /// @return Whether the enforced target can be overwritten
   bool checkIfEnforceTargetCanOverwrite(Span<Stack::iterator> const &args, StackElement const *const enforcedTarget) const VB_NOEXCEPT;
 
+  /// @brief Check enforced-target storage while condensing call operands.
+  /// @param args Operands of the current instruction
+  /// @param enforcedTarget Enforced target to check
+  /// @param condenseEdge Stable edge below call operands; LOCAL occurrences at or below it are excluded
+  /// @return Whether the enforced target can be overwritten
+  bool checkIfEnforceTargetCanOverwrite(Span<Stack::iterator> const &args, StackElement const *const enforcedTarget,
+                                        Stack::iterator const condenseEdge) const VB_NOEXCEPT;
+
   ///
   /// @brief Check enforced-target storage occurrences with the given visitor.
   /// @details An occurrence outside @p args prevents overwriting only if its storage overlaps the target storage.
@@ -423,17 +451,33 @@ public:
   bool checkIfEnforceTargetCanOverwrite(Span<Stack::iterator> const &args, StackElement const *const enforcedTarget, ModuleInfo const &moduleInfo,
                                         // coverity[autosar_cpp14_a8_4_7_violation]
                                         VisitorT const &visitor) const VB_NOEXCEPT {
+    return checkIfEnforceTargetCanOverwrite(args, enforcedTarget, moduleInfo, visitor, Stack::iterator());
+  }
+
+  /// @brief Check enforced-target occurrences with a visitor and a call-operand boundary.
+  /// @tparam VisitorT Type of the visitor to use for filtering occurrences
+  /// @param args Operands of the current instruction
+  /// @param enforcedTarget Enforced target to check
+  /// @param moduleInfo Module information needed to get references
+  /// @param visitor Visitor to use for filtering occurrences
+  /// @param condenseEdge Stable edge below call operands, or an empty iterator for ordinary condensation
+  /// @return Whether the enforced target can be overwritten
+  template <typename VisitorT>
+  bool checkIfEnforceTargetCanOverwrite(Span<Stack::iterator> const &args, StackElement const *const enforcedTarget, ModuleInfo const &moduleInfo,
+                                        // coverity[autosar_cpp14_a8_4_7_violation]
+                                        VisitorT const &visitor, Stack::iterator const condenseEdge) const VB_NOEXCEPT {
     if (enforcedTarget == nullptr) {
       return true;
     }
 
-    Stack::iterator const currentOccurrenceElement{moduleInfo.getReferenceToLastOccurrenceOnStack(*enforcedTarget)};
     VariableStorage const targetStorage{moduleInfo.getStorage(*enforcedTarget)};
+    uint32_t const targetReferencePosition{moduleInfo.getReferencePosition(*enforcedTarget)};
     bool canOverwrite{true};
     // coverity[autosar_cpp14_a8_5_2_violation]
     // coverity[autosar_cpp14_a5_1_9_violation]
-    auto const checker = [this, &args, &canOverwrite, &moduleInfo, targetStorage](Stack::iterator const occ) VB_NOEXCEPT -> bool {
-      if (args.contains(occ)) {
+    auto const checker = [this, &args, &canOverwrite, &moduleInfo, targetStorage, targetReferencePosition](Stack::iterator const occ)
+                             VB_NOEXCEPT -> bool {
+      if ((moduleInfo.getReferencePosition(*occ) != targetReferencePosition) || args.contains(occ)) {
         return true;
       }
       VariableStorage const occurrenceStorage{moduleInfo.getStorage(*occ)};
@@ -443,8 +487,14 @@ public:
       }
       return true; // continue walking
     };
-    // coverity[autosar_cpp14_a5_1_4_violation]
-    visitor.walk(currentOccurrenceElement, vb::FunctionRef<bool(Stack::iterator const &)>(checker));
+    if (condenseEdge.isEmpty()) {
+      Stack::iterator const currentOccurrenceElement{moduleInfo.getReferenceToLastOccurrenceOnStack(*enforcedTarget)};
+      // coverity[autosar_cpp14_a5_1_4_violation]
+      visitor.walk(currentOccurrenceElement, vb::FunctionRef<bool(Stack::iterator const &)>(checker));
+    } else {
+      // coverity[autosar_cpp14_a5_1_4_violation]
+      visitor.walk(getStackLast(), condenseEdge, vb::FunctionRef<bool(Stack::iterator const &)>(checker));
+    }
     return canOverwrite;
   }
 
@@ -702,6 +752,15 @@ public:
   /// @return ConditionResult Base of the valent block and an optional BranchCondition if this was a comparison
   ConditionResult condenseWithTargetHint(bool const comparison, Stack::iterator const belowIt, StackElement const *const recommendedTargetHint) const;
 
+  /// @brief Condense with a target hint and an explicit call-operand boundary.
+  /// @param comparison Whether this is a comparison
+  /// @param belowIt Iterator immediately above the valent block
+  /// @param recommendedTargetHint Optional result storage
+  /// @param condenseEdge Stable edge below call operands, or an empty iterator for ordinary condensation
+  /// @return ConditionResult Base of the valent block and an optional BranchCondition if this was a comparison
+  ConditionResult condenseWithTargetHint(bool const comparison, Stack::iterator const belowIt, StackElement const *const recommendedTargetHint,
+                                         Stack::iterator const condenseEdge) const;
+
   /// @brief Resolve the pending parallel moves with cycles through an explicit temp location.
   /// @brief Check whether a `return_call` can be lowered to an internal tail jump.
   /// @param calleeStackParamWidth Total stack-parameter width required by the callee
@@ -721,6 +780,10 @@ private:
   Compiler &compiler_; ///< Reference to the compiler instance
 
   bool hasPendingSideEffectInstructions_; ///< Whether there are pending side effect instructions that need to be condensed
+
+  /// @brief Get the topmost stack element for bounded visitation.
+  /// @return Iterator to the topmost stack element
+  Stack::iterator getStackLast() const VB_NOEXCEPT;
 
   ///
   /// @brief Evaluate a specific COMPARISON DEFERRED ACTION with up to two input operands
@@ -751,26 +814,34 @@ private:
   /// appropriately set CPU status flags can be considered the result
   /// @param belowIt iterator that represents the next element of the first valent block.
   /// @param enforcedTarget Optional StackElement representing a storage location where the result should be put
+  /// @param condenseEdge Stable edge below call operands, or an empty iterator for ordinary condensation
   /// @return ConditionResult Base of the valent block and an optional BranchCondition if this was a comparison
-  ConditionResult condenseValentBlockCoreBelow(bool const comparison, Stack::iterator const belowIt, StackElement const *const enforcedTarget) const;
+  ConditionResult condenseValentBlockCoreBelow(bool const comparison, Stack::iterator const belowIt, StackElement const *const enforcedTarget,
+                                               Stack::iterator const condenseEdge) const;
 
   ///
   /// @brief Condense a scratch register in the valent block tree
   /// @param rootNode iterator that represents the first valent block.
   /// @param recommendedTargetHint Optional StackElement representing a storage location where the result should be put
-  void condenseScratchRegBelow(Stack::iterator const rootNode, StackElement const *const recommendedTargetHint) const;
+  /// @param condenseEdge Stable edge below call operands, or an empty iterator for ordinary condensation
+  void condenseScratchRegBelow(Stack::iterator const rootNode, StackElement const *const recommendedTargetHint,
+                               Stack::iterator const condenseEdge) const;
 
   ///
   /// @brief Condense side effect instructions in the valent block tree.
   /// @details For better usage of CPU pipelines, the side effect instructions aka. div and memory load need to be scheduled earlier.
   /// @param rootNode iterator that represents the first valent block.
   /// @param recommendedTargetHint Optional StackElement representing a storage location where the result should be put
-  void condenseSideEffectInstructionBelow(Stack::iterator const rootNode, StackElement const *const recommendedTargetHint) const;
+  /// @param condenseEdge Stable edge below call operands, or an empty iterator for ordinary condensation
+  void condenseSideEffectInstructionBelow(Stack::iterator const rootNode, StackElement const *const recommendedTargetHint,
+                                          Stack::iterator const condenseEdge) const;
 
   /// @brief Condense a valent block in the valent block tree unconditionally
   /// @param rootNode iterator that represents the first valent block.
   /// @param recommendedTargetHint Optional StackElement representing a storage location where the result should be put
-  void condenseValentBlockBasic(Stack::iterator const rootNode, StackElement const *const recommendedTargetHint) const;
+  /// @param condenseEdge Stable edge below call operands, or an empty iterator for ordinary condensation
+  void condenseValentBlockBasic(Stack::iterator const rootNode, StackElement const *const recommendedTargetHint,
+                                Stack::iterator const condenseEdge) const;
 
   /// @brief Get the first operand of a deferred action, which is the left child in valent block tree
   /// @param instruction Iterator to a deferred action
@@ -809,9 +880,10 @@ private:
   /// @param currentParamCount Current count of parameters
   /// @param allParamsStart iterator to the first Stack Element of all params
   /// @param regUsedAsTarget Number of unfinished parameters targeting each register
+  /// @param condenseEdge Stable edge immediately below all call operands
   /// @return Iterator to the condensed parameter
   Stack::iterator condenseParameter(ParamPos const targetPos, vb::MachineType const paramType, uint32_t const currentParamCount,
-                                    Stack::iterator const allParamsStart, RegUsedAsTarget const &regUsedAsTarget);
+                                    Stack::iterator const allParamsStart, RegUsedAsTarget const &regUsedAsTarget, Stack::iterator const condenseEdge);
 };
 
 } // namespace vb

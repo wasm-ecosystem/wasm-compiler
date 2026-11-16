@@ -482,7 +482,7 @@ public:
                     1U)) <= UINT32_MAX,
                   "Index too large");
     uint32_t const numGlobals{getNumGlobals()};
-    uint32_t const numEntries{((NBackend::totalNumRegs + fnc.numLocals) + numGlobals + fnc.numLocals) + 1_U32 /* TEMPSTACK */};
+    uint32_t const numEntries{((NBackend::totalNumRegs + fnc.numLocals) + numGlobals) + 1_U32 /* TEMPSTACK */};
     uint32_t const bytesToReserve{static_cast<uint32_t>(sizeof(Stack::iterator)) * numEntries};
 
     // Reserve space for references
@@ -495,8 +495,7 @@ public:
     referenceMap[static_cast<uint32_t>(StackType::SCRATCHREGISTER)] = 0U;
     referenceMap[static_cast<uint32_t>(StackType::LOCAL)] = NBackend::totalNumRegs;
     referenceMap[static_cast<uint32_t>(StackType::GLOBAL)] = referenceMap[static_cast<uint32_t>(StackType::LOCAL)] + fnc.numLocals;
-    referenceMap[static_cast<uint32_t>(StackType::SAVED_LOCAL)] = referenceMap[static_cast<uint32_t>(StackType::GLOBAL)] + numGlobals;
-    referenceMap[getStackMemoryInReferenceMapIndex()] = referenceMap[static_cast<uint32_t>(StackType::SAVED_LOCAL)] + fnc.numLocals;
+    referenceMap[getStackMemoryInReferenceMapIndex()] = referenceMap[static_cast<uint32_t>(StackType::GLOBAL)] + numGlobals;
   }
 
   ///
@@ -507,7 +506,7 @@ public:
   inline uint32_t getReferencePosition(StackElement const &element) const VB_NOEXCEPT {
     StackType const baseType{element.getBaseType()};
     assert((baseType == StackType::LOCAL) || (baseType == StackType::GLOBAL) || (baseType == StackType::SCRATCHREGISTER) ||
-           (baseType == StackType::TEMP_RESULT) || (baseType == StackType::SAVED_LOCAL));
+           (baseType == StackType::TEMP_RESULT));
 
     if (baseType == StackType::TEMP_RESULT) {
       return element.data.variableData.location.calculationResult.referencePosition;
@@ -709,7 +708,6 @@ private:
     static_assert(static_cast<uint32_t>(StackType::SCRATCHREGISTER) != tempstackReferenceMapIndex, "please select another index for stack memory");
     static_assert(static_cast<uint32_t>(StackType::LOCAL) != tempstackReferenceMapIndex, "please select another index for stack memory");
     static_assert(static_cast<uint32_t>(StackType::GLOBAL) != tempstackReferenceMapIndex, "please select another index for stack memory");
-    static_assert(static_cast<uint32_t>(StackType::SAVED_LOCAL) != tempstackReferenceMapIndex, "please select another index for stack memory");
 
     return tempstackReferenceMapIndex;
   }

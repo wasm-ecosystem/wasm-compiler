@@ -3423,12 +3423,17 @@ void Backend::spillFromStack(StackElement const &source, RegMask protRegs, bool 
 }
 
 bool Backend::checkIfEnforceTargetCanOverwrite(Span<Stack::iterator> const &args, StackElement const *const enforcedTarget) const VB_NOEXCEPT {
+  return checkIfEnforceTargetCanOverwrite(args, enforcedTarget, Stack::iterator());
+}
+
+bool Backend::checkIfEnforceTargetCanOverwrite(Span<Stack::iterator> const &args, StackElement const *const enforcedTarget,
+                                               Stack::iterator const condenseEdge) const VB_NOEXCEPT {
   if (enforcedTarget == nullptr) {
     return true;
   }
   bool const isScrReg{enforcedTarget->getBaseType() == StackType::SCRATCHREGISTER};
   if (!isScrReg) {
-    return common_.checkIfEnforceTargetCanOverwrite(args, enforcedTarget);
+    return common_.checkIfEnforceTargetCanOverwrite(args, enforcedTarget, condenseEdge);
   } else {
     bool const is64{(enforcedTarget->type == StackType::SCRATCHREGISTER_I64) || (enforcedTarget->type == StackType::SCRATCHREGISTER_F64)};
     REG const enforcedReg{enforcedTarget->data.variableData.location.reg};
@@ -3436,16 +3441,17 @@ bool Backend::checkIfEnforceTargetCanOverwrite(Span<Stack::iterator> const &args
     if (is64) {
       assert(canBeExtendedReg && "Must be extendable");
       StackElement const otherElem{StackElement::scratchReg(RegUtil::getOtherExtReg(enforcedReg), StackType::SCRATCHREGISTER)};
-      return common_.checkIfEnforceTargetCanOverwrite(args, enforcedTarget) && common_.checkIfEnforceTargetCanOverwrite(args, &otherElem);
+      return common_.checkIfEnforceTargetCanOverwrite(args, enforcedTarget, condenseEdge) &&
+             common_.checkIfEnforceTargetCanOverwrite(args, &otherElem, condenseEdge);
     } else {
       if (canBeExtendedReg) {
-        return common_.checkIfEnforceTargetCanOverwrite(args, enforcedTarget);
+        return common_.checkIfEnforceTargetCanOverwrite(args, enforcedTarget, condenseEdge);
       } else {
         StackElement const otherElem{StackElement::scratchReg(RegUtil::getOtherExtReg(enforcedReg), StackType::SCRATCHREGISTER)};
         ERegReferenceChainVisitor const visitor{moduleInfo_};
-        return common_.checkIfEnforceTargetCanOverwrite(args, enforcedTarget) &&
+        return common_.checkIfEnforceTargetCanOverwrite(args, enforcedTarget, condenseEdge) &&
                // only check for e[n] and d[n+1] conflicts
-               common_.checkIfEnforceTargetCanOverwrite(args, &otherElem, moduleInfo_, visitor);
+               common_.checkIfEnforceTargetCanOverwrite(args, &otherElem, moduleInfo_, visitor, condenseEdge);
       }
     }
   }

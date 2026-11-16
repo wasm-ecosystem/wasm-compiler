@@ -175,10 +175,20 @@ bool Common::storageOverlaps(VariableStorage const &first, VariableStorage const
   return compiler_.backend_.storageOverlaps(first, second);
 }
 
+Stack::iterator Common::getStackLast() const VB_NOEXCEPT {
+  return compiler_.stack_.last();
+}
+
 void Common::spillStorageFromStack(VariableStorage const &storageToOverwrite, RegMask const protRegs, bool const forceToStack, bool const presFlags,
                                    Stack::iterator const pExcludedZoneBottom, Stack::iterator const pExcludedZoneTop) const {
-  assert((((storageToOverwrite.type == StorageType::REGISTER) || (storageToOverwrite.type == StorageType::STACKMEMORY)) ||
-          (storageToOverwrite.type == StorageType::LINKDATA)) &&
+  spillStorageFromStack(storageToOverwrite, protRegs, forceToStack, presFlags, pExcludedZoneBottom, pExcludedZoneTop, Stack::iterator());
+}
+
+void Common::spillStorageFromStack(VariableStorage const &storageToOverwrite, RegMask const protRegs, bool const forceToStack, bool const presFlags,
+                                   Stack::iterator const pExcludedZoneBottom, Stack::iterator const pExcludedZoneTop,
+                                   Stack::iterator const condenseEdge) const {
+  assert((storageToOverwrite.type == StorageType::REGISTER || storageToOverwrite.type == StorageType::STACKMEMORY ||
+          storageToOverwrite.type == StorageType::LINKDATA) &&
          "Write destination must have addressable storage");
 
   StackElement newElement{StackElement::invalid()};
@@ -210,15 +220,18 @@ void Common::spillStorageFromStack(VariableStorage const &storageToOverwrite, Re
     }
   };
 
-  if ((!pExcludedZoneBottom.isEmpty()) || (!pExcludedZoneTop.isEmpty())) {
+  bool const hasExcludedZone{(!pExcludedZoneBottom.isEmpty()) || (!pExcludedZoneTop.isEmpty())};
+  Stack::iterator const spillBegin{condenseEdge.isEmpty() ? getCurrentFrameBase() : condenseEdge.next()};
+
+  if (hasExcludedZone) {
     if (!pExcludedZoneBottom.isEmpty()) {
-      visitor(getCurrentFrameBase(), pExcludedZoneBottom);
+      visitor(spillBegin, pExcludedZoneBottom);
     }
     if (!pExcludedZoneTop.isEmpty()) {
       visitor(pExcludedZoneTop, compiler_.stack_.end());
     }
   } else {
-    visitor(getCurrentFrameBase(), compiler_.stack_.end());
+    visitor(spillBegin, compiler_.stack_.end());
   }
 }
 
@@ -434,17 +447,27 @@ Stack::iterator Common::condenseMultipleValentBlocksWithTargetHintBelow(Stack::i
 }
 
 bool Common::checkIfEnforceTargetCanOverwrite(Span<Stack::iterator> const &args, StackElement const *const enforcedTarget) const VB_NOEXCEPT {
+  return checkIfEnforceTargetCanOverwrite(args, enforcedTarget, Stack::iterator());
+}
+
+bool Common::checkIfEnforceTargetCanOverwrite(Span<Stack::iterator> const &args, StackElement const *const enforcedTarget,
+                                              Stack::iterator const condenseEdge) const VB_NOEXCEPT {
   BasicReferenceChainVisitor const visitor;
-  return checkIfEnforceTargetCanOverwrite<BasicReferenceChainVisitor>(args, enforcedTarget, compiler_.moduleInfo_, visitor);
+  return checkIfEnforceTargetCanOverwrite<BasicReferenceChainVisitor>(args, enforcedTarget, compiler_.moduleInfo_, visitor, condenseEdge);
 }
 
 Stack::iterator Common::condenseValentBlockBelow(Stack::iterator const belowIt, StackElement const *const enforcedTarget) const {
+  return condenseValentBlockBelow(belowIt, enforcedTarget, Stack::iterator());
+}
+
+Stack::iterator Common::condenseValentBlockBelow(Stack::iterator const belowIt, StackElement const *const enforcedTarget,
+                                                 Stack::iterator const condenseEdge) const {
   assert(belowIt != compiler_.stack_.begin());
-  return condenseValentBlockCoreBelow(false, belowIt, enforcedTarget).base;
+  return condenseValentBlockCoreBelow(false, belowIt, enforcedTarget, condenseEdge).base;
 }
 
 BC Common::condenseComparisonBelow(Stack::iterator const belowIt) const {
-  ConditionResult const result{condenseValentBlockCoreBelow(true, belowIt, nullptr)};
+  ConditionResult const result{condenseValentBlockCoreBelow(true, belowIt, nullptr, Stack::iterator())};
   if (result.base == belowIt) {
     return result.branchCond;
   }
@@ -469,7 +492,8 @@ bool Common::scratchRegOnlyOnceOnStack(Stack::iterator const element) VB_NOEXCEP
   }
 }
 
-void Common::condenseSideEffectInstructionBelow(Stack::iterator const rootNode, StackElement const *const recommendedTargetHint) const {
+void Common::condenseSideEffectInstructionBelow(Stack::iterator const rootNode, StackElement const *const recommendedTargetHint,
+                                                Stack::iterator const condenseEdge) const {
   if (rootNode->type != StackType::DEFERREDACTION) {
     return;
   }
@@ -482,7 +506,7 @@ void Common::condenseSideEffectInstructionBelow(Stack::iterator const rootNode, 
       Stack::iterator const instructionPtr{currentIt};
 
       if (compiler_.backend_.hasEnoughScratchRegForScheduleInstruction(instructionPtr->data.deferredAction.opcode)) {
-        condenseValentBlockBasic(instructionPtr, recommendedTargetHint);
+        condenseValentBlockBasic(instructionPtr, recommendedTargetHint, condenseEdge);
       } else {
         break;
       }
@@ -492,7 +516,8 @@ void Common::condenseSideEffectInstructionBelow(Stack::iterator const rootNode, 
   }
 }
 
-void Common::condenseValentBlockBasic(Stack::iterator const rootNode, StackElement const *const recommendedTargetHint) const {
+void Common::condenseValentBlockBasic(Stack::iterator const rootNode, StackElement const *const recommendedTargetHint,
+                                      Stack::iterator const condenseEdge) const {
   assert(rootNode->type == StackType::DEFERREDACTION);
 
   Stack::iterator const valentBlockTop{findBaseOfValentBlock(rootNode)};
@@ -512,7 +537,7 @@ void Common::condenseValentBlockBasic(Stack::iterator const rootNode, StackEleme
       }
 
       bool const propagateTargetHint{compiler_.backend_.checkIfEnforceTargetCanOverwrite(
-          Span<Stack::iterator>{args.data(), static_cast<size_t>(instructionArity)}, recommendedTargetHint)};
+          Span<Stack::iterator>{args.data(), static_cast<size_t>(instructionArity)}, recommendedTargetHint, condenseEdge)};
       StackElement const *const targetHint{propagateTargetHint ? recommendedTargetHint : nullptr};
       StackElement const result{evaluateInstruction(instructionPtr, args[0], args[1], args[2], targetHint)};
       replaceAndUpdateReference(instructionPtr, result);
@@ -525,7 +550,8 @@ void Common::condenseValentBlockBasic(Stack::iterator const rootNode, StackEleme
   }
 }
 
-void Common::condenseScratchRegBelow(Stack::iterator const rootNode, StackElement const *const recommendedTargetHint) const {
+void Common::condenseScratchRegBelow(Stack::iterator const rootNode, StackElement const *const recommendedTargetHint,
+                                     Stack::iterator const condenseEdge) const {
   if (rootNode->type != StackType::DEFERREDACTION) {
     return;
   }
@@ -563,7 +589,7 @@ void Common::condenseScratchRegBelow(Stack::iterator const rootNode, StackElemen
 
       if (needCondense) {
         bool const propagateTargetHint{compiler_.backend_.checkIfEnforceTargetCanOverwrite(
-            Span<Stack::iterator>{args.data(), static_cast<size_t>(instructionArity)}, recommendedTargetHint)};
+            Span<Stack::iterator>{args.data(), static_cast<size_t>(instructionArity)}, recommendedTargetHint, condenseEdge)};
         StackElement const *const targetHint{propagateTargetHint ? recommendedTargetHint : nullptr};
         StackElement const result{evaluateInstruction(instructionPtr, args[0], args[1], args[2], targetHint)};
         replaceAndUpdateReference(instructionPtr, result);
@@ -578,7 +604,7 @@ void Common::condenseScratchRegBelow(Stack::iterator const rootNode, StackElemen
 /// Then to reduce the register pressure of follow up code emit, instructions with side effects are condensed.
 /// Finally, the remaining instructions are condensed.
 Common::ConditionResult Common::condenseValentBlockCoreBelow(bool const comparison, Stack::iterator const belowIt,
-                                                             StackElement const *const enforcedTarget) const {
+                                                             StackElement const *const enforcedTarget, Stack::iterator const condenseEdge) const {
   assert(!(comparison && enforcedTarget) && "No target allowed for comparison");
   Stack::iterator const lastBlock{compiler_.moduleInfo_.fnc.lastBlockReference};
   const bool unreachable{(lastBlock.isEmpty()) ? compiler_.moduleInfo_.fnc.unreachable : lastBlock->data.blockInfo.blockUnreachable};
@@ -590,11 +616,11 @@ Common::ConditionResult Common::condenseValentBlockCoreBelow(bool const comparis
   if (enforcedTarget != nullptr) {
     assert(!enforcedTarget->isStackMemory() && "TEMPSTACK not allowed as enforced target");
     VariableStorage const storageToOverwrite{compiler_.moduleInfo_.getStorage(*enforcedTarget)};
-    spillStorageFromStack(storageToOverwrite, RegMask::none(), false, false, findBaseOfValentBlockBelow(belowIt), belowIt);
+    spillStorageFromStack(storageToOverwrite, RegMask::none(), false, false, findBaseOfValentBlockBelow(belowIt), belowIt, condenseEdge);
   }
 
   // coverity[autosar_cpp14_a5_3_2_violation]
-  Common::ConditionResult const condenseResult{condenseWithTargetHint(comparison, belowIt, enforcedTarget)};
+  Common::ConditionResult const condenseResult{condenseWithTargetHint(comparison, belowIt, enforcedTarget, condenseEdge)};
 
   if (enforcedTarget != nullptr) {
     VariableStorage srcStorage{compiler_.moduleInfo_.getStorage(*condenseResult.base)};
@@ -612,15 +638,20 @@ Common::ConditionResult Common::condenseValentBlockCoreBelow(bool const comparis
 
 Common::ConditionResult Common::condenseWithTargetHint(bool const comparison, Stack::iterator const belowIt,
                                                        StackElement const *const recommendedTargetHint) const {
+  return condenseWithTargetHint(comparison, belowIt, recommendedTargetHint, Stack::iterator());
+}
+
+Common::ConditionResult Common::condenseWithTargetHint(bool const comparison, Stack::iterator const belowIt,
+                                                       StackElement const *const recommendedTargetHint, Stack::iterator const condenseEdge) const {
   Stack::iterator const frameBase{getCurrentFrameBase()};
   static_cast<void>(frameBase);
   BC branchCond{BC::UNCONDITIONAL};
 
   Stack::iterator const vbBase{belowIt.prev()};
   // coverity[autosar_cpp14_a5_3_2_violation]
-  condenseSideEffectInstructionBelow(vbBase, recommendedTargetHint);
+  condenseSideEffectInstructionBelow(vbBase, recommendedTargetHint, condenseEdge);
   // coverity[autosar_cpp14_a5_3_2_violation]
-  condenseScratchRegBelow(vbBase, recommendedTargetHint);
+  condenseScratchRegBelow(vbBase, recommendedTargetHint, condenseEdge);
 
   Stack::iterator currentIt{findBaseOfValentBlock(vbBase)};
   Stack::iterator condenseResult{currentIt};
@@ -647,7 +678,7 @@ Common::ConditionResult Common::condenseWithTargetHint(bool const comparison, St
         break;
       } else {
         bool const propagateTargetHint{compiler_.backend_.checkIfEnforceTargetCanOverwrite(
-            Span<Stack::iterator>{args.data(), static_cast<size_t>(instructionArity)}, recommendedTargetHint)};
+            Span<Stack::iterator>{args.data(), static_cast<size_t>(instructionArity)}, recommendedTargetHint, condenseEdge)};
         StackElement const *const targetHint{propagateTargetHint ? recommendedTargetHint : nullptr};
         StackElement const result{evaluateInstruction(instructionPtr, args[0], args[1], args[2], targetHint)};
         replaceAndUpdateReference(instructionPtr, result);
@@ -723,7 +754,7 @@ void Common::addReference(Stack::iterator const element) const VB_NOEXCEPT {
     return; // For reinterpretations, which can stay constant
   }
   assert((elementBaseType == StackType::LOCAL || elementBaseType == StackType::GLOBAL || elementBaseType == StackType::SCRATCHREGISTER ||
-          (elementBaseType == StackType::TEMP_RESULT) || (elementBaseType == StackType::SAVED_LOCAL)) &&
+          (elementBaseType == StackType::TEMP_RESULT)) &&
          "Only variables can be referenced");
 
   Stack::iterator &majorReference{compiler_.moduleInfo_.getReferenceToLastOccurrenceOnStack(*element)};
@@ -827,7 +858,7 @@ void Common::removeReference(Stack::iterator const element) const VB_NOEXCEPT {
     return;
   }
   assert((elementBaseType == StackType::SCRATCHREGISTER || elementBaseType == StackType::LOCAL || elementBaseType == StackType::GLOBAL ||
-          elementBaseType == StackType::TEMP_RESULT || (elementBaseType == StackType::SAVED_LOCAL)) &&
+          elementBaseType == StackType::TEMP_RESULT) &&
          "Only variables can be occurrence");
 
   Stack::iterator *pTopGroupReference{&compiler_.moduleInfo_.getReferenceToLastOccurrenceOnStack(*element)};
@@ -1447,25 +1478,16 @@ Stack::iterator Common::prepareCallParams(uint32_t const sigIndex, bool const is
   Stack::iterator paramsBase{};
   if (numVBsToResolve > 0U) {
     Stack::iterator const allParamsStart{skipValentBlock(numVBsToResolve)};
-    for (Stack::iterator it{compiler_.stack_.begin()}; it != allParamsStart; it++) {
-      if (it->type == StackType::LOCAL) {
-        VariableStorage const localStorage{compiler_.moduleInfo_.getStorage(*it)};
-        if (localStorage.type == StorageType::REGISTER) {
-          StackElement savedLocal{*it};
-          savedLocal.type = StackType::SAVED_LOCAL;
-          replaceAndUpdateReference(it, savedLocal);
-        }
-      }
-    }
+    Stack::iterator const condenseEdge{allParamsStart.prev()};
 
     compiler_.moduleInfo_.iterateParamsForSignature(
-        sigIndex,
-        FunctionRef<void(MachineType)>([this, &paramsBase, &skipCount, &regUsedAsTarget, &paramPosFunc, allParamsStart](MachineType const paramType) {
+        sigIndex, FunctionRef<void(MachineType)>([this, &paramsBase, &skipCount, &regUsedAsTarget, &paramPosFunc, allParamsStart,
+                                                  condenseEdge](MachineType const paramType) {
           skipCount--;
           // coverity[autosar_cpp14_a4_5_1_violation]
           ParamPos const targetPos{paramPosFunc(paramType)};
           Stack::iterator const condenseResult{
-              condenseParameter(targetPos, paramType, skipCount, paramsBase.isEmpty() ? allParamsStart : paramsBase, regUsedAsTarget)};
+              condenseParameter(targetPos, paramType, skipCount, paramsBase.isEmpty() ? allParamsStart : paramsBase, regUsedAsTarget, condenseEdge)};
           if (paramsBase.isEmpty()) {
             paramsBase = condenseResult;
           }
@@ -1477,18 +1499,10 @@ Stack::iterator Common::prepareCallParams(uint32_t const sigIndex, bool const is
       assert(skipCount == 0U);
       // GCOVR_EXCL_STOP
       constexpr ParamPos indirectCallRegPos{NBackend::WasmABI::REGS::indirectCallReg, 0U};
-      Stack::iterator const condenseResult{
-          condenseParameter(indirectCallRegPos, MachineType::I32, skipCount, paramsBase.isEmpty() ? allParamsStart : paramsBase, regUsedAsTarget)};
+      Stack::iterator const condenseResult{condenseParameter(indirectCallRegPos, MachineType::I32, skipCount,
+                                                             paramsBase.isEmpty() ? allParamsStart : paramsBase, regUsedAsTarget, condenseEdge)};
       if (paramsBase.isEmpty()) {
         paramsBase = condenseResult;
-      }
-    }
-
-    for (Stack::iterator it{compiler_.stack_.begin()}; it != paramsBase; it++) {
-      if (it->type == StackType::SAVED_LOCAL) {
-        StackElement restoredLocal{*it};
-        restoredLocal.type = StackType::LOCAL;
-        replaceAndUpdateReference(it, restoredLocal);
       }
     }
   }
@@ -1499,7 +1513,8 @@ Stack::iterator Common::prepareCallParams(uint32_t const sigIndex, bool const is
 }
 
 Stack::iterator Common::condenseParameter(ParamPos const targetPos, vb::MachineType const paramType, uint32_t const currentParamCount,
-                                          Stack::iterator const allParamsStart, RegUsedAsTarget const &regUsedAsTarget) {
+                                          Stack::iterator const allParamsStart, RegUsedAsTarget const &regUsedAsTarget,
+                                          Stack::iterator const condenseEdge) {
   StackElement targetHint{};
   Stack::iterator const baseIt{skipValentBlock(currentParamCount)};
   bool targetStackMemoryUsedByOtherParams{false}; // Only happened in return_call that callee reuse caller's param stack memory
@@ -1567,7 +1582,7 @@ Stack::iterator Common::condenseParameter(ParamPos const targetPos, vb::MachineT
   bool const useTargetHint{(targetHint.type != StackType::INVALID) &&
                            ((currentParamEnd->type == StackType::DEFERREDACTION) || sourceRegUsedByFutureTarget)};
 
-  Stack::iterator const condenseResult{condenseValentBlockBelow(baseIt, useTargetHint ? &targetHint : nullptr)};
+  Stack::iterator const condenseResult{condenseValentBlockBelow(baseIt, useTargetHint ? &targetHint : nullptr, condenseEdge)};
   // No need to set regUsedAsTarget back to false. Because target-hint is only used when it not conflict with the future sources.
   // Which means set-to-false here will not help with future delay condense.
   VariableStorage const condenseStorage{compiler_.moduleInfo_.getStorage(*condenseResult)};

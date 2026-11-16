@@ -528,6 +528,16 @@ public:
     return common_.checkIfEnforceTargetCanOverwrite(args, enforcedTarget);
   }
 
+  /// @brief See Common::checkIfEnforceTargetCanOverwrite.
+  /// @param args Operands of the current instruction
+  /// @param enforcedTarget Enforced target to check
+  /// @param condenseEdge Stable edge below call operands
+  /// @return Whether the enforced target can be overwritten
+  inline bool checkIfEnforceTargetCanOverwrite(Span<Stack::iterator> const &args, StackElement const *const enforcedTarget,
+                                               Stack::iterator const condenseEdge) const VB_NOEXCEPT {
+    return common_.checkIfEnforceTargetCanOverwrite(args, enforcedTarget, condenseEdge);
+  }
+
 #if BUILTIN_FUNCTIONS
   ///
   /// @brief Consumes the input valent blocks (or StackElements) from the compiler's stack and emits machine code that

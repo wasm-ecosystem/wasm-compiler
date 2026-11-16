@@ -50,6 +50,27 @@ public:
     }
   }
 
+  /// @brief Walk stack variables backwards and stop at the given edge.
+  /// @param start Topmost stack element
+  /// @param condenseEdge Stable edge below call operands, or an empty iterator to visit the whole stack
+  /// @param fn Callable invoked for each visited variable; return false to stop
+  inline void walk(Stack::iterator const start, Stack::iterator const condenseEdge,
+                   FunctionRef<bool(Stack::iterator const &)> const &fn) const VB_NOEXCEPT {
+    static_assert(std::is_base_of<ReferenceChainVisitor<Sub>, Sub>::value, "Sub must derive from ReferenceChainVisitor<Sub>");
+    Sub const &self{static_cast<Sub const &>(*this)};
+    Stack::iterator const edge{condenseEdge.isEmpty() ? start.next() : condenseEdge};
+    for (Stack::iterator cursor{start}; cursor != edge; cursor--) {
+      StackType const baseType{cursor->getBaseType()};
+      bool const isVariable{((baseType == StackType::LOCAL) || (baseType == StackType::GLOBAL)) ||
+                            ((baseType == StackType::SCRATCHREGISTER) || (baseType == StackType::TEMP_RESULT))};
+      if (isVariable && self.shouldVisit(cursor)) {
+        if (!fn(cursor)) {
+          break;
+        }
+      }
+    }
+  }
+
   /// @brief By default visit all occurrences.
   /// @param occurrence Current occurrence.
   // coverity[autosar_cpp14_a10_2_1_violation]

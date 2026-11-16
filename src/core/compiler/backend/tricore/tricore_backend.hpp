@@ -457,6 +457,14 @@ public:
   /// @return bool Whether this enforced target is only among the (up to 2) input operands
   bool checkIfEnforceTargetCanOverwrite(Span<Stack::iterator> const &args, StackElement const *const enforcedTarget) const VB_NOEXCEPT;
 
+  /// @brief See Common::checkIfEnforceTargetCanOverwrite.
+  /// @param args Operands of the current instruction
+  /// @param enforcedTarget Enforced target to check
+  /// @param condenseEdge Stable edge below call operands
+  /// @return Whether the enforced target can be overwritten
+  bool checkIfEnforceTargetCanOverwrite(Span<Stack::iterator> const &args, StackElement const *const enforcedTarget,
+                                        Stack::iterator const condenseEdge) const VB_NOEXCEPT;
+
   ///
   /// @brief Iterate over all GPR and FPR scratch register and globals
   /// NOTE: Lambda will be called irrespective of whether they are currently in use
