@@ -4247,11 +4247,17 @@ StackElement Backend::emitInstrsRot(StackElement *const arg0Ptr, StackElement *c
       }
     }
 
+    MachineType const resultType{is64 ? MachineType::I64 : MachineType::I32};
+    REG const targetHintReg{getUnderlyingRegIfSuitable(targetHint, resultType, RegMask::none())};
     RegAllocTracker regAllocTracker{};
-    REG const arg0Reg{common_.liftToRegInPlaceProt(*arg0Ptr, false, regAllocTracker).reg};
-    RegElement targetRegElem{RegElement{*arg0Ptr, arg0Reg}};
-    if (!isWritableScratchReg(arg0Ptr)) {
-      targetRegElem = common_.reqScratchRegProt(is64 ? MachineType::I64 : MachineType::I32, targetHint, regAllocTracker, false);
+    REG const arg0Reg{common_.liftToRegInPlaceProt(*arg0Ptr, false, targetHint, regAllocTracker).reg};
+    RegElement targetRegElem{};
+    if (targetHintReg != REG::NONE) {
+      targetRegElem = RegElement{common_.getResultStackElement(targetHint, resultType), targetHintReg};
+    } else if (isWritableScratchReg(arg0Ptr)) {
+      targetRegElem = RegElement{common_.getResultStackElement(arg0Ptr, resultType), arg0Reg};
+    } else {
+      targetRegElem = common_.reqScratchRegProt(resultType, regAllocTracker, false);
     }
 
     if (is64) {
