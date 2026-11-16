@@ -478,10 +478,9 @@ StackElement Assembler::selectInstr(Span<AbstrInstr const> const &instructions, 
     }
   }
 
-  // Whether arg0, arg1, dest is located in writable scratch register
-  std::array<bool const, 3> const startedAsWritableScratchReg{{backend_.isWritableScratchReg(&inputArgs[0]),
-                                                               backend_.isWritableScratchReg(&inputArgs[1]),
-                                                               backend_.isWritableScratchReg(verifiedTargetHint)}};
+  // Whether arg0 and arg1 are located in writable scratch registers
+  std::array<bool const, 2> const startedAsWritableScratchReg{
+      {backend_.isWritableScratchReg(&inputArgs[0]), backend_.isWritableScratchReg(&inputArgs[1])}};
   OperandMovement minCostMovement{invalidMovCost, 0U, false, false, false};
   uint32_t selectedInstrIdx{UINT32_MAX};
   VariableStorage const destStorage{(verifiedTargetHint != nullptr) ? moduleInfo_.getStorage(*verifiedTargetHint) : VariableStorage{}};
@@ -1089,7 +1088,7 @@ uint32_t Assembler::getOperandMovCost(ArgType const argType, VariableStorage con
 }
 
 Assembler::OperandMovement Assembler::getInstructionCost(AbstrInstr const &instruction, VariableStorage const &arg0, VariableStorage const &arg1,
-                                                         std::array<bool const, 3> const startedAsWritableScratchReg,
+                                                         std::array<bool const, 2> const startedAsWritableScratchReg,
                                                          VariableStorage const &verifiedTargetHint, bool const isD15Available) const VB_THROW {
   constexpr OperandMovement const invalid{invalidMovCost, 0U, false, false, false};
   if (instruction.useD15 && !isD15Available) {
@@ -1129,8 +1128,11 @@ Assembler::OperandMovement Assembler::getInstructionCost(AbstrInstr const &instr
   if (verifiedTargetHint.machineType != MachineType::INVALID) {
     // given targetHint, try to use dest as arg0:
     // 1. if already equals => true
-    // 2. arg0 is constant(need to lift to reg) and dest is a writableScratchReg. Then arg0 should lift to targetHint in future
-    canSrc0DstBeSame = (verifiedTargetHint.equals(arg0) || (result.movArg0 && startedAsWritableScratchReg[2]));
+    // 2. arg0 needs lifting and can use targetHint without overwriting arg1
+    bool const canLiftArg0ToTargetHint{
+        elementFitsArgType(instruction.src0Type, VariableStorage::reg(MachineType::I32, verifiedTargetHint.location.reg)) &&
+        !arg1.overlapsWith(verifiedTargetHint)};
+    canSrc0DstBeSame = (verifiedTargetHint.equals(arg0) || (result.movArg0 && canLiftArg0ToTargetHint));
   } else {
     // no targetHint, try to use arg0 as dest:
     // 1. arg0 is already writable => true, use arg0 reg as dest
@@ -1145,7 +1147,10 @@ Assembler::OperandMovement Assembler::getInstructionCost(AbstrInstr const &instr
 
     bool canSwappedSrc0DstBeSame{false};
     if (verifiedTargetHint.machineType != MachineType::INVALID) {
-      canSwappedSrc0DstBeSame = (verifiedTargetHint.equals(arg1) || (swappedResult.movArg1 && startedAsWritableScratchReg[2]));
+      bool const canLiftArg1ToTargetHint{
+          elementFitsArgType(instruction.src0Type, VariableStorage::reg(MachineType::I32, verifiedTargetHint.location.reg)) &&
+          !arg0.overlapsWith(verifiedTargetHint)};
+      canSwappedSrc0DstBeSame = (verifiedTargetHint.equals(arg1) || (swappedResult.movArg1 && canLiftArg1ToTargetHint));
     } else {
       canSwappedSrc0DstBeSame = (startedAsWritableScratchReg[1] || swappedResult.movArg1);
     }

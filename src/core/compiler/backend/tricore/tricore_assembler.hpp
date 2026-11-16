@@ -697,7 +697,7 @@ private:
   /// @param isD15Available Whether D15 is available
   /// @return OperandMovement Byte length of the instructions require to move the operand
   OperandMovement getInstructionCost(AbstrInstr const &instruction, VariableStorage const &arg0, VariableStorage const &arg1,
-                                     std::array<bool const, 3> const startedAsWritableScratchReg, VariableStorage const &verifiedTargetHint,
+                                     std::array<bool const, 2> const startedAsWritableScratchReg, VariableStorage const &verifiedTargetHint,
                                      bool const isD15Available) const VB_THROW;
 
   ///
