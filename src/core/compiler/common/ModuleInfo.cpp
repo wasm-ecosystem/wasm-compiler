@@ -210,8 +210,8 @@ RegMask ModuleInfo::maskForElement(StackElement const *const element) const VB_N
 VariableStorage ModuleInfo::getStorage(StackElement const &element) const VB_NOEXCEPT {
   StackType const baseType{element.getBaseType()};
   if (static_cast<uint32_t>(baseType) < static_cast<uint32_t>(StackType::DEFERREDACTION)) {
-    MachineType const machineType{getMachineType(&element)};
     if ((element.type == StackType::LOCAL)) {
+      assert(element.data.variableData.location.localIdx < fnc.numLocals && "Local out of range");
       ModuleInfo::LocalDef const &localDef{localDefs[element.data.variableData.location.localIdx]};
       if (localDef.currentStorageType == StorageType::STACKMEMORY) {
         return VariableStorage::stackMemory(localDef.type, localDef.stackFramePosition);
@@ -219,6 +219,7 @@ VariableStorage ModuleInfo::getStorage(StackElement const &element) const VB_NOE
         return VariableStorage::reg(localDef.type, localDef.reg);
       }
     } else if ((element.type == StackType::GLOBAL)) {
+      assert(element.data.variableData.location.globalIdx < getNumGlobals() && "Global out of range");
       ModuleInfo::GlobalDef const &globalDef{getGlobalDefUnchecked(element.data.variableData.location.globalIdx)};
       assert(globalDef.isMutable && "Immutable globals are not allowed on the stack as global reference, reduce them to constants");
       if (globalDef.reg == TReg::NONE) {
@@ -239,11 +240,11 @@ VariableStorage ModuleInfo::getStorage(StackElement const &element) const VB_NOE
         return VariableStorage::stackMemory(calculationResult.resultLocation.stackFramePosition, calculationResult.machineType);
       }
     } else if (baseType == StackType::SCRATCHREGISTER) {
-      return VariableStorage::reg(machineType, element.data.variableData.location.reg);
+      return VariableStorage::reg(getMachineType(&element), element.data.variableData.location.reg);
     } else if (baseType == StackType::CONSTANT) {
       VariableStorage res{};
       res.type = StorageType::CONSTANT;
-      res.machineType = machineType;
+      res.machineType = getMachineType(&element);
       res.location.constUnion = element.data.constUnion;
       return res;
     } else {
@@ -291,12 +292,8 @@ StackElement ModuleInfo::getStackElementByReg(TReg const reg, StackType const ty
 
   for (uint32_t i{0U}; i < fnc.numLocals; i++) {
     ModuleInfo::LocalDef const &localDef{localDefs[i]};
-    StackElement const localElement{StackElement::local(i)};
-    VariableStorage const storage{getStorage(localElement)};
-    if (storage.type == StorageType::REGISTER) {
-      if (localDef.reg == reg) {
-        return localElement;
-      }
+    if (localDef.reg == reg) {
+      return StackElement::local(i);
     }
   }
 
