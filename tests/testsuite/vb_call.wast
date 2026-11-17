@@ -548,3 +548,23 @@
     i32.add))
 
 (assert_return (invoke "test") (i32.const 42))
+
+(module
+  (func $consume (param i32 i64) (result i32)
+    local.get 0)
+  (func (export "repro") (param i32 i32) (result i32)
+    (local i32 i32 i32 i32 i32 i32 i32)
+    local.get 0
+    i64.const 0
+    call $consume
+    i32.eqz
+    local.get 1
+    i64.extend_i32_u
+    local.get 1
+    i64.extend_i32_u
+    i64.const 1
+    i64.mul
+    i64.mul
+    call $consume)
+)
+(assert_return (invoke "repro" (i32.const 37) (i32.const 16)) (i32.const 0))
