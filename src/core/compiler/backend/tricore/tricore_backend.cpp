@@ -1835,12 +1835,12 @@ void Backend::execBuiltinFncCall(BuiltinFunction const builtinFunction) {
 #endif
 
 void Backend::emitMemcpyWithConstSizeNoBoundsCheck(REG const dstReg, REG const srcReg, REG const sizeReg, uint32_t const sizeToCopy,
-                                                   REG const scratchReg, bool const canOverlap) const {
+                                                   REG const scratchReg) const {
   REG const extScratchReg{RegUtil::getOtherExtReg(scratchReg)};
 
   as_.INSTR(MOVD_Da_Ab).setDa(scratchReg).setAb(srcReg)();
   as_.INSTR(MOVD_Da_Ab).setDa(extScratchReg).setAb(dstReg)();
-  RelPatchObj const reverse{canOverlap ? as_.prepareJump(JumpCondition::u32LtReg(scratchReg, extScratchReg)) : RelPatchObj{}};
+  RelPatchObj const reverse{as_.prepareJump(JumpCondition::u32LtReg(scratchReg, extScratchReg))};
   // src >= dst
 
   if (sizeToCopy >= 8U) {
@@ -1882,60 +1882,57 @@ void Backend::emitMemcpyWithConstSizeNoBoundsCheck(REG const dstReg, REG const s
   as_.INSTR(STB_deref_Ab_Da_postinc).setAb(dstReg).setDa(scratchReg)();
   as_.INSTR(JNED_Da_const4sx_disp15sx2).setDa(sizeReg).setConst4sx(SafeInt<4U>::fromConst<1U>()).prepJmp().linkToBinaryPos(copy1Forward);
 
-  if (canOverlap) {
-    RelPatchObj const finishedForward{as_.INSTR(J_disp24sx2).prepJmp()};
-    // src < dst
-    reverse.linkToHere();
-    // src in scratchReg, dst in extScratchReg
-    as_.INSTR(ADD_Da_Db).setDa(scratchReg).setDb(sizeReg)();
-    as_.INSTR(MOVA_Aa_Db).setAa(srcReg).setDb(scratchReg)();
-    as_.INSTR(ADD_Da_Db).setDa(extScratchReg).setDb(sizeReg)();
-    as_.INSTR(MOVA_Aa_Db).setAa(dstReg).setDb(extScratchReg)();
+  RelPatchObj const finishedForward{as_.INSTR(J_disp24sx2).prepJmp()};
+  // src < dst
+  reverse.linkToHere();
+  // src in scratchReg, dst in extScratchReg
+  as_.INSTR(ADD_Da_Db).setDa(scratchReg).setDb(sizeReg)();
+  as_.INSTR(MOVA_Aa_Db).setAa(srcReg).setDb(scratchReg)();
+  as_.INSTR(ADD_Da_Db).setDa(extScratchReg).setDb(sizeReg)();
+  as_.INSTR(MOVA_Aa_Db).setAa(dstReg).setDb(extScratchReg)();
 
-    if (sizeToCopy >= 8U) {
-      // If one is aligned and the other is not (LSB is not the same for src and dst), we can only do a bytewise copy
-      as_.INSTR(XOR_Da_Db).setDa(scratchReg).setDb(extScratchReg)();
-      RelPatchObj const toBytewiseCopyInReverse{as_.INSTR(JNZT_Da_n_disp15sx2).setDa(scratchReg).setN(SafeUInt<5U>::fromConst<0U>()).prepJmp()};
-      // Alignment is the same for dst and src, copy a single byte so it's aligned if they are unaligned
-      RelPatchObj const bothAlignedInReverse{as_.INSTR(JZT_Da_n_disp15sx2).setDa(extScratchReg).setN(SafeUInt<5U>::fromConst<0U>()).prepJmp()};
-      as_.INSTR(LDBU_Da_deref_Ab_off10sx_preinc).setDa(scratchReg).setAb(srcReg).setOff10sx(SafeInt<10U>::fromConst<-1>())();
-      as_.INSTR(ADDI_Dc_Da_const16sx).setDc(sizeReg).setDa(sizeReg).setConst16sx(SafeInt<16U>::fromConst<-1>())();
-      as_.INSTR(STB_deref_Ab_off10sx_Da_preinc).setAb(dstReg).setOff10sx(SafeInt<10U>::fromConst<-1>()).setDa(scratchReg)();
-
-      RelPatchObj lessThan8Forward{};
-      if (sizeToCopy == 8U) {
-        // Check if we are now below 8 bytes after alignment(Only original size=8 can reach here)
-        lessThan8Forward = as_.INSTR(JLTU_Da_const4zx_disp15sx2).setDa(sizeReg).setConst4zx(SafeUInt<4U>::fromConst<8U>()).prepJmp();
-      }
-      bothAlignedInReverse.linkToHere();
-
-      // Copy 8 bytes
-      uint32_t const copy8InReverse{output_.size()};
-      as_.INSTR(LDD_Ea_deref_Ab_off10sx_preinc).setEa(scratchReg).setAb(srcReg).setOff10sx(SafeInt<10U>::fromConst<-8>())();
-      as_.INSTR(ADDI_Dc_Da_const16sx).setDc(sizeReg).setDa(sizeReg).setConst16sx(SafeInt<16U>::fromConst<-8>())();
-      as_.INSTR(STD_deref_Ab_off10sx_Ea_preinc).setAb(dstReg).setOff10sx(SafeInt<10U>::fromConst<-8>()).setEa(scratchReg)();
-      as_.INSTR(JGEU_Da_const4zx_disp15sx2).setDa(sizeReg).setConst4zx(SafeUInt<4U>::fromConst<8U>()).prepJmp().linkToBinaryPos(copy8InReverse);
-
-      if (lessThan8Forward.isInitialized()) {
-        assert(sizeToCopy == 8U);
-        lessThan8Forward.linkToHere();
-      }
-      toBytewiseCopyInReverse.linkToHere();
-    }
-
-    // Check if (remaining) size is at least 1
-    RelPatchObj const quickFinishedInReverse{
-        as_.INSTR(JLTU_Da_const4zx_disp15sx2).setDa(sizeReg).setConst4zx(SafeUInt<4U>::fromConst<1U>()).prepJmp()};
-
-    // Copy 1 byte
-    uint32_t const copy1InReverse{output_.size()};
+  if (sizeToCopy >= 8U) {
+    // If one is aligned and the other is not (LSB is not the same for src and dst), we can only do a bytewise copy
+    as_.INSTR(XOR_Da_Db).setDa(scratchReg).setDb(extScratchReg)();
+    RelPatchObj const toBytewiseCopyInReverse{as_.INSTR(JNZT_Da_n_disp15sx2).setDa(scratchReg).setN(SafeUInt<5U>::fromConst<0U>()).prepJmp()};
+    // Alignment is the same for dst and src, copy a single byte so it's aligned if they are unaligned
+    RelPatchObj const bothAlignedInReverse{as_.INSTR(JZT_Da_n_disp15sx2).setDa(extScratchReg).setN(SafeUInt<5U>::fromConst<0U>()).prepJmp()};
     as_.INSTR(LDBU_Da_deref_Ab_off10sx_preinc).setDa(scratchReg).setAb(srcReg).setOff10sx(SafeInt<10U>::fromConst<-1>())();
+    as_.INSTR(ADDI_Dc_Da_const16sx).setDc(sizeReg).setDa(sizeReg).setConst16sx(SafeInt<16U>::fromConst<-1>())();
     as_.INSTR(STB_deref_Ab_off10sx_Da_preinc).setAb(dstReg).setOff10sx(SafeInt<10U>::fromConst<-1>()).setDa(scratchReg)();
-    as_.INSTR(JNED_Da_const4sx_disp15sx2).setDa(sizeReg).setConst4sx(SafeInt<4U>::fromConst<1U>()).prepJmp().linkToBinaryPos(copy1InReverse);
 
-    quickFinishedInReverse.linkToHere();
-    finishedForward.linkToHere();
+    RelPatchObj lessThan8Forward{};
+    if (sizeToCopy == 8U) {
+      // Check if we are now below 8 bytes after alignment(Only original size=8 can reach here)
+      lessThan8Forward = as_.INSTR(JLTU_Da_const4zx_disp15sx2).setDa(sizeReg).setConst4zx(SafeUInt<4U>::fromConst<8U>()).prepJmp();
+    }
+    bothAlignedInReverse.linkToHere();
+
+    // Copy 8 bytes
+    uint32_t const copy8InReverse{output_.size()};
+    as_.INSTR(LDD_Ea_deref_Ab_off10sx_preinc).setEa(scratchReg).setAb(srcReg).setOff10sx(SafeInt<10U>::fromConst<-8>())();
+    as_.INSTR(ADDI_Dc_Da_const16sx).setDc(sizeReg).setDa(sizeReg).setConst16sx(SafeInt<16U>::fromConst<-8>())();
+    as_.INSTR(STD_deref_Ab_off10sx_Ea_preinc).setAb(dstReg).setOff10sx(SafeInt<10U>::fromConst<-8>()).setEa(scratchReg)();
+    as_.INSTR(JGEU_Da_const4zx_disp15sx2).setDa(sizeReg).setConst4zx(SafeUInt<4U>::fromConst<8U>()).prepJmp().linkToBinaryPos(copy8InReverse);
+
+    if (lessThan8Forward.isInitialized()) {
+      assert(sizeToCopy == 8U);
+      lessThan8Forward.linkToHere();
+    }
+    toBytewiseCopyInReverse.linkToHere();
   }
+
+  // Check if (remaining) size is at least 1
+  RelPatchObj const quickFinishedInReverse{as_.INSTR(JLTU_Da_const4zx_disp15sx2).setDa(sizeReg).setConst4zx(SafeUInt<4U>::fromConst<1U>()).prepJmp()};
+
+  // Copy 1 byte
+  uint32_t const copy1InReverse{output_.size()};
+  as_.INSTR(LDBU_Da_deref_Ab_off10sx_preinc).setDa(scratchReg).setAb(srcReg).setOff10sx(SafeInt<10U>::fromConst<-1>())();
+  as_.INSTR(STB_deref_Ab_off10sx_Da_preinc).setAb(dstReg).setOff10sx(SafeInt<10U>::fromConst<-1>()).setDa(scratchReg)();
+  as_.INSTR(JNED_Da_const4sx_disp15sx2).setDa(sizeReg).setConst4sx(SafeInt<4U>::fromConst<1U>()).prepJmp().linkToBinaryPos(copy1InReverse);
+
+  quickFinishedInReverse.linkToHere();
+  finishedForward.linkToHere();
 
   quickFinishedForward.linkToHere();
 }
@@ -2817,11 +2814,11 @@ void Backend::executeLinearMemoryCopy(Stack::iterator const dst, Stack::iterator
 
   as_.INSTR(ADDA_Aa_Ab).setAa(srcReg).setAb(WasmABI::REGS::linMem)();
   as_.INSTR(ADDA_Aa_Ab).setAa(dstReg).setAb(WasmABI::REGS::linMem)();
-  constexpr bool canOverlap{true};
+
   if (sizeIsConstant) {
-    emitMemcpyWithConstSizeNoBoundsCheck(dstReg, srcReg, sizeReg, sizeValue, scratchReg, canOverlap);
+    emitMemcpyWithConstSizeNoBoundsCheck(dstReg, srcReg, sizeReg, sizeValue, scratchReg);
   } else {
-    emitMemcpyNoBoundsCheck(dstReg, srcReg, sizeReg, scratchReg, canOverlap);
+    emitMemcpyNoBoundsCheck(dstReg, srcReg, sizeReg, scratchReg, true);
   }
 }
 

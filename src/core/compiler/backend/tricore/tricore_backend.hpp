@@ -741,11 +741,8 @@ private:
   /// @param sizeReg data register holding the number of bytes to copy (will be written to)
   /// @param sizeToCopy Number of bytes to copy
   /// @param scratchReg data scratch register (will be written to)
-  /// @param canOverlap Whether the implementation should have a check for potentially overlapping regions. Set to true
-  /// if there is a theoretical chance the regions can overlap. Undefined behavior otherwise. (Setting this to false
-  /// makes it equivalent to memcpy, otherwise this is equivalent to memmove)
-  void emitMemcpyWithConstSizeNoBoundsCheck(REG const dstReg, REG const srcReg, REG const sizeReg, uint32_t const sizeToCopy, REG const scratchReg,
-                                            bool const canOverlap) const;
+  void emitMemcpyWithConstSizeNoBoundsCheck(REG const dstReg, REG const srcReg, REG const sizeReg, uint32_t const sizeToCopy,
+                                            REG const scratchReg) const;
   ///
   /// @brief Emits a memcpy without a bounds check from an arbitrary absolute address to another absolute address
   ///

@@ -2165,12 +2165,10 @@ void Backend::execBuiltinFncCall(BuiltinFunction const builtinFunction) {
 #endif
 
 void Backend::emitMemcpyWithConstSizeNoBoundsCheck(REG const dstReg, REG const srcReg, REG const sizeReg, uint32_t const sizeToCopy,
-                                                   REG const gpScratchReg, bool const canOverlap) const {
+                                                   REG const gpScratchReg) const {
   RelPatchObj reverse{};
-  if (canOverlap) {
-    as_.INSTR(CMP_r64_rm64).setR(srcReg).setR4RM(dstReg)();
-    reverse = as_.prepareJMP(true, CC::A);
-  }
+  as_.INSTR(CMP_r64_rm64).setR(srcReg).setR4RM(dstReg)();
+  reverse = as_.prepareJMP(true, CC::A);
 
   // src <= dst
 
@@ -2231,69 +2229,67 @@ void Backend::emitMemcpyWithConstSizeNoBoundsCheck(REG const dstReg, REG const s
     as_.prepareJMP(true, CC::NE).linkToBinaryPos(copy1InReverse); // Jump back if not zero
   }
 
-  if (canOverlap) {
-    RelPatchObj const finishedForward{as_.prepareJMP(true)};
-    reverse.linkToHere();
-    // src > dst
+  RelPatchObj const finishedForward{as_.prepareJMP(true)};
+  reverse.linkToHere();
+  // src > dst
 
-    if (unrollingCopy8ByteLoop) {
-      int32_t const sizeReversed{-static_cast<int32_t>(sizeToCopy)};
-      int32_t offset{sizeReversed};
-      for (uint32_t i{0U}; i < copy8ByteCount; ++i) {
-        as_.INSTR(MOV_r64_rm64).setR(gpScratchReg).setM4RM(srcReg, offset, sizeReg)();
-        as_.INSTR(MOV_rm64_r64).setM4RM(dstReg, offset, sizeReg).setR(gpScratchReg)();
-        offset += 8;
-      }
+  if (unrollingCopy8ByteLoop) {
+    int32_t const sizeReversed{-static_cast<int32_t>(sizeToCopy)};
+    int32_t offset{sizeReversed};
+    for (uint32_t i{0U}; i < copy8ByteCount; ++i) {
+      as_.INSTR(MOV_r64_rm64).setR(gpScratchReg).setM4RM(srcReg, offset, sizeReg)();
+      as_.INSTR(MOV_rm64_r64).setM4RM(dstReg, offset, sizeReg).setR(gpScratchReg)();
+      offset += 8;
+    }
 
-      if (copy1ByteCount > 0U) {
-        as_.INSTR(ADD_r64_rm64).setR(srcReg).setR4RM(sizeReg)();
-        as_.INSTR(ADD_r64_rm64).setR(dstReg).setR4RM(sizeReg)();
-        int64_t const copy8ByteOffset{static_cast<int64_t>(copy8ByteCount) * 8LL};
-        int64_t const totalOffset{static_cast<int64_t>(sizeReversed) + copy8ByteOffset};
-        as_.INSTR(MOV_r64_imm64_t).setR(sizeReg).setImm64(bit_cast<uint64_t>(totalOffset))();
-        // Then, sizeReg is negative size if has remain bytes to copy
-      }
-    } else {
+    if (copy1ByteCount > 0U) {
       as_.INSTR(ADD_r64_rm64).setR(srcReg).setR4RM(sizeReg)();
       as_.INSTR(ADD_r64_rm64).setR(dstReg).setR4RM(sizeReg)();
-      as_.INSTR(NEG_rm64).setR4RM(sizeReg)();
-      // Then, sizeReg is negative size
-
-      // Check if (remaining) size is at least 8
-      uint32_t const check8Forward{output_.size()};
-      as_.INSTR(CMP_rm32_imm8sx).setR4RM(sizeReg).setImm8(static_cast<uint8_t>(-8))();
-      RelPatchObj const lessThan8Forward{as_.prepareJMP(true, CC::G)};
-      // Copy 8 bytes
-      // TODO(SIMD): Update to SIMD later? Same as for other architectures
-      as_.INSTR(MOV_r64_rm64).setR(gpScratchReg).setM4RM(srcReg, 0, sizeReg)();
-      as_.INSTR(MOV_rm64_r64).setM4RM(dstReg, 0, sizeReg).setR(gpScratchReg)();
-      as_.INSTR(ADD_rm64_imm8sx).setR4RM(sizeReg).setImm8(8U)();
-      as_.prepareJMP(true, CC::NONE).linkToBinaryPos(check8Forward);
-      lessThan8Forward.linkToHere();
+      int64_t const copy8ByteOffset{static_cast<int64_t>(copy8ByteCount) * 8LL};
+      int64_t const totalOffset{static_cast<int64_t>(sizeReversed) + copy8ByteOffset};
+      as_.INSTR(MOV_r64_imm64_t).setR(sizeReg).setImm64(bit_cast<uint64_t>(totalOffset))();
+      // Then, sizeReg is negative size if has remain bytes to copy
     }
+  } else {
+    as_.INSTR(ADD_r64_rm64).setR(srcReg).setR4RM(sizeReg)();
+    as_.INSTR(ADD_r64_rm64).setR(dstReg).setR4RM(sizeReg)();
+    as_.INSTR(NEG_rm64).setR4RM(sizeReg)();
+    // Then, sizeReg is negative size
 
-    // sizeReg is negative number
-    if (unrollingCopy1ByteLoop) {
-      int32_t offset{0};
-      for (uint32_t i{0U}; i < copy1ByteCount; ++i) {
-        as_.INSTR(MOV_r8_rm8_t).setR(gpScratchReg).setM4RM(srcReg, offset, sizeReg)();
-        as_.INSTR(MOV_rm8_r8_t).setM4RM(dstReg, offset, sizeReg).setR(gpScratchReg)();
-        offset += 1;
-      }
-    } else {
-      // Check if (remaining) size is at least 1
-      as_.INSTR(CMP_rm64_imm8sx).setR4RM(sizeReg).setImm8(static_cast<uint8_t>(-1))();
-      RelPatchObj const quickFinishedForward{as_.prepareJMP(true, CC::G)};
-      // Copy 1 byte
-      uint32_t const copy1Forward{output_.size()};
-      as_.INSTR(MOV_r8_rm8_t).setR(gpScratchReg).setM4RM(srcReg, 0, sizeReg)();
-      as_.INSTR(MOV_rm8_r8_t).setM4RM(dstReg, 0, sizeReg).setR(gpScratchReg)();
-      as_.INSTR(ADD_rm64_imm8sx).setR4RM(sizeReg).setImm8(1U)();
-      as_.prepareJMP(true, CC::NE).linkToBinaryPos(copy1Forward); // Jump back if not zero
-      quickFinishedForward.linkToHere();
-    }
-    finishedForward.linkToHere();
+    // Check if (remaining) size is at least 8
+    uint32_t const check8Forward{output_.size()};
+    as_.INSTR(CMP_rm32_imm8sx).setR4RM(sizeReg).setImm8(static_cast<uint8_t>(-8))();
+    RelPatchObj const lessThan8Forward{as_.prepareJMP(true, CC::G)};
+    // Copy 8 bytes
+    // TODO(SIMD): Update to SIMD later? Same as for other architectures
+    as_.INSTR(MOV_r64_rm64).setR(gpScratchReg).setM4RM(srcReg, 0, sizeReg)();
+    as_.INSTR(MOV_rm64_r64).setM4RM(dstReg, 0, sizeReg).setR(gpScratchReg)();
+    as_.INSTR(ADD_rm64_imm8sx).setR4RM(sizeReg).setImm8(8U)();
+    as_.prepareJMP(true, CC::NONE).linkToBinaryPos(check8Forward);
+    lessThan8Forward.linkToHere();
   }
+
+  // sizeReg is negative number
+  if (unrollingCopy1ByteLoop) {
+    int32_t offset{0};
+    for (uint32_t i{0U}; i < copy1ByteCount; ++i) {
+      as_.INSTR(MOV_r8_rm8_t).setR(gpScratchReg).setM4RM(srcReg, offset, sizeReg)();
+      as_.INSTR(MOV_rm8_r8_t).setM4RM(dstReg, offset, sizeReg).setR(gpScratchReg)();
+      offset += 1;
+    }
+  } else {
+    // Check if (remaining) size is at least 1
+    as_.INSTR(CMP_rm64_imm8sx).setR4RM(sizeReg).setImm8(static_cast<uint8_t>(-1))();
+    RelPatchObj const quickFinishedForward{as_.prepareJMP(true, CC::G)};
+    // Copy 1 byte
+    uint32_t const copy1Forward{output_.size()};
+    as_.INSTR(MOV_r8_rm8_t).setR(gpScratchReg).setM4RM(srcReg, 0, sizeReg)();
+    as_.INSTR(MOV_rm8_r8_t).setM4RM(dstReg, 0, sizeReg).setR(gpScratchReg)();
+    as_.INSTR(ADD_rm64_imm8sx).setR4RM(sizeReg).setImm8(1U)();
+    as_.prepareJMP(true, CC::NE).linkToBinaryPos(copy1Forward); // Jump back if not zero
+    quickFinishedForward.linkToHere();
+  }
+  finishedForward.linkToHere();
 
   quickFinishedInReverse.linkToHere();
 }
@@ -3034,11 +3030,10 @@ void Backend::executeLinearMemoryCopy(Stack::iterator const dst, Stack::iterator
   as_.INSTR(CMP_rm8_imm8).setM4RM(gpScratchReg, -1, sizeReg, 0U).setImm8(0U)();
 #endif
 
-  constexpr bool canOverlap{true};
   if (sizeIsConstant) {
-    emitMemcpyWithConstSizeNoBoundsCheck(dstReg, srcReg, sizeReg, sizeValue, gpScratchReg, canOverlap);
+    emitMemcpyWithConstSizeNoBoundsCheck(dstReg, srcReg, sizeReg, sizeValue, gpScratchReg);
   } else {
-    emitMemcpyNoBoundsCheck(dstReg, srcReg, sizeReg, gpScratchReg, canOverlap);
+    emitMemcpyNoBoundsCheck(dstReg, srcReg, sizeReg, gpScratchReg, true);
   }
 
   common_.removeReference(size);

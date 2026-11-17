@@ -762,11 +762,8 @@ private:
   /// @param gpScratchReg GPR scratch register (will be written to)
   /// @param floatScratchReg First FPR scratch register (will be written to)
   /// @param floatScratchReg2 Second FPR scratch register (will be written to)
-  /// @param canOverlap Whether the implementation should have a check for potentially overlapping regions. Set to true
-  /// if there is a theoretical chance the regions can overlap. Undefined behavior otherwise. (Setting this to false
-  /// makes it equivalent to memcpy, otherwise this is equivalent to memmove)
   void emitMemcpyWithConstSizeNoBoundsCheck(REG const dstReg, REG const srcReg, REG const sizeReg, uint32_t const sizeToCopy, REG const gpScratchReg,
-                                            REG const floatScratchReg, REG const floatScratchReg2, bool const canOverlap) const;
+                                            REG const floatScratchReg, REG const floatScratchReg2) const;
   ///
   /// @brief Emits a memcpy without a bounds check from an arbitrary absolute address to another absolute address
   ///

@@ -2520,13 +2520,10 @@ void Backend::execBuiltinFncCall(BuiltinFunction const builtinFunction) {
 #endif
 
 void Backend::emitMemcpyWithConstSizeNoBoundsCheck(REG const dstReg, REG const srcReg, REG const sizeReg, uint32_t const sizeToCopy,
-                                                   REG const gpScratchReg, REG const floatScratchReg, REG const floatScratchReg2,
-                                                   bool const canOverlap) const {
+                                                   REG const gpScratchReg, REG const floatScratchReg, REG const floatScratchReg2) const {
   RelPatchObj reverse{};
-  if (canOverlap) {
-    as_.INSTR(CMP_xN_xM).setN(srcReg).setM(dstReg)();
-    reverse = as_.prepareJMP(CC::LO);
-  }
+  as_.INSTR(CMP_xN_xM).setN(srcReg).setM(dstReg)();
+  reverse = as_.prepareJMP(CC::LO);
   // when src >= dst, we copy from begin to end
 
   uint32_t const copy16Count{sizeToCopy / 16U};
@@ -2613,88 +2610,86 @@ void Backend::emitMemcpyWithConstSizeNoBoundsCheck(REG const dstReg, REG const s
     as_.prepareJMPIfRegIsNotZero(sizeReg, false).linkToBinaryPos(copy1Forward);
   }
 
-  if (canOverlap) {
-    RelPatchObj const finished2Forward{as_.prepareJMP()};
-    reverse.linkToHere();
-    // when src < dst, we copy from end to begin
-    as_.INSTR(ADD_xD_xN_xMolsImm6).setD(srcReg).setN(srcReg).setM(sizeReg)();
-    as_.INSTR(ADD_xD_xN_xMolsImm6).setD(dstReg).setN(dstReg).setM(sizeReg)();
+  RelPatchObj const finished2Forward{as_.prepareJMP()};
+  reverse.linkToHere();
+  // when src < dst, we copy from end to begin
+  as_.INSTR(ADD_xD_xN_xMolsImm6).setD(srcReg).setN(srcReg).setM(sizeReg)();
+  as_.INSTR(ADD_xD_xN_xMolsImm6).setD(dstReg).setN(dstReg).setM(sizeReg)();
 
-    if (copy16Count <= unrollingThreshold) {
-      for (uint32_t i{0U}; i < copy16Count; ++i) {
-        as_.INSTR(LDP_dT1_dT2_deref_xN_scSImm7_preidx_t)
-            .setT1(floatScratchReg)
-            .setT2(floatScratchReg2)
-            .setN(srcReg)
-            .setSImm7ls3(SafeInt<10U>::fromConst<-16>())();
-        as_.INSTR(STP_dT1_dT2_deref_xN_scSImm7_preidx_t)
-            .setT1(floatScratchReg)
-            .setT2(floatScratchReg2)
-            .setN(dstReg)
-            .setSImm7ls3(SafeInt<10U>::fromConst<-16>())();
-      }
-      if (!unrollingCopy1Byte) {
-        // prepare size reg
-        uint32_t const maxRange{sizeToCopy - copy1ByteCount};
-        if (maxRange != 0U) {
-          assert(SignedInRangeCheck<12U>::check(bit_cast<int32_t>(maxRange)).inRange());
-          as_.INSTR(SUBS_wD_wN_imm12zxols12).setD(sizeReg).setN(sizeReg).setImm12zx(SafeUInt<12U>::fromUnsafe(maxRange))();
-        }
-      }
-    } else {
-      // Check if (remaining) size is at least 16
-      as_.INSTR(SUBS_wD_wN_imm12zxols12)
-          .setD(sizeReg)
-          .setN(sizeReg)
-          .setImm12zx(SafeUInt<12U>::fromConst<16U>())(); // Temporarily subtract so we can efficiently compare to 0
-                                                          // (optimization)
-      RelPatchObj const lessThan16InReverse{as_.prepareJMP(CC::MI)};
-      // Copy 16 bytes
-      uint32_t const copy16InReverse{output_.size()};
+  if (copy16Count <= unrollingThreshold) {
+    for (uint32_t i{0U}; i < copy16Count; ++i) {
       as_.INSTR(LDP_dT1_dT2_deref_xN_scSImm7_preidx_t)
           .setT1(floatScratchReg)
           .setT2(floatScratchReg2)
           .setN(srcReg)
           .setSImm7ls3(SafeInt<10U>::fromConst<-16>())();
-      as_.INSTR(SUBS_wD_wN_imm12zxols12).setD(sizeReg).setN(sizeReg).setImm12zx(SafeUInt<12U>::fromConst<16U>())();
       as_.INSTR(STP_dT1_dT2_deref_xN_scSImm7_preidx_t)
           .setT1(floatScratchReg)
           .setT2(floatScratchReg2)
           .setN(dstReg)
           .setSImm7ls3(SafeInt<10U>::fromConst<-16>())();
-      as_.prepareJMP(CC::PL).linkToBinaryPos(copy16InReverse); // Jump back if positive or zero, 16 are remaining anyway (optimization)
-      lessThan16InReverse.linkToHere();
-      if (!unrollingCopy1Byte) {
-        // Add again (optimization)
-        // prepare size reg
-        uint32_t const added{16U - (copy8Count * 8U)};
-        as_.INSTR(ADD_wD_wN_imm12zxols12).setD(sizeReg).setN(sizeReg).setImm12zx(SafeUInt<12U>::fromUnsafe(added))();
+    }
+    if (!unrollingCopy1Byte) {
+      // prepare size reg
+      uint32_t const maxRange{sizeToCopy - copy1ByteCount};
+      if (maxRange != 0U) {
+        assert(SignedInRangeCheck<12U>::check(bit_cast<int32_t>(maxRange)).inRange());
+        as_.INSTR(SUBS_wD_wN_imm12zxols12).setD(sizeReg).setN(sizeReg).setImm12zx(SafeUInt<12U>::fromUnsafe(maxRange))();
       }
     }
-
-    if (copy8Count == 1U) {
-      as_.INSTR(LDR_xT_deref_xN_unscSImm9_preidx).setT(gpScratchReg).setN(srcReg).setUnscSImm9(SafeInt<9U>::fromConst<-8>())();
-      as_.INSTR(STR_xT_deref_xN_unscSImm9_preidx).setT(gpScratchReg).setN(dstReg).setUnscSImm9(SafeInt<9U>::fromConst<-8>())();
+  } else {
+    // Check if (remaining) size is at least 16
+    as_.INSTR(SUBS_wD_wN_imm12zxols12)
+        .setD(sizeReg)
+        .setN(sizeReg)
+        .setImm12zx(SafeUInt<12U>::fromConst<16U>())(); // Temporarily subtract so we can efficiently compare to 0
+                                                        // (optimization)
+    RelPatchObj const lessThan16InReverse{as_.prepareJMP(CC::MI)};
+    // Copy 16 bytes
+    uint32_t const copy16InReverse{output_.size()};
+    as_.INSTR(LDP_dT1_dT2_deref_xN_scSImm7_preidx_t)
+        .setT1(floatScratchReg)
+        .setT2(floatScratchReg2)
+        .setN(srcReg)
+        .setSImm7ls3(SafeInt<10U>::fromConst<-16>())();
+    as_.INSTR(SUBS_wD_wN_imm12zxols12).setD(sizeReg).setN(sizeReg).setImm12zx(SafeUInt<12U>::fromConst<16U>())();
+    as_.INSTR(STP_dT1_dT2_deref_xN_scSImm7_preidx_t)
+        .setT1(floatScratchReg)
+        .setT2(floatScratchReg2)
+        .setN(dstReg)
+        .setSImm7ls3(SafeInt<10U>::fromConst<-16>())();
+    as_.prepareJMP(CC::PL).linkToBinaryPos(copy16InReverse); // Jump back if positive or zero, 16 are remaining anyway (optimization)
+    lessThan16InReverse.linkToHere();
+    if (!unrollingCopy1Byte) {
+      // Add again (optimization)
+      // prepare size reg
+      uint32_t const added{16U - (copy8Count * 8U)};
+      as_.INSTR(ADD_wD_wN_imm12zxols12).setD(sizeReg).setN(sizeReg).setImm12zx(SafeUInt<12U>::fromUnsafe(added))();
     }
-
-    if (unrollingCopy1Byte) {
-      for (uint32_t i{0U}; i < copy1ByteCount; ++i) {
-        as_.INSTR(LDRB_wT_deref_xN_unscSImm9_preidx).setT(gpScratchReg).setN(srcReg).setUnscSImm9(SafeInt<9U>::fromConst<-1>())();
-        as_.INSTR(STRB_wT_deref_xN_unscSImm9_preidx).setT(gpScratchReg).setN(dstReg).setUnscSImm9(SafeInt<9U>::fromConst<-1>())();
-      }
-    } else {
-      // Check if (remaining) size is at least 1
-      RelPatchObj const finishedInReverse{as_.prepareJMPIfRegIsZero(sizeReg, false)};
-      // Copy 1 byte
-      uint32_t const copy1InReverse{output_.size()};
-      as_.INSTR(LDRB_wT_deref_xN_unscSImm9_preidx).setT(gpScratchReg).setN(srcReg).setUnscSImm9(SafeInt<9U>::fromConst<-1>())();
-      as_.INSTR(SUB_wD_wN_imm12zxols12).setD(sizeReg).setN(sizeReg).setImm12zx(SafeUInt<12U>::fromConst<1U>())(); // optimize instruction scheduling
-      as_.INSTR(STRB_wT_deref_xN_unscSImm9_preidx).setT(gpScratchReg).setN(dstReg).setUnscSImm9(SafeInt<9U>::fromConst<-1>())();
-      as_.prepareJMPIfRegIsNotZero(sizeReg, false).linkToBinaryPos(copy1InReverse);
-      finishedInReverse.linkToHere();
-    }
-    finished2Forward.linkToHere();
   }
+
+  if (copy8Count == 1U) {
+    as_.INSTR(LDR_xT_deref_xN_unscSImm9_preidx).setT(gpScratchReg).setN(srcReg).setUnscSImm9(SafeInt<9U>::fromConst<-8>())();
+    as_.INSTR(STR_xT_deref_xN_unscSImm9_preidx).setT(gpScratchReg).setN(dstReg).setUnscSImm9(SafeInt<9U>::fromConst<-8>())();
+  }
+
+  if (unrollingCopy1Byte) {
+    for (uint32_t i{0U}; i < copy1ByteCount; ++i) {
+      as_.INSTR(LDRB_wT_deref_xN_unscSImm9_preidx).setT(gpScratchReg).setN(srcReg).setUnscSImm9(SafeInt<9U>::fromConst<-1>())();
+      as_.INSTR(STRB_wT_deref_xN_unscSImm9_preidx).setT(gpScratchReg).setN(dstReg).setUnscSImm9(SafeInt<9U>::fromConst<-1>())();
+    }
+  } else {
+    // Check if (remaining) size is at least 1
+    RelPatchObj const finishedInReverse{as_.prepareJMPIfRegIsZero(sizeReg, false)};
+    // Copy 1 byte
+    uint32_t const copy1InReverse{output_.size()};
+    as_.INSTR(LDRB_wT_deref_xN_unscSImm9_preidx).setT(gpScratchReg).setN(srcReg).setUnscSImm9(SafeInt<9U>::fromConst<-1>())();
+    as_.INSTR(SUB_wD_wN_imm12zxols12).setD(sizeReg).setN(sizeReg).setImm12zx(SafeUInt<12U>::fromConst<1U>())(); // optimize instruction scheduling
+    as_.INSTR(STRB_wT_deref_xN_unscSImm9_preidx).setT(gpScratchReg).setN(dstReg).setUnscSImm9(SafeInt<9U>::fromConst<-1>())();
+    as_.prepareJMPIfRegIsNotZero(sizeReg, false).linkToBinaryPos(copy1InReverse);
+    finishedInReverse.linkToHere();
+  }
+  finished2Forward.linkToHere();
 
   finishedForward.linkToHere();
 }
@@ -3510,11 +3505,11 @@ void Backend::executeLinearMemoryCopy(Stack::iterator const dst, Stack::iterator
 
   as_.INSTR(LDRB_wT_deref_xN_unscSImm9_preidx).setT(REG::ZR).setN(gpScratchReg).setUnscSImm9(SafeInt<9U>::fromConst<-1>())();
 #endif
-  constexpr bool canOverlap{true};
+
   if (sizeIsConstant) {
-    emitMemcpyWithConstSizeNoBoundsCheck(dstReg, srcReg, sizeReg, sizeValue, gpScratchReg, floatScratchReg, floatScratchReg2, canOverlap);
+    emitMemcpyWithConstSizeNoBoundsCheck(dstReg, srcReg, sizeReg, sizeValue, gpScratchReg, floatScratchReg, floatScratchReg2);
   } else {
-    emitMemcpyNoBoundsCheck(dstReg, srcReg, sizeReg, gpScratchReg, floatScratchReg, floatScratchReg2, canOverlap);
+    emitMemcpyNoBoundsCheck(dstReg, srcReg, sizeReg, gpScratchReg, floatScratchReg, floatScratchReg2, true);
   }
   common_.removeReference(size);
   common_.removeReference(src);
