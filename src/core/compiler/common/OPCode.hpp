@@ -119,42 +119,42 @@ enum class OPCode : uint16_t {
 
   // COMPARISON OPERATORS + INVERTED CMP OPCODE
   I32_EQZ = 0x45,  // UNREACHABLE
-  I32_EQ = 0x46,   // I32_NE
-  I32_NE = 0x47,   // I32_EQ
-  I32_LT_S = 0x48, // I32_GE_S
-  I32_LT_U = 0x49, // I32_GE_U
-  I32_GT_S = 0x4A, // I32_LE_S
-  I32_GT_U = 0x4B, // I32_LE_U
-  I32_LE_S = 0x4C, // I32_GT_S
-  I32_LE_U = 0x4D, // I32_GT_U
-  I32_GE_S = 0x4E, // I32_LT_S
-  I32_GE_U = 0x4F, // I32_LT_U
+  I32_EQ = 0x46,   // I32_EQ
+  I32_NE = 0x47,   // I32_NE
+  I32_LT_S = 0x48, // I32_LT_S
+  I32_LT_U = 0x49, // I32_LT_U
+  I32_GT_S = 0x4A, // I32_GT_S
+  I32_GT_U = 0x4B, // I32_GT_U
+  I32_LE_S = 0x4C, // I32_LE_S
+  I32_LE_U = 0x4D, // I32_LE_U
+  I32_GE_S = 0x4E, // I32_GE_S
+  I32_GE_U = 0x4F, // I32_GE_U
 
   I64_EQZ = 0x50,  // UNREACHABLE
-  I64_EQ = 0x51,   // I64_NE
-  I64_NE = 0x52,   // I64_EQ
-  I64_LT_S = 0x53, // I64_GE_S
-  I64_LT_U = 0x54, // I64_GE_U
-  I64_GT_S = 0x55, // I64_LE_S
-  I64_GT_U = 0x56, // I64_LE_U
-  I64_LE_S = 0x57, // I64_GT_S
-  I64_LE_U = 0x58, // I64_GT_U
-  I64_GE_S = 0x59, // I64_LT_S
-  I64_GE_U = 0x5A, // I64_LT_U
+  I64_EQ = 0x51,   // I64_EQ
+  I64_NE = 0x52,   // I64_NE
+  I64_LT_S = 0x53, // I64_LT_S
+  I64_LT_U = 0x54, // I64_LT_U
+  I64_GT_S = 0x55, // I64_GT_S
+  I64_GT_U = 0x56, // I64_GT_U
+  I64_LE_S = 0x57, // I64_LE_S
+  I64_LE_U = 0x58, // I64_LE_U
+  I64_GE_S = 0x59, // I64_GE_S
+  I64_GE_U = 0x5A, // I64_GE_U
 
-  F32_EQ = 0x5B, // F32_NE
-  F32_NE = 0x5C, // F32_EQ
-  F32_LT = 0x5D, // F32_GE
-  F32_GT = 0x5E, // F32_LE
-  F32_LE = 0x5F, // F32_GT
-  F32_GE = 0x60, // F32_LT
+  F32_EQ = 0x5B, // F32_EQ
+  F32_NE = 0x5C, // F32_NE
+  F32_LT = 0x5D, // F32_LT
+  F32_GT = 0x5E, // F32_GT
+  F32_LE = 0x5F, // F32_LE
+  F32_GE = 0x60, // F32_GE
 
-  F64_EQ = 0x61, // F64_NE
-  F64_NE = 0x62, // F64_EQ
-  F64_LT = 0x63, // F64_GE
-  F64_GT = 0x64, // F64_LE
-  F64_LE = 0x65, // F64_GT
-  F64_GE = 0x66, // F64_LT
+  F64_EQ = 0x61, // F64_EQ
+  F64_NE = 0x62, // F64_NE
+  F64_LT = 0x63, // F64_LT
+  F64_GT = 0x64, // F64_GT
+  F64_LE = 0x65, // F64_LE
+  F64_GE = 0x66, // F64_GE
 
   // NUMERIC OPERATORS
   I32_CLZ = 0x67,
