@@ -2299,8 +2299,6 @@ void Backend::execBuiltinFncCall(BuiltinFunction const builtinFunction) {
 
     // Make scratch registers available
     REG const scratchReg{common_.reqScratchRegProt(MachineType::I32, regAllocTracker, false).reg};
-    REG const floatScratchReg{common_.reqScratchRegProt(MachineType::F64, regAllocTracker, false).reg};
-    REG const floatScratchReg2{common_.reqScratchRegProt(MachineType::F64, regAllocTracker, false).reg};
 
     // Add size to destination and check for an overflow
     as_.INSTR(ADDS_wD_wN_wM).setD(dstReg).setN(dstReg).setM(sizeReg)();
@@ -2371,7 +2369,7 @@ void Backend::execBuiltinFncCall(BuiltinFunction const builtinFunction) {
         .setUnscSImm9(SafeInt<9>::fromConst<-BD::FromEnd::linkedMemPtr>())();
     as_.INSTR(ADD_xD_xN_xMolsImm6).setD(srcReg).setN(scratchReg).setM(srcReg)();
     constexpr bool canOverlap{false};
-    emitMemcpyNoBoundsCheck(dstReg, srcReg, sizeReg, scratchReg, floatScratchReg, floatScratchReg2, canOverlap);
+    emitMemcpyWithSizeReg(dstReg, srcReg, sizeReg, scratchReg, regAllocTracker, canOverlap);
 
     common_.removeReference(sizeElem);
     common_.removeReference(srcElem);
@@ -2519,13 +2517,47 @@ void Backend::execBuiltinFncCall(BuiltinFunction const builtinFunction) {
 }
 #endif
 
-void Backend::emitMemcpyWithConstSizeNoBoundsCheck(REG const dstReg, REG const srcReg, REG const sizeReg, uint32_t const sizeToCopy,
-                                                   REG const gpScratchReg, REG const floatScratchReg, REG const floatScratchReg2) const {
+REG Backend::getFreeMemcpySimdTail(MemcpySimdRegCount const registerCount, RegMask const protRegs) const VB_NOEXCEPT {
+  uint32_t const firstReg{static_cast<uint32_t>(REG::F31) - static_cast<uint32_t>(registerCount)};
+  // Probe the fixed physical tail F(31-registerCount)..F30
+  // F31 is reserved for the move helper. Every candidate must be scratch-allocable, have no live stack reference,
+  // and be outside protRegs. If any candidate fails, return NONE so the caller uses the fallback copy path.
+  // A single candidate group keeps allocation logic simple and avoids pressure-dependent copy strategies.
+  if (WasmABI::getRegPos(static_cast<REG>(firstReg)) < moduleInfo_.getNumStaticallyAllocatedFPRs()) {
+    return REG::NONE;
+  }
+  for (uint32_t regIndex{firstReg}; regIndex < static_cast<uint32_t>(REG::F31); ++regIndex) {
+    REG const reg{static_cast<REG>(regIndex)};
+    if (!moduleInfo_.getReferenceToLastOccurrenceOnStack(reg).isEmpty() || protRegs.contains(reg)) {
+      return REG::NONE;
+    }
+  }
+  return static_cast<REG>(firstReg);
+}
+
+void Backend::memcpyWithConstSizeFallback(REG const dstReg, REG const srcReg, uint32_t const sizeToCopy, REG const gpScratchReg,
+                                          RegAllocTracker &regAllocTracker) const {
+  // Constant-Size Fallback
+  // Size above 128 or unavailable SIMD group. Initialize a size GPR; use two D-register scratches.
+  assert(sizeToCopy >= 16U);
+  REG const sizeReg{common_.reqScratchRegProt(MachineType::I64, regAllocTracker, false).reg};
+  as_.MOVimm32(sizeReg, sizeToCopy);
+  REG const floatScratchReg{common_.reqScratchRegProt(MachineType::F64, regAllocTracker, false).reg};
+  REG const floatScratchReg2{common_.reqScratchRegProt(MachineType::F64, regAllocTracker, false).reg};
+
+  // Runtime direction, shared with the non-constant path:
+  // if source >= destination: copy forward with post-increment
+  // else: advance both addresses by size; copy backward with pre-decrement
   RelPatchObj reverse{};
   as_.INSTR(CMP_xN_xM).setN(srcReg).setM(dstReg)();
   reverse = as_.prepareJMP(CC::LO);
   // when src >= dst, we copy from begin to end
 
+  // Part                   | Emit
+  // size / 16 chunks       | Count <= 2: unroll; otherwise runtime loop. Each chunk uses LDP/STP D (16 bytes).
+  // (size % 16) >= 8       | One 8-byte GPR load/store.
+  // size % 8 bytes         | Count <= 2: unroll; otherwise prepare remaining count and emit a byte loop.
+  // Example: 35 bytes use two unrolled 16-byte copies and a three-byte loop; 34 bytes unroll everything.
   uint32_t const copy16Count{sizeToCopy / 16U};
   uint32_t const copy8Count{(sizeToCopy % 16U) / 8U};
   uint32_t const copy1ByteCount{sizeToCopy % 8U};
@@ -2693,8 +2725,171 @@ void Backend::emitMemcpyWithConstSizeNoBoundsCheck(REG const dstReg, REG const s
 
   finishedForward.linkToHere();
 }
-void Backend::emitMemcpyNoBoundsCheck(REG const dstReg, REG const srcReg, REG const sizeReg, REG const gpScratchReg, REG const floatScratchReg,
-                                      REG const floatScratchReg2, bool const canOverlap) const {
+
+void Backend::memcpyWithConstSizeSimdQuickPath(REG const dstReg, REG const srcReg, uint32_t const sizeToCopy, REG const floatScratchRegHead) const {
+  // SIMD Quick Path: all loads precede all stores.
+  // Size         | Copy body
+  // 128 bytes    | Two four-register LD1 loads, then two ST1 stores; first group uses 64-byte post-indexing.
+  // 64 bytes     | One four-register LD1, then one ST1.
+  // 65-127 bytes | 64-byte grouped prefix, then 32-byte LDP/STP Q blocks and single-Q tail.
+  // 16-63 bytes  | 32-byte LDP/STP Q blocks and single-Q tail.
+  // The caller verified the fixed physical tail is free; F31 remains the move helper.
+  assert((sizeToCopy >= 16U) && (sizeToCopy <= 128U));
+  assert(floatScratchRegHead != REG::NONE);
+  uint32_t const firstReg{static_cast<uint32_t>(floatScratchRegHead)};
+  if (sizeToCopy == 128U) {
+    // coverity[autosar_cpp14_a7_2_1_violation]
+    REG const secondGroup{static_cast<REG>(firstReg + 4U)};
+    as_.INSTR(LD1_vT_4x16b_deref_xN_postidx64_t).setT(floatScratchRegHead).setN(srcReg)();
+    as_.INSTR(LD1_vT_4x16b_deref_xN_t).setT(secondGroup).setN(srcReg)();
+    as_.INSTR(ST1_vT_4x16b_deref_xN_postidx64_t).setT(floatScratchRegHead).setN(dstReg)();
+    as_.INSTR(ST1_vT_4x16b_deref_xN_t).setT(secondGroup).setN(dstReg)();
+    return;
+  }
+
+  bool const has64ByteGroup{sizeToCopy >= 64U};
+  constexpr uint32_t bytesPerFReg{16U};
+  constexpr uint32_t bytesPerPair{16U * 2U};
+  // LD1/ST1 cover [0, groupedByteCount).
+  // Pairs cover [groupedByteCount, firstSingleByteOffset).
+  // Single-register accesses cover the remaining bytes.
+  uint32_t const groupedByteCount{has64ByteGroup ? 64_U32 : 0_U32};
+  uint32_t const firstSingleByteOffset{(sizeToCopy / bytesPerPair) * bytesPerPair};
+
+  // After complete blocks, plan at most two single-Q accesses at compilation:
+  // while nextOffset < size:
+  //   offset = min(nextOffset, size - 16)
+  //   record a 16-byte load/store at offset
+  //   nextOffset += 16
+  // Always use 16-byte Q accesses, even for an 8-byte remainder.
+  // Example: 31 bytes use offsets 0 and 15, repeating one byte without going out of bounds.
+  // At most two single-register accesses remain after the complete 32-byte blocks.
+  // Each access is 16 bytes; shift the final one back if it would pass sizeToCopy.
+  // Example: 16 + 15 bytes, with byte numbers starting at 1:
+  // Bytes (1-based): |   1..15   | 16 |   17..31   |
+  // offset 0, 16B:   |===========|====|            |
+  // offset 15, 16B:  |           |====|============|
+  // Byte 16 is read and written twice. Both accesses stay within the requested range.
+
+  //
+  // Load
+  //
+  // Keep every source byte live until stores begin
+  if (has64ByteGroup) {
+    // Load four 16-byte registers from the source into the first group of SIMD registers
+    as_.INSTR(LD1_vT_4x16b_deref_xN_t).setT(floatScratchRegHead).setN(srcReg)();
+  }
+  for (uint32_t bytesCopied{groupedByteCount}; bytesCopied < firstSingleByteOffset; bytesCopied += bytesPerPair) {
+    uint32_t const regIndex{bytesCopied / bytesPerFReg};
+    // coverity[autosar_cpp14_a7_2_1_violation]
+    REG const firstPairReg{static_cast<REG>(firstReg + regIndex)};
+    // coverity[autosar_cpp14_a7_2_1_violation]
+    REG const secondPairReg{static_cast<REG>(firstReg + regIndex + 1U)};
+    as_.INSTR(LDP_qT1_qT2_deref_xN_scSImm7_t)
+        .setT1(firstPairReg)
+        .setT2(secondPairReg)
+        .setN(srcReg)
+        .setSImm7ls4(SafeInt<11U>::fromUnsafe(static_cast<int32_t>(bytesCopied)))();
+  }
+  for (uint32_t bytesCopied{firstSingleByteOffset}; bytesCopied < sizeToCopy; bytesCopied += bytesPerFReg) {
+    uint32_t const byteOffset{((bytesCopied + bytesPerFReg) > sizeToCopy) ? (sizeToCopy - bytesPerFReg) : bytesCopied};
+    as_.INSTR(LDUR_qT_deref_xN_unscSImm9_t)
+        // coverity[autosar_cpp14_a7_2_1_violation]
+        .setT(static_cast<REG>(firstReg + (bytesCopied / bytesPerFReg)))
+        .setN(srcReg)
+        .setUnscSImm9(SafeInt<9U>::fromUnsafe(static_cast<int32_t>(byteOffset)))();
+  }
+
+  //
+  // Store
+  //
+  if (has64ByteGroup) {
+    // Store the first group of four 128-bit registers from the scratch registers to the destination
+    as_.INSTR(ST1_vT_4x16b_deref_xN_t).setT(floatScratchRegHead).setN(dstReg)();
+  }
+  for (uint32_t bytesCopied{groupedByteCount}; bytesCopied < firstSingleByteOffset; bytesCopied += bytesPerPair) {
+    uint32_t const regIndex{bytesCopied / bytesPerFReg};
+    // coverity[autosar_cpp14_a7_2_1_violation]
+    REG const firstPairReg{static_cast<REG>(firstReg + regIndex)};
+    // coverity[autosar_cpp14_a7_2_1_violation]
+    REG const secondPairReg{static_cast<REG>(firstReg + regIndex + 1U)};
+    as_.INSTR(STP_qT1_qT2_deref_xN_scSImm7_t)
+        .setT1(firstPairReg)
+        .setT2(secondPairReg)
+        .setN(dstReg)
+        .setSImm7ls4(SafeInt<11U>::fromUnsafe(static_cast<int32_t>(bytesCopied)))();
+  }
+  // Match the load offsets, including any overlapping final access.
+  for (uint32_t bytesCopied{firstSingleByteOffset}; bytesCopied < sizeToCopy; bytesCopied += bytesPerFReg) {
+    uint32_t const byteOffset{((bytesCopied + bytesPerFReg) > sizeToCopy) ? (sizeToCopy - bytesPerFReg) : bytesCopied};
+    as_.INSTR(STUR_qT_deref_xN_unscSImm9_t)
+        // coverity[autosar_cpp14_a7_2_1_violation]
+        .setT(static_cast<REG>(firstReg + (bytesCopied / bytesPerFReg)))
+        .setN(dstReg)
+        .setUnscSImm9(SafeInt<9U>::fromUnsafe(static_cast<int32_t>(byteOffset)))();
+  }
+}
+
+void Backend::memcpyWithConstSize(REG const dstReg, REG const srcReg, uint32_t const sizeToCopy, REG const gpScratchReg,
+                                  RegAllocTracker &regAllocTracker) const {
+  // Constant Size: memcpyWithConstSize dispatches:
+  // if size == 0: return
+  // if size < 16: emit scalar head/tail copy; return
+  // if size <= 128:
+  //   group = F27..F30 if size <= 64 else F23..F30
+  //   if getFreeMemcpySimdTail(group) succeeds:
+  //     emit SIMD quick path; return
+  // emit constant-size fallback
+  if (sizeToCopy == 0U) {
+    return;
+  }
+
+  // Both accesses stay in bounds. Preload before stores to avoid the overhead of check overlap
+  // Scalar Head/Tail Copy
+  // Choose the largest width in 1, 2, 4, 8 that fits. Access offset 0, plus size - width if size > width.
+  // Load everything before storing; both accesses stay in bounds.
+  if (sizeToCopy < 16U) {
+    uint32_t const accessSize{(sizeToCopy >= 8U) ? 8_U32 : ((sizeToCopy >= 4U) ? 4_U32 : ((sizeToCopy >= 2U) ? 2_U32 : 1_U32))};
+    REG const gpScratchReg2{common_.reqScratchRegProt(MachineType::I64, regAllocTracker, false).reg};
+
+    OPCodeTemplate const loadOpcode{LDUR_T_deref_N_unscSImm9(accessSize)};
+    OPCodeTemplate const storeOpcode{STUR_T_deref_N_unscSImm9(accessSize)};
+    SafeInt<9U> const tailOffset{SafeInt<9U>::fromUnsafe(static_cast<int32_t>(sizeToCopy) - static_cast<int32_t>(accessSize))};
+    as_.INSTR(loadOpcode).setT(gpScratchReg).setN(srcReg).setUnscSImm9(SafeInt<9U>::fromConst<0>())();
+    if (sizeToCopy > accessSize) {
+      as_.INSTR(loadOpcode).setT(gpScratchReg2).setN(srcReg).setUnscSImm9(tailOffset)();
+    }
+    as_.INSTR(storeOpcode).setT(gpScratchReg).setN(dstReg).setUnscSImm9(SafeInt<9U>::fromConst<0>())();
+    if (sizeToCopy > accessSize) {
+      as_.INSTR(storeOpcode).setT(gpScratchReg2).setN(dstReg).setUnscSImm9(tailOffset)();
+    }
+    return;
+  }
+
+  // Determine if we can use the SIMD quick path
+  if (sizeToCopy <= 128U) {
+    MemcpySimdRegCount const registerCount{(sizeToCopy <= 64U) ? MemcpySimdRegCount::FOUR : MemcpySimdRegCount::EIGHT};
+    REG const firstSimdReg{getFreeMemcpySimdTail(registerCount, regAllocTracker.readWriteFutureLiftMask())};
+    if (firstSimdReg != REG::NONE) {
+      memcpyWithConstSizeSimdQuickPath(dstReg, srcReg, sizeToCopy, firstSimdReg);
+      return;
+    }
+  }
+  memcpyWithConstSizeFallback(dstReg, srcReg, sizeToCopy, gpScratchReg, regAllocTracker);
+}
+
+void Backend::emitMemcpyWithSizeReg(REG const dstReg, REG const srcReg, REG const sizeReg, REG const gpScratchReg, RegAllocTracker &regAllocTracker,
+                                    bool const canOverlap) const {
+  // Non-Constant Size: size in a GPR, two D-register scratches.
+  // Use the constant-size fallback's direction rule when canOverlap is true, then loop at runtime:
+  // while remaining >= 16:
+  //   copy 16 bytes using LDP/STP D
+  //   remaining -= 16
+  // while remaining != 0:
+  //   copy one byte
+  //   remaining -= 1
+  REG const floatScratchReg{common_.reqScratchRegProt(MachineType::F64, regAllocTracker, false).reg};
+  REG const floatScratchReg2{common_.reqScratchRegProt(MachineType::F64, regAllocTracker, false).reg};
   RelPatchObj reverse{};
   if (canOverlap) {
     as_.INSTR(CMP_xN_xM).setN(srcReg).setM(dstReg)();
@@ -3467,6 +3662,12 @@ void Backend::emitMemoryLoadProbe(vb::OPCode const opcode, Aarch64MemoryAddrImmT
 }
 
 void Backend::executeLinearMemoryCopy(Stack::iterator const dst, Stack::iterator const src, Stack::iterator const size) {
+  // Memory Copy: ARM (AArch64) Implementation
+  // Entry Dispatch: bounds handling and absolute-address setup, then dispatch:
+  // if size storage is StorageType::CONSTANT:
+  //   memcpyWithConstSize(size)
+  // else:
+  //   emitMemcpyWithSizeReg(sizeRegister, canOverlap = true)
   RegAllocTracker regAllocTracker{};
   regAllocTracker.futureLifts = mask(src.unwrap()) | mask(dst.unwrap());
   // get size value before lift to reg if size is compile-time constant
@@ -3475,12 +3676,11 @@ void Backend::executeLinearMemoryCopy(Stack::iterator const dst, Stack::iterator
   if (sizeIsConstant) {
     sizeValue = size->data.constUnion.u32;
   }
-  REG const sizeReg{common_.liftToRegInPlaceProt(*size, true, regAllocTracker).reg};
+
+  REG const sizeReg{sizeIsConstant ? REG::NONE : common_.liftToRegInPlaceProt(*size, true, regAllocTracker).reg};
   REG const srcReg{common_.liftToRegInPlaceProt(*src, true, regAllocTracker).reg};
   REG const dstReg{common_.liftToRegInPlaceProt(*dst, true, regAllocTracker).reg};
   REG const gpScratchReg{common_.reqScratchRegProt(MachineType::I64, regAllocTracker, false).reg};
-  REG const floatScratchReg{common_.reqScratchRegProt(MachineType::F64, regAllocTracker, false).reg};
-  REG const floatScratchReg2{common_.reqScratchRegProt(MachineType::F64, regAllocTracker, false).reg};
 
   // if src + size is larger then the length of mem.data then trap
   // if dst + size is larger then the length of mem.data then trap
@@ -3489,7 +3689,11 @@ void Backend::executeLinearMemoryCopy(Stack::iterator const dst, Stack::iterator
 #if LINEAR_MEMORY_BOUNDS_CHECKS
   as_.INSTR(CMP_wN_wM).setN(srcReg).setM(dstReg)();
   as_.INSTR(CSELcondh_wD_wN_wM_t).setCond(false, CC::HI).setD(gpScratchReg).setN(srcReg).setM(dstReg)();
-  as_.INSTR(ADD_xD_xN_xMolsImm6).setD(gpScratchReg).setN(gpScratchReg).setM(sizeReg)();
+  if (sizeIsConstant) {
+    as_.addImm24ToReg(gpScratchReg, static_cast<int32_t>(sizeValue), true);
+  } else {
+    as_.INSTR(ADD_xD_xN_xMolsImm6).setD(gpScratchReg).setN(gpScratchReg).setM(sizeReg)();
+  }
 
   emitLinMemBoundsCheck(gpScratchReg, 0U);
 
@@ -3501,15 +3705,19 @@ void Backend::executeLinearMemoryCopy(Stack::iterator const dst, Stack::iterator
 
   as_.INSTR(CMP_xN_xM).setN(srcReg).setM(dstReg)();
   as_.INSTR(CSELcondh_xD_xN_xM_t).setCond(false, CC::HI).setD(gpScratchReg).setN(srcReg).setM(dstReg)();
-  as_.INSTR(ADD_xD_xN_xMolsImm6).setD(gpScratchReg).setN(gpScratchReg).setM(sizeReg)();
+  if (sizeIsConstant) {
+    as_.addImm24ToReg(gpScratchReg, static_cast<int32_t>(sizeValue), true);
+  } else {
+    as_.INSTR(ADD_xD_xN_xMolsImm6).setD(gpScratchReg).setN(gpScratchReg).setM(sizeReg)();
+  }
 
   as_.INSTR(LDRB_wT_deref_xN_unscSImm9_preidx).setT(REG::ZR).setN(gpScratchReg).setUnscSImm9(SafeInt<9U>::fromConst<-1>())();
 #endif
 
   if (sizeIsConstant) {
-    emitMemcpyWithConstSizeNoBoundsCheck(dstReg, srcReg, sizeReg, sizeValue, gpScratchReg, floatScratchReg, floatScratchReg2);
+    memcpyWithConstSize(dstReg, srcReg, sizeValue, gpScratchReg, regAllocTracker);
   } else {
-    emitMemcpyNoBoundsCheck(dstReg, srcReg, sizeReg, gpScratchReg, floatScratchReg, floatScratchReg2, true);
+    emitMemcpyWithSizeReg(dstReg, srcReg, sizeReg, gpScratchReg, regAllocTracker, true);
   }
   common_.removeReference(size);
   common_.removeReference(src);

@@ -530,3 +530,100 @@
 (invoke "copy34byte_gt")
 (assert_return (invoke "load8_u" (i32.const 0)) (i32.const 0x41))
 (assert_return (invoke "load8_u" (i32.const 33)) (i32.const 0x62))
+
+(module
+  (type $copy_type (func (param i32 i32)))
+  (memory 1 1)
+  ;; Scalar, Q-pair, grouped SIMD, and fallback boundaries; each size also runs under register pressure.
+  (data (i32.const 512) "\00\04\05\07\0f\10\11\1f\20\21\23\2f\30\3f\40\41\7f\80\81\82\83\88")
+  (func $copy0 (type $copy_type) (memory.copy (local.get 0) (local.get 1) (i32.const 0)))
+  (func $copy4 (type $copy_type) (memory.copy (local.get 0) (local.get 1) (i32.const 4)))
+  (func $copy5 (type $copy_type) (memory.copy (local.get 0) (local.get 1) (i32.const 5)))
+  (func $copy7 (type $copy_type) (memory.copy (local.get 0) (local.get 1) (i32.const 7)))
+  (func $copy15 (type $copy_type) (memory.copy (local.get 0) (local.get 1) (i32.const 15)))
+  (func $copy16 (type $copy_type) (memory.copy (local.get 0) (local.get 1) (i32.const 16)))
+  (func $copy17 (type $copy_type) (memory.copy (local.get 0) (local.get 1) (i32.const 17)))
+  (func $copy31 (type $copy_type) (memory.copy (local.get 0) (local.get 1) (i32.const 31)))
+  (func $copy32 (type $copy_type) (memory.copy (local.get 0) (local.get 1) (i32.const 32)))
+  (func $copy33 (type $copy_type) (memory.copy (local.get 0) (local.get 1) (i32.const 33)))
+  (func $copy35 (type $copy_type) (memory.copy (local.get 0) (local.get 1) (i32.const 35)))
+  (func $copy47 (type $copy_type) (memory.copy (local.get 0) (local.get 1) (i32.const 47)))
+  (func $copy48 (type $copy_type) (memory.copy (local.get 0) (local.get 1) (i32.const 48)))
+  (func $copy63 (type $copy_type) (memory.copy (local.get 0) (local.get 1) (i32.const 63)))
+  (func $copy64 (type $copy_type) (memory.copy (local.get 0) (local.get 1) (i32.const 64)))
+  (func $copy65 (type $copy_type) (memory.copy (local.get 0) (local.get 1) (i32.const 65)))
+  (func $copy127 (type $copy_type) (memory.copy (local.get 0) (local.get 1) (i32.const 127)))
+  (func $copy128 (type $copy_type) (memory.copy (local.get 0) (local.get 1) (i32.const 128)))
+  (func $copy129 (type $copy_type) (memory.copy (local.get 0) (local.get 1) (i32.const 129)))
+  (func $copy130 (type $copy_type) (memory.copy (local.get 0) (local.get 1) (i32.const 130)))
+  (func $copy131 (type $copy_type) (memory.copy (local.get 0) (local.get 1) (i32.const 131)))
+  (func $copy136 (type $copy_type) (memory.copy (local.get 0) (local.get 1) (i32.const 136)))
+  (table funcref (elem $copy0 $copy4 $copy5 $copy7 $copy15 $copy16 $copy17 $copy31 $copy32 $copy33 $copy35
+                      $copy47 $copy48 $copy63 $copy64 $copy65 $copy127 $copy128 $copy129 $copy130 $copy131 $copy136))
+  (func $check (param $dst i32) (param $src i32) (param $case i32) (param $base i32) (result i32)
+    (local $index i32) (local $expected i32) (local $size i32)
+    (local.set $size (i32.load8_u offset=512 (local.get $case)))
+    (loop $initialize
+      (i32.store8 (i32.add (local.get $base) (local.get $index)) (local.get $index))
+      (local.set $index (i32.add (local.get $index) (i32.const 1)))
+      (br_if $initialize (i32.lt_u (local.get $index) (i32.const 512))))
+    (call_indirect (type $copy_type)
+      (i32.add (local.get $base) (local.get $dst))
+      (i32.add (local.get $base) (local.get $src))
+      (local.get $case))
+    (local.set $index (i32.const 0))
+    (loop $verify
+      (local.set $expected (local.get $index))
+      (if (i32.and
+            (i32.ge_u (local.get $index) (local.get $dst))
+            (i32.lt_u (local.get $index) (i32.add (local.get $dst) (local.get $size))))
+        (then
+          (local.set $expected (i32.add (local.get $src) (i32.sub (local.get $index) (local.get $dst))))))
+      (if (i32.ne
+            (i32.load8_u (i32.add (local.get $base) (local.get $index)))
+            (i32.and (local.get $expected) (i32.const 255)))
+        (then (return (i32.const 0))))
+      (local.set $index (i32.add (local.get $index) (i32.const 1)))
+      (br_if $verify (i32.lt_u (local.get $index) (i32.const 512))))
+    (i32.const 1))
+  (func (export "check_simd_copies") (result i32)
+    (local $case i32) (local $size i32)
+    (loop $cases
+      (local.set $size (i32.load8_u offset=512 (local.get $case)))
+      (if (i32.eqz (call $check (i32.const 1) (i32.const 0) (local.get $case) (i32.const 0))) (then (return (i32.const 0))))
+      (if (i32.eqz (call $check (i32.const 0) (i32.const 1) (local.get $case) (i32.const 0))) (then (return (i32.const 0))))
+      (if (i32.eqz (call $check (i32.const 1) (i32.const 1) (local.get $case) (i32.const 0))) (then (return (i32.const 0))))
+      (if (i32.eqz (call $check (i32.sub (i32.const 512) (local.get $size)) (i32.const 1) (local.get $case) (i32.const 65024)))
+        (then (return (i32.const 0))))
+      (if (i32.eqz (call $check (i32.const 1) (i32.sub (i32.const 512) (local.get $size)) (local.get $case) (i32.const 65024)))
+        (then (return (i32.const 0))))
+      (local.set $case (i32.add (local.get $case) (i32.const 1)))
+      (br_if $cases (i32.lt_u (local.get $case) (i32.const 22))))
+    (i32.const 1))
+  (func (export "copy128_live_f64") (param f64 f64 f64 f64 f64 f64 f64 f64) (result f64)
+    (memory.copy (i32.const 1) (i32.const 0) (i32.const 128))
+    (f64.add
+      (f64.add
+        (f64.add (local.get 0) (local.get 1))
+        (f64.add (local.get 2) (local.get 3)))
+      (f64.add
+        (f64.add (local.get 4) (local.get 5))
+        (f64.add (local.get 6) (local.get 7)))))
+  (func $float_pair (param f64 f64) (result f64 f64)
+    local.get 0
+    local.get 1)
+  (func (export "copy128_live_scratch") (param f64 f64) (result f64)
+    local.get 0
+    local.get 1
+    call $float_pair
+    i32.const 1
+    i32.const 0
+    i32.const 128
+    memory.copy
+    f64.add))
+
+(assert_return (invoke "check_simd_copies") (i32.const 1))
+(assert_return (invoke "copy128_live_f64"
+  (f64.const 1) (f64.const 2) (f64.const 3) (f64.const 4)
+  (f64.const 5) (f64.const 6) (f64.const 7) (f64.const 8)) (f64.const 36))
+(assert_return (invoke "copy128_live_scratch" (f64.const 7) (f64.const 3)) (f64.const 10))

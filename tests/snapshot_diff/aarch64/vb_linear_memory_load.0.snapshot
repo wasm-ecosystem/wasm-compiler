@@ -506,48 +506,33 @@ e0 03 0b 2a  mov  w0, w11
 be ff ff 17  b  0x684
 13 e0 bf 12  mov  w19, #0xffffff
 b3 6b 73 b8  ldr  w19, [x29, x19]
-48 01 80 52  mov  w8, #0xa
-01 00 80 52  mov  w1, #0
-42 01 80 52  mov  w2, #0xa
+08 00 80 52  mov  w8, #0
+41 01 80 52  mov  w1, #0xa
+08 01 1d 8b  add  x8, x8, x29
 21 00 1d 8b  add  x1, x1, x29
-42 00 1d 8b  add  x2, x2, x29
-3f 00 02 eb  cmp  x1, x2
-23 80 82 9a  csel  x3, x1, x2, hi
-63 00 08 8b  add  x3, x3, x8
-7f fc 5f 38  ldrb  wzr, [x3, #-1]!
-3f 00 02 eb  cmp  x1, x2
-23 01 00 54  b.lo  0x7e4
-23 84 40 f8  ldr  x3, [x1], #8
-43 84 00 f8  str  x3, [x2], #8
-23 14 40 38  ldrb  w3, [x1], #1
-43 14 00 38  strb  w3, [x2], #1
-23 14 40 38  ldrb  w3, [x1], #1
-43 14 00 38  strb  w3, [x2], #1
-0a 00 00 14  b  0x804
-09 00 00 14  b  0x804
-21 00 08 8b  add  x1, x1, x8
-42 00 08 8b  add  x2, x2, x8
-23 8c 5f f8  ldr  x3, [x1, #-8]!
-43 8c 1f f8  str  x3, [x2, #-8]!
-23 fc 5f 38  ldrb  w3, [x1, #-1]!
-43 fc 1f 38  strb  w3, [x2, #-1]!
-23 fc 5f 38  ldrb  w3, [x1, #-1]!
-43 fc 1f 38  strb  w3, [x2, #-1]!
+1f 01 01 eb  cmp  x8, x1
+02 81 81 9a  csel  x2, x8, x1, hi
+42 28 00 91  add  x2, x2, #0xa
+5f fc 5f 38  ldrb  wzr, [x2, #-1]!
+02 01 40 f8  ldur  x2, [x8]
+03 21 40 f8  ldur  x3, [x8, #2]
+22 00 00 f8  stur  x2, [x1]
+23 20 00 f8  stur  x3, [x1, #2]
 ff 03 02 91  add  sp, sp, #0x80
 c0 03 5f d6  ret  
-90 00 00 00  Size of the function body: 144
+54 00 00 00  Size of the function body: 84
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 ff 03 02 d1  sub  sp, sp, #0x80
 ab 83 5f 38  ldurb  w11, [x29, #-8]
-6b 00 00 34  cbz  w11, 0x824
+6b 00 00 34  cbz  w11, 0x7e8
 e0 03 0b 2a  mov  w0, w11
-99 ff ff 17  b  0x684
+a8 ff ff 17  b  0x684
 00 e0 bf 12  mov  w0, #0xffffff
 a0 6b 60 b8  ldr  w0, [x29, x0]
 13 00 80 52  mov  w19, #0
 08 00 80 52  mov  w8, #0
 1f 01 00 71  cmp  w8, #0
-c0 e3 ff 54  b.eq  0x4b0
+a0 e5 ff 54  b.eq  0x4b0
 61 0a c8 1a  udiv  w1, w19, w8
 00 00 01 0b  add  w0, w0, w1
 ff 03 02 91  add  sp, sp, #0x80
@@ -556,19 +541,19 @@ c0 03 5f d6  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 ff 83 02 d1  sub  sp, sp, #0xa0
 ab 83 5f 38  ldurb  w11, [x29, #-8]
-6b 00 00 34  cbz  w11, 0x864
+6b 00 00 34  cbz  w11, 0x828
 e0 03 0b 2a  mov  w0, w11
-89 ff ff 17  b  0x684
+98 ff ff 17  b  0x684
 1f 01 00 71  cmp  w8, #0
-40 e2 ff 54  b.eq  0x4b0
+20 e4 ff 54  b.eq  0x4b0
 02 00 b0 52  mov  w2, #-0x80000000
 7f 02 02 6b  cmp  w19, w2
-c1 00 00 54  b.ne  0x88c
+c1 00 00 54  b.ne  0x850
 02 00 80 12  mov  w2, #-1
 1f 01 02 6b  cmp  w8, w2
-61 00 00 54  b.ne  0x88c
+61 00 00 54  b.ne  0x850
 02 00 80 52  mov  w2, #0
-02 00 00 14  b  0x890
+02 00 00 14  b  0x854
 62 0a c8 1a  udiv  w2, w19, w8
 03 00 be 12  mov  w3, #0xfffffff
 a3 6b 63 b8  ldr  w3, [x29, x3]
@@ -583,9 +568,9 @@ c0 03 5f d6  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 ff 43 02 d1  sub  sp, sp, #0x90
 ab 83 5f 38  ldurb  w11, [x29, #-8]
-6b 00 00 34  cbz  w11, 0x8cc
+6b 00 00 34  cbz  w11, 0x890
 e0 03 0b 2a  mov  w0, w11
-6f ff ff 17  b  0x684
+7e ff ff 17  b  0x684
 60 02 08 0b  add  w0, w19, w8
 ff 43 02 91  add  sp, sp, #0x90
 c0 03 5f d6  ret  
@@ -593,28 +578,28 @@ c0 03 5f d6  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 ff 43 02 d1  sub  sp, sp, #0x90
 ab 83 5f 38  ldurb  w11, [x29, #-8]
-6b 00 00 34  cbz  w11, 0x8f0
+6b 00 00 34  cbz  w11, 0x8b4
 e0 03 0b 2a  mov  w0, w11
-66 ff ff 17  b  0x684
+75 ff ff 17  b  0x684
 f3 8b 00 b9  str  w19, [sp, #0x88]
 e8 83 00 b9  str  w8, [sp, #0x80]
 ff c3 01 91  add  sp, sp, #0x70
 fe 03 00 f9  str  x30, [sp]
 1f 01 00 71  cmp  w8, #0
-60 dd ff 54  b.eq  0x4b0
+40 df ff 54  b.eq  0x4b0
 01 00 b0 52  mov  w1, #-0x80000000
 7f 02 01 6b  cmp  w19, w1
-c1 00 00 54  b.ne  0x928
+c1 00 00 54  b.ne  0x8ec
 01 00 80 12  mov  w1, #-1
 1f 01 01 6b  cmp  w8, w1
-61 00 00 54  b.ne  0x928
+61 00 00 54  b.ne  0x8ec
 01 00 80 52  mov  w1, #0
-02 00 00 14  b  0x92c
+02 00 00 14  b  0x8f0
 61 0a c8 1a  udiv  w1, w19, w8
 f3 03 01 2a  mov  w19, w1
 08 00 be 12  mov  w8, #0xfffffff
 a8 6b 68 b8  ldr  w8, [x29, x8]
-e0 ff ff 97  bl  0x8b8
+e0 ff ff 97  bl  0x87c
 fe 03 40 f9  ldr  x30, [sp]
 ff 83 00 91  add  sp, sp, #0x20
 c0 03 5f d6  ret  
@@ -688,21 +673,21 @@ e2 03 00 f9  str  x2, [sp]
 e3 13 00 f9  str  x3, [sp, #0x20]
 aa 83 5d f8  ldur  x10, [x29, #-0x28]
 5f 01 1f eb  cmp  x10, xzr
-21 01 00 54  b.ne  0xa40
+21 01 00 54  b.ne  0xa04
 e9 03 00 91  mov  x9, sp
 a9 83 1d f8  stur  x9, [x29, #-0x28]
-29 01 00 10  adr  x9, 0xa4c
+29 01 00 10  adr  x9, 0xa10
 a9 03 1e f8  stur  x9, [x29, #-0x20]
 09 48 88 52  mov  w9, #0x4240
 e9 01 a0 72  movk  w9, #0xf, lsl #16
 e9 63 29 cb  sub  x9, sp, x9
 a9 83 1e f8  stur  x9, [x29, #-0x18]
-c9 fd ff 97  bl  0x164
+d8 fd ff 97  bl  0x164
 ea 13 40 f9  ldr  x10, [sp, #0x20]
 40 01 00 b9  str  w0, [x10]
 aa 83 5d f8  ldur  x10, [x29, #-0x28]
 ff 63 2a eb  cmp  sp, x10
-61 00 00 54  b.ne  0xa60
+61 00 00 54  b.ne  0xa24
 bf 83 1d f8  stur  xzr, [x29, #-0x28]
 bf 03 1e f8  stur  xzr, [x29, #-0x20]
 ff c3 00 91  add  sp, sp, #0x30
@@ -746,21 +731,21 @@ e2 03 00 f9  str  x2, [sp]
 e3 13 00 f9  str  x3, [sp, #0x20]
 aa 83 5d f8  ldur  x10, [x29, #-0x28]
 5f 01 1f eb  cmp  x10, xzr
-21 01 00 54  b.ne  0xb2c
+21 01 00 54  b.ne  0xaf0
 e9 03 00 91  mov  x9, sp
 a9 83 1d f8  stur  x9, [x29, #-0x28]
-29 01 00 10  adr  x9, 0xb38
+29 01 00 10  adr  x9, 0xafc
 a9 03 1e f8  stur  x9, [x29, #-0x20]
 09 48 88 52  mov  w9, #0x4240
 e9 01 a0 72  movk  w9, #0xf, lsl #16
 e9 63 29 cb  sub  x9, sp, x9
 a9 83 1e f8  stur  x9, [x29, #-0x18]
-a3 fd ff 97  bl  0x1b8
+b2 fd ff 97  bl  0x1b8
 ea 13 40 f9  ldr  x10, [sp, #0x20]
 40 01 00 b9  str  w0, [x10]
 aa 83 5d f8  ldur  x10, [x29, #-0x28]
 ff 63 2a eb  cmp  sp, x10
-61 00 00 54  b.ne  0xb4c
+61 00 00 54  b.ne  0xb10
 bf 83 1d f8  stur  xzr, [x29, #-0x28]
 bf 03 1e f8  stur  xzr, [x29, #-0x20]
 ff c3 00 91  add  sp, sp, #0x30
@@ -804,21 +789,21 @@ e2 03 00 f9  str  x2, [sp]
 e3 13 00 f9  str  x3, [sp, #0x20]
 aa 83 5d f8  ldur  x10, [x29, #-0x28]
 5f 01 1f eb  cmp  x10, xzr
-21 01 00 54  b.ne  0xc1c
+21 01 00 54  b.ne  0xbe0
 e9 03 00 91  mov  x9, sp
 a9 83 1d f8  stur  x9, [x29, #-0x28]
-29 01 00 10  adr  x9, 0xc28
+29 01 00 10  adr  x9, 0xbec
 a9 03 1e f8  stur  x9, [x29, #-0x20]
 09 48 88 52  mov  w9, #0x4240
 e9 01 a0 72  movk  w9, #0xf, lsl #16
 e9 63 29 cb  sub  x9, sp, x9
 a9 83 1e f8  stur  x9, [x29, #-0x18]
-77 fd ff 97  bl  0x1f8
+86 fd ff 97  bl  0x1f8
 ea 13 40 f9  ldr  x10, [sp, #0x20]
 40 01 00 b9  str  w0, [x10]
 aa 83 5d f8  ldur  x10, [x29, #-0x28]
 ff 63 2a eb  cmp  sp, x10
-61 00 00 54  b.ne  0xc3c
+61 00 00 54  b.ne  0xc00
 bf 83 1d f8  stur  xzr, [x29, #-0x28]
 bf 03 1e f8  stur  xzr, [x29, #-0x20]
 ff c3 00 91  add  sp, sp, #0x30
@@ -862,22 +847,22 @@ e2 03 00 f9  str  x2, [sp]
 e3 13 00 f9  str  x3, [sp, #0x20]
 aa 83 5d f8  ldur  x10, [x29, #-0x28]
 5f 01 1f eb  cmp  x10, xzr
-21 01 00 54  b.ne  0xd0c
+21 01 00 54  b.ne  0xcd0
 e9 03 00 91  mov  x9, sp
 a9 83 1d f8  stur  x9, [x29, #-0x28]
-49 01 00 10  adr  x9, 0xd1c
+49 01 00 10  adr  x9, 0xce0
 a9 03 1e f8  stur  x9, [x29, #-0x20]
 09 48 88 52  mov  w9, #0x4240
 e9 01 a0 72  movk  w9, #0xf, lsl #16
 e9 63 29 cb  sub  x9, sp, x9
 a9 83 1e f8  stur  x9, [x29, #-0x18]
 73 01 40 b9  ldr  w19, [x11]
-4e fd ff 97  bl  0x248
+5d fd ff 97  bl  0x248
 ea 13 40 f9  ldr  x10, [sp, #0x20]
 40 01 00 b9  str  w0, [x10]
 aa 83 5d f8  ldur  x10, [x29, #-0x28]
 ff 63 2a eb  cmp  sp, x10
-61 00 00 54  b.ne  0xd30
+61 00 00 54  b.ne  0xcf4
 bf 83 1d f8  stur  xzr, [x29, #-0x28]
 bf 03 1e f8  stur  xzr, [x29, #-0x20]
 ff c3 00 91  add  sp, sp, #0x30
@@ -921,22 +906,22 @@ e2 03 00 f9  str  x2, [sp]
 e3 13 00 f9  str  x3, [sp, #0x20]
 aa 83 5d f8  ldur  x10, [x29, #-0x28]
 5f 01 1f eb  cmp  x10, xzr
-21 01 00 54  b.ne  0xe00
+21 01 00 54  b.ne  0xdc4
 e9 03 00 91  mov  x9, sp
 a9 83 1d f8  stur  x9, [x29, #-0x28]
-49 01 00 10  adr  x9, 0xe10
+49 01 00 10  adr  x9, 0xdd4
 a9 03 1e f8  stur  x9, [x29, #-0x20]
 09 48 88 52  mov  w9, #0x4240
 e9 01 a0 72  movk  w9, #0xf, lsl #16
 e9 63 29 cb  sub  x9, sp, x9
 a9 83 1e f8  stur  x9, [x29, #-0x18]
 73 01 40 b9  ldr  w19, [x11]
-2c fd ff 97  bl  0x2b4
+3b fd ff 97  bl  0x2b4
 ea 13 40 f9  ldr  x10, [sp, #0x20]
 40 01 00 b9  str  w0, [x10]
 aa 83 5d f8  ldur  x10, [x29, #-0x28]
 ff 63 2a eb  cmp  sp, x10
-61 00 00 54  b.ne  0xe24
+61 00 00 54  b.ne  0xde8
 bf 83 1d f8  stur  xzr, [x29, #-0x28]
 bf 03 1e f8  stur  xzr, [x29, #-0x20]
 ff c3 00 91  add  sp, sp, #0x30
@@ -980,21 +965,21 @@ e2 03 00 f9  str  x2, [sp]
 e3 13 00 f9  str  x3, [sp, #0x20]
 aa 83 5d f8  ldur  x10, [x29, #-0x28]
 5f 01 1f eb  cmp  x10, xzr
-21 01 00 54  b.ne  0xef4
+21 01 00 54  b.ne  0xeb8
 e9 03 00 91  mov  x9, sp
 a9 83 1d f8  stur  x9, [x29, #-0x28]
-29 01 00 10  adr  x9, 0xf00
+29 01 00 10  adr  x9, 0xec4
 a9 03 1e f8  stur  x9, [x29, #-0x20]
 09 48 88 52  mov  w9, #0x4240
 e9 01 a0 72  movk  w9, #0xf, lsl #16
 e9 63 29 cb  sub  x9, sp, x9
 a9 83 1e f8  stur  x9, [x29, #-0x18]
-0b fd ff 97  bl  0x320
+1a fd ff 97  bl  0x320
 ea 13 40 f9  ldr  x10, [sp, #0x20]
 40 01 00 b9  str  w0, [x10]
 aa 83 5d f8  ldur  x10, [x29, #-0x28]
 ff 63 2a eb  cmp  sp, x10
-61 00 00 54  b.ne  0xf14
+61 00 00 54  b.ne  0xed8
 bf 83 1d f8  stur  xzr, [x29, #-0x28]
 bf 03 1e f8  stur  xzr, [x29, #-0x20]
 ff c3 00 91  add  sp, sp, #0x30
@@ -1038,21 +1023,21 @@ e2 03 00 f9  str  x2, [sp]
 e3 13 00 f9  str  x3, [sp, #0x20]
 aa 83 5d f8  ldur  x10, [x29, #-0x28]
 5f 01 1f eb  cmp  x10, xzr
-21 01 00 54  b.ne  0xfe0
+21 01 00 54  b.ne  0xfa4
 e9 03 00 91  mov  x9, sp
 a9 83 1d f8  stur  x9, [x29, #-0x28]
-29 01 00 10  adr  x9, 0xfec
+29 01 00 10  adr  x9, 0xfb0
 a9 03 1e f8  stur  x9, [x29, #-0x20]
 09 48 88 52  mov  w9, #0x4240
 e9 01 a0 72  movk  w9, #0xf, lsl #16
 e9 63 29 cb  sub  x9, sp, x9
 a9 83 1e f8  stur  x9, [x29, #-0x18]
-ee fc ff 97  bl  0x398
+fd fc ff 97  bl  0x398
 ea 13 40 f9  ldr  x10, [sp, #0x20]
 40 01 00 b9  str  w0, [x10]
 aa 83 5d f8  ldur  x10, [x29, #-0x28]
 ff 63 2a eb  cmp  sp, x10
-61 00 00 54  b.ne  0x1000
+61 00 00 54  b.ne  0xfc4
 bf 83 1d f8  stur  xzr, [x29, #-0x28]
 bf 03 1e f8  stur  xzr, [x29, #-0x20]
 ff c3 00 91  add  sp, sp, #0x30
@@ -1096,21 +1081,21 @@ e2 03 00 f9  str  x2, [sp]
 e3 13 00 f9  str  x3, [sp, #0x20]
 aa 83 5d f8  ldur  x10, [x29, #-0x28]
 5f 01 1f eb  cmp  x10, xzr
-21 01 00 54  b.ne  0x10d8
+21 01 00 54  b.ne  0x109c
 e9 03 00 91  mov  x9, sp
 a9 83 1d f8  stur  x9, [x29, #-0x28]
-29 01 00 10  adr  x9, 0x10e4
+29 01 00 10  adr  x9, 0x10a8
 a9 03 1e f8  stur  x9, [x29, #-0x20]
 09 48 88 52  mov  w9, #0x4240
 e9 01 a0 72  movk  w9, #0xf, lsl #16
 e9 63 29 cb  sub  x9, sp, x9
 a9 83 1e f8  stur  x9, [x29, #-0x18]
-d8 fc ff 97  bl  0x438
+e7 fc ff 97  bl  0x438
 ea 13 40 f9  ldr  x10, [sp, #0x20]
 40 01 00 b9  str  w0, [x10]
 aa 83 5d f8  ldur  x10, [x29, #-0x28]
 ff 63 2a eb  cmp  sp, x10
-61 00 00 54  b.ne  0x10f8
+61 00 00 54  b.ne  0x10bc
 bf 83 1d f8  stur  xzr, [x29, #-0x28]
 bf 03 1e f8  stur  xzr, [x29, #-0x20]
 ff c3 00 91  add  sp, sp, #0x30
@@ -1154,20 +1139,20 @@ e2 03 00 f9  str  x2, [sp]
 e3 13 00 f9  str  x3, [sp, #0x20]
 aa 83 5d f8  ldur  x10, [x29, #-0x28]
 5f 01 1f eb  cmp  x10, xzr
-21 01 00 54  b.ne  0x11c8
+21 01 00 54  b.ne  0x118c
 e9 03 00 91  mov  x9, sp
 a9 83 1d f8  stur  x9, [x29, #-0x28]
-09 01 00 10  adr  x9, 0x11d0
+09 01 00 10  adr  x9, 0x1194
 a9 03 1e f8  stur  x9, [x29, #-0x20]
 09 48 88 52  mov  w9, #0x4240
 e9 01 a0 72  movk  w9, #0xf, lsl #16
 e9 63 29 cb  sub  x9, sp, x9
 a9 83 1e f8  stur  x9, [x29, #-0x18]
-a7 fc ff 97  bl  0x464
+b6 fc ff 97  bl  0x464
 ea 13 40 f9  ldr  x10, [sp, #0x20]
 aa 83 5d f8  ldur  x10, [x29, #-0x28]
 ff 63 2a eb  cmp  sp, x10
-61 00 00 54  b.ne  0x11e4
+61 00 00 54  b.ne  0x11a8
 bf 83 1d f8  stur  xzr, [x29, #-0x28]
 bf 03 1e f8  stur  xzr, [x29, #-0x20]
 ff c3 00 91  add  sp, sp, #0x30
@@ -1211,21 +1196,21 @@ e2 03 00 f9  str  x2, [sp]
 e3 13 00 f9  str  x3, [sp, #0x20]
 aa 83 5d f8  ldur  x10, [x29, #-0x28]
 5f 01 1f eb  cmp  x10, xzr
-21 01 00 54  b.ne  0x12b0
+21 01 00 54  b.ne  0x1274
 e9 03 00 91  mov  x9, sp
 a9 83 1d f8  stur  x9, [x29, #-0x28]
-29 01 00 10  adr  x9, 0x12bc
+29 01 00 10  adr  x9, 0x1280
 a9 03 1e f8  stur  x9, [x29, #-0x20]
 09 48 88 52  mov  w9, #0x4240
 e9 01 a0 72  movk  w9, #0xf, lsl #16
 e9 63 29 cb  sub  x9, sp, x9
 a9 83 1e f8  stur  x9, [x29, #-0x18]
-77 fc ff 97  bl  0x48c
+86 fc ff 97  bl  0x48c
 ea 13 40 f9  ldr  x10, [sp, #0x20]
 40 01 00 b9  str  w0, [x10]
 aa 83 5d f8  ldur  x10, [x29, #-0x28]
 ff 63 2a eb  cmp  sp, x10
-61 00 00 54  b.ne  0x12d0
+61 00 00 54  b.ne  0x1294
 bf 83 1d f8  stur  xzr, [x29, #-0x28]
 bf 03 1e f8  stur  xzr, [x29, #-0x20]
 ff c3 00 91  add  sp, sp, #0x30
@@ -1269,20 +1254,20 @@ e2 03 00 f9  str  x2, [sp]
 e3 13 00 f9  str  x3, [sp, #0x20]
 aa 83 5d f8  ldur  x10, [x29, #-0x28]
 5f 01 1f eb  cmp  x10, xzr
-21 01 00 54  b.ne  0x139c
+21 01 00 54  b.ne  0x1360
 e9 03 00 91  mov  x9, sp
 a9 83 1d f8  stur  x9, [x29, #-0x28]
-09 01 00 10  adr  x9, 0x13a4
+09 01 00 10  adr  x9, 0x1368
 a9 03 1e f8  stur  x9, [x29, #-0x20]
 09 48 88 52  mov  w9, #0x4240
 e9 01 a0 72  movk  w9, #0xf, lsl #16
 e9 63 29 cb  sub  x9, sp, x9
 a9 83 1e f8  stur  x9, [x29, #-0x18]
-4e fc ff 97  bl  0x4d4
+5d fc ff 97  bl  0x4d4
 ea 13 40 f9  ldr  x10, [sp, #0x20]
 aa 83 5d f8  ldur  x10, [x29, #-0x28]
 ff 63 2a eb  cmp  sp, x10
-61 00 00 54  b.ne  0x13b8
+61 00 00 54  b.ne  0x137c
 bf 83 1d f8  stur  xzr, [x29, #-0x28]
 bf 03 1e f8  stur  xzr, [x29, #-0x20]
 ff c3 00 91  add  sp, sp, #0x30
@@ -1326,20 +1311,20 @@ e2 03 00 f9  str  x2, [sp]
 e3 13 00 f9  str  x3, [sp, #0x20]
 aa 83 5d f8  ldur  x10, [x29, #-0x28]
 5f 01 1f eb  cmp  x10, xzr
-21 01 00 54  b.ne  0x1484
+21 01 00 54  b.ne  0x1448
 e9 03 00 91  mov  x9, sp
 a9 83 1d f8  stur  x9, [x29, #-0x28]
-09 01 00 10  adr  x9, 0x148c
+09 01 00 10  adr  x9, 0x1450
 a9 03 1e f8  stur  x9, [x29, #-0x20]
 09 48 88 52  mov  w9, #0x4240
 e9 01 a0 72  movk  w9, #0xf, lsl #16
 e9 63 29 cb  sub  x9, sp, x9
 a9 83 1e f8  stur  x9, [x29, #-0x18]
-20 fc ff 97  bl  0x504
+2f fc ff 97  bl  0x504
 ea 13 40 f9  ldr  x10, [sp, #0x20]
 aa 83 5d f8  ldur  x10, [x29, #-0x28]
 ff 63 2a eb  cmp  sp, x10
-61 00 00 54  b.ne  0x14a0
+61 00 00 54  b.ne  0x1464
 bf 83 1d f8  stur  xzr, [x29, #-0x28]
 bf 03 1e f8  stur  xzr, [x29, #-0x20]
 ff c3 00 91  add  sp, sp, #0x30
@@ -1383,21 +1368,21 @@ e2 03 00 f9  str  x2, [sp]
 e3 13 00 f9  str  x3, [sp, #0x20]
 aa 83 5d f8  ldur  x10, [x29, #-0x28]
 5f 01 1f eb  cmp  x10, xzr
-21 01 00 54  b.ne  0x1570
+21 01 00 54  b.ne  0x1534
 e9 03 00 91  mov  x9, sp
 a9 83 1d f8  stur  x9, [x29, #-0x28]
-29 01 00 10  adr  x9, 0x157c
+29 01 00 10  adr  x9, 0x1540
 a9 03 1e f8  stur  x9, [x29, #-0x20]
 09 48 88 52  mov  w9, #0x4240
 e9 01 a0 72  movk  w9, #0xf, lsl #16
 e9 63 29 cb  sub  x9, sp, x9
 a9 83 1e f8  stur  x9, [x29, #-0x18]
-f1 fb ff 97  bl  0x534
+00 fc ff 97  bl  0x534
 ea 13 40 f9  ldr  x10, [sp, #0x20]
 40 01 00 b9  str  w0, [x10]
 aa 83 5d f8  ldur  x10, [x29, #-0x28]
 ff 63 2a eb  cmp  sp, x10
-61 00 00 54  b.ne  0x1590
+61 00 00 54  b.ne  0x1554
 bf 83 1d f8  stur  xzr, [x29, #-0x28]
 bf 03 1e f8  stur  xzr, [x29, #-0x20]
 ff c3 00 91  add  sp, sp, #0x30
@@ -1441,21 +1426,21 @@ e2 03 00 f9  str  x2, [sp]
 e3 13 00 f9  str  x3, [sp, #0x20]
 aa 83 5d f8  ldur  x10, [x29, #-0x28]
 5f 01 1f eb  cmp  x10, xzr
-21 01 00 54  b.ne  0x1664
+21 01 00 54  b.ne  0x1628
 e9 03 00 91  mov  x9, sp
 a9 83 1d f8  stur  x9, [x29, #-0x28]
-29 01 00 10  adr  x9, 0x1670
+29 01 00 10  adr  x9, 0x1634
 a9 03 1e f8  stur  x9, [x29, #-0x20]
 09 48 88 52  mov  w9, #0x4240
 e9 01 a0 72  movk  w9, #0xf, lsl #16
 e9 63 29 cb  sub  x9, sp, x9
 a9 83 1e f8  stur  x9, [x29, #-0x18]
-bc fb ff 97  bl  0x554
+cb fb ff 97  bl  0x554
 ea 13 40 f9  ldr  x10, [sp, #0x20]
 40 01 00 b9  str  w0, [x10]
 aa 83 5d f8  ldur  x10, [x29, #-0x28]
 ff 63 2a eb  cmp  sp, x10
-61 00 00 54  b.ne  0x1684
+61 00 00 54  b.ne  0x1648
 bf 83 1d f8  stur  xzr, [x29, #-0x28]
 bf 03 1e f8  stur  xzr, [x29, #-0x20]
 ff c3 00 91  add  sp, sp, #0x30
@@ -1499,21 +1484,21 @@ e2 03 00 f9  str  x2, [sp]
 e3 13 00 f9  str  x3, [sp, #0x20]
 aa 83 5d f8  ldur  x10, [x29, #-0x28]
 5f 01 1f eb  cmp  x10, xzr
-21 01 00 54  b.ne  0x1754
+21 01 00 54  b.ne  0x1718
 e9 03 00 91  mov  x9, sp
 a9 83 1d f8  stur  x9, [x29, #-0x28]
-29 01 00 10  adr  x9, 0x1760
+29 01 00 10  adr  x9, 0x1724
 a9 03 1e f8  stur  x9, [x29, #-0x20]
 09 48 88 52  mov  w9, #0x4240
 e9 01 a0 72  movk  w9, #0xf, lsl #16
 e9 63 29 cb  sub  x9, sp, x9
 a9 83 1e f8  stur  x9, [x29, #-0x18]
-9f fb ff 97  bl  0x5d0
+ae fb ff 97  bl  0x5d0
 ea 13 40 f9  ldr  x10, [sp, #0x20]
 40 01 00 b9  str  w0, [x10]
 aa 83 5d f8  ldur  x10, [x29, #-0x28]
 ff 63 2a eb  cmp  sp, x10
-61 00 00 54  b.ne  0x1774
+61 00 00 54  b.ne  0x1738
 bf 83 1d f8  stur  xzr, [x29, #-0x28]
 bf 03 1e f8  stur  xzr, [x29, #-0x20]
 ff c3 00 91  add  sp, sp, #0x30
@@ -1557,21 +1542,21 @@ e2 03 00 f9  str  x2, [sp]
 e3 13 00 f9  str  x3, [sp, #0x20]
 aa 83 5d f8  ldur  x10, [x29, #-0x28]
 5f 01 1f eb  cmp  x10, xzr
-21 01 00 54  b.ne  0x1848
+21 01 00 54  b.ne  0x180c
 e9 03 00 91  mov  x9, sp
 a9 83 1d f8  stur  x9, [x29, #-0x28]
-29 01 00 10  adr  x9, 0x1854
+29 01 00 10  adr  x9, 0x1818
 a9 03 1e f8  stur  x9, [x29, #-0x20]
 09 48 88 52  mov  w9, #0x4240
 e9 01 a0 72  movk  w9, #0xf, lsl #16
 e9 63 29 cb  sub  x9, sp, x9
 a9 83 1e f8  stur  x9, [x29, #-0x18]
-af fb ff 97  bl  0x704
+be fb ff 97  bl  0x704
 ea 13 40 f9  ldr  x10, [sp, #0x20]
 40 01 00 b9  str  w0, [x10]
 aa 83 5d f8  ldur  x10, [x29, #-0x28]
 ff 63 2a eb  cmp  sp, x10
-61 00 00 54  b.ne  0x1868
+61 00 00 54  b.ne  0x182c
 bf 83 1d f8  stur  xzr, [x29, #-0x28]
 bf 03 1e f8  stur  xzr, [x29, #-0x20]
 ff c3 00 91  add  sp, sp, #0x30
@@ -1615,20 +1600,20 @@ e2 03 00 f9  str  x2, [sp]
 e3 13 00 f9  str  x3, [sp, #0x20]
 aa 83 5d f8  ldur  x10, [x29, #-0x28]
 5f 01 1f eb  cmp  x10, xzr
-21 01 00 54  b.ne  0x193c
+21 01 00 54  b.ne  0x1900
 e9 03 00 91  mov  x9, sp
 a9 83 1d f8  stur  x9, [x29, #-0x28]
-09 01 00 10  adr  x9, 0x1944
+09 01 00 10  adr  x9, 0x1908
 a9 03 1e f8  stur  x9, [x29, #-0x20]
 09 48 88 52  mov  w9, #0x4240
 e9 01 a0 72  movk  w9, #0xf, lsl #16
 e9 63 29 cb  sub  x9, sp, x9
 a9 83 1e f8  stur  x9, [x29, #-0x18]
-90 fb ff 97  bl  0x77c
+9f fb ff 97  bl  0x77c
 ea 13 40 f9  ldr  x10, [sp, #0x20]
 aa 83 5d f8  ldur  x10, [x29, #-0x28]
 ff 63 2a eb  cmp  sp, x10
-61 00 00 54  b.ne  0x1958
+61 00 00 54  b.ne  0x191c
 bf 83 1d f8  stur  xzr, [x29, #-0x28]
 bf 03 1e f8  stur  xzr, [x29, #-0x20]
 ff c3 00 91  add  sp, sp, #0x30
@@ -1672,21 +1657,21 @@ e2 03 00 f9  str  x2, [sp]
 e3 13 00 f9  str  x3, [sp, #0x20]
 aa 83 5d f8  ldur  x10, [x29, #-0x28]
 5f 01 1f eb  cmp  x10, xzr
-21 01 00 54  b.ne  0x1a2c
+21 01 00 54  b.ne  0x19f0
 e9 03 00 91  mov  x9, sp
 a9 83 1d f8  stur  x9, [x29, #-0x28]
-29 01 00 10  adr  x9, 0x1a38
+29 01 00 10  adr  x9, 0x19fc
 a9 03 1e f8  stur  x9, [x29, #-0x20]
 09 48 88 52  mov  w9, #0x4240
 e9 01 a0 72  movk  w9, #0xf, lsl #16
 e9 63 29 cb  sub  x9, sp, x9
 a9 83 1e f8  stur  x9, [x29, #-0x18]
-79 fb ff 97  bl  0x810
+79 fb ff 97  bl  0x7d4
 ea 13 40 f9  ldr  x10, [sp, #0x20]
 40 01 00 b9  str  w0, [x10]
 aa 83 5d f8  ldur  x10, [x29, #-0x28]
 ff 63 2a eb  cmp  sp, x10
-61 00 00 54  b.ne  0x1a4c
+61 00 00 54  b.ne  0x1a10
 bf 83 1d f8  stur  xzr, [x29, #-0x28]
 bf 03 1e f8  stur  xzr, [x29, #-0x20]
 ff c3 00 91  add  sp, sp, #0x30
@@ -1730,10 +1715,10 @@ e2 03 00 f9  str  x2, [sp]
 e3 13 00 f9  str  x3, [sp, #0x20]
 aa 83 5d f8  ldur  x10, [x29, #-0x28]
 5f 01 1f eb  cmp  x10, xzr
-21 01 00 54  b.ne  0x1b18
+21 01 00 54  b.ne  0x1adc
 e9 03 00 91  mov  x9, sp
 a9 83 1d f8  stur  x9, [x29, #-0x28]
-69 01 00 10  adr  x9, 0x1b2c
+69 01 00 10  adr  x9, 0x1af0
 a9 03 1e f8  stur  x9, [x29, #-0x20]
 09 48 88 52  mov  w9, #0x4240
 e9 01 a0 72  movk  w9, #0xf, lsl #16
@@ -1741,12 +1726,12 @@ e9 63 29 cb  sub  x9, sp, x9
 a9 83 1e f8  stur  x9, [x29, #-0x18]
 73 01 40 b9  ldr  w19, [x11]
 68 09 40 b9  ldr  w8, [x11, #8]
-4c fb ff 97  bl  0x850
+4c fb ff 97  bl  0x814
 ea 13 40 f9  ldr  x10, [sp, #0x20]
 40 01 00 b9  str  w0, [x10]
 aa 83 5d f8  ldur  x10, [x29, #-0x28]
 ff 63 2a eb  cmp  sp, x10
-61 00 00 54  b.ne  0x1b40
+61 00 00 54  b.ne  0x1b04
 bf 83 1d f8  stur  xzr, [x29, #-0x28]
 bf 03 1e f8  stur  xzr, [x29, #-0x20]
 ff c3 00 91  add  sp, sp, #0x30
@@ -1790,10 +1775,10 @@ e2 03 00 f9  str  x2, [sp]
 e3 13 00 f9  str  x3, [sp, #0x20]
 aa 83 5d f8  ldur  x10, [x29, #-0x28]
 5f 01 1f eb  cmp  x10, xzr
-21 01 00 54  b.ne  0x1c14
+21 01 00 54  b.ne  0x1bd8
 e9 03 00 91  mov  x9, sp
 a9 83 1d f8  stur  x9, [x29, #-0x28]
-69 01 00 10  adr  x9, 0x1c28
+69 01 00 10  adr  x9, 0x1bec
 a9 03 1e f8  stur  x9, [x29, #-0x20]
 09 48 88 52  mov  w9, #0x4240
 e9 01 a0 72  movk  w9, #0xf, lsl #16
@@ -1801,12 +1786,12 @@ e9 63 29 cb  sub  x9, sp, x9
 a9 83 1e f8  stur  x9, [x29, #-0x18]
 73 01 40 b9  ldr  w19, [x11]
 68 09 40 b9  ldr  w8, [x11, #8]
-30 fb ff 97  bl  0x8dc
+30 fb ff 97  bl  0x8a0
 ea 13 40 f9  ldr  x10, [sp, #0x20]
 40 01 00 b9  str  w0, [x10]
 aa 83 5d f8  ldur  x10, [x29, #-0x28]
 ff 63 2a eb  cmp  sp, x10
-61 00 00 54  b.ne  0x1c3c
+61 00 00 54  b.ne  0x1c00
 bf 83 1d f8  stur  xzr, [x29, #-0x28]
 bf 03 1e f8  stur  xzr, [x29, #-0x20]
 ff c3 00 91  add  sp, sp, #0x30
@@ -1837,7 +1822,7 @@ Padding for link status table
 00 00 00 00  Total number of imported functions: 0
 
 WebAssembly Table
-38 01 00 00  Offset from here for the function body (0xFFFF'FFFF = undefined, pos: 1b70): 312
+38 01 00 00  Offset from here for the function body (0xFFFF'FFFF = undefined, pos: 1b34): 312
 00 00 00 00  Function signature index (0xFFFF'FFFF = undefined): 0
 01 00 00 00  Number of table entries: 1
 ff ff ff ff  Wrapper function offset in binary module: 4294967295
@@ -1845,8 +1830,8 @@ ff ff ff ff  Wrapper function offset in binary module: 4294967295
 
 More Info
 00 00 00 00  Size of link data: 0
-9c 1c 00 00  Offset from here for the landing pad function body (0xFFFF'FFFF = undefined, pos: 24): 7324
+60 1c 00 00  Offset from here for the landing pad function body (0xFFFF'FFFF = undefined, pos: 24): 7264
 00 00 00 00  Stacktrace records 0, debugMode: 0
 03 00 00 00  Version of this binary module: 3
-cc 1c 00 00  Module binary size (excl. this value): 7372
+90 1c 00 00  Module binary size (excl. this value): 7312
 

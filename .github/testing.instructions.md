@@ -94,6 +94,16 @@ cmake --build build_tricore --parallel
 python3 scripts/tricore_qemu_execute.py qemu-system-tricore -semihosting -display none -M tricore_tsim162 -kernel build_tricore/bin/vb_spectest_binary_standalone_0
 ```
 
+## Cross-Platform Binary Size
+
+Build the demo with the host C/C++ compilers and select the target code backend with `BACKEND`. For example, measure AArch64 output on an x86_64 host:
+
+```bash
+cmake -S . -B build_arm_demo -DCMAKE_BUILD_TYPE=Release -DVB_ENABLE_DEV_FEATURE=OFF -DENABLE_DEMO=ON -DBACKEND=aarch64
+cmake --build build_arm_demo --target vb_demo --parallel
+./build_arm_demo/bin/vb_demo wasm_examples/log.wasm
+```
+
 ## Unit Tests
 
 Unit tests are built into the `Unittests` binary under `build/tests/unittests/`.

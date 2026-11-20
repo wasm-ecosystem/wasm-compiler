@@ -819,6 +819,9 @@ constexpr OPCodeTemplate LDUR_wT_deref_xN_unscSImm9_t{0xB8400000U};
 /// @brief LDUR Xt, [Xn|SP{, simm}]: Calculates an address from a base register and an unscaled, signed immediate offset
 /// (in the range -256 to 255), loads a word from memory, zero-extends it, and writes it to a register.
 constexpr OPCodeTemplate LDUR_xT_deref_xN_unscSImm9_t{0xF8400000U};
+/// @brief LDUR Qt, [Xn|SP{, simm}]: Loads 128 bits into a SIMD register with an unscaled signed byte offset (-256 to 255).
+// coverity[autosar_cpp14_m3_4_1_violation]
+constexpr OPCodeTemplate LDUR_qT_deref_xN_unscSImm9_t{0x3CC00000U};
 /// @brief LDURB Wt, [Xn|SP{, simm}]: Calculates an address from a base register and an unscaled, signed immediate
 /// offset (in the range -256 to 255), loads a byte from memory, zero-extends it, and writes it to a register
 constexpr OPCodeTemplate LDURB_wT_deref_xN_unscSImm9_t{0x38400000U};
@@ -904,6 +907,9 @@ constexpr OPCodeTemplate STUR_wT_deref_xN_unscSImm9_t{0xB8000000U};
 /// @brief STUR Xt, [Xn|SP{, simm}]: Stores a 64-bit doubleword to memory. The address that is used for the store is
 /// calculated from a base register and an unscaled, signed immediate offset (in the range -256 to 255)
 constexpr OPCodeTemplate STUR_xT_deref_xN_unscSImm9_t{0xF8000000U};
+/// @brief STUR Qt, [Xn|SP{, simm}]: Stores 128 bits from a SIMD register with an unscaled signed byte offset (-256 to 255).
+// coverity[autosar_cpp14_m3_4_1_violation]
+constexpr OPCodeTemplate STUR_qT_deref_xN_unscSImm9_t{0x3C800000U};
 /// @brief STUR St, [Xn|SP{, simm}]: Stores a single-precision floating-point register to memory. The address that is
 /// used for the store is calculated from a base register and an unscaled, signed immediate offset (in the range -256 to
 /// 255)
@@ -916,10 +922,12 @@ constexpr OPCodeTemplate STUR_dT_deref_xN_unscSImm9_t{0xFC000000U};
 /// @brief STURB Wt, [Xn|SP{, simm}]: Stores the least significant byte of a 32-bit register to memory. The address that
 /// is used for the store is calculated from a base register and an unscaled, signed immediate offset (in the range -256
 /// to 255)
+// coverity[autosar_cpp14_m3_4_1_violation]
 constexpr OPCodeTemplate STURB_wT_deref_xN_unscSImm9_t{0x38000000U};
 /// @brief STURH Wt, [Xn|SP{, simm}]: Stores the least significant halfword of a 32-bit register to memory. The address
 /// that is used for the store is calculated from a base register and an unscaled, signed immediate offset (in the range
 /// -256 to 255)
+// coverity[autosar_cpp14_m3_4_1_violation]
 constexpr OPCodeTemplate STURH_wT_deref_xN_unscSImm9_t{0x78000000U};
 
 /// @brief STR Wt, [Xn|SP, (Wm|Xm)]: Stores a 32-bit word register to memory. The address that is used for the store is
@@ -993,6 +1001,26 @@ constexpr OPCodeTemplate LDP_dT1_dT2_deref_xN_scSImm7_t{0x6D400000U};
 /// range -512 to 504, encoded in imm7 as imm/8)
 // coverity[autosar_cpp14_m3_4_1_violation]
 constexpr OPCodeTemplate STP_dT1_dT2_deref_xN_scSImm7_t{0x6D000000U};
+
+/// @brief LDP Qt1, Qt2, [Xn|SP{, simm}]: Loads two 128-bit SIMD registers with a signed offset scaled by 16.
+// coverity[autosar_cpp14_m3_4_1_violation]
+constexpr OPCodeTemplate LDP_qT1_qT2_deref_xN_scSImm7_t{0xAD400000U};
+/// @brief STP Qt1, Qt2, [Xn|SP{, simm}]: Stores two 128-bit SIMD registers with a signed offset scaled by 16.
+// coverity[autosar_cpp14_m3_4_1_violation]
+constexpr OPCodeTemplate STP_qT1_qT2_deref_xN_scSImm7_t{0xAD000000U};
+
+/// @brief LD1 {Vt.16B-V(t+3).16B}, [Xn|SP]: Loads 64 bytes into four consecutive SIMD registers.
+// coverity[autosar_cpp14_m3_4_1_violation]
+constexpr OPCodeTemplate LD1_vT_4x16b_deref_xN_t{0x4C402000U};
+/// @brief ST1 {Vt.16B-V(t+3).16B}, [Xn|SP]: Stores 64 bytes from four consecutive SIMD registers.
+// coverity[autosar_cpp14_m3_4_1_violation]
+constexpr OPCodeTemplate ST1_vT_4x16b_deref_xN_t{0x4C002000U};
+/// @brief LD1 {Vt.16B-V(t+3).16B}, [Xn|SP], #64: Loads 64 bytes and advances the base register by 64.
+// coverity[autosar_cpp14_m3_4_1_violation]
+constexpr OPCodeTemplate LD1_vT_4x16b_deref_xN_postidx64_t{0x4CDF2000U};
+/// @brief ST1 {Vt.16B-V(t+3).16B}, [Xn|SP], #64: Stores 64 bytes and advances the base register by 64.
+// coverity[autosar_cpp14_m3_4_1_violation]
+constexpr OPCodeTemplate ST1_vT_4x16b_deref_xN_postidx64_t{0x4C9F2000U};
 
 /// @brief STP Dt1, Dt2, [Xn|SP{, imm}]: Stores two 64-bit doublewords to memory. The address that is used for the store
 /// is calculated from a base register and a scaled, signed immediate offset (multiple of 8 in the range -512 to 504,
@@ -1108,6 +1136,30 @@ inline constexpr OPCodeTemplate STR_T_deref_N_scUImm12(bool const isGPR, bool co
     return is64 ? STR_xT_deref_xN_imm12zxls3_t : STR_wT_deref_xN_imm12zxls2_t;
   }
   return is64 ? STR_dT_deref_xN_imm12zxls3_t : STR_sT_deref_xN_imm12zxls2_t;
+}
+
+///
+/// @brief Selects an unsigned integer load with an unscaled signed byte offset.
+///
+/// @param byteWidth Access width in bytes, either 1, 2, 4 or 8.
+/// @return OPCodeTemplate Resulting OPCodeTemplate
+inline constexpr OPCodeTemplate LDUR_T_deref_N_unscSImm9(uint32_t const byteWidth) VB_NOEXCEPT {
+  if (byteWidth >= 4U) {
+    return (byteWidth == 8U) ? LDUR_xT_deref_xN_unscSImm9_t : LDUR_wT_deref_xN_unscSImm9_t;
+  }
+  return (byteWidth == 2U) ? LDURH_wT_deref_xN_unscSImm9_t : LDURB_wT_deref_xN_unscSImm9_t;
+}
+
+///
+/// @brief Selects an integer store with an unscaled signed byte offset.
+///
+/// @param byteWidth Access width in bytes, either 1, 2, 4 or 8.
+/// @return OPCodeTemplate Resulting OPCodeTemplate
+inline constexpr OPCodeTemplate STUR_T_deref_N_unscSImm9(uint32_t const byteWidth) VB_NOEXCEPT {
+  if (byteWidth >= 4U) {
+    return (byteWidth == 8U) ? STUR_xT_deref_xN_unscSImm9_t : STUR_wT_deref_xN_unscSImm9_t;
+  }
+  return (byteWidth == 2U) ? STURH_wT_deref_xN_unscSImm9_t : STURB_wT_deref_xN_unscSImm9_t;
 }
 
 } // namespace aarch64

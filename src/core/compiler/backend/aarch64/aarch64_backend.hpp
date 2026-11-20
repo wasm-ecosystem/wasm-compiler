@@ -753,31 +753,71 @@ private:
   void emitV2ImportAdapterImpl(uint32_t const fncIndex);
 
   ///
-  /// @brief Emits a memcpy without a bounds check from an arbitrary absolute address to another absolute address
+  /// @brief Fixed physical SIMD tail sizes for constant-size memory copies
+  enum class MemcpySimdRegCount : uint32_t {
+    FOUR = 4U, ///< Registers F27-F30
+    EIGHT = 8U ///< Registers F23-F30
+  };
+
+  ///
+  /// @brief Checks the fixed physical SIMD tail without allocating or spilling registers
+  ///
+  /// @param registerCount Check four registers F27-F30 or eight registers F23-F30
+  /// @param protRegs Registers that must not be overwritten
+  /// @return First register of the free tail, or NONE if the tail is unsuitable
+  REG getFreeMemcpySimdTail(MemcpySimdRegCount const registerCount, RegMask const protRegs) const VB_NOEXCEPT;
+
+  ///
+  /// @brief Emits a memcpy without a bounds check from an arbitrary absolute address to another absolute address.
+  /// With the ConstSize version, overlaps are always a possibility.
   ///
   /// @param dstReg GPR holding the absolute destination address (will be written to)
   /// @param srcReg GPR holding the absolute source address (will be written to)
-  /// @param sizeReg GPR holding the number of bytes to copy (will be written to)
   /// @param sizeToCopy Number of bytes to copy
   /// @param gpScratchReg GPR scratch register (will be written to)
-  /// @param floatScratchReg First FPR scratch register (will be written to)
-  /// @param floatScratchReg2 Second FPR scratch register (will be written to)
-  void emitMemcpyWithConstSizeNoBoundsCheck(REG const dstReg, REG const srcReg, REG const sizeReg, uint32_t const sizeToCopy, REG const gpScratchReg,
-                                            REG const floatScratchReg, REG const floatScratchReg2) const;
+  /// @param regAllocTracker A tracker to track the protected register mask which prevents the registers which
+  /// correspond to the set bits in the mask from being modified
+  //
+  void memcpyWithConstSize(REG const dstReg, REG const srcReg, uint32_t const sizeToCopy, REG const gpScratchReg,
+                           RegAllocTracker &regAllocTracker) const;
   ///
-  /// @brief Emits a memcpy without a bounds check from an arbitrary absolute address to another absolute address
+  /// @brief Emits the overlap-safe constant-size fallback between absolute addresses without bounds checks
+  ///
+  /// @param dstReg GPR holding the absolute destination address (will be written to)
+  /// @param srcReg GPR holding the absolute source address (will be written to)
+  /// @param sizeToCopy Number of bytes to copy
+  /// @param gpScratchReg GPR scratch register (will be written to)
+  /// @param regAllocTracker A tracker to track the protected register mask which prevents the registers which
+  /// correspond to the set bits in the mask from being modified
+  void memcpyWithConstSizeFallback(REG const dstReg, REG const srcReg, uint32_t const sizeToCopy, REG const gpScratchReg,
+                                   RegAllocTracker &regAllocTracker) const;
+  ///
+  /// @brief Emits an overlap-safe SIMD copy of 16-128 constant bytes between absolute addresses without bounds checks
+  ///
+  /// Uses two four-register groups for 128 bytes and one for 64-127 bytes; Q pairs/singles handle the rest.
+  /// All source loads are emitted before any destination store.
+  /// @param dstReg GPR holding the absolute destination address (will be written to)
+  /// @param srcReg GPR holding the absolute source address (will be written to)
+  /// @param sizeToCopy Number of bytes to copy
+  /// @param floatScratchRegHead F27 for 16-64 bytes or F23 for 65-128 bytes, after rounding the tail size up to four or eight registers.
+  /// The caller must verify that the entire tail is scratch-allocable, has no live stack references and is unprotected
+  void memcpyWithConstSizeSimdQuickPath(REG const dstReg, REG const srcReg, uint32_t const sizeToCopy, REG const floatScratchRegHead) const;
+
+  ///
+  /// @brief Emits a memcpy without a bounds check from an arbitrary absolute address to another absolute address.
+  /// Non-ConstSize version, includes @p canOverlap parameter; size value has already been lifted into @p sizeReg .
   ///
   /// @param dstReg GPR holding the absolute destination address (will be written to)
   /// @param srcReg GPR holding the absolute source address (will be written to)
   /// @param sizeReg GPR holding the number of bytes to copy (will be written to)
   /// @param gpScratchReg GPR scratch register (will be written to)
-  /// @param floatScratchReg First FPR scratch register (will be written to)
-  /// @param floatScratchReg2 Second FPR scratch register (will be written to)
+  /// @param regAllocTracker A tracker to track the protected register mask which prevents the registers which
+  /// correspond to the set bits in the mask from being modified
   /// @param canOverlap Whether the implementation should have a check for potentially overlapping regions. Set to true
   /// if there is a theoretical chance the regions can overlap. Undefined behavior otherwise. (Setting this to false
   /// makes it equivalent to memcpy, otherwise this is equivalent to memmove)
-  void emitMemcpyNoBoundsCheck(REG const dstReg, REG const srcReg, REG const sizeReg, REG const gpScratchReg, REG const floatScratchReg,
-                               REG const floatScratchReg2, bool const canOverlap) const;
+  void emitMemcpyWithSizeReg(REG const dstReg, REG const srcReg, REG const sizeReg, REG const gpScratchReg, RegAllocTracker &regAllocTracker,
+                             bool const canOverlap) const;
 
   ///
   /// @brief Get the width in bytes of all the parameters that are passed on the stack for a function with a
