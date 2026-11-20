@@ -164,13 +164,19 @@ void Assembler::probeStack(uint32_t const delta, REG const scratchReg1, REG cons
   assert(scratchReg1 != REG::NONE && scratchReg2 != REG::NONE && "Scratch register needed");
 
   constexpr uint32_t osPageSize{1_U32 << 12_U32};
-  if (delta < osPageSize) {
+  uint32_t const numPages{delta / osPageSize};
+  if (numPages == 0U) {
     return;
   }
 
+  // A single page needs only the probe; multiple pages also need a counter and loop.
+  bool const needsLoop{numPages > 1U};
+
   // Move SP to scratchReg1
   INSTR(MOV_r64_rm64).setR(scratchReg1).setR4RM(REG::SP)();
-  INSTR(MOV_rm64_imm32sx).setR4RM(scratchReg2).setImm32(delta)();
+  if (needsLoop) {
+    INSTR(MOV_rm64_imm32sx).setR4RM(scratchReg2).setImm32(numPages)();
+  }
 
 #ifdef VB_WIN32
   uint32_t const branchTargetOffset = binary_.size();
@@ -179,8 +185,10 @@ void Assembler::probeStack(uint32_t const delta, REG const scratchReg1, REG cons
   // Probe the position and discard the result
   INSTR(TEST_rm64_r64_t).setM4RM(scratchReg1, 0).setR(scratchReg1)();
 
-  INSTR(SUB_rm64_imm32sx).setR4RM(scratchReg2).setImm32(osPageSize)();
-  prepareJMP(true, CC::A).linkToBinaryPos(branchTargetOffset);
+  if (needsLoop) {
+    INSTR(SUB_rm64_imm32sx).setR4RM(scratchReg2).setImm32(1U)();
+    prepareJMP(true, CC::A).linkToBinaryPos(branchTargetOffset);
+  }
 #else
   uint32_t const branchTargetOffset{binary_.size()};
   INSTR(SUB_rm64_imm32sx).setR4RM(REG::SP).setImm32(osPageSize)();
@@ -188,8 +196,10 @@ void Assembler::probeStack(uint32_t const delta, REG const scratchReg1, REG cons
   // Probe the position and discard the result
   INSTR(TEST_rm64_r64_t).setM4RM(REG::SP, 0).setR(REG::SP)();
 
-  INSTR(SUB_rm64_imm32sx).setR4RM(scratchReg2).setImm32(osPageSize)();
-  prepareJMP(true, CC::A).linkToBinaryPos(branchTargetOffset);
+  if (needsLoop) {
+    INSTR(SUB_rm64_imm32sx).setR4RM(scratchReg2).setImm32(1U)();
+    prepareJMP(true, CC::A).linkToBinaryPos(branchTargetOffset);
+  }
 
   // Restore the stack pointer
   INSTR(MOV_r64_rm64).setR(REG::SP).setR4RM(scratchReg1)();

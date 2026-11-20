@@ -76,17 +76,14 @@ c3  ret
 9d 01 00 00  Size of the function body: 413
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 4c 8b ec  mov  r13, rsp
-49 c7 c6 58 10 00 00  mov  r14, 0x1058
 48 81 ec 00 10 00 00  sub  rsp, 0x1000
 48 85 24 24  test  qword ptr [rsp], rsp
-49 81 ee 00 10 00 00  sub  r14, 0x1000
-77 ec  ja  0x1ca
 49 8b e5  mov  rsp, r13
 48 8d a4 24 a8 ef ff ff  lea  rsp, [rsp - 0x1058]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0x1f8
+74 09  je  0x1e8
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 0e fe ff ff  jmp  6
+e9 1e fe ff ff  jmp  6
 bd 01 00 00 00  mov  ebp, 1
 bf 02 00 00 00  mov  edi, 2
 8b c5  mov  eax, ebp
@@ -96,7 +93,7 @@ bf 02 00 00 00  mov  edi, 2
 48 8d a4 24 58 10 00 00  lea  rsp, [rsp + 0x1058]
 c3  ret  
 00 00  add  byte ptr [rax], al
-60 00 00 00  Size of the function body: 96
+50 00 00 00  Size of the function body: 80
 
 Initial Linear Memory Data
 00 00 00 00  Number of data segments: 0
@@ -138,17 +135,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x2a9
+75 1b  jne  0x299
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 12 ff ff ff  call  0x1c0
+e8 22 ff ff ff  call  0x1c0
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x2cc
+75 10  jne  0x2bc
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -180,8 +177,8 @@ WebAssembly Table
 
 More Info
 00 00 00 00  Size of link data: 0
-28 03 00 00  Offset from here for the landing pad function body (0xFFFF'FFFF = undefined, pos: 1c): 808
+18 03 00 00  Offset from here for the landing pad function body (0xFFFF'FFFF = undefined, pos: 1c): 792
 00 00 00 00  Stacktrace records 0, debugMode: 0
 03 00 00 00  Version of this binary module: 3
-50 03 00 00  Module binary size (excl. this value): 848
+40 03 00 00  Module binary size (excl. this value): 832
 

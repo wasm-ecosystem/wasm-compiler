@@ -339,13 +339,19 @@ void Assembler::probeStack(uint32_t const delta, REG const scratchReg1, REG cons
 
   // Smallest possible page size on AArch64
   constexpr uint32_t osPageSize{1_U32 << 12_U32};
-  if (delta < osPageSize) {
+  uint32_t const numPages{delta / osPageSize};
+  if (numPages == 0U) {
     return;
   }
 
+  // A single page needs only the probe; multiple pages also need a counter and loop.
+  bool const needsLoop{numPages > 1U};
+
   // Move SP to scratchReg1
   movSPToReg(scratchReg1);
-  MOVimm64(scratchReg2, static_cast<uint64_t>(delta));
+  if (needsLoop) {
+    MOVimm64(scratchReg2, static_cast<uint64_t>(numPages));
+  }
 
 #ifdef VB_WIN32
   uint32_t const branchTargetOffset = binary_.size();
@@ -354,8 +360,10 @@ void Assembler::probeStack(uint32_t const delta, REG const scratchReg1, REG cons
   // Probe the position and discard the result
   INSTR(LDR_xT_deref_xN_imm12zxls3_t).setT(REG::ZR).setN(scratchReg1).setImm12zxls3(SafeUInt<15U>::fromConst<0U>())();
 
-  INSTR(SUBS_xD_xN_imm12zxols12).setD(scratchReg2).setN(scratchReg2).setImm12zxls12(SafeUInt<24U>::fromConst<osPageSize>())();
-  prepareJMP(CC::GT).linkToBinaryPos(branchTargetOffset);
+  if (needsLoop) {
+    INSTR(SUBS_xD_xN_imm12zxols12).setD(scratchReg2).setN(scratchReg2).setImm12zx(SafeUInt<12U>::fromConst<1U>())();
+    prepareJMP(CC::GT).linkToBinaryPos(branchTargetOffset);
+  }
 #else
   uint32_t const branchTargetOffset{binary_.size()};
   INSTR(SUB_xD_xN_imm12zxols12).setD(REG::SP).setN(REG::SP).setImm12zxls12(SafeUInt<24U>::fromConst<osPageSize>())();
@@ -363,8 +371,10 @@ void Assembler::probeStack(uint32_t const delta, REG const scratchReg1, REG cons
   // Probe the position and discard the result
   INSTR(LDR_xT_deref_xN_imm12zxls3_t).setT(REG::ZR).setN(REG::SP).setImm12zxls3(SafeUInt<15U>::fromConst<0>())();
 
-  INSTR(SUBS_xD_xN_imm12zxols12).setD(scratchReg2).setN(scratchReg2).setImm12zxls12(SafeUInt<24U>::fromConst<osPageSize>())();
-  prepareJMP(CC::GT).linkToBinaryPos(branchTargetOffset);
+  if (needsLoop) {
+    INSTR(SUBS_xD_xN_imm12zxols12).setD(scratchReg2).setN(scratchReg2).setImm12zx(SafeUInt<12U>::fromConst<1U>())();
+    prepareJMP(CC::GT).linkToBinaryPos(branchTargetOffset);
+  }
 
   // Restore the stack pointer
   movRegToSP(scratchReg1);
