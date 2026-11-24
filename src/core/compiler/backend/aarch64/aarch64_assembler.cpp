@@ -150,6 +150,24 @@ Instruction Assembler::INSTR(OPCodeTemplate const opcode) const VB_NOEXCEPT {
   return Instruction(opcode, binary_);
 }
 
+void Assembler::LDUR_T_deref_N_unscSImm9(uint32_t const byteWidth, REG const targetReg, REG const baseReg, SafeInt<9U> const byteOffset) const {
+  assert(((byteWidth == 1U) || (byteWidth == 2U) || (byteWidth == 4U) || (byteWidth == 8U)) && "Invalid load width");
+  OPCodeTemplate const instr{(byteWidth == 8U)   ? LDUR_xT_deref_xN_unscSImm9_t
+                             : (byteWidth == 4U) ? LDUR_wT_deref_xN_unscSImm9_t
+                             : (byteWidth == 2U) ? LDURH_wT_deref_xN_unscSImm9_t
+                                                 : LDURB_wT_deref_xN_unscSImm9_t};
+  INSTR(instr).setT(targetReg).setN(baseReg).setUnscSImm9(byteOffset)();
+}
+
+void Assembler::STUR_T_deref_N_unscSImm9(uint32_t const byteWidth, REG const sourceReg, REG const baseReg, SafeInt<9U> const byteOffset) const {
+  assert(((byteWidth == 1U) || (byteWidth == 2U) || (byteWidth == 4U) || (byteWidth == 8U)) && "Invalid store width");
+  OPCodeTemplate const instr{(byteWidth == 8U)   ? STUR_xT_deref_xN_unscSImm9_t
+                             : (byteWidth == 4U) ? STUR_wT_deref_xN_unscSImm9_t
+                             : (byteWidth == 2U) ? STURH_wT_deref_xN_unscSImm9_t
+                                                 : STURB_wT_deref_xN_unscSImm9_t};
+  INSTR(instr).setT(sourceReg).setN(baseReg).setUnscSImm9(byteOffset)();
+}
+
 Instruction Assembler::INSTR(AbstrInstr const abstrInstr) const VB_NOEXCEPT {
 #if ENABLE_EXTENSIONS
   if (backend_.compiler_.getDwarfGenerator() != nullptr) {

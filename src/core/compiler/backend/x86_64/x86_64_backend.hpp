@@ -669,15 +669,35 @@ private:
   void emitMemcpyNoBoundsCheck(REG const dstReg, REG const srcReg, REG const sizeReg, REG const gpScratchReg, bool const canOverlap) const;
 
   ///
-  /// @brief Emits a memcpy without a bounds check from an arbitrary absolute address to another absolute address with constant size
+  /// @brief Dispatch constant copies to scalar, SSE2 or fallback paths
+  ///
+  /// @param dstReg GPR holding the absolute destination address
+  /// @param srcReg GPR holding the absolute source address
+  /// @param sizeToCopy Number of bytes to copy
+  /// @param gpScratchReg GPR scratch register reused from the bounds check
+  /// @param regAllocTracker Registers protected during the copy
+  void memcpyWithConstSize(REG const dstReg, REG const srcReg, uint32_t const sizeToCopy, REG const gpScratchReg,
+                           RegAllocTracker &regAllocTracker) const;
+
+  ///
+  /// @brief Emit bounded 16-byte SSE2 accesses, with all source loads preceding destination stores
+  ///
+  /// @param dstReg GPR holding the absolute destination address
+  /// @param srcReg GPR holding the absolute source address
+  /// @param sizeToCopy Number of bytes to copy, between 16 and 128
+  /// @param floatScratchRegs Free XMM registers allocated before any source load
+  void memcpyWithConstSizeSimdQuickPath(REG const dstReg, REG const srcReg, uint32_t const sizeToCopy, Span<REG const> const &floatScratchRegs) const;
+
+  ///
+  /// @brief Emit the constant-size fallback, allocating its length register only when needed
   ///
   /// @param dstReg GPR holding the absolute destination address (will be written to)
   /// @param srcReg GPR holding the absolute source address (will be written to)
-  /// @param sizeReg GPR holding the number of bytes to copy (will be written to)
-  /// @param sizeToCopy the number of bytes to copy
+  /// @param sizeToCopy Number of bytes to copy, at least 16
   /// @param gpScratchReg GPR scratch register (will be written to)
-  void emitMemcpyWithConstSizeNoBoundsCheck(REG const dstReg, REG const srcReg, REG const sizeReg, uint32_t const sizeToCopy,
-                                            REG const gpScratchReg) const;
+  /// @param regAllocTracker Registers protected during the copy
+  void memcpyWithConstSizeFallback(REG const dstReg, REG const srcReg, uint32_t const sizeToCopy, REG const gpScratchReg,
+                                   RegAllocTracker &regAllocTracker) const;
 
   ///
   /// @brief Get the width in bytes of all the parameters that are passed on the stack for a function with a

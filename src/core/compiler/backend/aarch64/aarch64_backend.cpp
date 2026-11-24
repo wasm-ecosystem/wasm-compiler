@@ -2852,16 +2852,15 @@ void Backend::memcpyWithConstSize(REG const dstReg, REG const srcReg, uint32_t c
     uint32_t const accessSize{(sizeToCopy >= 8U) ? 8_U32 : ((sizeToCopy >= 4U) ? 4_U32 : ((sizeToCopy >= 2U) ? 2_U32 : 1_U32))};
     REG const gpScratchReg2{common_.reqScratchRegProt(MachineType::I64, regAllocTracker, false).reg};
 
-    OPCodeTemplate const loadOpcode{LDUR_T_deref_N_unscSImm9(accessSize)};
-    OPCodeTemplate const storeOpcode{STUR_T_deref_N_unscSImm9(accessSize)};
-    SafeInt<9U> const tailOffset{SafeInt<9U>::fromUnsafe(static_cast<int32_t>(sizeToCopy) - static_cast<int32_t>(accessSize))};
-    as_.INSTR(loadOpcode).setT(gpScratchReg).setN(srcReg).setUnscSImm9(SafeInt<9U>::fromConst<0>())();
+    SignedInRangeCheck<9U> const tailOffsetCheck{SignedInRangeCheck<9U>::check(static_cast<int32_t>(sizeToCopy) - static_cast<int32_t>(accessSize))};
+    assert(tailOffsetCheck.inRange());
+    as_.LDUR_T_deref_N_unscSImm9(accessSize, gpScratchReg, srcReg, SafeInt<9U>::fromConst<0>());
     if (sizeToCopy > accessSize) {
-      as_.INSTR(loadOpcode).setT(gpScratchReg2).setN(srcReg).setUnscSImm9(tailOffset)();
+      as_.LDUR_T_deref_N_unscSImm9(accessSize, gpScratchReg2, srcReg, tailOffsetCheck.safeInt());
     }
-    as_.INSTR(storeOpcode).setT(gpScratchReg).setN(dstReg).setUnscSImm9(SafeInt<9U>::fromConst<0>())();
+    as_.STUR_T_deref_N_unscSImm9(accessSize, gpScratchReg, dstReg, SafeInt<9U>::fromConst<0>());
     if (sizeToCopy > accessSize) {
-      as_.INSTR(storeOpcode).setT(gpScratchReg2).setN(dstReg).setUnscSImm9(tailOffset)();
+      as_.STUR_T_deref_N_unscSImm9(accessSize, gpScratchReg2, dstReg, tailOffsetCheck.safeInt());
     }
     return;
   }
@@ -2899,9 +2898,9 @@ void Backend::emitMemcpyWithSizeReg(REG const dstReg, REG const srcReg, REG cons
   as_.INSTR(SUBS_wD_wN_imm12zxols12)
       .setD(sizeReg)
       .setN(sizeReg)
-      .setImm12zx(SafeUInt<12U>::fromConst<16U>())(); // Temporarily subtract so we can efficiently compare to 0 (optimization)
+      .setImm12zx(SafeUInt<12U>::fromConst<16U>())(); // Pre-subtract 16 to avoid a separate comparison (optimization).
   // Check if (remaining) size is at least 16
-  RelPatchObj const lessThan16Forward{as_.prepareJMP(CC::MI)}; // Jump back if positive or zero, 16 are remaining anyway (optimization)
+  RelPatchObj const lessThan16Forward{as_.prepareJMP(CC::LO)};
   // Copy 16 bytes
   uint32_t const copy16Forward{output_.size()};
   // TODO(SIMD): Do once SIMD is implemented and use LDP/STP for 16-byte SIMD registers (Copy 32 bytes in one
@@ -2917,7 +2916,7 @@ void Backend::emitMemcpyWithSizeReg(REG const dstReg, REG const srcReg, REG cons
       .setT2(floatScratchReg2)
       .setN(dstReg)
       .setSImm7ls3(SafeInt<10>::fromConst<16>())();
-  as_.prepareJMP(CC::PL).linkToBinaryPos(copy16Forward); // Jump back if positive or zero, 16 are remaining anyway (optimization)
+  as_.prepareJMP(CC::HS).linkToBinaryPos(copy16Forward); // Jump back if no borrow; at least 16 bytes remain (optimization).
   lessThan16Forward.linkToHere();
   as_.INSTR(ADD_wD_wN_imm12zxols12).setD(sizeReg).setN(sizeReg).setImm12zx(SafeUInt<12U>::fromConst<16U>())(); // Add again (optimization)
   // Check if (remaining) size is at least 1
@@ -2938,9 +2937,8 @@ void Backend::emitMemcpyWithSizeReg(REG const dstReg, REG const srcReg, REG cons
     as_.INSTR(SUBS_wD_wN_imm12zxols12)
         .setD(sizeReg)
         .setN(sizeReg)
-        .setImm12zx(SafeUInt<12U>::fromConst<16U>())(); // Temporarily subtract so we can efficiently compare to 0
-                                                        // (optimization)
-    RelPatchObj const lessThan16InReverse{as_.prepareJMP(CC::MI)};
+        .setImm12zx(SafeUInt<12U>::fromConst<16U>())(); // Pre-subtract 16 to avoid a separate comparison (optimization).
+    RelPatchObj const lessThan16InReverse{as_.prepareJMP(CC::LO)};
     // Copy 16 bytes
     uint32_t const copy16InReverse{output_.size()};
     as_.INSTR(LDP_dT1_dT2_deref_xN_scSImm7_preidx_t)
@@ -2954,7 +2952,7 @@ void Backend::emitMemcpyWithSizeReg(REG const dstReg, REG const srcReg, REG cons
         .setT2(floatScratchReg2)
         .setN(dstReg)
         .setSImm7ls3(SafeInt<10>::fromConst<-16>())();
-    as_.prepareJMP(CC::PL).linkToBinaryPos(copy16InReverse); // Jump back if positive or zero, 16 are remaining anyway (optimization)
+    as_.prepareJMP(CC::HS).linkToBinaryPos(copy16InReverse); // Jump back if no borrow; at least 16 bytes remain (optimization).
     lessThan16InReverse.linkToHere();
     as_.INSTR(ADD_wD_wN_imm12zxols12)
         .setD(sizeReg)
@@ -3663,21 +3661,18 @@ void Backend::emitMemoryLoadProbe(vb::OPCode const opcode, Aarch64MemoryAddrImmT
 
 void Backend::executeLinearMemoryCopy(Stack::iterator const dst, Stack::iterator const src, Stack::iterator const size) {
   // Memory Copy: ARM (AArch64) Implementation
-  // Entry Dispatch: bounds handling and absolute-address setup, then dispatch:
-  // if size storage is StorageType::CONSTANT:
-  //   memcpyWithConstSize(size)
-  // else:
-  //   emitMemcpyWithSizeReg(sizeRegister, canOverlap = true)
+  // Encodable constant sizes use memcpyWithConstSize; other sizes use a GPR.
   RegAllocTracker regAllocTracker{};
   regAllocTracker.futureLifts = mask(src.unwrap()) | mask(dst.unwrap());
   // get size value before lift to reg if size is compile-time constant
   uint32_t sizeValue{0U};
-  bool const sizeIsConstant{moduleInfo_.getStorage(*size).type == StorageType::CONSTANT};
-  if (sizeIsConstant) {
+  bool sizeCanUseConstPath{moduleInfo_.getStorage(*size).type == StorageType::CONSTANT};
+  if (sizeCanUseConstPath) {
     sizeValue = size->data.constUnion.u32;
+    sizeCanUseConstPath = UnsignedInRangeCheck<24U>::check(sizeValue).inRange();
   }
 
-  REG const sizeReg{sizeIsConstant ? REG::NONE : common_.liftToRegInPlaceProt(*size, true, regAllocTracker).reg};
+  REG const sizeReg{sizeCanUseConstPath ? REG::NONE : common_.liftToRegInPlaceProt(*size, true, regAllocTracker).reg};
   REG const srcReg{common_.liftToRegInPlaceProt(*src, true, regAllocTracker).reg};
   REG const dstReg{common_.liftToRegInPlaceProt(*dst, true, regAllocTracker).reg};
   REG const gpScratchReg{common_.reqScratchRegProt(MachineType::I64, regAllocTracker, false).reg};
@@ -3689,7 +3684,7 @@ void Backend::executeLinearMemoryCopy(Stack::iterator const dst, Stack::iterator
 #if LINEAR_MEMORY_BOUNDS_CHECKS
   as_.INSTR(CMP_wN_wM).setN(srcReg).setM(dstReg)();
   as_.INSTR(CSELcondh_wD_wN_wM_t).setCond(false, CC::HI).setD(gpScratchReg).setN(srcReg).setM(dstReg)();
-  if (sizeIsConstant) {
+  if (sizeCanUseConstPath) {
     as_.addImm24ToReg(gpScratchReg, static_cast<int32_t>(sizeValue), true);
   } else {
     as_.INSTR(ADD_xD_xN_xMolsImm6).setD(gpScratchReg).setN(gpScratchReg).setM(sizeReg)();
@@ -3705,7 +3700,7 @@ void Backend::executeLinearMemoryCopy(Stack::iterator const dst, Stack::iterator
 
   as_.INSTR(CMP_xN_xM).setN(srcReg).setM(dstReg)();
   as_.INSTR(CSELcondh_xD_xN_xM_t).setCond(false, CC::HI).setD(gpScratchReg).setN(srcReg).setM(dstReg)();
-  if (sizeIsConstant) {
+  if (sizeCanUseConstPath) {
     as_.addImm24ToReg(gpScratchReg, static_cast<int32_t>(sizeValue), true);
   } else {
     as_.INSTR(ADD_xD_xN_xMolsImm6).setD(gpScratchReg).setN(gpScratchReg).setM(sizeReg)();
@@ -3714,7 +3709,7 @@ void Backend::executeLinearMemoryCopy(Stack::iterator const dst, Stack::iterator
   as_.INSTR(LDRB_wT_deref_xN_unscSImm9_preidx).setT(REG::ZR).setN(gpScratchReg).setUnscSImm9(SafeInt<9U>::fromConst<-1>())();
 #endif
 
-  if (sizeIsConstant) {
+  if (sizeCanUseConstPath) {
     memcpyWithConstSize(dstReg, srcReg, sizeValue, gpScratchReg, regAllocTracker);
   } else {
     emitMemcpyWithSizeReg(dstReg, srcReg, sizeReg, gpScratchReg, regAllocTracker, true);

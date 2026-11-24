@@ -1138,30 +1138,6 @@ inline constexpr OPCodeTemplate STR_T_deref_N_scUImm12(bool const isGPR, bool co
   return is64 ? STR_dT_deref_xN_imm12zxls3_t : STR_sT_deref_xN_imm12zxls2_t;
 }
 
-///
-/// @brief Selects an unsigned integer load with an unscaled signed byte offset.
-///
-/// @param byteWidth Access width in bytes, either 1, 2, 4 or 8.
-/// @return OPCodeTemplate Resulting OPCodeTemplate
-inline constexpr OPCodeTemplate LDUR_T_deref_N_unscSImm9(uint32_t const byteWidth) VB_NOEXCEPT {
-  if (byteWidth >= 4U) {
-    return (byteWidth == 8U) ? LDUR_xT_deref_xN_unscSImm9_t : LDUR_wT_deref_xN_unscSImm9_t;
-  }
-  return (byteWidth == 2U) ? LDURH_wT_deref_xN_unscSImm9_t : LDURB_wT_deref_xN_unscSImm9_t;
-}
-
-///
-/// @brief Selects an integer store with an unscaled signed byte offset.
-///
-/// @param byteWidth Access width in bytes, either 1, 2, 4 or 8.
-/// @return OPCodeTemplate Resulting OPCodeTemplate
-inline constexpr OPCodeTemplate STUR_T_deref_N_unscSImm9(uint32_t const byteWidth) VB_NOEXCEPT {
-  if (byteWidth >= 4U) {
-    return (byteWidth == 8U) ? STUR_xT_deref_xN_unscSImm9_t : STUR_wT_deref_xN_unscSImm9_t;
-  }
-  return (byteWidth == 2U) ? STURH_wT_deref_xN_unscSImm9_t : STURB_wT_deref_xN_unscSImm9_t;
-}
-
 } // namespace aarch64
 } // namespace vb
 

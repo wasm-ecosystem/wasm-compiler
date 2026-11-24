@@ -287,4 +287,35 @@
     ;; AARCH64: ret
     memory.copy
   )
+
+  ;; CHECK-LABEL: Function[15] Body
+  (func (param i32 i32 i32)
+    ;; AARCH64: subs  [[SIZE:w[0-9]+]], [[SIZE]], #0x10
+    ;; AARCH64-NEXT: b.lo
+    ;; AARCH64: subs  [[SIZE]], [[SIZE]], #0x10
+    ;; AARCH64-NEXT: stp
+    ;; AARCH64-NEXT: b.hs
+    ;; AARCH64: subs  [[SIZE]], [[SIZE]], #0x10
+    ;; AARCH64-NEXT: b.lo
+    ;; AARCH64: subs  [[SIZE]], [[SIZE]], #0x10
+    ;; AARCH64-NEXT: stp
+    ;; AARCH64-NEXT: b.hs
+    (memory.copy (local.get 0) (local.get 1) (local.get 2))
+  )
+
+  ;; CHECK-LABEL: Function[16] Body
+  (func (param i32 i32)
+    ;; AARCH64: add  {{x[0-9]+}}, {{x[0-9]+}}, #0xfff
+    ;; AARCH64-NEXT: add  {{x[0-9]+}}, {{x[0-9]+}}, #0xfff, lsl #12
+    (memory.copy (local.get 0) (local.get 1) (i32.const 0xffffff))
+  )
+
+  ;; CHECK-LABEL: Function[17] Body
+  (func (param i32 i32)
+    ;; AARCH64: mov  {{w[0-9]+}}, #0x1000000
+    ;; AARCH64: add  {{x[0-9]+}}, {{x[0-9]+}}, {{x[0-9]+}}
+    ;; AARCH64: subs  [[BIGSIZE:w[0-9]+]], [[BIGSIZE]], #0x10
+    ;; AARCH64-NEXT: b.lo
+    (memory.copy (local.get 0) (local.get 1) (i32.const 0x1000000))
+  )
 )

@@ -60,6 +60,7 @@
 #include "src/core/compiler/common/ParallelMoveResolver.hpp"
 #include "src/core/compiler/common/ParamPos.hpp"
 #include "src/core/compiler/common/RegMask.hpp"
+#include "src/core/compiler/common/SafeInt.hpp"
 #include "src/core/compiler/common/Stack.hpp"
 #include "src/core/compiler/common/StackElement.hpp"
 #include "src/core/compiler/common/StackType.hpp"
@@ -2164,8 +2165,86 @@ void Backend::execBuiltinFncCall(BuiltinFunction const builtinFunction) {
 }
 #endif
 
-void Backend::emitMemcpyWithConstSizeNoBoundsCheck(REG const dstReg, REG const srcReg, REG const sizeReg, uint32_t const sizeToCopy,
-                                                   REG const gpScratchReg) const {
+void Backend::memcpyWithConstSize(REG const dstReg, REG const srcReg, uint32_t const sizeToCopy, REG const gpScratchReg,
+                                  RegAllocTracker &regAllocTracker) const {
+  // Constant Size: bounds have already been checked.
+  // size == 0: return; size < 16: scalar head/tail copy.
+  // size <= 128: use 4 free XMMs for 16-64 bytes, or 8 for 65-128 bytes.
+  // Larger sizes or insufficient free XMMs use the constant-size fallback.
+  if (sizeToCopy == 0U) {
+    return;
+  }
+  // Preload both payloads before storing.
+  if (sizeToCopy < 16U) {
+    uint32_t const accessSize{(sizeToCopy >= 8U) ? 8_U32 : ((sizeToCopy >= 4U) ? 4_U32 : ((sizeToCopy >= 2U) ? 2_U32 : 1_U32))};
+    OPCodeTemplate const loadOpCode{(accessSize == 8U)
+                                        ? MOV_r64_rm64.opTemplate
+                                        : ((accessSize == 4U) ? MOV_r32_rm32.opTemplate : ((accessSize == 2U) ? MOVZX_r32_rm16_t : MOVZX_r32_rm8_t))};
+    OPCodeTemplate const storeOpCode{(accessSize == 8U)
+                                         ? MOV_rm64_r64.opTemplate
+                                         : ((accessSize == 4U) ? MOV_rm32_r32.opTemplate : ((accessSize == 2U) ? MOV_rm16_r16_t : MOV_rm8_r8_t))};
+    REG const gpScratchReg2{(sizeToCopy > accessSize) ? common_.reqScratchRegProt(MachineType::I64, regAllocTracker, false).reg : REG::NONE};
+    int32_t const tailOffset{static_cast<int32_t>(sizeToCopy) - static_cast<int32_t>(accessSize)};
+    as_.INSTR(loadOpCode).setR(gpScratchReg).setM4RM(srcReg, 0)();
+    if (sizeToCopy > accessSize) {
+      as_.INSTR(loadOpCode).setR(gpScratchReg2).setM4RM(srcReg, tailOffset)();
+    }
+    as_.INSTR(storeOpCode).setM4RM(dstReg, 0).setR(gpScratchReg)();
+    if (sizeToCopy > accessSize) {
+      as_.INSTR(storeOpCode).setM4RM(dstReg, tailOffset).setR(gpScratchReg2)();
+    }
+    return;
+  }
+  if (sizeToCopy <= 128U) {
+    // Collect arbitrary free XMMs without spilling.
+    uint32_t const registerCount{(sizeToCopy <= 64U) ? 4_U32 : 8_U32};
+    RegMask const protectedRegs{regAllocTracker.readWriteFutureLiftMask()};
+    RegMask floatScratchRegsMask{regAllocTracker.writeProtRegs};
+    std::array<REG, 8U> floatScratchRegs{};
+    uint32_t freeRegisterCount{0U};
+    for (uint32_t regPos{moduleInfo_.getNumStaticallyAllocatedFPRs()}; regPos < WasmABI::fpr.size(); ++regPos) {
+      REG const reg{WasmABI::fpr[regPos]};
+      if (!protectedRegs.contains(reg) && moduleInfo_.getReferenceToLastOccurrenceOnStack(reg).isEmpty()) {
+        floatScratchRegs[freeRegisterCount] = reg;
+        floatScratchRegsMask.mask(mask(reg, true));
+        ++freeRegisterCount;
+        if (freeRegisterCount == registerCount) {
+          regAllocTracker.writeProtRegs = floatScratchRegsMask;
+          memcpyWithConstSizeSimdQuickPath(dstReg, srcReg, sizeToCopy, Span<REG const>{floatScratchRegs.data(), registerCount});
+          return;
+        }
+      }
+    }
+  }
+  memcpyWithConstSizeFallback(dstReg, srcReg, sizeToCopy, gpScratchReg, regAllocTracker);
+}
+
+void Backend::memcpyWithConstSizeSimdQuickPath(REG const dstReg, REG const srcReg, uint32_t const sizeToCopy,
+                                               Span<REG const> const &floatScratchRegs) const {
+  // SIMD Quick Path: all registers are protected before entry; all source loads precede destination stores.
+  // Use unaligned 16-byte SSE2 accesses throughout, shifting the final access back to size - 16 if needed.
+  // Example: 31 bytes use offsets 0 and 15, repeating one byte without accessing outside the copy range.
+  // Bytes (1-based): |   1..15   | 16 |   17..31   |
+  // offset 0, 16B:   |===========|====|            |
+  // offset 15, 16B:  |           |====|============|
+  assert((sizeToCopy >= 16U) && (sizeToCopy <= 128U));
+  constexpr uint32_t bytesPerFReg{16U};
+  assert(floatScratchRegs.size() >= ((sizeToCopy + bytesPerFReg - 1U) / bytesPerFReg));
+  for (uint32_t bytesCopied{0U}; bytesCopied < sizeToCopy; bytesCopied += bytesPerFReg) {
+    uint32_t const byteOffset{((bytesCopied + bytesPerFReg) > sizeToCopy) ? (sizeToCopy - bytesPerFReg) : bytesCopied};
+    as_.INSTR(MOVUPD_rf_rmf128).setR(floatScratchRegs[bytesCopied / bytesPerFReg]).setM4RM(srcReg, static_cast<int32_t>(byteOffset))();
+  }
+  for (uint32_t bytesCopied{0U}; bytesCopied < sizeToCopy; bytesCopied += bytesPerFReg) {
+    uint32_t const byteOffset{((bytesCopied + bytesPerFReg) > sizeToCopy) ? (sizeToCopy - bytesPerFReg) : bytesCopied};
+    as_.INSTR(MOVUPD_rmf128_rf).setM4RM(dstReg, static_cast<int32_t>(byteOffset)).setR(floatScratchRegs[bytesCopied / bytesPerFReg])();
+  }
+}
+
+void Backend::memcpyWithConstSizeFallback(REG const dstReg, REG const srcReg, uint32_t const sizeToCopy, REG const gpScratchReg,
+                                          RegAllocTracker &regAllocTracker) const {
+  assert(sizeToCopy >= 16U);
+  REG const sizeReg{common_.reqScratchRegProt(MachineType::I64, regAllocTracker, false).reg};
+  as_.INSTR(MOV_r32_imm32).setR(sizeReg).setImm32(sizeToCopy)();
   RelPatchObj reverse{};
   as_.INSTR(CMP_r64_rm64).setR(srcReg).setR4RM(dstReg)();
   reverse = as_.prepareJMP(true, CC::A);
@@ -2996,15 +3075,18 @@ void Backend::executeLinearMemoryStore(OPCode const opcode, uint32_t const offse
 }
 
 void Backend::executeLinearMemoryCopy(Stack::iterator const dst, Stack::iterator const src, Stack::iterator const size) {
+  // Memory Copy: check bounds and prepare absolute addresses before dispatching.
+  // Encodable constant sizes use memcpyWithConstSize; other sizes use a GPR.
   RegAllocTracker regAllocTracker{};
   regAllocTracker.futureLifts = mask(src.unwrap()) | mask(dst.unwrap());
   // get size value before lift to reg if size is compile-time constant
   uint32_t sizeValue{0U};
-  bool const sizeIsConstant{moduleInfo_.getStorage(*size).type == StorageType::CONSTANT};
-  if (sizeIsConstant) {
+  bool sizeCanUseConstPath{moduleInfo_.getStorage(*size).type == StorageType::CONSTANT};
+  if (sizeCanUseConstPath) {
     sizeValue = size->data.constUnion.u32;
+    sizeCanUseConstPath = UnsignedInRangeCheck<31U>::check(sizeValue).inRange();
   }
-  REG const sizeReg{common_.liftToRegInPlaceProt(*size, true, regAllocTracker).reg};
+  REG const sizeReg{sizeCanUseConstPath ? REG::NONE : common_.liftToRegInPlaceProt(*size, true, regAllocTracker).reg};
   REG const srcReg{common_.liftToRegInPlaceProt(*src, true, regAllocTracker).reg};
   REG const dstReg{common_.liftToRegInPlaceProt(*dst, true, regAllocTracker).reg};
   REG const gpScratchReg{common_.reqScratchRegProt(MachineType::I64, regAllocTracker, false).reg};
@@ -3017,7 +3099,13 @@ void Backend::executeLinearMemoryCopy(Stack::iterator const dst, Stack::iterator
   as_.INSTR(MOV_r32_rm32).setR(gpScratchReg).setR4RM(srcReg)();
   as_.INSTR(CMP_r32_rm32).setR(dstReg).setR4RM(srcReg)();
   as_.INSTR(CMOVCC_r32_rm32_t).setR(gpScratchReg).setR4RM(dstReg).setCC(CC::A)();
-  as_.INSTR(ADD_r64_rm64).setR(gpScratchReg).setR4RM(sizeReg)();
+  if (sizeCanUseConstPath) {
+    if (sizeValue != 0U) {
+      as_.INSTR(ADD_rm64_imm32sx).setR4RM(gpScratchReg).setImm32(sizeValue)();
+    }
+  } else {
+    as_.INSTR(ADD_r64_rm64).setR(gpScratchReg).setR4RM(sizeReg)();
+  }
   emitLinMemBoundsCheck(gpScratchReg, 0, 0U);
   as_.INSTR(ADD_r64_rm64).setR(srcReg).setR4RM(WasmABI::REGS::linMem)();
   as_.INSTR(ADD_r64_rm64).setR(dstReg).setR4RM(WasmABI::REGS::linMem)();
@@ -3027,11 +3115,16 @@ void Backend::executeLinearMemoryCopy(Stack::iterator const dst, Stack::iterator
   as_.INSTR(MOV_r64_rm64).setR(gpScratchReg).setR4RM(srcReg)();
   as_.INSTR(CMP_r64_rm64).setR(dstReg).setR4RM(srcReg)();
   as_.INSTR(CMOVCC_r64_rm64_t).setR(gpScratchReg).setR4RM(dstReg).setCC(CC::A)();
-  as_.INSTR(CMP_rm8_imm8).setM4RM(gpScratchReg, -1, sizeReg, 0U).setImm8(0U)();
+  if (sizeCanUseConstPath) {
+    int32_t const lastByteOffset{static_cast<int32_t>(sizeValue) - 1};
+    as_.INSTR(CMP_rm8_imm8).setM4RM(gpScratchReg, lastByteOffset).setImm8(0U)();
+  } else {
+    as_.INSTR(CMP_rm8_imm8).setM4RM(gpScratchReg, -1, sizeReg, 0U).setImm8(0U)();
+  }
 #endif
 
-  if (sizeIsConstant) {
-    emitMemcpyWithConstSizeNoBoundsCheck(dstReg, srcReg, sizeReg, sizeValue, gpScratchReg);
+  if (sizeCanUseConstPath) {
+    memcpyWithConstSize(dstReg, srcReg, sizeValue, gpScratchReg, regAllocTracker);
   } else {
     emitMemcpyNoBoundsCheck(dstReg, srcReg, sizeReg, gpScratchReg, true);
   }

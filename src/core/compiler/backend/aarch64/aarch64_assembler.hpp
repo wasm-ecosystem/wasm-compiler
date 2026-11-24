@@ -28,6 +28,7 @@
 #include "src/core/common/TrapCode.hpp"
 #include "src/core/compiler/common/ModuleInfo.hpp"
 #include "src/core/compiler/common/RegMask.hpp"
+#include "src/core/compiler/common/SafeInt.hpp"
 #include "src/core/compiler/common/VariableStorage.hpp"
 
 namespace vb {
@@ -202,6 +203,24 @@ public:
   inline void MOVimm64(REG const reg, uint64_t const imm) const {
     MOVimm(true, reg, imm);
   }
+
+  ///
+  /// @brief Emit an unsigned integer load with an unscaled signed byte offset
+  ///
+  /// @param byteWidth Number of bytes to load: 1, 2, 4 or 8
+  /// @param targetReg Destination GPR
+  /// @param baseReg Memory base register
+  /// @param byteOffset Signed byte offset checked to fit [-256, 255], without alignment restrictions
+  void LDUR_T_deref_N_unscSImm9(uint32_t const byteWidth, REG const targetReg, REG const baseReg, SafeInt<9U> const byteOffset) const;
+
+  ///
+  /// @brief Emit an integer store with an unscaled signed byte offset
+  ///
+  /// @param byteWidth Number of bytes to store: 1, 2, 4 or 8
+  /// @param sourceReg Source GPR
+  /// @param baseReg Memory base register
+  /// @param byteOffset Signed byte offset checked to fit [-256, 255], without alignment restrictions
+  void STUR_T_deref_N_unscSImm9(uint32_t const byteWidth, REG const sourceReg, REG const baseReg, SafeInt<9U> const byteOffset) const;
 
   ///
   /// @brief Moves an immediate floating-point value to a floating-point register

@@ -103,11 +103,11 @@ a5 00 03 cb  sub  x5, x5, x3
 a6 83 5c f8  ldur  x6, [x29, #-0x38]
 c4 00 04 8b  add  x4, x6, x4
 63 40 00 71  subs  w3, w3, #0x10
-a4 00 00 54  b.mi  0x1a8
+a3 00 00 54  b.lo  0x1a8
 88 04 c1 6c  ldp  d8, d1, [x4], #0x10
 63 40 00 71  subs  w3, w3, #0x10
 a8 04 81 6c  stp  d8, d1, [x5], #0x10
-a5 ff ff 54  b.pl  0x198
+a2 ff ff 54  b.hs  0x198
 63 40 00 11  add  w3, w3, #0x10
 a3 00 00 34  cbz  w3, 0x1c0
 86 14 40 38  ldrb  w6, [x4], #1
