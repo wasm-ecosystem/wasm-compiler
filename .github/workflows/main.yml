@@ -35,7 +35,7 @@ jobs:
       - name: Install Git
         run: |
           apt-get update -y -qq
-          apt-get install -y --no-install-recommends git ca-certificates
+          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends git ca-certificates
       - uses: actions/checkout@v4
         with:
           submodules: true
@@ -90,7 +90,7 @@ jobs:
       - name: Install Git
         run: |
           apt-get update -y -qq
-          apt-get install -y --no-install-recommends git ca-certificates
+          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends git ca-certificates
       - uses: actions/checkout@v4
         with:
           submodules: true
@@ -121,7 +121,7 @@ jobs:
       - name: Install Git
         run: |
           apt-get update -y -qq
-          apt-get install -y --no-install-recommends git ca-certificates
+          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends git ca-certificates
       - uses: actions/checkout@v4
         with:
           submodules: true
@@ -148,7 +148,7 @@ jobs:
       - name: Install Git
         run: |
           apt-get update -y -qq
-          apt-get install -y --no-install-recommends git ca-certificates
+          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends git ca-certificates
       - uses: actions/checkout@v4
         with:
           submodules: true
@@ -181,7 +181,7 @@ jobs:
       - name: Install Git
         run: |
           apt-get update -y -qq
-          apt-get install -y --no-install-recommends git ca-certificates
+          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends git ca-certificates
       - uses: actions/checkout@v4
         with:
           submodules: true
@@ -212,7 +212,7 @@ jobs:
       - name: Install Git
         run: |
           apt-get update -y -qq
-          apt-get install -y --no-install-recommends git ca-certificates
+          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends git ca-certificates
       - uses: actions/checkout@v4
         with:
           submodules: true
@@ -233,7 +233,7 @@ jobs:
       - name: Install Git
         run: |
           apt-get update -y -qq
-          apt-get install -y --no-install-recommends git ca-certificates
+          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends git ca-certificates
       - uses: actions/checkout@v4
         with:
           submodules: true
@@ -258,7 +258,7 @@ jobs:
       - name: Install Git
         run: |
           apt-get update -y -qq
-          apt-get install -y --no-install-recommends git ca-certificates
+          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends git ca-certificates
       - uses: actions/checkout@v4
         with:
           submodules: true
@@ -348,7 +348,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y wget cmake make unzip tree
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y wget cmake make unzip tree
 
       - name: Setup Java
         uses: actions/setup-java@v3

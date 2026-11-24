@@ -44,7 +44,7 @@ jobs:
       - name: install packages
         run: |
           sudo apt-get update
-          sudo apt-get install wget qemu-system-x86-64 python3-pip python3-scp python3-paramiko python-is-python3 -y --no-install-recommends
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install wget qemu-system-x86-64 python3-pip python3-scp python3-paramiko python-is-python3 -y --no-install-recommends
       - name: install qcc compiler
         uses: ./.github/actions/install-qcc
         with:
@@ -92,7 +92,7 @@ jobs:
       - name: install packages
         run: |
           sudo apt-get update
-          sudo apt-get install libsdl2-2.0-0 wget libvirglrenderer1 libpixman-1-0 libgtk-3-0 python3-pip python3-scp python3-paramiko python-is-python3 -y --no-install-recommends
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install libsdl2-2.0-0 wget libvirglrenderer1 libpixman-1-0 libgtk-3-0 python3-pip python3-scp python3-paramiko python-is-python3 -y --no-install-recommends
       - name: install qcc compiler
         uses: ./.github/actions/install-qcc
         with:

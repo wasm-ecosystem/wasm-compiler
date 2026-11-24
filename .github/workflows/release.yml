@@ -48,7 +48,7 @@ jobs:
         run: |
           set -ex
           sudo apt-get update
-          sudo apt-get install -y wget unzip
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y wget unzip
 
       - name: Generate and validate SPDX
         uses: ./.github/actions/spdx-gen

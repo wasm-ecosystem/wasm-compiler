@@ -82,7 +82,7 @@ jobs:
       - name: Install Git
         run: |
           apt-get update -y -qq
-          apt-get install -y --no-install-recommends git ca-certificates  ca-certificates
+          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends git ca-certificates  ca-certificates
       - uses: actions/checkout@v4
         with:
           submodules: true
@@ -122,7 +122,7 @@ jobs:
       - name: Install Git
         run: |
           apt-get update -y -qq
-          apt-get install -y --no-install-recommends git ca-certificates  ca-certificates
+          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends git ca-certificates  ca-certificates
       - uses: actions/checkout@v4
         with:
           submodules: true

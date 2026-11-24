@@ -55,10 +55,18 @@ parser.add_argument(
     default=1,
     help="Number of times to compile each module",
 )
+parser.add_argument(
+    "--max-workers",
+    type=int,
+    default=len(vb_targets),
+    help="Maximum number of target analysis workers",
+)
 
 args = parser.parse_args()
 if args.repeat < 1:
     parser.error("--repeat must be at least 1")
+if args.max_workers < 1:
+    parser.error("--max-workers must be at least 1")
 
 
 def open_output(path):
@@ -224,7 +232,7 @@ def run_target_analysis(target_name: str, modules: list[str], repeat: int):
 
 def run_analyze(modules):
     with ProcessPoolExecutor(
-        max_workers=len(vb_targets), mp_context=get_context("fork")
+        max_workers=args.max_workers, mp_context=get_context("fork")
     ) as executor:
         workers = [
             executor.submit(run_target_analysis, target_name, modules, args.repeat)

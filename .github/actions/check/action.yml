@@ -48,7 +48,7 @@ runs:
       run: |
         set -ex
         apt-get update
-        apt-get install -y --no-install-recommends doxygen graphviz clang-format
+        DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends doxygen graphviz clang-format
         npm install -g cspell
 
     - name: cspell
@@ -85,7 +85,7 @@ runs:
     # bazel format
     - name: Install wget
       shell: bash
-      run: apt-get update && apt-get install -y wget
+      run: apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y wget
     - name: Download and install buildifier
       shell: bash
       run: |
@@ -116,7 +116,7 @@ runs:
         python-version: "3.12"
     - shell: bash
       run: |
-        apt-get update && apt-get install python-is-python3 -y --no-install-recommends
+        apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install python-is-python3 -y --no-install-recommends
         python -m pip install --upgrade pip
         python -m pip install black==24.4.2
     - name: python format check

@@ -18,7 +18,7 @@ jobs:
         run: |
           set -ex
           apt-get update
-          apt-get install -y --no-install-recommends wget cmake make tar git ca-certificates g++
+          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends wget cmake make tar git ca-certificates g++
       - uses: actions/checkout@v4
       - name: Install wabt
         shell: bash
