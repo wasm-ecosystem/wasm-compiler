@@ -1179,10 +1179,6 @@ void Common::emitGenericTrapHandler() {
   compiler_.backend_.emitNativeTrapAdapter();
   // generic trap handler should be placed after
   compiler_.moduleInfo_.helperFunctionBinaryPositions.genericTrapHandler = compiler_.output_.size();
-  if (compiler_.isStacktraceEnabled()) {
-    uint32_t const stacktraceRecordCount{compiler_.getStacktraceRecordCount()};
-    compiler_.backend_.emitStackTraceCollector(stacktraceRecordCount);
-  }
   compiler_.backend_.emitTrapHandler();
 }
 

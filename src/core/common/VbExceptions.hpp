@@ -136,7 +136,7 @@ public:
     Dynamic_import_not_resolved,
     Could_not_extend_linear_memory,
     Stack_fence_too_high,
-    Cannot_keep_STACKSIZE_LEFT_BEFORE_NATIVE_CALL_free_before_native_call__Stack_fence_too_high_,
+    Cannot_reserve_STACK_HEAD_ROOM__Stack_fence_too_high_,
     Memory_reallocation_failed,
     Linear_memory_address_out_of_bounds,
     Module_memory_not_16_byte_aligned,

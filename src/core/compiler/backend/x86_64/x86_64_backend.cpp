@@ -1270,11 +1270,6 @@ void Backend::emitFunctionEntryPoint(uint32_t const fncIndex) {
   as_.INSTR(SUB_rm64_imm32sx)
       .setM4RM(WasmABI::REGS::linMem, -BD::FromEnd::nativeStackFence)
       .setImm32(static_cast<uint32_t>(MAX_WASM_STACKSIZE_BEFORE_NATIVE_CALL))();
-#elif STACKSIZE_LEFT_BEFORE_NATIVE_CALL != 0 && ACTIVE_STACK_OVERFLOW_CHECK
-  as_.INSTR(MOV_r64_rm64).setR(callScrRegs[0]).setM4RM(WasmABI::REGS::linMem, -BD::FromEnd::stackFence)();
-  as_.INSTR(ADD_rm64_imm32sx).setR4RM(callScrRegs[0]).setImm32(static_cast<uint32_t>(STACKSIZE_LEFT_BEFORE_NATIVE_CALL))();
-  // Overflow check is performed in Runtime::setStackFence()
-  as_.INSTR(MOV_rm64_r64).setM4RM(WasmABI::REGS::linMem, -BD::FromEnd::nativeStackFence).setR(callScrRegs[0])();
 #endif
 
   //
@@ -1817,8 +1812,7 @@ void Backend::emitRawFunctionCall(uint32_t const fncIndex) {
       return;
     }
 
-#if (MAX_WASM_STACKSIZE_BEFORE_NATIVE_CALL != 0 && !ACTIVE_STACK_OVERFLOW_CHECK) ||                                                                  \
-    (STACKSIZE_LEFT_BEFORE_NATIVE_CALL != 0 && ACTIVE_STACK_OVERFLOW_CHECK)
+#if MAX_WASM_STACKSIZE_BEFORE_NATIVE_CALL != 0 && !ACTIVE_STACK_OVERFLOW_CHECK
     as_.INSTR(CMP_r64_rm64).setM4RM(WasmABI::REGS::linMem, -BD::FromEnd::nativeStackFence).setR(REG::SP)(); // Compare stack pointer to stack fence
     as_.cTRAP(TrapCode::STACKFENCEBREACHED, CC::LE);
 #endif
@@ -2123,6 +2117,8 @@ void Backend::execBuiltinFncCall(BuiltinFunction const builtinFunction) {
     uint32_t const origStackFrameSize{moduleInfo_.fnc.stackFrameSize};
 
     constexpr std::array<REG, 3U> tmpRegs{{tmpReg1, tmpReg2, tmpReg3}};
+    static_assert(STACK_HEAD_ROOM > (roundUpToPow2(static_cast<uint32_t>(tmpRegs.size()) * 8U, 4U) + returnAddrWidth),
+                  "STACK_HEAD_ROOM must exceed the trace point helper stack size");
     std::array<REG, 3U> savedRegs{{REG::NONE, REG::NONE, REG::NONE}};
     uint32_t numSavedRegs{0U};
 
@@ -2134,7 +2130,7 @@ void Backend::execBuiltinFncCall(BuiltinFunction const builtinFunction) {
       }
     }
 
-    updateStackFrameSizeHelper(as_.alignStackFrameSize(origStackFrameSize + (numSavedRegs * 8U)));
+    as_.setStackFrameSize(as_.alignStackFrameSize(origStackFrameSize + (numSavedRegs * 8U)));
 
     int32_t cursor{1};
     for (uint32_t i{0U}; i < numSavedRegs; ++i) {
@@ -2152,7 +2148,7 @@ void Backend::execBuiltinFncCall(BuiltinFunction const builtinFunction) {
       cursor--;
     }
 
-    updateStackFrameSizeHelper(origStackFrameSize);
+    as_.setStackFrameSize(origStackFrameSize);
     break;
   }
   // GCOVR_EXCL_START
@@ -2728,6 +2724,16 @@ void Backend::emitStackTraceCollector(uint32_t const stacktraceRecordCount) cons
 }
 
 void Backend::emitTrapHandler() const {
+#if ACTIVE_STACK_OVERFLOW_CHECK
+  // TODO: Enable SP capture and headroom switching when eh_frame stacktrace collection is implemented.
+  // as_.INSTR(MOV_r64_rm64).setR(WasmABI::REGS::trapSPReg).setR4RM(REG::SP)();
+  // as_.INSTR(MOV_r64_rm64).setR(REG::SP).setM4RM(WasmABI::REGS::linMem, -BD::FromEnd::stackFence)();
+#endif
+
+  if (compiler_.isStacktraceEnabled()) {
+    emitStackTraceCollector(compiler_.getStacktraceRecordCount());
+  }
+
   // Restore stack pointer
   as_.INSTR(MOV_r64_rm64).setR(REG::SP).setM4RM(WasmABI::REGS::linMem, -Basedata::FromEnd::trapStackReentry)();
 
@@ -2744,6 +2750,9 @@ void Backend::emitLandingPad() {
 
   constexpr uint32_t retWidth{8U};
   constexpr uint32_t volRegsSpillSize{static_cast<uint32_t>(NABI::volRegs.size()) * 8U};
+  constexpr uint8_t maxAlignmentPadding{0xFU};
+  static_assert(STACK_HEAD_ROOM > (NABI::shadowSpaceSize + volRegsSpillSize + retWidth + maxAlignmentPadding + returnAddrWidth),
+                "STACK_HEAD_ROOM must exceed the landing pad stack size");
 
   // RSP <-
   //  | Shadow Space | Vol Regs Spill | Return Address Width
@@ -2751,20 +2760,16 @@ void Backend::emitLandingPad() {
 
   // Reserve space on stack and spill all volatile registers since we will call a native function
   as_.INSTR(SUB_rm64_imm32sx).setR4RM(REG::SP).setImm32(NABI::shadowSpaceSize + volRegsSpillSize + retWidth)();
-#if ACTIVE_STACK_OVERFLOW_CHECK
-  as_.checkStackFence();
-#endif
   spillRestoreRegsRaw({NABI::volRegs.data(), NABI::volRegs.size()}, false, NABI::shadowSpaceSize);
 
-#if (MAX_WASM_STACKSIZE_BEFORE_NATIVE_CALL != 0 && !ACTIVE_STACK_OVERFLOW_CHECK) ||                                                                  \
-    (STACKSIZE_LEFT_BEFORE_NATIVE_CALL != 0 && ACTIVE_STACK_OVERFLOW_CHECK)
+#if MAX_WASM_STACKSIZE_BEFORE_NATIVE_CALL != 0 && !ACTIVE_STACK_OVERFLOW_CHECK
   as_.INSTR(CMP_r64_rm64).setM4RM(WasmABI::REGS::linMem, -BD::FromEnd::nativeStackFence).setR(REG::SP)(); // Compare stack pointer to stack fence
   as_.cTRAP(TrapCode::STACKFENCEBREACHED, CC::LE);
 #endif
 
   // Check if stack pointer is properly aligned, we can use NABI::gpParams[0] as a volatile scratch register
   as_.INSTR(MOV_rm64_r64).setR4RM(NABI::gpParams[0]).setR(REG::SP)();
-  as_.INSTR(AND_rm64_imm8sx).setR4RM(NABI::gpParams[0]).setImm8(0xFU)();
+  as_.INSTR(AND_rm64_imm8sx).setR4RM(NABI::gpParams[0]).setImm8(maxAlignmentPadding)();
   as_.INSTR(SUB_rm64_r64).setR4RM(REG::SP).setR(NABI::gpParams[0])();
 
   // We can retrieve the landing pad target and store the volatile register we used there so that the information
@@ -2809,10 +2814,9 @@ void Backend::emitExtensionRequestFunction() {
 
   // Reserve space on stack and spill all volatile registers since we will call a native function
   uint32_t const spillSize = roundUpToPow2((static_cast<uint32_t>(NABI::volRegs.size()) * 8U) + returnAddrWidth, 4U) - returnAddrWidth;
+  static_assert(STACK_HEAD_ROOM > (spillSize + NABI::shadowSpaceSize + (2U * returnAddrWidth)),
+                "STACK_HEAD_ROOM must exceed the extension helper stack size");
   as_.INSTR(SUB_rm64_imm32sx).setR4RM(REG::SP).setImm32(spillSize + NABI::shadowSpaceSize)();
-#if ACTIVE_STACK_OVERFLOW_CHECK
-  as_.checkStackFence();
-#endif
   spillRestoreRegsRaw({NABI::volRegs.data(), NABI::volRegs.size()}, false, NABI::shadowSpaceSize);
 
   // Load the other arguments for the extension helper, the accessed address is already in the first register
@@ -3235,14 +3239,14 @@ void Backend::executeMemGrow() {
 #if !LINEAR_MEMORY_BOUNDS_CHECKS
   // Notify the allocator of the memory growth
   constexpr uint32_t spillSize{static_cast<uint32_t>(NABI::volRegs.size()) * 8U};
+  constexpr uint32_t maxAlignmentPadding{15U};
+  static_assert(STACK_HEAD_ROOM > (spillSize + NABI::shadowSpaceSize + maxAlignmentPadding + returnAddrWidth),
+                "STACK_HEAD_ROOM must exceed the memory growth helper stack size");
   uint32_t const newStackFrameSize{as_.alignStackFrameSize(moduleInfo_.fnc.stackFrameSize + spillSize)};
   uint32_t const stackFrameSizeDelta{(NABI::shadowSpaceSize + newStackFrameSize) - moduleInfo_.fnc.stackFrameSize};
 
   // Reserve space on stack and spill all volatile registers since we will call a native function
   as_.INSTR(SUB_rm64_imm32sx).setR4RM(REG::SP).setImm32(stackFrameSizeDelta)();
-#if ACTIVE_STACK_OVERFLOW_CHECK
-  as_.checkStackFence();
-#endif
   spillRestoreRegsRaw({NABI::volRegs.data(), NABI::volRegs.size()}, false, NABI::shadowSpaceSize);
 
   // Load the arguments for the call (in this order because gpOutputReg could be one of the gpParams)

@@ -18,10 +18,10 @@ ef 4e 0c 80  jnz.t  d14, #0x14, #0x30
 1d ff f0 ff  j  #0xc
 40 3b  mov.aa  a11, a3
 0d 00 80 01  ret  
-99 2a d8 ff  ld.a  sp, [a2]#-0x28
+99 2a e0 ff  ld.a  sp, [a2]#-0x20
 d4 ac  ld.a  a12, [sp]
 74 c0  st.w  [a12], d0
-99 2b dc ff  ld.a  a11, [a2]#-0x24
+99 2b e4 ff  ld.a  a11, [a2]#-0x1c
 dc 0b  ji  a11
 44 00 00 00  Size of the function body: 68
 

@@ -18,15 +18,15 @@ ef 4e 0c 80  jnz.t  d14, #0x14, #0x30
 1d ff f0 ff  j  #0xc
 40 3b  mov.aa  a11, a3
 0d 00 80 01  ret  
-99 2a d8 ff  ld.a  sp, [a2]#-0x28
+99 2a e0 ff  ld.a  sp, [a2]#-0x20
 d4 ac  ld.a  a12, [sp]
 74 c0  st.w  [a12], d0
-99 2b dc ff  ld.a  a11, [a2]#-0x24
+99 2b e4 ff  ld.a  a11, [a2]#-0x1c
 dc 0b  ji  a11
 44 00 00 00  Size of the function body: 68
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 20 84  sub.a  sp, #0x84
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
 6f 0e 06 00  jz.t  d14, #0, #0x5e
 bb d0 00 00  mov.u  d0, #0xd
@@ -43,7 +43,7 @@ d9 aa 04 20  lea  sp, [sp]#0x84
 34 00 00 00  Size of the function body: 52
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 20 84  sub.a  sp, #0x84
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
 6f 0e e6 ff  jnz.t  d14, #0, #0x56
 39 25 f8 ff  ld.bu  d5, [a2]#-8
@@ -60,7 +60,7 @@ d9 aa 04 20  lea  sp, [sp]#0x84
 34 00 00 00  Size of the function body: 52
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 20 84  sub.a  sp, #0x84
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
 6f 0e ca ff  jnz.t  d14, #0, #0x56
 39 25 f8 ff  ld.bu  d5, [a2]#-8
@@ -74,7 +74,7 @@ d9 aa 04 20  lea  sp, [sp]#0x84
 28 00 00 00  Size of the function body: 40
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 20 84  sub.a  sp, #0x84
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
 6f 0e b4 ff  jnz.t  d14, #0, #0x56
 39 25 f8 ff  ld.bu  d5, [a2]#-8
@@ -88,7 +88,7 @@ d9 aa 04 20  lea  sp, [sp]#0x84
 28 00 00 00  Size of the function body: 40
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 20 84  sub.a  sp, #0x84
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
 6f 0e 9e ff  jnz.t  d14, #0, #0x56
 39 25 f8 ff  ld.bu  d5, [a2]#-8
@@ -101,7 +101,7 @@ d9 aa 04 20  lea  sp, [sp]#0x84
 24 00 00 00  Size of the function body: 36
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 20 84  sub.a  sp, #0x84
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
 6f 0e 8a ff  jnz.t  d14, #0, #0x56
 39 25 f8 ff  ld.bu  d5, [a2]#-8
@@ -116,7 +116,7 @@ d9 aa 04 20  lea  sp, [sp]#0x84
 2c 00 00 00  Size of the function body: 44
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 20 84  sub.a  sp, #0x84
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
 6f 0e 72 ff  jnz.t  d14, #0, #0x56
 39 25 f8 ff  ld.bu  d5, [a2]#-8
@@ -131,7 +131,7 @@ d9 aa 04 20  lea  sp, [sp]#0x84
 2c 00 00 00  Size of the function body: 44
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 20 84  sub.a  sp, #0x84
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
 6f 0e 5a ff  jnz.t  d14, #0, #0x56
 39 25 f8 ff  ld.bu  d5, [a2]#-8
@@ -144,7 +144,7 @@ d9 aa 04 20  lea  sp, [sp]#0x84
 24 00 00 00  Size of the function body: 36
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 20 84  sub.a  sp, #0x84
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
 6f 0e 46 ff  jnz.t  d14, #0, #0x56
 39 25 f8 ff  ld.bu  d5, [a2]#-8
@@ -159,7 +159,7 @@ d9 aa 04 20  lea  sp, [sp]#0x84
 2c 00 00 00  Size of the function body: 44
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 20 84  sub.a  sp, #0x84
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
 6f 0e 2e ff  jnz.t  d14, #0, #0x56
 39 25 f8 ff  ld.bu  d5, [a2]#-8
@@ -176,7 +176,7 @@ d9 aa 04 20  lea  sp, [sp]#0x84
 34 00 00 00  Size of the function body: 52
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 20 84  sub.a  sp, #0x84
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
 6f 0e 12 ff  jnz.t  d14, #0, #0x56
 39 25 f8 ff  ld.bu  d5, [a2]#-8
@@ -189,7 +189,7 @@ d9 aa 04 20  lea  sp, [sp]#0x84
 24 00 00 00  Size of the function body: 36
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 20 84  sub.a  sp, #0x84
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
 6f 0e fe fe  jnz.t  d14, #0, #0x56
 39 25 f8 ff  ld.bu  d5, [a2]#-8
@@ -202,7 +202,7 @@ d9 aa 04 20  lea  sp, [sp]#0x84
 24 00 00 00  Size of the function body: 36
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 20 84  sub.a  sp, #0x84
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
 6f 0e ea fe  jnz.t  d14, #0, #0x56
 39 25 f8 ff  ld.bu  d5, [a2]#-8
@@ -216,7 +216,7 @@ d9 aa 04 20  lea  sp, [sp]#0x84
 28 00 00 00  Size of the function body: 40
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 20 84  sub.a  sp, #0x84
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
 6f 0e d4 fe  jnz.t  d14, #0, #0x56
 39 25 f8 ff  ld.bu  d5, [a2]#-8
@@ -230,7 +230,7 @@ d9 aa 04 20  lea  sp, [sp]#0x84
 28 00 00 00  Size of the function body: 40
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 20 84  sub.a  sp, #0x84
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
 6f 0e be fe  jnz.t  d14, #0, #0x56
 39 25 f8 ff  ld.bu  d5, [a2]#-8
@@ -245,7 +245,7 @@ d9 aa 04 20  lea  sp, [sp]#0x84
 2c 00 00 00  Size of the function body: 44
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 20 84  sub.a  sp, #0x84
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
 6f 0e a6 fe  jnz.t  d14, #0, #0x56
 39 25 f8 ff  ld.bu  d5, [a2]#-8
@@ -259,7 +259,7 @@ d9 aa 04 20  lea  sp, [sp]#0x84
 28 00 00 00  Size of the function body: 40
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 20 84  sub.a  sp, #0x84
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
 6f 0e 90 fe  jnz.t  d14, #0, #0x56
 39 25 f8 ff  ld.bu  d5, [a2]#-8
@@ -272,7 +272,7 @@ d9 aa 04 20  lea  sp, [sp]#0x84
 24 00 00 00  Size of the function body: 36
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 20 84  sub.a  sp, #0x84
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
 6f 0e 7c fe  jnz.t  d14, #0, #0x56
 39 25 f8 ff  ld.bu  d5, [a2]#-8
@@ -285,7 +285,7 @@ d9 aa 04 20  lea  sp, [sp]#0x84
 24 00 00 00  Size of the function body: 36
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 20 84  sub.a  sp, #0x84
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
 6f 0e 68 fe  jnz.t  d14, #0, #0x56
 39 25 f8 ff  ld.bu  d5, [a2]#-8
@@ -299,7 +299,7 @@ d9 aa 04 20  lea  sp, [sp]#0x84
 28 00 00 00  Size of the function body: 40
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 20 84  sub.a  sp, #0x84
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
 6f 0e 52 fe  jnz.t  d14, #0, #0x56
 39 25 f8 ff  ld.bu  d5, [a2]#-8
@@ -313,7 +313,7 @@ d9 aa 04 20  lea  sp, [sp]#0x84
 28 00 00 00  Size of the function body: 40
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 20 84  sub.a  sp, #0x84
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
 6f 0e 3c fe  jnz.t  d14, #0, #0x56
 39 25 f8 ff  ld.bu  d5, [a2]#-8
@@ -327,7 +327,7 @@ d9 aa 04 20  lea  sp, [sp]#0x84
 28 00 00 00  Size of the function body: 40
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 20 84  sub.a  sp, #0x84
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
 6f 0e 26 fe  jnz.t  d14, #0, #0x56
 39 25 f8 ff  ld.bu  d5, [a2]#-8
@@ -342,7 +342,7 @@ d9 aa 04 20  lea  sp, [sp]#0x84
 2c 00 00 00  Size of the function body: 44
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 20 84  sub.a  sp, #0x84
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
 6f 0e 0e fe  jnz.t  d14, #0, #0x56
 39 25 f8 ff  ld.bu  d5, [a2]#-8
@@ -355,7 +355,7 @@ d9 aa 04 20  lea  sp, [sp]#0x84
 24 00 00 00  Size of the function body: 36
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 20 84  sub.a  sp, #0x84
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
 6f 0e fa fd  jnz.t  d14, #0, #0x56
 39 25 f8 ff  ld.bu  d5, [a2]#-8
@@ -369,7 +369,7 @@ d9 aa 04 20  lea  sp, [sp]#0x84
 28 00 00 00  Size of the function body: 40
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 20 84  sub.a  sp, #0x84
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
 6f 0e e4 fd  jnz.t  d14, #0, #0x56
 39 25 f8 ff  ld.bu  d5, [a2]#-8
@@ -383,7 +383,7 @@ d9 aa 04 20  lea  sp, [sp]#0x84
 28 00 00 00  Size of the function body: 40
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 20 84  sub.a  sp, #0x84
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
 6f 0e ce fd  jnz.t  d14, #0, #0x56
 39 25 f8 ff  ld.bu  d5, [a2]#-8
@@ -397,7 +397,7 @@ d9 aa 04 20  lea  sp, [sp]#0x84
 28 00 00 00  Size of the function body: 40
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 20 84  sub.a  sp, #0x84
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
 6f 0e b8 fd  jnz.t  d14, #0, #0x56
 39 25 f8 ff  ld.bu  d5, [a2]#-8
@@ -412,7 +412,7 @@ d9 aa 04 20  lea  sp, [sp]#0x84
 2c 00 00 00  Size of the function body: 44
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 20 84  sub.a  sp, #0x84
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
 6f 0e a0 fd  jnz.t  d14, #0, #0x56
 39 25 f8 ff  ld.bu  d5, [a2]#-8
@@ -425,7 +425,7 @@ d9 aa 04 20  lea  sp, [sp]#0x84
 24 00 00 00  Size of the function body: 36
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 20 84  sub.a  sp, #0x84
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
 6f 0e 8c fd  jnz.t  d14, #0, #0x56
 39 25 f8 ff  ld.bu  d5, [a2]#-8
@@ -439,7 +439,7 @@ d9 aa 04 20  lea  sp, [sp]#0x84
 28 00 00 00  Size of the function body: 40
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 20 84  sub.a  sp, #0x84
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
 6f 0e 76 fd  jnz.t  d14, #0, #0x56
 39 25 f8 ff  ld.bu  d5, [a2]#-8
@@ -453,7 +453,7 @@ d9 aa 04 20  lea  sp, [sp]#0x84
 28 00 00 00  Size of the function body: 40
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 20 84  sub.a  sp, #0x84
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
 6f 0e 60 fd  jnz.t  d14, #0, #0x56
 39 25 f8 ff  ld.bu  d5, [a2]#-8
@@ -470,7 +470,7 @@ d9 aa 04 20  lea  sp, [sp]#0x84
 34 00 00 00  Size of the function body: 52
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 20 84  sub.a  sp, #0x84
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
 6f 0e 44 fd  jnz.t  d14, #0, #0x56
 39 25 f8 ff  ld.bu  d5, [a2]#-8
@@ -483,7 +483,7 @@ d9 aa 04 20  lea  sp, [sp]#0x84
 24 00 00 00  Size of the function body: 36
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 20 84  sub.a  sp, #0x84
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
 6f 0e 30 fd  jnz.t  d14, #0, #0x56
 39 25 f8 ff  ld.bu  d5, [a2]#-8
@@ -497,7 +497,7 @@ d9 aa 04 20  lea  sp, [sp]#0x84
 28 00 00 00  Size of the function body: 40
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 20 84  sub.a  sp, #0x84
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
 6f 0e 1a fd  jnz.t  d14, #0, #0x56
 39 25 f8 ff  ld.bu  d5, [a2]#-8
@@ -511,7 +511,7 @@ d9 aa 04 20  lea  sp, [sp]#0x84
 28 00 00 00  Size of the function body: 40
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 20 84  sub.a  sp, #0x84
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
 6f 0e 04 fd  jnz.t  d14, #0, #0x56
 39 25 f8 ff  ld.bu  d5, [a2]#-8
@@ -528,7 +528,7 @@ d9 aa 04 20  lea  sp, [sp]#0x84
 34 00 00 00  Size of the function body: 52
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 20 84  sub.a  sp, #0x84
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
 6f 0e e8 fc  jnz.t  d14, #0, #0x56
 39 25 f8 ff  ld.bu  d5, [a2]#-8
@@ -541,7 +541,7 @@ d9 aa 04 20  lea  sp, [sp]#0x84
 24 00 00 00  Size of the function body: 36
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 20 84  sub.a  sp, #0x84
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
 6f 0e d4 fc  jnz.t  d14, #0, #0x56
 39 25 f8 ff  ld.bu  d5, [a2]#-8
@@ -554,7 +554,7 @@ d9 aa 04 20  lea  sp, [sp]#0x84
 24 00 00 00  Size of the function body: 36
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 20 84  sub.a  sp, #0x84
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
 6f 0e c0 fc  jnz.t  d14, #0, #0x56
 39 25 f8 ff  ld.bu  d5, [a2]#-8
@@ -567,7 +567,7 @@ d9 aa 04 20  lea  sp, [sp]#0x84
 24 00 00 00  Size of the function body: 36
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 20 84  sub.a  sp, #0x84
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
 6f 0e ac fc  jnz.t  d14, #0, #0x56
 39 25 f8 ff  ld.bu  d5, [a2]#-8
@@ -612,32 +612,29 @@ b5 ab 10 00  st.a  [sp]#0x10, a11
 b5 a6 00 00  st.a  [sp]#0, a6
 b5 a7 14 00  st.a  [sp]#0x14, a7
 99 23 e8 ff  ld.a  a3, [a2]#-0x18
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-bd 0c 14 80  jnz.a  a12, #0x788
-b5 2a d8 ff  st.a  [a2]#-0x28, sp
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+bd 0c 0e 80  jnz.a  a12, #0x77c
+b5 2a e0 ff  st.a  [a2]#-0x20, sp
 5d 00 02 00  jl  #0x76c
-d9 bb 32 00  lea  a11, [a11]#0x32
-b5 2b dc ff  st.a  [a2]#-0x24, a11
+d9 bb 26 00  lea  a11, [a11]#0x26
+b5 2b e4 ff  st.a  [a2]#-0x1c, a11
 4d 00 e0 ef  mfcr  d14, #0xfe00
 59 2e f0 ff  st.w  [a2]#-0x10, d14
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
-d9 cc 00 01  lea  a12, [a12]#0x1000
-b5 2c e0 ff  st.a  [a2]#-0x20, a12
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
-6f 0e 63 fc  jnz.t  d14, #0, #0x56
-61 ff 5a fc  fcall  #0x48
+6f 0e 69 fc  jnz.t  d14, #0, #0x56
+61 ff 60 fc  fcall  #0x48
 99 a7 14 00  ld.a  a7, [sp]#0x14
 74 72  st.w  [a7], d2
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-7d ca 07 80  jne.a  sp, a12, #0x7b0
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+7d ca 07 80  jne.a  sp, a12, #0x7a4
 82 0f  mov  d15, #0
-59 2f d8 ff  st.w  [a2]#-0x28, d15
-59 2f dc ff  st.w  [a2]#-0x24, d15
+59 2f e0 ff  st.w  [a2]#-0x20, d15
+59 2f e4 ff  st.w  [a2]#-0x1c, d15
 99 ab 10 00  ld.a  a11, [sp]#0x10
 d9 aa 20 00  lea  sp, [sp]#0x20
 0d 00 80 01  ret  
-74 00 00 00  Function wrapper size: 116
+68 00 00 00  Function wrapper size: 104
 28 29 69 00  Function signature, padded to 4B: "()i"
 03 00 00 00  Function signature length: 3
 vv vv vv vv vv vv vv vv vv vv  Export name, padded to 4B: "aarch64_logical_i32"
@@ -651,32 +648,29 @@ b5 ab 10 00  st.a  [sp]#0x10, a11
 b5 a6 00 00  st.a  [sp]#0, a6
 b5 a7 14 00  st.a  [sp]#0x14, a7
 99 23 e8 ff  ld.a  a3, [a2]#-0x18
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-bd 0c 14 80  jnz.a  a12, #0x824
-b5 2a d8 ff  st.a  [a2]#-0x28, sp
-5d 00 02 00  jl  #0x808
-d9 bb 34 00  lea  a11, [a11]#0x34
-b5 2b dc ff  st.a  [a2]#-0x24, a11
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+bd 0c 0e 80  jnz.a  a12, #0x80c
+b5 2a e0 ff  st.a  [a2]#-0x20, sp
+5d 00 02 00  jl  #0x7fc
+d9 bb 28 00  lea  a11, [a11]#0x28
+b5 2b e4 ff  st.a  [a2]#-0x1c, a11
 4d 00 e0 ef  mfcr  d14, #0xfe00
 59 2e f0 ff  st.w  [a2]#-0x10, d14
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
-d9 cc 00 01  lea  a12, [a12]#0x1000
-b5 2c e0 ff  st.a  [a2]#-0x20, a12
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
-6f 0e 15 fc  jnz.t  d14, #0, #0x56
-61 ff 28 fc  fcall  #0x80
+6f 0e 21 fc  jnz.t  d14, #0, #0x56
+61 ff 34 fc  fcall  #0x80
 99 a7 14 00  ld.a  a7, [sp]#0x14
 89 72 40 09  st.d  [a7]#0, e2
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-7d ca 07 80  jne.a  sp, a12, #0x84e
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+7d ca 07 80  jne.a  sp, a12, #0x836
 82 0f  mov  d15, #0
-59 2f d8 ff  st.w  [a2]#-0x28, d15
-59 2f dc ff  st.w  [a2]#-0x24, d15
+59 2f e0 ff  st.w  [a2]#-0x20, d15
+59 2f e4 ff  st.w  [a2]#-0x1c, d15
 99 ab 10 00  ld.a  a11, [sp]#0x10
 d9 aa 20 00  lea  sp, [sp]#0x20
 0d 00 80 01  ret  
-76 00 00 00  Function wrapper size: 118
+6a 00 00 00  Function wrapper size: 106
 28 29 49 00  Function signature, padded to 4B: "()I"
 03 00 00 00  Function signature length: 3
 vv vv vv vv vv vv vv vv vv vv  Export name, padded to 4B: "aarch64_logical_i64"
@@ -690,32 +684,29 @@ b5 ab 10 00  st.a  [sp]#0x10, a11
 b5 a6 00 00  st.a  [sp]#0, a6
 b5 a7 14 00  st.a  [sp]#0x14, a7
 99 23 e8 ff  ld.a  a3, [a2]#-0x18
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-bd 0c 14 80  jnz.a  a12, #0x8c4
-b5 2a d8 ff  st.a  [a2]#-0x28, sp
-5d 00 02 00  jl  #0x8a8
-d9 bb 32 00  lea  a11, [a11]#0x32
-b5 2b dc ff  st.a  [a2]#-0x24, a11
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+bd 0c 0e 80  jnz.a  a12, #0x8a0
+b5 2a e0 ff  st.a  [a2]#-0x20, sp
+5d 00 02 00  jl  #0x890
+d9 bb 26 00  lea  a11, [a11]#0x26
+b5 2b e4 ff  st.a  [a2]#-0x1c, a11
 4d 00 e0 ef  mfcr  d14, #0xfe00
 59 2e f0 ff  st.w  [a2]#-0x10, d14
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
-d9 cc 00 01  lea  a12, [a12]#0x1000
-b5 2c e0 ff  st.a  [a2]#-0x20, a12
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
-6f 0e c5 fb  jnz.t  d14, #0, #0x56
-61 ff f4 fb  fcall  #0xb8
+6f 0e d7 fb  jnz.t  d14, #0, #0x56
+61 ff 06 fc  fcall  #0xb8
 99 a7 14 00  ld.a  a7, [sp]#0x14
 74 72  st.w  [a7], d2
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-7d ca 07 80  jne.a  sp, a12, #0x8ec
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+7d ca 07 80  jne.a  sp, a12, #0x8c8
 82 0f  mov  d15, #0
-59 2f d8 ff  st.w  [a2]#-0x28, d15
-59 2f dc ff  st.w  [a2]#-0x24, d15
+59 2f e0 ff  st.w  [a2]#-0x20, d15
+59 2f e4 ff  st.w  [a2]#-0x1c, d15
 99 ab 10 00  ld.a  a11, [sp]#0x10
 d9 aa 20 00  lea  sp, [sp]#0x20
 0d 00 80 01  ret  
-74 00 00 00  Function wrapper size: 116
+68 00 00 00  Function wrapper size: 104
 28 29 69 00  Function signature, padded to 4B: "()i"
 03 00 00 00  Function signature length: 3
 vv vv vv vv vv vv vv vv vv vv  Export name, padded to 4B: "aarch64_movz_i32"
@@ -729,32 +720,29 @@ b5 ab 10 00  st.a  [sp]#0x10, a11
 b5 a6 00 00  st.a  [sp]#0, a6
 b5 a7 14 00  st.a  [sp]#0x14, a7
 99 23 e8 ff  ld.a  a3, [a2]#-0x18
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-bd 0c 14 80  jnz.a  a12, #0x95c
-b5 2a d8 ff  st.a  [a2]#-0x28, sp
-5d 00 02 00  jl  #0x940
-d9 bb 34 00  lea  a11, [a11]#0x34
-b5 2b dc ff  st.a  [a2]#-0x24, a11
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+bd 0c 0e 80  jnz.a  a12, #0x92c
+b5 2a e0 ff  st.a  [a2]#-0x20, sp
+5d 00 02 00  jl  #0x91c
+d9 bb 28 00  lea  a11, [a11]#0x28
+b5 2b e4 ff  st.a  [a2]#-0x1c, a11
 4d 00 e0 ef  mfcr  d14, #0xfe00
 59 2e f0 ff  st.w  [a2]#-0x10, d14
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
-d9 cc 00 01  lea  a12, [a12]#0x1000
-b5 2c e0 ff  st.a  [a2]#-0x20, a12
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
-6f 0e 79 fb  jnz.t  d14, #0, #0x56
-61 ff be fb  fcall  #0xe4
+6f 0e 91 fb  jnz.t  d14, #0, #0x56
+61 ff d6 fb  fcall  #0xe4
 99 a7 14 00  ld.a  a7, [sp]#0x14
 89 72 40 09  st.d  [a7]#0, e2
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-7d ca 07 80  jne.a  sp, a12, #0x986
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+7d ca 07 80  jne.a  sp, a12, #0x956
 82 0f  mov  d15, #0
-59 2f d8 ff  st.w  [a2]#-0x28, d15
-59 2f dc ff  st.w  [a2]#-0x24, d15
+59 2f e0 ff  st.w  [a2]#-0x20, d15
+59 2f e4 ff  st.w  [a2]#-0x1c, d15
 99 ab 10 00  ld.a  a11, [sp]#0x10
 d9 aa 20 00  lea  sp, [sp]#0x20
 0d 00 80 01  ret  
-76 00 00 00  Function wrapper size: 118
+6a 00 00 00  Function wrapper size: 106
 28 29 49 00  Function signature, padded to 4B: "()I"
 03 00 00 00  Function signature length: 3
 vv vv vv vv vv vv vv vv vv vv  Export name, padded to 4B: "aarch64_movz_i64"
@@ -768,32 +756,29 @@ b5 ab 10 00  st.a  [sp]#0x10, a11
 b5 a6 00 00  st.a  [sp]#0, a6
 b5 a7 14 00  st.a  [sp]#0x14, a7
 99 23 e8 ff  ld.a  a3, [a2]#-0x18
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-bd 0c 14 80  jnz.a  a12, #0x9f8
-b5 2a d8 ff  st.a  [a2]#-0x28, sp
-5d 00 02 00  jl  #0x9dc
-d9 bb 34 00  lea  a11, [a11]#0x34
-b5 2b dc ff  st.a  [a2]#-0x24, a11
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+bd 0c 0e 80  jnz.a  a12, #0x9bc
+b5 2a e0 ff  st.a  [a2]#-0x20, sp
+5d 00 02 00  jl  #0x9ac
+d9 bb 28 00  lea  a11, [a11]#0x28
+b5 2b e4 ff  st.a  [a2]#-0x1c, a11
 4d 00 e0 ef  mfcr  d14, #0xfe00
 59 2e f0 ff  st.w  [a2]#-0x10, d14
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
-d9 cc 00 01  lea  a12, [a12]#0x1000
-b5 2c e0 ff  st.a  [a2]#-0x20, a12
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
-6f 0e 2b fb  jnz.t  d14, #0, #0x56
-61 ff 86 fb  fcall  #0x110
+6f 0e 49 fb  jnz.t  d14, #0, #0x56
+61 ff a4 fb  fcall  #0x110
 99 a7 14 00  ld.a  a7, [sp]#0x14
 89 72 40 09  st.d  [a7]#0, e2
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-7d ca 07 80  jne.a  sp, a12, #0xa22
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+7d ca 07 80  jne.a  sp, a12, #0x9e6
 82 0f  mov  d15, #0
-59 2f d8 ff  st.w  [a2]#-0x28, d15
-59 2f dc ff  st.w  [a2]#-0x24, d15
+59 2f e0 ff  st.w  [a2]#-0x20, d15
+59 2f e4 ff  st.w  [a2]#-0x1c, d15
 99 ab 10 00  ld.a  a11, [sp]#0x10
 d9 aa 20 00  lea  sp, [sp]#0x20
 0d 00 80 01  ret  
-76 00 00 00  Function wrapper size: 118
+6a 00 00 00  Function wrapper size: 106
 28 29 49 00  Function signature, padded to 4B: "()I"
 03 00 00 00  Function signature length: 3
 vv vv vv vv vv vv vv vv vv vv  Export name, padded to 4B: "aarch64_movz_zero_i64"
@@ -807,32 +792,29 @@ b5 ab 10 00  st.a  [sp]#0x10, a11
 b5 a6 00 00  st.a  [sp]#0, a6
 b5 a7 14 00  st.a  [sp]#0x14, a7
 99 23 e8 ff  ld.a  a3, [a2]#-0x18
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-bd 0c 14 80  jnz.a  a12, #0xa9c
-b5 2a d8 ff  st.a  [a2]#-0x28, sp
-5d 00 02 00  jl  #0xa80
-d9 bb 32 00  lea  a11, [a11]#0x32
-b5 2b dc ff  st.a  [a2]#-0x24, a11
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+bd 0c 0e 80  jnz.a  a12, #0xa54
+b5 2a e0 ff  st.a  [a2]#-0x20, sp
+5d 00 02 00  jl  #0xa44
+d9 bb 26 00  lea  a11, [a11]#0x26
+b5 2b e4 ff  st.a  [a2]#-0x1c, a11
 4d 00 e0 ef  mfcr  d14, #0xfe00
 59 2e f0 ff  st.w  [a2]#-0x10, d14
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
-d9 cc 00 01  lea  a12, [a12]#0x1000
-b5 2c e0 ff  st.a  [a2]#-0x20, a12
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
-6f 0e d9 fa  jnz.t  d14, #0, #0x56
-61 ff 48 fb  fcall  #0x138
+6f 0e fd fa  jnz.t  d14, #0, #0x56
+61 ff 6c fb  fcall  #0x138
 99 a7 14 00  ld.a  a7, [sp]#0x14
 74 72  st.w  [a7], d2
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-7d ca 07 80  jne.a  sp, a12, #0xac4
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+7d ca 07 80  jne.a  sp, a12, #0xa7c
 82 0f  mov  d15, #0
-59 2f d8 ff  st.w  [a2]#-0x28, d15
-59 2f dc ff  st.w  [a2]#-0x24, d15
+59 2f e0 ff  st.w  [a2]#-0x20, d15
+59 2f e4 ff  st.w  [a2]#-0x1c, d15
 99 ab 10 00  ld.a  a11, [sp]#0x10
 d9 aa 20 00  lea  sp, [sp]#0x20
 0d 00 80 01  ret  
-74 00 00 00  Function wrapper size: 116
+68 00 00 00  Function wrapper size: 104
 28 29 69 00  Function signature, padded to 4B: "()i"
 03 00 00 00  Function signature length: 3
 vv vv vv vv vv vv vv vv vv vv  Export name, padded to 4B: "aarch64_movn_i32"
@@ -846,32 +828,29 @@ b5 ab 10 00  st.a  [sp]#0x10, a11
 b5 a6 00 00  st.a  [sp]#0, a6
 b5 a7 14 00  st.a  [sp]#0x14, a7
 99 23 e8 ff  ld.a  a3, [a2]#-0x18
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-bd 0c 14 80  jnz.a  a12, #0xb34
-b5 2a d8 ff  st.a  [a2]#-0x28, sp
-5d 00 02 00  jl  #0xb18
-d9 bb 34 00  lea  a11, [a11]#0x34
-b5 2b dc ff  st.a  [a2]#-0x24, a11
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+bd 0c 0e 80  jnz.a  a12, #0xae0
+b5 2a e0 ff  st.a  [a2]#-0x20, sp
+5d 00 02 00  jl  #0xad0
+d9 bb 28 00  lea  a11, [a11]#0x28
+b5 2b e4 ff  st.a  [a2]#-0x1c, a11
 4d 00 e0 ef  mfcr  d14, #0xfe00
 59 2e f0 ff  st.w  [a2]#-0x10, d14
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
-d9 cc 00 01  lea  a12, [a12]#0x1000
-b5 2c e0 ff  st.a  [a2]#-0x20, a12
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
-6f 0e 8d fa  jnz.t  d14, #0, #0x56
-61 ff 14 fb  fcall  #0x168
+6f 0e b7 fa  jnz.t  d14, #0, #0x56
+61 ff 3e fb  fcall  #0x168
 99 a7 14 00  ld.a  a7, [sp]#0x14
 89 72 40 09  st.d  [a7]#0, e2
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-7d ca 07 80  jne.a  sp, a12, #0xb5e
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+7d ca 07 80  jne.a  sp, a12, #0xb0a
 82 0f  mov  d15, #0
-59 2f d8 ff  st.w  [a2]#-0x28, d15
-59 2f dc ff  st.w  [a2]#-0x24, d15
+59 2f e0 ff  st.w  [a2]#-0x20, d15
+59 2f e4 ff  st.w  [a2]#-0x1c, d15
 99 ab 10 00  ld.a  a11, [sp]#0x10
 d9 aa 20 00  lea  sp, [sp]#0x20
 0d 00 80 01  ret  
-76 00 00 00  Function wrapper size: 118
+6a 00 00 00  Function wrapper size: 106
 28 29 49 00  Function signature, padded to 4B: "()I"
 03 00 00 00  Function signature length: 3
 vv vv vv vv vv vv vv vv vv vv  Export name, padded to 4B: "aarch64_movn_i64"
@@ -885,32 +864,29 @@ b5 ab 10 00  st.a  [sp]#0x10, a11
 b5 a6 00 00  st.a  [sp]#0, a6
 b5 a7 14 00  st.a  [sp]#0x14, a7
 99 23 e8 ff  ld.a  a3, [a2]#-0x18
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-bd 0c 14 80  jnz.a  a12, #0xbd0
-b5 2a d8 ff  st.a  [a2]#-0x28, sp
-5d 00 02 00  jl  #0xbb4
-d9 bb 34 00  lea  a11, [a11]#0x34
-b5 2b dc ff  st.a  [a2]#-0x24, a11
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+bd 0c 0e 80  jnz.a  a12, #0xb70
+b5 2a e0 ff  st.a  [a2]#-0x20, sp
+5d 00 02 00  jl  #0xb60
+d9 bb 28 00  lea  a11, [a11]#0x28
+b5 2b e4 ff  st.a  [a2]#-0x1c, a11
 4d 00 e0 ef  mfcr  d14, #0xfe00
 59 2e f0 ff  st.w  [a2]#-0x10, d14
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
-d9 cc 00 01  lea  a12, [a12]#0x1000
-b5 2c e0 ff  st.a  [a2]#-0x20, a12
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
-6f 0e 3f fa  jnz.t  d14, #0, #0x56
-61 ff de fa  fcall  #0x198
+6f 0e 6f fa  jnz.t  d14, #0, #0x56
+61 ff 0e fb  fcall  #0x198
 99 a7 14 00  ld.a  a7, [sp]#0x14
 89 72 40 09  st.d  [a7]#0, e2
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-7d ca 07 80  jne.a  sp, a12, #0xbfa
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+7d ca 07 80  jne.a  sp, a12, #0xb9a
 82 0f  mov  d15, #0
-59 2f d8 ff  st.w  [a2]#-0x28, d15
-59 2f dc ff  st.w  [a2]#-0x24, d15
+59 2f e0 ff  st.w  [a2]#-0x20, d15
+59 2f e4 ff  st.w  [a2]#-0x1c, d15
 99 ab 10 00  ld.a  a11, [sp]#0x10
 d9 aa 20 00  lea  sp, [sp]#0x20
 0d 00 80 01  ret  
-76 00 00 00  Function wrapper size: 118
+6a 00 00 00  Function wrapper size: 106
 28 29 49 00  Function signature, padded to 4B: "()I"
 03 00 00 00  Function signature length: 3
 vv vv vv vv vv vv vv vv vv vv  Export name, padded to 4B: "aarch64_movn_ones_i64"
@@ -924,32 +900,29 @@ b5 ab 10 00  st.a  [sp]#0x10, a11
 b5 a6 00 00  st.a  [sp]#0, a6
 b5 a7 14 00  st.a  [sp]#0x14, a7
 99 23 e8 ff  ld.a  a3, [a2]#-0x18
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-bd 0c 14 80  jnz.a  a12, #0xc74
-b5 2a d8 ff  st.a  [a2]#-0x28, sp
-5d 00 02 00  jl  #0xc58
-d9 bb 32 00  lea  a11, [a11]#0x32
-b5 2b dc ff  st.a  [a2]#-0x24, a11
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+bd 0c 0e 80  jnz.a  a12, #0xc08
+b5 2a e0 ff  st.a  [a2]#-0x20, sp
+5d 00 02 00  jl  #0xbf8
+d9 bb 26 00  lea  a11, [a11]#0x26
+b5 2b e4 ff  st.a  [a2]#-0x1c, a11
 4d 00 e0 ef  mfcr  d14, #0xfe00
 59 2e f0 ff  st.w  [a2]#-0x10, d14
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
-d9 cc 00 01  lea  a12, [a12]#0x1000
-b5 2c e0 ff  st.a  [a2]#-0x20, a12
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
-6f 0e ed f9  jnz.t  d14, #0, #0x56
-61 ff a0 fa  fcall  #0x1c0
+6f 0e 23 fa  jnz.t  d14, #0, #0x56
+61 ff d6 fa  fcall  #0x1c0
 99 a7 14 00  ld.a  a7, [sp]#0x14
 74 72  st.w  [a7], d2
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-7d ca 07 80  jne.a  sp, a12, #0xc9c
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+7d ca 07 80  jne.a  sp, a12, #0xc30
 82 0f  mov  d15, #0
-59 2f d8 ff  st.w  [a2]#-0x28, d15
-59 2f dc ff  st.w  [a2]#-0x24, d15
+59 2f e0 ff  st.w  [a2]#-0x20, d15
+59 2f e4 ff  st.w  [a2]#-0x1c, d15
 99 ab 10 00  ld.a  a11, [sp]#0x10
 d9 aa 20 00  lea  sp, [sp]#0x20
 0d 00 80 01  ret  
-74 00 00 00  Function wrapper size: 116
+68 00 00 00  Function wrapper size: 104
 28 29 69 00  Function signature, padded to 4B: "()i"
 03 00 00 00  Function signature length: 3
 vv vv vv vv vv vv vv vv vv vv  Export name, padded to 4B: "aarch64_multi_movwide_i32"
@@ -963,32 +936,29 @@ b5 ab 10 00  st.a  [sp]#0x10, a11
 b5 a6 00 00  st.a  [sp]#0, a6
 b5 a7 14 00  st.a  [sp]#0x14, a7
 99 23 e8 ff  ld.a  a3, [a2]#-0x18
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-bd 0c 14 80  jnz.a  a12, #0xd18
-b5 2a d8 ff  st.a  [a2]#-0x28, sp
-5d 00 02 00  jl  #0xcfc
-d9 bb 34 00  lea  a11, [a11]#0x34
-b5 2b dc ff  st.a  [a2]#-0x24, a11
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+bd 0c 0e 80  jnz.a  a12, #0xca0
+b5 2a e0 ff  st.a  [a2]#-0x20, sp
+5d 00 02 00  jl  #0xc90
+d9 bb 28 00  lea  a11, [a11]#0x28
+b5 2b e4 ff  st.a  [a2]#-0x1c, a11
 4d 00 e0 ef  mfcr  d14, #0xfe00
 59 2e f0 ff  st.w  [a2]#-0x10, d14
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
-d9 cc 00 01  lea  a12, [a12]#0x1000
-b5 2c e0 ff  st.a  [a2]#-0x20, a12
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
-6f 0e 9b f9  jnz.t  d14, #0, #0x56
-61 ff 66 fa  fcall  #0x1f0
+6f 0e d7 f9  jnz.t  d14, #0, #0x56
+61 ff a2 fa  fcall  #0x1f0
 99 a7 14 00  ld.a  a7, [sp]#0x14
 89 72 40 09  st.d  [a7]#0, e2
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-7d ca 07 80  jne.a  sp, a12, #0xd42
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+7d ca 07 80  jne.a  sp, a12, #0xcca
 82 0f  mov  d15, #0
-59 2f d8 ff  st.w  [a2]#-0x28, d15
-59 2f dc ff  st.w  [a2]#-0x24, d15
+59 2f e0 ff  st.w  [a2]#-0x20, d15
+59 2f e4 ff  st.w  [a2]#-0x1c, d15
 99 ab 10 00  ld.a  a11, [sp]#0x10
 d9 aa 20 00  lea  sp, [sp]#0x20
 0d 00 80 01  ret  
-76 00 00 00  Function wrapper size: 118
+6a 00 00 00  Function wrapper size: 106
 28 29 49 00  Function signature, padded to 4B: "()I"
 03 00 00 00  Function signature length: 3
 vv vv vv vv vv vv vv vv vv vv  Export name, padded to 4B: "aarch64_multi_movwide_i64"
@@ -1002,32 +972,29 @@ b5 ab 10 00  st.a  [sp]#0x10, a11
 b5 a6 00 00  st.a  [sp]#0, a6
 b5 a7 14 00  st.a  [sp]#0x14, a7
 99 23 e8 ff  ld.a  a3, [a2]#-0x18
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-bd 0c 14 80  jnz.a  a12, #0xdc0
-b5 2a d8 ff  st.a  [a2]#-0x28, sp
-5d 00 02 00  jl  #0xda4
-d9 bb 32 00  lea  a11, [a11]#0x32
-b5 2b dc ff  st.a  [a2]#-0x24, a11
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+bd 0c 0e 80  jnz.a  a12, #0xd3c
+b5 2a e0 ff  st.a  [a2]#-0x20, sp
+5d 00 02 00  jl  #0xd2c
+d9 bb 26 00  lea  a11, [a11]#0x26
+b5 2b e4 ff  st.a  [a2]#-0x1c, a11
 4d 00 e0 ef  mfcr  d14, #0xfe00
 59 2e f0 ff  st.w  [a2]#-0x10, d14
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
-d9 cc 00 01  lea  a12, [a12]#0x1000
-b5 2c e0 ff  st.a  [a2]#-0x20, a12
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
-6f 0e 47 f9  jnz.t  d14, #0, #0x56
-61 ff 2e fa  fcall  #0x228
+6f 0e 89 f9  jnz.t  d14, #0, #0x56
+61 ff 70 fa  fcall  #0x228
 99 a7 14 00  ld.a  a7, [sp]#0x14
 74 72  st.w  [a7], d2
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-7d ca 07 80  jne.a  sp, a12, #0xde8
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+7d ca 07 80  jne.a  sp, a12, #0xd64
 82 0f  mov  d15, #0
-59 2f d8 ff  st.w  [a2]#-0x28, d15
-59 2f dc ff  st.w  [a2]#-0x24, d15
+59 2f e0 ff  st.w  [a2]#-0x20, d15
+59 2f e4 ff  st.w  [a2]#-0x1c, d15
 99 ab 10 00  ld.a  a11, [sp]#0x10
 d9 aa 20 00  lea  sp, [sp]#0x20
 0d 00 80 01  ret  
-74 00 00 00  Function wrapper size: 116
+68 00 00 00  Function wrapper size: 104
 28 29 69 00  Function signature, padded to 4B: "()i"
 03 00 00 00  Function signature length: 3
 vv vv vv vv vv vv vv vv vv vv  Export name, padded to 4B: "aarch64_float_zero_f32"
@@ -1041,32 +1008,29 @@ b5 ab 10 00  st.a  [sp]#0x10, a11
 b5 a6 00 00  st.a  [sp]#0, a6
 b5 a7 14 00  st.a  [sp]#0x14, a7
 99 23 e8 ff  ld.a  a3, [a2]#-0x18
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-bd 0c 14 80  jnz.a  a12, #0xe60
-b5 2a d8 ff  st.a  [a2]#-0x28, sp
-5d 00 02 00  jl  #0xe44
-d9 bb 34 00  lea  a11, [a11]#0x34
-b5 2b dc ff  st.a  [a2]#-0x24, a11
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+bd 0c 0e 80  jnz.a  a12, #0xdd0
+b5 2a e0 ff  st.a  [a2]#-0x20, sp
+5d 00 02 00  jl  #0xdc0
+d9 bb 28 00  lea  a11, [a11]#0x28
+b5 2b e4 ff  st.a  [a2]#-0x1c, a11
 4d 00 e0 ef  mfcr  d14, #0xfe00
 59 2e f0 ff  st.w  [a2]#-0x10, d14
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
-d9 cc 00 01  lea  a12, [a12]#0x1000
-b5 2c e0 ff  st.a  [a2]#-0x20, a12
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
-6f 0e f7 f8  jnz.t  d14, #0, #0x56
-61 ff f2 f9  fcall  #0x250
+6f 0e 3f f9  jnz.t  d14, #0, #0x56
+61 ff 3a fa  fcall  #0x250
 99 a7 14 00  ld.a  a7, [sp]#0x14
 89 72 40 09  st.d  [a7]#0, e2
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-7d ca 07 80  jne.a  sp, a12, #0xe8a
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+7d ca 07 80  jne.a  sp, a12, #0xdfa
 82 0f  mov  d15, #0
-59 2f d8 ff  st.w  [a2]#-0x28, d15
-59 2f dc ff  st.w  [a2]#-0x24, d15
+59 2f e0 ff  st.w  [a2]#-0x20, d15
+59 2f e4 ff  st.w  [a2]#-0x1c, d15
 99 ab 10 00  ld.a  a11, [sp]#0x10
 d9 aa 20 00  lea  sp, [sp]#0x20
 0d 00 80 01  ret  
-76 00 00 00  Function wrapper size: 118
+6a 00 00 00  Function wrapper size: 106
 28 29 49 00  Function signature, padded to 4B: "()I"
 03 00 00 00  Function signature length: 3
 vv vv vv vv vv vv vv vv vv vv  Export name, padded to 4B: "aarch64_float_zero_f64"
@@ -1080,32 +1044,29 @@ b5 ab 10 00  st.a  [sp]#0x10, a11
 b5 a6 00 00  st.a  [sp]#0, a6
 b5 a7 14 00  st.a  [sp]#0x14, a7
 99 23 e8 ff  ld.a  a3, [a2]#-0x18
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-bd 0c 14 80  jnz.a  a12, #0xf04
-b5 2a d8 ff  st.a  [a2]#-0x28, sp
-5d 00 02 00  jl  #0xee8
-d9 bb 32 00  lea  a11, [a11]#0x32
-b5 2b dc ff  st.a  [a2]#-0x24, a11
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+bd 0c 0e 80  jnz.a  a12, #0xe68
+b5 2a e0 ff  st.a  [a2]#-0x20, sp
+5d 00 02 00  jl  #0xe58
+d9 bb 26 00  lea  a11, [a11]#0x26
+b5 2b e4 ff  st.a  [a2]#-0x1c, a11
 4d 00 e0 ef  mfcr  d14, #0xfe00
 59 2e f0 ff  st.w  [a2]#-0x10, d14
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
-d9 cc 00 01  lea  a12, [a12]#0x1000
-b5 2c e0 ff  st.a  [a2]#-0x20, a12
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
-6f 0e a5 f8  jnz.t  d14, #0, #0x56
-61 ff b4 f9  fcall  #0x278
+6f 0e f3 f8  jnz.t  d14, #0, #0x56
+61 ff 02 fa  fcall  #0x278
 99 a7 14 00  ld.a  a7, [sp]#0x14
 74 72  st.w  [a7], d2
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-7d ca 07 80  jne.a  sp, a12, #0xf2c
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+7d ca 07 80  jne.a  sp, a12, #0xe90
 82 0f  mov  d15, #0
-59 2f d8 ff  st.w  [a2]#-0x28, d15
-59 2f dc ff  st.w  [a2]#-0x24, d15
+59 2f e0 ff  st.w  [a2]#-0x20, d15
+59 2f e4 ff  st.w  [a2]#-0x1c, d15
 99 ab 10 00  ld.a  a11, [sp]#0x10
 d9 aa 20 00  lea  sp, [sp]#0x20
 0d 00 80 01  ret  
-74 00 00 00  Function wrapper size: 116
+68 00 00 00  Function wrapper size: 104
 28 29 69 00  Function signature, padded to 4B: "()i"
 03 00 00 00  Function signature length: 3
 vv vv vv vv vv vv vv vv vv vv  Export name, padded to 4B: "aarch64_float_modified_f32"
@@ -1119,32 +1080,29 @@ b5 ab 10 00  st.a  [sp]#0x10, a11
 b5 a6 00 00  st.a  [sp]#0, a6
 b5 a7 14 00  st.a  [sp]#0x14, a7
 99 23 e8 ff  ld.a  a3, [a2]#-0x18
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-bd 0c 14 80  jnz.a  a12, #0xfa8
-b5 2a d8 ff  st.a  [a2]#-0x28, sp
-5d 00 02 00  jl  #0xf8c
-d9 bb 34 00  lea  a11, [a11]#0x34
-b5 2b dc ff  st.a  [a2]#-0x24, a11
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+bd 0c 0e 80  jnz.a  a12, #0xf00
+b5 2a e0 ff  st.a  [a2]#-0x20, sp
+5d 00 02 00  jl  #0xef0
+d9 bb 28 00  lea  a11, [a11]#0x28
+b5 2b e4 ff  st.a  [a2]#-0x1c, a11
 4d 00 e0 ef  mfcr  d14, #0xfe00
 59 2e f0 ff  st.w  [a2]#-0x10, d14
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
-d9 cc 00 01  lea  a12, [a12]#0x1000
-b5 2c e0 ff  st.a  [a2]#-0x20, a12
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
-6f 0e 53 f8  jnz.t  d14, #0, #0x56
-61 ff 78 f9  fcall  #0x2a4
+6f 0e a7 f8  jnz.t  d14, #0, #0x56
+61 ff cc f9  fcall  #0x2a4
 99 a7 14 00  ld.a  a7, [sp]#0x14
 89 72 40 09  st.d  [a7]#0, e2
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-7d ca 07 80  jne.a  sp, a12, #0xfd2
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+7d ca 07 80  jne.a  sp, a12, #0xf2a
 82 0f  mov  d15, #0
-59 2f d8 ff  st.w  [a2]#-0x28, d15
-59 2f dc ff  st.w  [a2]#-0x24, d15
+59 2f e0 ff  st.w  [a2]#-0x20, d15
+59 2f e4 ff  st.w  [a2]#-0x1c, d15
 99 ab 10 00  ld.a  a11, [sp]#0x10
 d9 aa 20 00  lea  sp, [sp]#0x20
 0d 00 80 01  ret  
-76 00 00 00  Function wrapper size: 118
+6a 00 00 00  Function wrapper size: 106
 28 29 49 00  Function signature, padded to 4B: "()I"
 03 00 00 00  Function signature length: 3
 vv vv vv vv vv vv vv vv vv vv  Export name, padded to 4B: "aarch64_float_modified_f64"
@@ -1158,32 +1116,29 @@ b5 ab 10 00  st.a  [sp]#0x10, a11
 b5 a6 00 00  st.a  [sp]#0, a6
 b5 a7 14 00  st.a  [sp]#0x14, a7
 99 23 e8 ff  ld.a  a3, [a2]#-0x18
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-bd 0c 14 80  jnz.a  a12, #0x1050
-b5 2a d8 ff  st.a  [a2]#-0x28, sp
-5d 00 02 00  jl  #0x1034
-d9 bb 32 00  lea  a11, [a11]#0x32
-b5 2b dc ff  st.a  [a2]#-0x24, a11
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+bd 0c 0e 80  jnz.a  a12, #0xf9c
+b5 2a e0 ff  st.a  [a2]#-0x20, sp
+5d 00 02 00  jl  #0xf8c
+d9 bb 26 00  lea  a11, [a11]#0x26
+b5 2b e4 ff  st.a  [a2]#-0x1c, a11
 4d 00 e0 ef  mfcr  d14, #0xfe00
 59 2e f0 ff  st.w  [a2]#-0x10, d14
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
-d9 cc 00 01  lea  a12, [a12]#0x1000
-b5 2c e0 ff  st.a  [a2]#-0x20, a12
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
-6f 0e ff f7  jnz.t  d14, #0, #0x56
-61 ff 3a f9  fcall  #0x2d0
+6f 0e 59 f8  jnz.t  d14, #0, #0x56
+61 ff 94 f9  fcall  #0x2d0
 99 a7 14 00  ld.a  a7, [sp]#0x14
 74 72  st.w  [a7], d2
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-7d ca 07 80  jne.a  sp, a12, #0x1078
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+7d ca 07 80  jne.a  sp, a12, #0xfc4
 82 0f  mov  d15, #0
-59 2f d8 ff  st.w  [a2]#-0x28, d15
-59 2f dc ff  st.w  [a2]#-0x24, d15
+59 2f e0 ff  st.w  [a2]#-0x20, d15
+59 2f e4 ff  st.w  [a2]#-0x1c, d15
 99 ab 10 00  ld.a  a11, [sp]#0x10
 d9 aa 20 00  lea  sp, [sp]#0x20
 0d 00 80 01  ret  
-74 00 00 00  Function wrapper size: 116
+68 00 00 00  Function wrapper size: 104
 28 29 69 00  Function signature, padded to 4B: "()i"
 03 00 00 00  Function signature length: 3
 vv vv vv vv vv vv vv vv vv vv  Export name, padded to 4B: "aarch64_float_gpr_f32"
@@ -1197,32 +1152,29 @@ b5 ab 10 00  st.a  [sp]#0x10, a11
 b5 a6 00 00  st.a  [sp]#0, a6
 b5 a7 14 00  st.a  [sp]#0x14, a7
 99 23 e8 ff  ld.a  a3, [a2]#-0x18
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-bd 0c 14 80  jnz.a  a12, #0x10f0
-b5 2a d8 ff  st.a  [a2]#-0x28, sp
-5d 00 02 00  jl  #0x10d4
-d9 bb 34 00  lea  a11, [a11]#0x34
-b5 2b dc ff  st.a  [a2]#-0x24, a11
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+bd 0c 0e 80  jnz.a  a12, #0x1030
+b5 2a e0 ff  st.a  [a2]#-0x20, sp
+5d 00 02 00  jl  #0x1020
+d9 bb 28 00  lea  a11, [a11]#0x28
+b5 2b e4 ff  st.a  [a2]#-0x1c, a11
 4d 00 e0 ef  mfcr  d14, #0xfe00
 59 2e f0 ff  st.w  [a2]#-0x10, d14
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
-d9 cc 00 01  lea  a12, [a12]#0x1000
-b5 2c e0 ff  st.a  [a2]#-0x20, a12
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
-6f 0e af f7  jnz.t  d14, #0, #0x56
-61 ff 02 f9  fcall  #0x300
+6f 0e 0f f8  jnz.t  d14, #0, #0x56
+61 ff 62 f9  fcall  #0x300
 99 a7 14 00  ld.a  a7, [sp]#0x14
 89 72 40 09  st.d  [a7]#0, e2
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-7d ca 07 80  jne.a  sp, a12, #0x111a
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+7d ca 07 80  jne.a  sp, a12, #0x105a
 82 0f  mov  d15, #0
-59 2f d8 ff  st.w  [a2]#-0x28, d15
-59 2f dc ff  st.w  [a2]#-0x24, d15
+59 2f e0 ff  st.w  [a2]#-0x20, d15
+59 2f e4 ff  st.w  [a2]#-0x1c, d15
 99 ab 10 00  ld.a  a11, [sp]#0x10
 d9 aa 20 00  lea  sp, [sp]#0x20
 0d 00 80 01  ret  
-76 00 00 00  Function wrapper size: 118
+6a 00 00 00  Function wrapper size: 106
 28 29 49 00  Function signature, padded to 4B: "()I"
 03 00 00 00  Function signature length: 3
 vv vv vv vv vv vv vv vv vv vv  Export name, padded to 4B: "aarch64_float_gpr_f64"
@@ -1236,32 +1188,29 @@ b5 ab 10 00  st.a  [sp]#0x10, a11
 b5 a6 00 00  st.a  [sp]#0, a6
 b5 a7 14 00  st.a  [sp]#0x14, a7
 99 23 e8 ff  ld.a  a3, [a2]#-0x18
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-bd 0c 14 80  jnz.a  a12, #0x1194
-b5 2a d8 ff  st.a  [a2]#-0x28, sp
-5d 00 02 00  jl  #0x1178
-d9 bb 32 00  lea  a11, [a11]#0x32
-b5 2b dc ff  st.a  [a2]#-0x24, a11
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+bd 0c 0e 80  jnz.a  a12, #0x10c8
+b5 2a e0 ff  st.a  [a2]#-0x20, sp
+5d 00 02 00  jl  #0x10b8
+d9 bb 26 00  lea  a11, [a11]#0x26
+b5 2b e4 ff  st.a  [a2]#-0x1c, a11
 4d 00 e0 ef  mfcr  d14, #0xfe00
 59 2e f0 ff  st.w  [a2]#-0x10, d14
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
-d9 cc 00 01  lea  a12, [a12]#0x1000
-b5 2c e0 ff  st.a  [a2]#-0x20, a12
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
-6f 0e 5d f7  jnz.t  d14, #0, #0x56
-61 ff c6 f8  fcall  #0x32c
+6f 0e c3 f7  jnz.t  d14, #0, #0x56
+61 ff 2c f9  fcall  #0x32c
 99 a7 14 00  ld.a  a7, [sp]#0x14
 74 72  st.w  [a7], d2
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-7d ca 07 80  jne.a  sp, a12, #0x11bc
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+7d ca 07 80  jne.a  sp, a12, #0x10f0
 82 0f  mov  d15, #0
-59 2f d8 ff  st.w  [a2]#-0x28, d15
-59 2f dc ff  st.w  [a2]#-0x24, d15
+59 2f e0 ff  st.w  [a2]#-0x20, d15
+59 2f e4 ff  st.w  [a2]#-0x1c, d15
 99 ab 10 00  ld.a  a11, [sp]#0x10
 d9 aa 20 00  lea  sp, [sp]#0x20
 0d 00 80 01  ret  
-74 00 00 00  Function wrapper size: 116
+68 00 00 00  Function wrapper size: 104
 28 29 69 00  Function signature, padded to 4B: "()i"
 03 00 00 00  Function signature length: 3
 vv vv vv vv vv vv vv vv vv vv  Export name, padded to 4B: "tricore_i32_signed4_pos"
@@ -1275,32 +1224,29 @@ b5 ab 10 00  st.a  [sp]#0x10, a11
 b5 a6 00 00  st.a  [sp]#0, a6
 b5 a7 14 00  st.a  [sp]#0x14, a7
 99 23 e8 ff  ld.a  a3, [a2]#-0x18
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-bd 0c 14 80  jnz.a  a12, #0x1234
-b5 2a d8 ff  st.a  [a2]#-0x28, sp
-5d 00 02 00  jl  #0x1218
-d9 bb 32 00  lea  a11, [a11]#0x32
-b5 2b dc ff  st.a  [a2]#-0x24, a11
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+bd 0c 0e 80  jnz.a  a12, #0x115c
+b5 2a e0 ff  st.a  [a2]#-0x20, sp
+5d 00 02 00  jl  #0x114c
+d9 bb 26 00  lea  a11, [a11]#0x26
+b5 2b e4 ff  st.a  [a2]#-0x1c, a11
 4d 00 e0 ef  mfcr  d14, #0xfe00
 59 2e f0 ff  st.w  [a2]#-0x10, d14
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
-d9 cc 00 01  lea  a12, [a12]#0x1000
-b5 2c e0 ff  st.a  [a2]#-0x20, a12
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
-6f 0e 0d f7  jnz.t  d14, #0, #0x56
-61 ff 8a f8  fcall  #0x354
+6f 0e 79 f7  jnz.t  d14, #0, #0x56
+61 ff f6 f8  fcall  #0x354
 99 a7 14 00  ld.a  a7, [sp]#0x14
 74 72  st.w  [a7], d2
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-7d ca 07 80  jne.a  sp, a12, #0x125c
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+7d ca 07 80  jne.a  sp, a12, #0x1184
 82 0f  mov  d15, #0
-59 2f d8 ff  st.w  [a2]#-0x28, d15
-59 2f dc ff  st.w  [a2]#-0x24, d15
+59 2f e0 ff  st.w  [a2]#-0x20, d15
+59 2f e4 ff  st.w  [a2]#-0x1c, d15
 99 ab 10 00  ld.a  a11, [sp]#0x10
 d9 aa 20 00  lea  sp, [sp]#0x20
 0d 00 80 01  ret  
-74 00 00 00  Function wrapper size: 116
+68 00 00 00  Function wrapper size: 104
 28 29 69 00  Function signature, padded to 4B: "()i"
 03 00 00 00  Function signature length: 3
 vv vv vv vv vv vv vv vv vv vv  Export name, padded to 4B: "tricore_i32_signed4_neg"
@@ -1314,32 +1260,29 @@ b5 ab 10 00  st.a  [sp]#0x10, a11
 b5 a6 00 00  st.a  [sp]#0, a6
 b5 a7 14 00  st.a  [sp]#0x14, a7
 99 23 e8 ff  ld.a  a3, [a2]#-0x18
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-bd 0c 14 80  jnz.a  a12, #0x12d4
-b5 2a d8 ff  st.a  [a2]#-0x28, sp
-5d 00 02 00  jl  #0x12b8
-d9 bb 32 00  lea  a11, [a11]#0x32
-b5 2b dc ff  st.a  [a2]#-0x24, a11
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+bd 0c 0e 80  jnz.a  a12, #0x11f0
+b5 2a e0 ff  st.a  [a2]#-0x20, sp
+5d 00 02 00  jl  #0x11e0
+d9 bb 26 00  lea  a11, [a11]#0x26
+b5 2b e4 ff  st.a  [a2]#-0x1c, a11
 4d 00 e0 ef  mfcr  d14, #0xfe00
 59 2e f0 ff  st.w  [a2]#-0x10, d14
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
-d9 cc 00 01  lea  a12, [a12]#0x1000
-b5 2c e0 ff  st.a  [a2]#-0x20, a12
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
-6f 0e bd f6  jnz.t  d14, #0, #0x56
-61 ff 4e f8  fcall  #0x37c
+6f 0e 2f f7  jnz.t  d14, #0, #0x56
+61 ff c0 f8  fcall  #0x37c
 99 a7 14 00  ld.a  a7, [sp]#0x14
 74 72  st.w  [a7], d2
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-7d ca 07 80  jne.a  sp, a12, #0x12fc
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+7d ca 07 80  jne.a  sp, a12, #0x1218
 82 0f  mov  d15, #0
-59 2f d8 ff  st.w  [a2]#-0x28, d15
-59 2f dc ff  st.w  [a2]#-0x24, d15
+59 2f e0 ff  st.w  [a2]#-0x20, d15
+59 2f e4 ff  st.w  [a2]#-0x1c, d15
 99 ab 10 00  ld.a  a11, [sp]#0x10
 d9 aa 20 00  lea  sp, [sp]#0x20
 0d 00 80 01  ret  
-74 00 00 00  Function wrapper size: 116
+68 00 00 00  Function wrapper size: 104
 28 29 69 00  Function signature, padded to 4B: "()i"
 03 00 00 00  Function signature length: 3
 vv vv vv vv vv vv vv vv vv vv  Export name, padded to 4B: "tricore_i32_unsigned16"
@@ -1353,32 +1296,29 @@ b5 ab 10 00  st.a  [sp]#0x10, a11
 b5 a6 00 00  st.a  [sp]#0, a6
 b5 a7 14 00  st.a  [sp]#0x14, a7
 99 23 e8 ff  ld.a  a3, [a2]#-0x18
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-bd 0c 14 80  jnz.a  a12, #0x1374
-b5 2a d8 ff  st.a  [a2]#-0x28, sp
-5d 00 02 00  jl  #0x1358
-d9 bb 32 00  lea  a11, [a11]#0x32
-b5 2b dc ff  st.a  [a2]#-0x24, a11
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+bd 0c 0e 80  jnz.a  a12, #0x1284
+b5 2a e0 ff  st.a  [a2]#-0x20, sp
+5d 00 02 00  jl  #0x1274
+d9 bb 26 00  lea  a11, [a11]#0x26
+b5 2b e4 ff  st.a  [a2]#-0x1c, a11
 4d 00 e0 ef  mfcr  d14, #0xfe00
 59 2e f0 ff  st.w  [a2]#-0x10, d14
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
-d9 cc 00 01  lea  a12, [a12]#0x1000
-b5 2c e0 ff  st.a  [a2]#-0x20, a12
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
-6f 0e 6d f6  jnz.t  d14, #0, #0x56
-61 ff 14 f8  fcall  #0x3a8
+6f 0e e5 f6  jnz.t  d14, #0, #0x56
+61 ff 8c f8  fcall  #0x3a8
 99 a7 14 00  ld.a  a7, [sp]#0x14
 74 72  st.w  [a7], d2
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-7d ca 07 80  jne.a  sp, a12, #0x139c
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+7d ca 07 80  jne.a  sp, a12, #0x12ac
 82 0f  mov  d15, #0
-59 2f d8 ff  st.w  [a2]#-0x28, d15
-59 2f dc ff  st.w  [a2]#-0x24, d15
+59 2f e0 ff  st.w  [a2]#-0x20, d15
+59 2f e4 ff  st.w  [a2]#-0x1c, d15
 99 ab 10 00  ld.a  a11, [sp]#0x10
 d9 aa 20 00  lea  sp, [sp]#0x20
 0d 00 80 01  ret  
-74 00 00 00  Function wrapper size: 116
+68 00 00 00  Function wrapper size: 104
 28 29 69 00  Function signature, padded to 4B: "()i"
 03 00 00 00  Function signature length: 3
 vv vv vv vv vv vv vv vv vv vv  Export name, padded to 4B: "tricore_i32_high16"
@@ -1392,32 +1332,29 @@ b5 ab 10 00  st.a  [sp]#0x10, a11
 b5 a6 00 00  st.a  [sp]#0, a6
 b5 a7 14 00  st.a  [sp]#0x14, a7
 99 23 e8 ff  ld.a  a3, [a2]#-0x18
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-bd 0c 14 80  jnz.a  a12, #0x1410
-b5 2a d8 ff  st.a  [a2]#-0x28, sp
-5d 00 02 00  jl  #0x13f4
-d9 bb 32 00  lea  a11, [a11]#0x32
-b5 2b dc ff  st.a  [a2]#-0x24, a11
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+bd 0c 0e 80  jnz.a  a12, #0x1314
+b5 2a e0 ff  st.a  [a2]#-0x20, sp
+5d 00 02 00  jl  #0x1304
+d9 bb 26 00  lea  a11, [a11]#0x26
+b5 2b e4 ff  st.a  [a2]#-0x1c, a11
 4d 00 e0 ef  mfcr  d14, #0xfe00
 59 2e f0 ff  st.w  [a2]#-0x10, d14
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
-d9 cc 00 01  lea  a12, [a12]#0x1000
-b5 2c e0 ff  st.a  [a2]#-0x20, a12
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
-6f 0e 1f f6  jnz.t  d14, #0, #0x56
-61 ff dc f7  fcall  #0x3d4
+6f 0e 9d f6  jnz.t  d14, #0, #0x56
+61 ff 5a f8  fcall  #0x3d4
 99 a7 14 00  ld.a  a7, [sp]#0x14
 74 72  st.w  [a7], d2
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-7d ca 07 80  jne.a  sp, a12, #0x1438
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+7d ca 07 80  jne.a  sp, a12, #0x133c
 82 0f  mov  d15, #0
-59 2f d8 ff  st.w  [a2]#-0x28, d15
-59 2f dc ff  st.w  [a2]#-0x24, d15
+59 2f e0 ff  st.w  [a2]#-0x20, d15
+59 2f e4 ff  st.w  [a2]#-0x1c, d15
 99 ab 10 00  ld.a  a11, [sp]#0x10
 d9 aa 20 00  lea  sp, [sp]#0x20
 0d 00 80 01  ret  
-74 00 00 00  Function wrapper size: 116
+68 00 00 00  Function wrapper size: 104
 28 29 69 00  Function signature, padded to 4B: "()i"
 03 00 00 00  Function signature length: 3
 vv vv vv vv vv vv vv vv vv vv  Export name, padded to 4B: "tricore_i32_signed16"
@@ -1431,32 +1368,29 @@ b5 ab 10 00  st.a  [sp]#0x10, a11
 b5 a6 00 00  st.a  [sp]#0, a6
 b5 a7 14 00  st.a  [sp]#0x14, a7
 99 23 e8 ff  ld.a  a3, [a2]#-0x18
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-bd 0c 14 80  jnz.a  a12, #0x14ac
-b5 2a d8 ff  st.a  [a2]#-0x28, sp
-5d 00 02 00  jl  #0x1490
-d9 bb 32 00  lea  a11, [a11]#0x32
-b5 2b dc ff  st.a  [a2]#-0x24, a11
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+bd 0c 0e 80  jnz.a  a12, #0x13a4
+b5 2a e0 ff  st.a  [a2]#-0x20, sp
+5d 00 02 00  jl  #0x1394
+d9 bb 26 00  lea  a11, [a11]#0x26
+b5 2b e4 ff  st.a  [a2]#-0x1c, a11
 4d 00 e0 ef  mfcr  d14, #0xfe00
 59 2e f0 ff  st.w  [a2]#-0x10, d14
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
-d9 cc 00 01  lea  a12, [a12]#0x1000
-b5 2c e0 ff  st.a  [a2]#-0x20, a12
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
-6f 0e d1 f5  jnz.t  d14, #0, #0x56
-61 ff a4 f7  fcall  #0x400
+6f 0e 55 f6  jnz.t  d14, #0, #0x56
+61 ff 28 f8  fcall  #0x400
 99 a7 14 00  ld.a  a7, [sp]#0x14
 74 72  st.w  [a7], d2
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-7d ca 07 80  jne.a  sp, a12, #0x14d4
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+7d ca 07 80  jne.a  sp, a12, #0x13cc
 82 0f  mov  d15, #0
-59 2f d8 ff  st.w  [a2]#-0x28, d15
-59 2f dc ff  st.w  [a2]#-0x24, d15
+59 2f e0 ff  st.w  [a2]#-0x20, d15
+59 2f e4 ff  st.w  [a2]#-0x1c, d15
 99 ab 10 00  ld.a  a11, [sp]#0x10
 d9 aa 20 00  lea  sp, [sp]#0x20
 0d 00 80 01  ret  
-74 00 00 00  Function wrapper size: 116
+68 00 00 00  Function wrapper size: 104
 28 29 69 00  Function signature, padded to 4B: "()i"
 03 00 00 00  Function signature length: 3
 vv vv vv vv vv vv vv vv vv vv  Export name, padded to 4B: "tricore_i32_split"
@@ -1470,32 +1404,29 @@ b5 ab 10 00  st.a  [sp]#0x10, a11
 b5 a6 00 00  st.a  [sp]#0, a6
 b5 a7 14 00  st.a  [sp]#0x14, a7
 99 23 e8 ff  ld.a  a3, [a2]#-0x18
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-bd 0c 14 80  jnz.a  a12, #0x1548
-b5 2a d8 ff  st.a  [a2]#-0x28, sp
-5d 00 02 00  jl  #0x152c
-d9 bb 32 00  lea  a11, [a11]#0x32
-b5 2b dc ff  st.a  [a2]#-0x24, a11
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+bd 0c 0e 80  jnz.a  a12, #0x1434
+b5 2a e0 ff  st.a  [a2]#-0x20, sp
+5d 00 02 00  jl  #0x1424
+d9 bb 26 00  lea  a11, [a11]#0x26
+b5 2b e4 ff  st.a  [a2]#-0x1c, a11
 4d 00 e0 ef  mfcr  d14, #0xfe00
 59 2e f0 ff  st.w  [a2]#-0x10, d14
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
-d9 cc 00 01  lea  a12, [a12]#0x1000
-b5 2c e0 ff  st.a  [a2]#-0x20, a12
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
-6f 0e 83 f5  jnz.t  d14, #0, #0x56
-61 ff 6e f7  fcall  #0x430
+6f 0e 0d f6  jnz.t  d14, #0, #0x56
+61 ff f8 f7  fcall  #0x430
 99 a7 14 00  ld.a  a7, [sp]#0x14
 74 72  st.w  [a7], d2
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-7d ca 07 80  jne.a  sp, a12, #0x1570
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+7d ca 07 80  jne.a  sp, a12, #0x145c
 82 0f  mov  d15, #0
-59 2f d8 ff  st.w  [a2]#-0x28, d15
-59 2f dc ff  st.w  [a2]#-0x24, d15
+59 2f e0 ff  st.w  [a2]#-0x20, d15
+59 2f e4 ff  st.w  [a2]#-0x1c, d15
 99 ab 10 00  ld.a  a11, [sp]#0x10
 d9 aa 20 00  lea  sp, [sp]#0x20
 0d 00 80 01  ret  
-74 00 00 00  Function wrapper size: 116
+68 00 00 00  Function wrapper size: 104
 28 29 69 00  Function signature, padded to 4B: "()i"
 03 00 00 00  Function signature length: 3
 vv vv vv vv vv vv vv vv vv vv  Export name, padded to 4B: "tricore_f32_signed4"
@@ -1509,32 +1440,29 @@ b5 ab 10 00  st.a  [sp]#0x10, a11
 b5 a6 00 00  st.a  [sp]#0, a6
 b5 a7 14 00  st.a  [sp]#0x14, a7
 99 23 e8 ff  ld.a  a3, [a2]#-0x18
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-bd 0c 14 80  jnz.a  a12, #0x15e4
-b5 2a d8 ff  st.a  [a2]#-0x28, sp
-5d 00 02 00  jl  #0x15c8
-d9 bb 32 00  lea  a11, [a11]#0x32
-b5 2b dc ff  st.a  [a2]#-0x24, a11
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+bd 0c 0e 80  jnz.a  a12, #0x14c4
+b5 2a e0 ff  st.a  [a2]#-0x20, sp
+5d 00 02 00  jl  #0x14b4
+d9 bb 26 00  lea  a11, [a11]#0x26
+b5 2b e4 ff  st.a  [a2]#-0x1c, a11
 4d 00 e0 ef  mfcr  d14, #0xfe00
 59 2e f0 ff  st.w  [a2]#-0x10, d14
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
-d9 cc 00 01  lea  a12, [a12]#0x1000
-b5 2c e0 ff  st.a  [a2]#-0x20, a12
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
-6f 0e 35 f5  jnz.t  d14, #0, #0x56
-61 ff 34 f7  fcall  #0x458
+6f 0e c5 f5  jnz.t  d14, #0, #0x56
+61 ff c4 f7  fcall  #0x458
 99 a7 14 00  ld.a  a7, [sp]#0x14
 74 72  st.w  [a7], d2
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-7d ca 07 80  jne.a  sp, a12, #0x160c
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+7d ca 07 80  jne.a  sp, a12, #0x14ec
 82 0f  mov  d15, #0
-59 2f d8 ff  st.w  [a2]#-0x28, d15
-59 2f dc ff  st.w  [a2]#-0x24, d15
+59 2f e0 ff  st.w  [a2]#-0x20, d15
+59 2f e4 ff  st.w  [a2]#-0x1c, d15
 99 ab 10 00  ld.a  a11, [sp]#0x10
 d9 aa 20 00  lea  sp, [sp]#0x20
 0d 00 80 01  ret  
-74 00 00 00  Function wrapper size: 116
+68 00 00 00  Function wrapper size: 104
 28 29 69 00  Function signature, padded to 4B: "()i"
 03 00 00 00  Function signature length: 3
 vv vv vv vv vv vv vv vv vv vv  Export name, padded to 4B: "tricore_f32_unsigned16"
@@ -1548,32 +1476,29 @@ b5 ab 10 00  st.a  [sp]#0x10, a11
 b5 a6 00 00  st.a  [sp]#0, a6
 b5 a7 14 00  st.a  [sp]#0x14, a7
 99 23 e8 ff  ld.a  a3, [a2]#-0x18
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-bd 0c 14 80  jnz.a  a12, #0x1684
-b5 2a d8 ff  st.a  [a2]#-0x28, sp
-5d 00 02 00  jl  #0x1668
-d9 bb 32 00  lea  a11, [a11]#0x32
-b5 2b dc ff  st.a  [a2]#-0x24, a11
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+bd 0c 0e 80  jnz.a  a12, #0x1558
+b5 2a e0 ff  st.a  [a2]#-0x20, sp
+5d 00 02 00  jl  #0x1548
+d9 bb 26 00  lea  a11, [a11]#0x26
+b5 2b e4 ff  st.a  [a2]#-0x1c, a11
 4d 00 e0 ef  mfcr  d14, #0xfe00
 59 2e f0 ff  st.w  [a2]#-0x10, d14
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
-d9 cc 00 01  lea  a12, [a12]#0x1000
-b5 2c e0 ff  st.a  [a2]#-0x20, a12
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
-6f 0e e5 f4  jnz.t  d14, #0, #0x56
-61 ff fa f6  fcall  #0x484
+6f 0e 7b f5  jnz.t  d14, #0, #0x56
+61 ff 90 f7  fcall  #0x484
 99 a7 14 00  ld.a  a7, [sp]#0x14
 74 72  st.w  [a7], d2
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-7d ca 07 80  jne.a  sp, a12, #0x16ac
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+7d ca 07 80  jne.a  sp, a12, #0x1580
 82 0f  mov  d15, #0
-59 2f d8 ff  st.w  [a2]#-0x28, d15
-59 2f dc ff  st.w  [a2]#-0x24, d15
+59 2f e0 ff  st.w  [a2]#-0x20, d15
+59 2f e4 ff  st.w  [a2]#-0x1c, d15
 99 ab 10 00  ld.a  a11, [sp]#0x10
 d9 aa 20 00  lea  sp, [sp]#0x20
 0d 00 80 01  ret  
-74 00 00 00  Function wrapper size: 116
+68 00 00 00  Function wrapper size: 104
 28 29 69 00  Function signature, padded to 4B: "()i"
 03 00 00 00  Function signature length: 3
 vv vv vv vv vv vv vv vv vv vv  Export name, padded to 4B: "tricore_f32_high16"
@@ -1587,32 +1512,29 @@ b5 ab 10 00  st.a  [sp]#0x10, a11
 b5 a6 00 00  st.a  [sp]#0, a6
 b5 a7 14 00  st.a  [sp]#0x14, a7
 99 23 e8 ff  ld.a  a3, [a2]#-0x18
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-bd 0c 14 80  jnz.a  a12, #0x1720
-b5 2a d8 ff  st.a  [a2]#-0x28, sp
-5d 00 02 00  jl  #0x1704
-d9 bb 32 00  lea  a11, [a11]#0x32
-b5 2b dc ff  st.a  [a2]#-0x24, a11
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+bd 0c 0e 80  jnz.a  a12, #0x15e8
+b5 2a e0 ff  st.a  [a2]#-0x20, sp
+5d 00 02 00  jl  #0x15d8
+d9 bb 26 00  lea  a11, [a11]#0x26
+b5 2b e4 ff  st.a  [a2]#-0x1c, a11
 4d 00 e0 ef  mfcr  d14, #0xfe00
 59 2e f0 ff  st.w  [a2]#-0x10, d14
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
-d9 cc 00 01  lea  a12, [a12]#0x1000
-b5 2c e0 ff  st.a  [a2]#-0x20, a12
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
-6f 0e 97 f4  jnz.t  d14, #0, #0x56
-61 ff c2 f6  fcall  #0x4b0
+6f 0e 33 f5  jnz.t  d14, #0, #0x56
+61 ff 5e f7  fcall  #0x4b0
 99 a7 14 00  ld.a  a7, [sp]#0x14
 74 72  st.w  [a7], d2
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-7d ca 07 80  jne.a  sp, a12, #0x1748
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+7d ca 07 80  jne.a  sp, a12, #0x1610
 82 0f  mov  d15, #0
-59 2f d8 ff  st.w  [a2]#-0x28, d15
-59 2f dc ff  st.w  [a2]#-0x24, d15
+59 2f e0 ff  st.w  [a2]#-0x20, d15
+59 2f e4 ff  st.w  [a2]#-0x1c, d15
 99 ab 10 00  ld.a  a11, [sp]#0x10
 d9 aa 20 00  lea  sp, [sp]#0x20
 0d 00 80 01  ret  
-74 00 00 00  Function wrapper size: 116
+68 00 00 00  Function wrapper size: 104
 28 29 69 00  Function signature, padded to 4B: "()i"
 03 00 00 00  Function signature length: 3
 vv vv vv vv vv vv vv vv vv vv  Export name, padded to 4B: "tricore_f32_signed16"
@@ -1626,32 +1548,29 @@ b5 ab 10 00  st.a  [sp]#0x10, a11
 b5 a6 00 00  st.a  [sp]#0, a6
 b5 a7 14 00  st.a  [sp]#0x14, a7
 99 23 e8 ff  ld.a  a3, [a2]#-0x18
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-bd 0c 14 80  jnz.a  a12, #0x17bc
-b5 2a d8 ff  st.a  [a2]#-0x28, sp
-5d 00 02 00  jl  #0x17a0
-d9 bb 32 00  lea  a11, [a11]#0x32
-b5 2b dc ff  st.a  [a2]#-0x24, a11
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+bd 0c 0e 80  jnz.a  a12, #0x1678
+b5 2a e0 ff  st.a  [a2]#-0x20, sp
+5d 00 02 00  jl  #0x1668
+d9 bb 26 00  lea  a11, [a11]#0x26
+b5 2b e4 ff  st.a  [a2]#-0x1c, a11
 4d 00 e0 ef  mfcr  d14, #0xfe00
 59 2e f0 ff  st.w  [a2]#-0x10, d14
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
-d9 cc 00 01  lea  a12, [a12]#0x1000
-b5 2c e0 ff  st.a  [a2]#-0x20, a12
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
-6f 0e 49 f4  jnz.t  d14, #0, #0x56
-61 ff 8a f6  fcall  #0x4dc
+6f 0e eb f4  jnz.t  d14, #0, #0x56
+61 ff 2c f7  fcall  #0x4dc
 99 a7 14 00  ld.a  a7, [sp]#0x14
 74 72  st.w  [a7], d2
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-7d ca 07 80  jne.a  sp, a12, #0x17e4
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+7d ca 07 80  jne.a  sp, a12, #0x16a0
 82 0f  mov  d15, #0
-59 2f d8 ff  st.w  [a2]#-0x28, d15
-59 2f dc ff  st.w  [a2]#-0x24, d15
+59 2f e0 ff  st.w  [a2]#-0x20, d15
+59 2f e4 ff  st.w  [a2]#-0x1c, d15
 99 ab 10 00  ld.a  a11, [sp]#0x10
 d9 aa 20 00  lea  sp, [sp]#0x20
 0d 00 80 01  ret  
-74 00 00 00  Function wrapper size: 116
+68 00 00 00  Function wrapper size: 104
 28 29 69 00  Function signature, padded to 4B: "()i"
 03 00 00 00  Function signature length: 3
 vv vv vv vv vv vv vv vv vv vv  Export name, padded to 4B: "tricore_f32_split"
@@ -1665,32 +1584,29 @@ b5 ab 10 00  st.a  [sp]#0x10, a11
 b5 a6 00 00  st.a  [sp]#0, a6
 b5 a7 14 00  st.a  [sp]#0x14, a7
 99 23 e8 ff  ld.a  a3, [a2]#-0x18
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-bd 0c 14 80  jnz.a  a12, #0x1858
-b5 2a d8 ff  st.a  [a2]#-0x28, sp
-5d 00 02 00  jl  #0x183c
-d9 bb 34 00  lea  a11, [a11]#0x34
-b5 2b dc ff  st.a  [a2]#-0x24, a11
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+bd 0c 0e 80  jnz.a  a12, #0x1708
+b5 2a e0 ff  st.a  [a2]#-0x20, sp
+5d 00 02 00  jl  #0x16f8
+d9 bb 28 00  lea  a11, [a11]#0x28
+b5 2b e4 ff  st.a  [a2]#-0x1c, a11
 4d 00 e0 ef  mfcr  d14, #0xfe00
 59 2e f0 ff  st.w  [a2]#-0x10, d14
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
-d9 cc 00 01  lea  a12, [a12]#0x1000
-b5 2c e0 ff  st.a  [a2]#-0x20, a12
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
-6f 0e fb f3  jnz.t  d14, #0, #0x56
-61 ff 54 f6  fcall  #0x50c
+6f 0e a3 f4  jnz.t  d14, #0, #0x56
+61 ff fc f6  fcall  #0x50c
 99 a7 14 00  ld.a  a7, [sp]#0x14
 89 72 40 09  st.d  [a7]#0, e2
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-7d ca 07 80  jne.a  sp, a12, #0x1882
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+7d ca 07 80  jne.a  sp, a12, #0x1732
 82 0f  mov  d15, #0
-59 2f d8 ff  st.w  [a2]#-0x28, d15
-59 2f dc ff  st.w  [a2]#-0x24, d15
+59 2f e0 ff  st.w  [a2]#-0x20, d15
+59 2f e4 ff  st.w  [a2]#-0x1c, d15
 99 ab 10 00  ld.a  a11, [sp]#0x10
 d9 aa 20 00  lea  sp, [sp]#0x20
 0d 00 80 01  ret  
-76 00 00 00  Function wrapper size: 118
+6a 00 00 00  Function wrapper size: 106
 28 29 49 00  Function signature, padded to 4B: "()I"
 03 00 00 00  Function signature length: 3
 vv vv vv vv vv vv vv vv vv vv  Export name, padded to 4B: "tricore_i64_signed4"
@@ -1704,32 +1620,29 @@ b5 ab 10 00  st.a  [sp]#0x10, a11
 b5 a6 00 00  st.a  [sp]#0, a6
 b5 a7 14 00  st.a  [sp]#0x14, a7
 99 23 e8 ff  ld.a  a3, [a2]#-0x18
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-bd 0c 14 80  jnz.a  a12, #0x18f8
-b5 2a d8 ff  st.a  [a2]#-0x28, sp
-5d 00 02 00  jl  #0x18dc
-d9 bb 34 00  lea  a11, [a11]#0x34
-b5 2b dc ff  st.a  [a2]#-0x24, a11
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+bd 0c 0e 80  jnz.a  a12, #0x179c
+b5 2a e0 ff  st.a  [a2]#-0x20, sp
+5d 00 02 00  jl  #0x178c
+d9 bb 28 00  lea  a11, [a11]#0x28
+b5 2b e4 ff  st.a  [a2]#-0x1c, a11
 4d 00 e0 ef  mfcr  d14, #0xfe00
 59 2e f0 ff  st.w  [a2]#-0x10, d14
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
-d9 cc 00 01  lea  a12, [a12]#0x1000
-b5 2c e0 ff  st.a  [a2]#-0x20, a12
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
-6f 0e ab f3  jnz.t  d14, #0, #0x56
-61 ff 18 f6  fcall  #0x534
+6f 0e 59 f4  jnz.t  d14, #0, #0x56
+61 ff c6 f6  fcall  #0x534
 99 a7 14 00  ld.a  a7, [sp]#0x14
 89 72 40 09  st.d  [a7]#0, e2
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-7d ca 07 80  jne.a  sp, a12, #0x1922
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+7d ca 07 80  jne.a  sp, a12, #0x17c6
 82 0f  mov  d15, #0
-59 2f d8 ff  st.w  [a2]#-0x28, d15
-59 2f dc ff  st.w  [a2]#-0x24, d15
+59 2f e0 ff  st.w  [a2]#-0x20, d15
+59 2f e4 ff  st.w  [a2]#-0x1c, d15
 99 ab 10 00  ld.a  a11, [sp]#0x10
 d9 aa 20 00  lea  sp, [sp]#0x20
 0d 00 80 01  ret  
-76 00 00 00  Function wrapper size: 118
+6a 00 00 00  Function wrapper size: 106
 28 29 49 00  Function signature, padded to 4B: "()I"
 03 00 00 00  Function signature length: 3
 vv vv vv vv vv vv vv vv vv vv  Export name, padded to 4B: "tricore_i64_signed16"
@@ -1743,32 +1656,29 @@ b5 ab 10 00  st.a  [sp]#0x10, a11
 b5 a6 00 00  st.a  [sp]#0, a6
 b5 a7 14 00  st.a  [sp]#0x14, a7
 99 23 e8 ff  ld.a  a3, [a2]#-0x18
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-bd 0c 14 80  jnz.a  a12, #0x1998
-b5 2a d8 ff  st.a  [a2]#-0x28, sp
-5d 00 02 00  jl  #0x197c
-d9 bb 34 00  lea  a11, [a11]#0x34
-b5 2b dc ff  st.a  [a2]#-0x24, a11
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+bd 0c 0e 80  jnz.a  a12, #0x1830
+b5 2a e0 ff  st.a  [a2]#-0x20, sp
+5d 00 02 00  jl  #0x1820
+d9 bb 28 00  lea  a11, [a11]#0x28
+b5 2b e4 ff  st.a  [a2]#-0x1c, a11
 4d 00 e0 ef  mfcr  d14, #0xfe00
 59 2e f0 ff  st.w  [a2]#-0x10, d14
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
-d9 cc 00 01  lea  a12, [a12]#0x1000
-b5 2c e0 ff  st.a  [a2]#-0x20, a12
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
-6f 0e 5b f3  jnz.t  d14, #0, #0x56
-61 ff de f5  fcall  #0x560
+6f 0e 0f f4  jnz.t  d14, #0, #0x56
+61 ff 92 f6  fcall  #0x560
 99 a7 14 00  ld.a  a7, [sp]#0x14
 89 72 40 09  st.d  [a7]#0, e2
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-7d ca 07 80  jne.a  sp, a12, #0x19c2
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+7d ca 07 80  jne.a  sp, a12, #0x185a
 82 0f  mov  d15, #0
-59 2f d8 ff  st.w  [a2]#-0x28, d15
-59 2f dc ff  st.w  [a2]#-0x24, d15
+59 2f e0 ff  st.w  [a2]#-0x20, d15
+59 2f e4 ff  st.w  [a2]#-0x1c, d15
 99 ab 10 00  ld.a  a11, [sp]#0x10
 d9 aa 20 00  lea  sp, [sp]#0x20
 0d 00 80 01  ret  
-76 00 00 00  Function wrapper size: 118
+6a 00 00 00  Function wrapper size: 106
 28 29 49 00  Function signature, padded to 4B: "()I"
 03 00 00 00  Function signature length: 3
 vv vv vv vv vv vv vv vv vv vv  Export name, padded to 4B: "tricore_i64_imask"
@@ -1782,32 +1692,29 @@ b5 ab 10 00  st.a  [sp]#0x10, a11
 b5 a6 00 00  st.a  [sp]#0, a6
 b5 a7 14 00  st.a  [sp]#0x14, a7
 99 23 e8 ff  ld.a  a3, [a2]#-0x18
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-bd 0c 14 80  jnz.a  a12, #0x1a38
-b5 2a d8 ff  st.a  [a2]#-0x28, sp
-5d 00 02 00  jl  #0x1a1c
-d9 bb 34 00  lea  a11, [a11]#0x34
-b5 2b dc ff  st.a  [a2]#-0x24, a11
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+bd 0c 0e 80  jnz.a  a12, #0x18c4
+b5 2a e0 ff  st.a  [a2]#-0x20, sp
+5d 00 02 00  jl  #0x18b4
+d9 bb 28 00  lea  a11, [a11]#0x28
+b5 2b e4 ff  st.a  [a2]#-0x1c, a11
 4d 00 e0 ef  mfcr  d14, #0xfe00
 59 2e f0 ff  st.w  [a2]#-0x10, d14
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
-d9 cc 00 01  lea  a12, [a12]#0x1000
-b5 2c e0 ff  st.a  [a2]#-0x20, a12
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
-6f 0e 0b f3  jnz.t  d14, #0, #0x56
-61 ff a4 f5  fcall  #0x58c
+6f 0e c5 f3  jnz.t  d14, #0, #0x56
+61 ff 5e f6  fcall  #0x58c
 99 a7 14 00  ld.a  a7, [sp]#0x14
 89 72 40 09  st.d  [a7]#0, e2
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-7d ca 07 80  jne.a  sp, a12, #0x1a62
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+7d ca 07 80  jne.a  sp, a12, #0x18ee
 82 0f  mov  d15, #0
-59 2f d8 ff  st.w  [a2]#-0x28, d15
-59 2f dc ff  st.w  [a2]#-0x24, d15
+59 2f e0 ff  st.w  [a2]#-0x20, d15
+59 2f e4 ff  st.w  [a2]#-0x1c, d15
 99 ab 10 00  ld.a  a11, [sp]#0x10
 d9 aa 20 00  lea  sp, [sp]#0x20
 0d 00 80 01  ret  
-76 00 00 00  Function wrapper size: 118
+6a 00 00 00  Function wrapper size: 106
 28 29 49 00  Function signature, padded to 4B: "()I"
 03 00 00 00  Function signature length: 3
 vv vv vv vv vv vv vv vv vv vv  Export name, padded to 4B: "tricore_i64_split"
@@ -1821,32 +1728,29 @@ b5 ab 10 00  st.a  [sp]#0x10, a11
 b5 a6 00 00  st.a  [sp]#0, a6
 b5 a7 14 00  st.a  [sp]#0x14, a7
 99 23 e8 ff  ld.a  a3, [a2]#-0x18
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-bd 0c 14 80  jnz.a  a12, #0x1ad8
-b5 2a d8 ff  st.a  [a2]#-0x28, sp
-5d 00 02 00  jl  #0x1abc
-d9 bb 34 00  lea  a11, [a11]#0x34
-b5 2b dc ff  st.a  [a2]#-0x24, a11
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+bd 0c 0e 80  jnz.a  a12, #0x1958
+b5 2a e0 ff  st.a  [a2]#-0x20, sp
+5d 00 02 00  jl  #0x1948
+d9 bb 28 00  lea  a11, [a11]#0x28
+b5 2b e4 ff  st.a  [a2]#-0x1c, a11
 4d 00 e0 ef  mfcr  d14, #0xfe00
 59 2e f0 ff  st.w  [a2]#-0x10, d14
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
-d9 cc 00 01  lea  a12, [a12]#0x1000
-b5 2c e0 ff  st.a  [a2]#-0x20, a12
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
-6f 0e bb f2  jnz.t  d14, #0, #0x56
-61 ff 70 f5  fcall  #0x5c4
+6f 0e 7b f3  jnz.t  d14, #0, #0x56
+61 ff 30 f6  fcall  #0x5c4
 99 a7 14 00  ld.a  a7, [sp]#0x14
 89 72 40 09  st.d  [a7]#0, e2
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-7d ca 07 80  jne.a  sp, a12, #0x1b02
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+7d ca 07 80  jne.a  sp, a12, #0x1982
 82 0f  mov  d15, #0
-59 2f d8 ff  st.w  [a2]#-0x28, d15
-59 2f dc ff  st.w  [a2]#-0x24, d15
+59 2f e0 ff  st.w  [a2]#-0x20, d15
+59 2f e4 ff  st.w  [a2]#-0x1c, d15
 99 ab 10 00  ld.a  a11, [sp]#0x10
 d9 aa 20 00  lea  sp, [sp]#0x20
 0d 00 80 01  ret  
-76 00 00 00  Function wrapper size: 118
+6a 00 00 00  Function wrapper size: 106
 28 29 49 00  Function signature, padded to 4B: "()I"
 03 00 00 00  Function signature length: 3
 vv vv vv vv vv vv vv vv vv vv  Export name, padded to 4B: "tricore_f64_signed4"
@@ -1860,32 +1764,29 @@ b5 ab 10 00  st.a  [sp]#0x10, a11
 b5 a6 00 00  st.a  [sp]#0, a6
 b5 a7 14 00  st.a  [sp]#0x14, a7
 99 23 e8 ff  ld.a  a3, [a2]#-0x18
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-bd 0c 14 80  jnz.a  a12, #0x1b78
-b5 2a d8 ff  st.a  [a2]#-0x28, sp
-5d 00 02 00  jl  #0x1b5c
-d9 bb 34 00  lea  a11, [a11]#0x34
-b5 2b dc ff  st.a  [a2]#-0x24, a11
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+bd 0c 0e 80  jnz.a  a12, #0x19ec
+b5 2a e0 ff  st.a  [a2]#-0x20, sp
+5d 00 02 00  jl  #0x19dc
+d9 bb 28 00  lea  a11, [a11]#0x28
+b5 2b e4 ff  st.a  [a2]#-0x1c, a11
 4d 00 e0 ef  mfcr  d14, #0xfe00
 59 2e f0 ff  st.w  [a2]#-0x10, d14
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
-d9 cc 00 01  lea  a12, [a12]#0x1000
-b5 2c e0 ff  st.a  [a2]#-0x20, a12
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
-6f 0e 6b f2  jnz.t  d14, #0, #0x56
-61 ff 34 f5  fcall  #0x5ec
+6f 0e 31 f3  jnz.t  d14, #0, #0x56
+61 ff fa f5  fcall  #0x5ec
 99 a7 14 00  ld.a  a7, [sp]#0x14
 89 72 40 09  st.d  [a7]#0, e2
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-7d ca 07 80  jne.a  sp, a12, #0x1ba2
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+7d ca 07 80  jne.a  sp, a12, #0x1a16
 82 0f  mov  d15, #0
-59 2f d8 ff  st.w  [a2]#-0x28, d15
-59 2f dc ff  st.w  [a2]#-0x24, d15
+59 2f e0 ff  st.w  [a2]#-0x20, d15
+59 2f e4 ff  st.w  [a2]#-0x1c, d15
 99 ab 10 00  ld.a  a11, [sp]#0x10
 d9 aa 20 00  lea  sp, [sp]#0x20
 0d 00 80 01  ret  
-76 00 00 00  Function wrapper size: 118
+6a 00 00 00  Function wrapper size: 106
 28 29 49 00  Function signature, padded to 4B: "()I"
 03 00 00 00  Function signature length: 3
 vv vv vv vv vv vv vv vv vv vv  Export name, padded to 4B: "tricore_f64_signed16"
@@ -1899,32 +1800,29 @@ b5 ab 10 00  st.a  [sp]#0x10, a11
 b5 a6 00 00  st.a  [sp]#0, a6
 b5 a7 14 00  st.a  [sp]#0x14, a7
 99 23 e8 ff  ld.a  a3, [a2]#-0x18
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-bd 0c 14 80  jnz.a  a12, #0x1c18
-b5 2a d8 ff  st.a  [a2]#-0x28, sp
-5d 00 02 00  jl  #0x1bfc
-d9 bb 34 00  lea  a11, [a11]#0x34
-b5 2b dc ff  st.a  [a2]#-0x24, a11
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+bd 0c 0e 80  jnz.a  a12, #0x1a80
+b5 2a e0 ff  st.a  [a2]#-0x20, sp
+5d 00 02 00  jl  #0x1a70
+d9 bb 28 00  lea  a11, [a11]#0x28
+b5 2b e4 ff  st.a  [a2]#-0x1c, a11
 4d 00 e0 ef  mfcr  d14, #0xfe00
 59 2e f0 ff  st.w  [a2]#-0x10, d14
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
-d9 cc 00 01  lea  a12, [a12]#0x1000
-b5 2c e0 ff  st.a  [a2]#-0x20, a12
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
-6f 0e 1b f2  jnz.t  d14, #0, #0x56
-61 ff fa f4  fcall  #0x618
+6f 0e e7 f2  jnz.t  d14, #0, #0x56
+61 ff c6 f5  fcall  #0x618
 99 a7 14 00  ld.a  a7, [sp]#0x14
 89 72 40 09  st.d  [a7]#0, e2
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-7d ca 07 80  jne.a  sp, a12, #0x1c42
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+7d ca 07 80  jne.a  sp, a12, #0x1aaa
 82 0f  mov  d15, #0
-59 2f d8 ff  st.w  [a2]#-0x28, d15
-59 2f dc ff  st.w  [a2]#-0x24, d15
+59 2f e0 ff  st.w  [a2]#-0x20, d15
+59 2f e4 ff  st.w  [a2]#-0x1c, d15
 99 ab 10 00  ld.a  a11, [sp]#0x10
 d9 aa 20 00  lea  sp, [sp]#0x20
 0d 00 80 01  ret  
-76 00 00 00  Function wrapper size: 118
+6a 00 00 00  Function wrapper size: 106
 28 29 49 00  Function signature, padded to 4B: "()I"
 03 00 00 00  Function signature length: 3
 vv vv vv vv vv vv vv vv vv vv  Export name, padded to 4B: "tricore_f64_imask"
@@ -1938,32 +1836,29 @@ b5 ab 10 00  st.a  [sp]#0x10, a11
 b5 a6 00 00  st.a  [sp]#0, a6
 b5 a7 14 00  st.a  [sp]#0x14, a7
 99 23 e8 ff  ld.a  a3, [a2]#-0x18
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-bd 0c 14 80  jnz.a  a12, #0x1cb8
-b5 2a d8 ff  st.a  [a2]#-0x28, sp
-5d 00 02 00  jl  #0x1c9c
-d9 bb 34 00  lea  a11, [a11]#0x34
-b5 2b dc ff  st.a  [a2]#-0x24, a11
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+bd 0c 0e 80  jnz.a  a12, #0x1b14
+b5 2a e0 ff  st.a  [a2]#-0x20, sp
+5d 00 02 00  jl  #0x1b04
+d9 bb 28 00  lea  a11, [a11]#0x28
+b5 2b e4 ff  st.a  [a2]#-0x1c, a11
 4d 00 e0 ef  mfcr  d14, #0xfe00
 59 2e f0 ff  st.w  [a2]#-0x10, d14
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
-d9 cc 00 01  lea  a12, [a12]#0x1000
-b5 2c e0 ff  st.a  [a2]#-0x20, a12
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
-6f 0e cb f1  jnz.t  d14, #0, #0x56
-61 ff c0 f4  fcall  #0x644
+6f 0e 9d f2  jnz.t  d14, #0, #0x56
+61 ff 92 f5  fcall  #0x644
 99 a7 14 00  ld.a  a7, [sp]#0x14
 89 72 40 09  st.d  [a7]#0, e2
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-7d ca 07 80  jne.a  sp, a12, #0x1ce2
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+7d ca 07 80  jne.a  sp, a12, #0x1b3e
 82 0f  mov  d15, #0
-59 2f d8 ff  st.w  [a2]#-0x28, d15
-59 2f dc ff  st.w  [a2]#-0x24, d15
+59 2f e0 ff  st.w  [a2]#-0x20, d15
+59 2f e4 ff  st.w  [a2]#-0x1c, d15
 99 ab 10 00  ld.a  a11, [sp]#0x10
 d9 aa 20 00  lea  sp, [sp]#0x20
 0d 00 80 01  ret  
-76 00 00 00  Function wrapper size: 118
+6a 00 00 00  Function wrapper size: 106
 28 29 49 00  Function signature, padded to 4B: "()I"
 03 00 00 00  Function signature length: 3
 vv vv vv vv vv vv vv vv vv vv  Export name, padded to 4B: "tricore_f64_split"
@@ -1977,32 +1872,29 @@ b5 ab 10 00  st.a  [sp]#0x10, a11
 b5 a6 00 00  st.a  [sp]#0, a6
 b5 a7 14 00  st.a  [sp]#0x14, a7
 99 23 e8 ff  ld.a  a3, [a2]#-0x18
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-bd 0c 14 80  jnz.a  a12, #0x1d58
-b5 2a d8 ff  st.a  [a2]#-0x28, sp
-5d 00 02 00  jl  #0x1d3c
-d9 bb 32 00  lea  a11, [a11]#0x32
-b5 2b dc ff  st.a  [a2]#-0x24, a11
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+bd 0c 0e 80  jnz.a  a12, #0x1ba8
+b5 2a e0 ff  st.a  [a2]#-0x20, sp
+5d 00 02 00  jl  #0x1b98
+d9 bb 26 00  lea  a11, [a11]#0x26
+b5 2b e4 ff  st.a  [a2]#-0x1c, a11
 4d 00 e0 ef  mfcr  d14, #0xfe00
 59 2e f0 ff  st.w  [a2]#-0x10, d14
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
-d9 cc 00 01  lea  a12, [a12]#0x1000
-b5 2c e0 ff  st.a  [a2]#-0x20, a12
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
-6f 0e 7b f1  jnz.t  d14, #0, #0x56
-61 ff 8c f4  fcall  #0x67c
+6f 0e 53 f2  jnz.t  d14, #0, #0x56
+61 ff 64 f5  fcall  #0x67c
 99 a7 14 00  ld.a  a7, [sp]#0x14
 74 72  st.w  [a7], d2
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-7d ca 07 80  jne.a  sp, a12, #0x1d80
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+7d ca 07 80  jne.a  sp, a12, #0x1bd0
 82 0f  mov  d15, #0
-59 2f d8 ff  st.w  [a2]#-0x28, d15
-59 2f dc ff  st.w  [a2]#-0x24, d15
+59 2f e0 ff  st.w  [a2]#-0x20, d15
+59 2f e4 ff  st.w  [a2]#-0x1c, d15
 99 ab 10 00  ld.a  a11, [sp]#0x10
 d9 aa 20 00  lea  sp, [sp]#0x20
 0d 00 80 01  ret  
-74 00 00 00  Function wrapper size: 116
+68 00 00 00  Function wrapper size: 104
 28 29 69 00  Function signature, padded to 4B: "()i"
 03 00 00 00  Function signature length: 3
 78 38 36 5f 69 33 32 00  Export name, padded to 4B: "x86_i32"
@@ -2015,32 +1907,29 @@ b5 ab 10 00  st.a  [sp]#0x10, a11
 b5 a6 00 00  st.a  [sp]#0, a6
 b5 a7 14 00  st.a  [sp]#0x14, a7
 99 23 e8 ff  ld.a  a3, [a2]#-0x18
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-bd 0c 14 80  jnz.a  a12, #0x1de8
-b5 2a d8 ff  st.a  [a2]#-0x28, sp
-5d 00 02 00  jl  #0x1dcc
-d9 bb 34 00  lea  a11, [a11]#0x34
-b5 2b dc ff  st.a  [a2]#-0x24, a11
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+bd 0c 0e 80  jnz.a  a12, #0x1c2c
+b5 2a e0 ff  st.a  [a2]#-0x20, sp
+5d 00 02 00  jl  #0x1c1c
+d9 bb 28 00  lea  a11, [a11]#0x28
+b5 2b e4 ff  st.a  [a2]#-0x1c, a11
 4d 00 e0 ef  mfcr  d14, #0xfe00
 59 2e f0 ff  st.w  [a2]#-0x10, d14
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
-d9 cc 00 01  lea  a12, [a12]#0x1000
-b5 2c e0 ff  st.a  [a2]#-0x20, a12
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
-6f 0e 33 f1  jnz.t  d14, #0, #0x56
-61 ff 58 f4  fcall  #0x6a4
+6f 0e 11 f2  jnz.t  d14, #0, #0x56
+61 ff 36 f5  fcall  #0x6a4
 99 a7 14 00  ld.a  a7, [sp]#0x14
 89 72 40 09  st.d  [a7]#0, e2
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-7d ca 07 80  jne.a  sp, a12, #0x1e12
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+7d ca 07 80  jne.a  sp, a12, #0x1c56
 82 0f  mov  d15, #0
-59 2f d8 ff  st.w  [a2]#-0x28, d15
-59 2f dc ff  st.w  [a2]#-0x24, d15
+59 2f e0 ff  st.w  [a2]#-0x20, d15
+59 2f e4 ff  st.w  [a2]#-0x1c, d15
 99 ab 10 00  ld.a  a11, [sp]#0x10
 d9 aa 20 00  lea  sp, [sp]#0x20
 0d 00 80 01  ret  
-76 00 00 00  Function wrapper size: 118
+6a 00 00 00  Function wrapper size: 106
 28 29 49 00  Function signature, padded to 4B: "()I"
 03 00 00 00  Function signature length: 3
 78 38 36 5f 69 36 34 00  Export name, padded to 4B: "x86_i64"
@@ -2053,32 +1942,29 @@ b5 ab 10 00  st.a  [sp]#0x10, a11
 b5 a6 00 00  st.a  [sp]#0, a6
 b5 a7 14 00  st.a  [sp]#0x14, a7
 99 23 e8 ff  ld.a  a3, [a2]#-0x18
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-bd 0c 14 80  jnz.a  a12, #0x1e7c
-b5 2a d8 ff  st.a  [a2]#-0x28, sp
-5d 00 02 00  jl  #0x1e60
-d9 bb 32 00  lea  a11, [a11]#0x32
-b5 2b dc ff  st.a  [a2]#-0x24, a11
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+bd 0c 0e 80  jnz.a  a12, #0x1cb4
+b5 2a e0 ff  st.a  [a2]#-0x20, sp
+5d 00 02 00  jl  #0x1ca4
+d9 bb 26 00  lea  a11, [a11]#0x26
+b5 2b e4 ff  st.a  [a2]#-0x1c, a11
 4d 00 e0 ef  mfcr  d14, #0xfe00
 59 2e f0 ff  st.w  [a2]#-0x10, d14
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
-d9 cc 00 01  lea  a12, [a12]#0x1000
-b5 2c e0 ff  st.a  [a2]#-0x20, a12
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
-6f 0e e9 f0  jnz.t  d14, #0, #0x56
-61 ff 22 f4  fcall  #0x6cc
+6f 0e cd f1  jnz.t  d14, #0, #0x56
+61 ff 06 f5  fcall  #0x6cc
 99 a7 14 00  ld.a  a7, [sp]#0x14
 74 72  st.w  [a7], d2
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-7d ca 07 80  jne.a  sp, a12, #0x1ea4
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+7d ca 07 80  jne.a  sp, a12, #0x1cdc
 82 0f  mov  d15, #0
-59 2f d8 ff  st.w  [a2]#-0x28, d15
-59 2f dc ff  st.w  [a2]#-0x24, d15
+59 2f e0 ff  st.w  [a2]#-0x20, d15
+59 2f e4 ff  st.w  [a2]#-0x1c, d15
 99 ab 10 00  ld.a  a11, [sp]#0x10
 d9 aa 20 00  lea  sp, [sp]#0x20
 0d 00 80 01  ret  
-74 00 00 00  Function wrapper size: 116
+68 00 00 00  Function wrapper size: 104
 28 29 69 00  Function signature, padded to 4B: "()i"
 03 00 00 00  Function signature length: 3
 78 38 36 5f 66 33 32 00  Export name, padded to 4B: "x86_f32"
@@ -2091,39 +1977,36 @@ b5 ab 10 00  st.a  [sp]#0x10, a11
 b5 a6 00 00  st.a  [sp]#0, a6
 b5 a7 14 00  st.a  [sp]#0x14, a7
 99 23 e8 ff  ld.a  a3, [a2]#-0x18
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-bd 0c 14 80  jnz.a  a12, #0x1f0c
-b5 2a d8 ff  st.a  [a2]#-0x28, sp
-5d 00 02 00  jl  #0x1ef0
-d9 bb 34 00  lea  a11, [a11]#0x34
-b5 2b dc ff  st.a  [a2]#-0x24, a11
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+bd 0c 0e 80  jnz.a  a12, #0x1d38
+b5 2a e0 ff  st.a  [a2]#-0x20, sp
+5d 00 02 00  jl  #0x1d28
+d9 bb 28 00  lea  a11, [a11]#0x28
+b5 2b e4 ff  st.a  [a2]#-0x1c, a11
 4d 00 e0 ef  mfcr  d14, #0xfe00
 59 2e f0 ff  st.w  [a2]#-0x10, d14
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
-d9 cc 00 01  lea  a12, [a12]#0x1000
-b5 2c e0 ff  st.a  [a2]#-0x20, a12
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
-6f 0e a1 f0  jnz.t  d14, #0, #0x56
-61 ff ee f3  fcall  #0x6f4
+6f 0e 8b f1  jnz.t  d14, #0, #0x56
+61 ff d8 f4  fcall  #0x6f4
 99 a7 14 00  ld.a  a7, [sp]#0x14
 89 72 40 09  st.d  [a7]#0, e2
-99 2c d8 ff  ld.a  a12, [a2]#-0x28
-7d ca 07 80  jne.a  sp, a12, #0x1f36
+99 2c e0 ff  ld.a  a12, [a2]#-0x20
+7d ca 07 80  jne.a  sp, a12, #0x1d62
 82 0f  mov  d15, #0
-59 2f d8 ff  st.w  [a2]#-0x28, d15
-59 2f dc ff  st.w  [a2]#-0x24, d15
+59 2f e0 ff  st.w  [a2]#-0x20, d15
+59 2f e4 ff  st.w  [a2]#-0x1c, d15
 99 ab 10 00  ld.a  a11, [sp]#0x10
 d9 aa 20 00  lea  sp, [sp]#0x20
 0d 00 80 01  ret  
-76 00 00 00  Function wrapper size: 118
+6a 00 00 00  Function wrapper size: 106
 28 29 49 00  Function signature, padded to 4B: "()I"
 03 00 00 00  Function signature length: 3
 78 38 36 5f 66 36 34 00  Export name, padded to 4B: "x86_f64"
 07 00 00 00  Export name length: 7
 26 00 00 00  WebAssembly function index: 38
 27 00 00 00  Number of exported functions: 39
-1c 18 00 00  Section size (excl. this value): 6172
+48 16 00 00  Section size (excl. this value): 5704
 
 WebAssembly Link Status of Imported Functions
 Padding for link status table 
@@ -2135,8 +2018,8 @@ WebAssembly Table
 
 More Info
 00 00 00 00  Size of link data: 0
-ff ff ff ff  Offset from here for the landing pad function body (0xFFFF'FFFF = undefined, pos: 1f79): 4294967295
+ff ff ff ff  Offset from here for the landing pad function body (0xFFFF'FFFF = undefined, pos: 1da5): 4294967295
 00 00 00 00  Stacktrace records 0, debugMode: 0
 03 00 00 00  Version of this binary module: 3
-84 1f 00 00  Module binary size (excl. this value): 8068
+b0 1d 00 00  Module binary size (excl. this value): 7600
 

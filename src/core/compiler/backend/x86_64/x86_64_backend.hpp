@@ -115,7 +115,7 @@ public:
   /// pre: stacktraceRecordCount > 0
   void emitStackTraceCollector(uint32_t const stacktraceRecordCount) const;
 
-  /// @brief emit code snippet, to unwind stack and back to trapHandler set at the function entry point.
+  /// @brief Emit shared trap stack setup, stacktrace collection and native recovery.
   void emitTrapHandler() const;
 
 #if !LINEAR_MEMORY_BOUNDS_CHECKS

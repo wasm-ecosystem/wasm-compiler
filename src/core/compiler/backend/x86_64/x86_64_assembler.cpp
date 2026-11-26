@@ -154,9 +154,7 @@ void Assembler::setStackFrameSize(uint32_t const frameSize, bool const temporary
 #if ACTIVE_STACK_OVERFLOW_CHECK
 void Assembler::checkStackFence() const {
   INSTR(CMP_r64_rm64).setR(REG::SP).setM4RM(WasmABI::REGS::linMem, -Basedata::FromEnd::stackFence)();
-  RelPatchObj const inRange = prepareJMP(true, CC::AE);
-  TRAP(TrapCode::STACKFENCEBREACHED);
-  inRange.linkToHere();
+  cTRAP(TrapCode::STACKFENCEBREACHED, CC::B);
 }
 #endif
 

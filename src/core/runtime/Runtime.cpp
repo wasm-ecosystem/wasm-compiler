@@ -308,18 +308,8 @@ uint32_t Runtime::initializeModule(Span<NativeSymbol const> const &dynamicallyLi
 #endif
 
 #if ACTIVE_STACK_OVERFLOW_CHECK
-  try {
-    constexpr uintptr_t highPtr{UINTPTR_MAX -
-                                // coverity[autosar_cpp14_m0_1_2_violation]
-                                static_cast<uintptr_t>((64U > STACKSIZE_LEFT_BEFORE_NATIVE_CALL) ? 64U : STACKSIZE_LEFT_BEFORE_NATIVE_CALL)};
-    setStackFence(numToP<void *>(highPtr));
-  } catch (vb::RuntimeError const &e) {
-    static_cast<void>(e);
-  } catch (...) {
-    // GCOVR_EXCL_START
-    UNREACHABLE(return 0U, "Should not have other exception type");
-    // GCOVR_EXCL_STOP
-  }
+  // Prevent execution until the caller supplies the hard stack limit.
+  writeToPtr<uintptr_t>(pSubI(getLinearMemoryBase(), Basedata::FromEnd::stackFence), UINTPTR_MAX);
 #endif
 
 #if defined(JIT_TARGET_TRICORE)
@@ -362,21 +352,28 @@ uint32_t Runtime::getInitialLinMemSizeInPages() const VB_NOEXCEPT {
 
 #if ACTIVE_STACK_OVERFLOW_CHECK
 void Runtime::setStackFence(void const *const stackFence) const {
-// Store fence plus 64 so we do not have to check for any changes <= 64 bytes
 #if (CXX_TARGET != ISA_TRICORE)
   static_assert(sizeof(void *) == 8, "Pointer size mismatch");
 #else
   static_assert(sizeof(void *) == 4, "Pointer size mismatch");
 #endif
-  if (pToNum(stackFence) > (UINTPTR_MAX - 64U)) {
-    throw RuntimeError(ErrorCode::Stack_fence_too_high);
-  }
-#if STACKSIZE_LEFT_BEFORE_NATIVE_CALL
-  if ((pToNum(stackFence) + static_cast<uintptr_t>(STACKSIZE_LEFT_BEFORE_NATIVE_CALL)) <= pToNum(stackFence)) {
-    throw RuntimeError(ErrorCode::Cannot_keep_STACKSIZE_LEFT_BEFORE_NATIVE_CALL_free_before_native_call__Stack_fence_too_high_);
-  }
+#ifdef JIT_TARGET_TRICORE
+  constexpr uintptr_t stackAlignment{8U};
+#else
+  constexpr uintptr_t stackAlignment{16U};
 #endif
-  writeToPtr<uint8_t *>(pSubI(getLinearMemoryBase(), Basedata::FromEnd::stackFence), pAddI(pCast<uint8_t const *>(stackFence), 64));
+  static_assert(STACK_HEAD_ROOM >= stackAlignment, "STACK_HEAD_ROOM must cover ABI alignment");
+  constexpr uintptr_t maxStackFence{UINTPTR_MAX & ~(stackAlignment - 1U)};
+  constexpr uintptr_t runtimeHeadroom{static_cast<uintptr_t>(STACK_HEAD_ROOM)};
+  if ((runtimeHeadroom > maxStackFence) || (pToNum(stackFence) > (maxStackFence - runtimeHeadroom))) {
+    throw RuntimeError(ErrorCode::Cannot_reserve_STACK_HEAD_ROOM__Stack_fence_too_high_);
+  }
+  uintptr_t const wasmFence{((pToNum(stackFence) + runtimeHeadroom) + (stackAlignment - 1U)) & ~(stackAlignment - 1U)};
+  uintptr_t const nativeEntrySP{readFromPtr<uintptr_t>(pSubI(getLinearMemoryBase(), Basedata::FromEnd::trapStackReentry))};
+  if ((nativeEntrySP != 0U) && (wasmFence >= nativeEntrySP)) {
+    throw RuntimeError(ErrorCode::Cannot_reserve_STACK_HEAD_ROOM__Stack_fence_too_high_);
+  }
+  writeToPtr<uintptr_t>(pSubI(getLinearMemoryBase(), Basedata::FromEnd::stackFence), wasmFence);
 }
 #endif
 

@@ -2,6 +2,11 @@
 
 ## 5.0.0-rc2 (Unreleased)
 
+### Feature
+
+- Add `STACK_HEAD_ROOM` (default: 1024 bytes) for active stack overflow protection, replacing `STACKSIZE_LEFT_BEFORE_NATIVE_CALL`.
+  `Runtime::setStackFence()` now takes the hard lower stack limit; the Wasm stack boundary is this limit plus the headroom, rounded up to ABI alignment.
+
 ### Bug fix
 
 - Fix getContextPC is not enabled when passive stack overflow protection only

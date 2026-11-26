@@ -23,11 +23,15 @@
 #include "WabtCmd.hpp"
 #include "tests/unittests/common.hpp"
 
+#include "src/core/common/FunctionRef.hpp"
 #include "src/core/common/Span.hpp"
 #include "src/core/common/VbExceptions.hpp"
+#include "src/core/common/basedataoffsets.hpp"
+#include "src/core/common/function_traits.hpp"
 #include "src/core/common/util.hpp"
 #include "src/core/compiler/Compiler.hpp"
 #include "src/core/runtime/Runtime.hpp"
+#include "src/core/runtime/TrapException.hpp"
 #include "src/utils/ExecutableMemory.hpp"
 #include "src/utils/MemUtils.hpp"
 #include "src/utils/STDCompilerLogger.hpp"
@@ -109,5 +113,66 @@ TEST(TestRuntimeAPI, CallWithFuncIndex) {
   EXPECT_THROW((runtime.getFunctionByExportedTableIndex<1, int32_t>(0U)), vb::RuntimeError);
   EXPECT_THROW((runtime.getFunctionByExportedTableIndex<2, int32_t, int64_t>(0U)), vb::RuntimeError);
 }
+
+#if ACTIVE_STACK_OVERFLOW_CHECK
+TEST(TestRuntimeAPI, stackFenceReservesAlignedHeadroom) {
+  std::vector<uint8_t> const wasmFileContent{vb::test::WabtCmd::loadWasmFromWat("(module)")};
+  vb::Compiler compiler(memoryFnc, allocFnc, freeFnc, nullptr, memoryFnc);
+  vb::ManagedBinary const binaryModule{compiler.compile({wasmFileContent.data(), wasmFileContent.size()})};
+  vb::ExecutableMemory const executableMemory{vb::ExecutableMemory::make_executable_copy(binaryModule)};
+  auto runtime = vb::test::createRuntime(executableMemory);
+
+  constexpr uintptr_t stackAlignment{(JIT_TARGET == ISA_TRICORE) ? 8U : 16U};
+  constexpr uintptr_t maxFence{UINTPTR_MAX & ~(stackAlignment - 1U)};
+  constexpr uintptr_t highestHardLimit{maxFence - static_cast<uintptr_t>(STACK_HEAD_ROOM)};
+  for (uintptr_t const hardLimit : {uintptr_t{0U}, uintptr_t{1U}, highestHardLimit}) {
+    ASSERT_NO_THROW(runtime.setStackFence(vb::numToP<void *>(hardLimit)));
+    uintptr_t const fence{vb::readFromPtr<uintptr_t>(vb::pSubI(runtime.unsafe__getLinearMemoryBase(), Basedata::FromEnd::stackFence))};
+    EXPECT_EQ(fence % stackAlignment, 0U);
+    EXPECT_GE(fence - hardLimit, static_cast<uintptr_t>(STACK_HEAD_ROOM));
+    EXPECT_LT(fence - hardLimit - static_cast<uintptr_t>(STACK_HEAD_ROOM), stackAlignment);
+  }
+  EXPECT_THROW(runtime.setStackFence(vb::numToP<void *>(highestHardLimit + 1U)), vb::RuntimeError);
+  EXPECT_THROW(runtime.setStackFence(vb::numToP<void *>(UINTPTR_MAX)), vb::RuntimeError);
+}
+
+TEST(TestRuntimeAPI, stackOverflowTrapPreservesTraceAndRuntime) {
+  std::vector<uint8_t> const wasmFileContent{vb::test::WabtCmd::loadWasmFromWat(R"(
+    (module
+      (func $f (export "f") (param i32)
+        local.get 0
+        if
+          local.get 0
+          i32.const 1
+          i32.sub
+          call $f
+        end))
+  )")};
+  vb::Compiler compiler(memoryFnc, allocFnc, freeFnc, nullptr, memoryFnc);
+  compiler.setStacktraceRecordCount(3U);
+  vb::ManagedBinary const binaryModule{compiler.compile({wasmFileContent.data(), wasmFileContent.size()})};
+  vb::ExecutableMemory const executableMemory{vb::ExecutableMemory::make_executable_copy(binaryModule)};
+  auto runtime = vb::test::createRuntime(executableMemory);
+  uint8_t stackMarker{0U};
+  uintptr_t const hardLimit{vb::pToNum(&stackMarker) - 16384U - static_cast<uintptr_t>(STACK_HEAD_ROOM)};
+  runtime.setStackFence(vb::numToP<void *>(hardLimit));
+  runtime.start();
+  auto const function{runtime.getExportedFunctionByName<0, int32_t>("f")};
+
+  try {
+    function(1024);
+    FAIL() << "Recursive Wasm execution must exceed the stack fence";
+  } catch (vb::TrapException const &exception) {
+    EXPECT_EQ(exception.getTrapCode(), vb::TrapCode::STACKFENCEBREACHED);
+  }
+
+  std::vector<uint32_t> stacktrace;
+  runtime.iterateStacktraceRecords(vb::FunctionRef<void(uint32_t)>([&stacktrace](uint32_t const fncIndex) {
+    stacktrace.push_back(fncIndex);
+  }));
+  EXPECT_EQ(stacktrace, (std::vector<uint32_t>{0U, 0U, 0U}));
+  EXPECT_NO_THROW(function(0));
+}
+#endif
 
 #endif // CXX_TARGET == JIT_TARGET

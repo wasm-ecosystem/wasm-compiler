@@ -337,6 +337,16 @@ void Backend::emitStackTraceCollector(uint32_t const stacktraceRecordCount) cons
 }
 
 void Backend::emitTrapHandler() const {
+#if ACTIVE_STACK_OVERFLOW_CHECK
+  // TODO: Enable SP capture and headroom switching when eh_frame stacktrace collection is implemented.
+  // as_.INSTR(MOVAA_Aa_Ab).setAa(WasmABI::REGS::trapSPReg).setAb(REG::SP)();
+  // as_.emitLoadDerefOff16sx(REG::SP, WasmABI::REGS::linMem, SafeInt<16U>::fromConst<-BD::FromEnd::stackFence>());
+#endif
+
+  if (compiler_.isStacktraceEnabled()) {
+    emitStackTraceCollector(compiler_.getStacktraceRecordCount());
+  }
+
   // Restore stack pointer
   as_.INSTR(LDA_Aa_deref_Ab_off16sx)
       .setAa(REG::SP)
@@ -445,20 +455,6 @@ void Backend::emitFunctionEntryPoint(uint32_t const fncIndex) {
   constexpr uint16_t pcxiCROffset{0xFE00U};
   as_.INSTR(MFCR_Dc_const16).setDc(callScrRegs[0]).setConst16(SafeUInt<16U>::fromConst<static_cast<uint32_t>(pcxiCROffset)>())();
   as_.storeWordDerefARegDisp16sxDReg(callScrRegs[0], WasmABI::REGS::linMem, SafeInt<16U>::fromConst<-BD::FromEnd::unwindPCXI>());
-
-  // Check stack limit for active protection
-#if STACKSIZE_LEFT_BEFORE_NATIVE_CALL != 0 && ACTIVE_STACK_OVERFLOW_CHECK
-  as_.INSTR(LDA_Aa_deref_Ab_off16sx)
-      .setAa(WasmABI::REGS::addrScrReg[0])
-      .setAb(WasmABI::REGS::linMem)
-      .setOff16sx(SafeInt<16U>::fromConst<-BD::FromEnd::stackFence>())();
-  as_.addImmToReg(WasmABI::REGS::addrScrReg[0], STACKSIZE_LEFT_BEFORE_NATIVE_CALL);
-  // Overflow check is performed in Runtime::setStackFence()
-  as_.INSTR(STA_deref_Ab_off16sx_Aa)
-      .setAb(WasmABI::REGS::linMem)
-      .setOff16sx(SafeInt<16U>::fromConst<-BD::FromEnd::nativeStackFence>())
-      .setAa(WasmABI::REGS::addrScrReg[0])();
-#endif
 
   //
   //
@@ -671,16 +667,6 @@ void Backend::emitRawFunctionCall(uint32_t const fncIndex) {
       as_.TRAP(TrapCode::CALLED_FUNCTION_NOT_LINKED);
       return;
     }
-
-#if STACKSIZE_LEFT_BEFORE_NATIVE_CALL != 0 && ACTIVE_STACK_OVERFLOW_CHECK
-    as_.INSTR(LDA_Aa_deref_Ab_off16sx)
-        .setAa(WasmABI::REGS::addrScrReg[0])
-        .setAb(WasmABI::REGS::linMem)
-        .setOff16sx(SafeInt<16U>::fromConst<-BD::FromEnd::nativeStackFence>())();
-    // if (nativeStackFence >= $SP) trap
-    as_.INSTR(GEA_Dc_Aa_Ab).setDc(callScrRegs[0]).setAa(WasmABI::REGS::addrScrReg[0]).setAb(REG::SP)();
-    as_.cTRAP(TrapCode::STACKFENCEBREACHED, JumpCondition::bitTrue(callScrRegs[0], SafeInt<4U>::fromConst<0>()));
-#endif
 
     NativeSymbol const &nativeSymbol{moduleInfo_.getImportSymbol(impFuncDef.symbolIndex)};
     if (nativeSymbol.linkage == NativeSymbol::Linkage::STATIC) {
@@ -2131,27 +2117,26 @@ void Backend::copyValueOfElemToAddrReg(REG const addrReg, StackElement const &el
 
 void Backend::emitExtensionRequestFunction() {
   moduleInfo_.helperFunctionBinaryPositions.extensionRequest = output_.size();
+  constexpr uint32_t spillSize{16U + NativeABI::contextRegisterSize};
+  constexpr uint32_t maxAlignmentPadding{0b11'1111U};
+  static_assert(STACK_HEAD_ROOM > (returnAddrWidth + sizeof(uint32_t) + maxAlignmentPadding + spillSize),
+                "STACK_HEAD_ROOM must exceed the extension helper stack size");
   constexpr REG helperReg{REG::D15};
   // Spill D0
   as_.INSTR(STW_deref_Ab_off10sx_Da_preinc).setAb(REG::SP).setOff10sx(SafeInt<10>::fromConst<-4>()).setDa(helperReg)();
 
   // Align stack pointer to 16-word boundary for STLCX/STUCX/LDLCX/LDUCX
   as_.INSTR(MOVD_Da_Ab).setDa(helperReg).setAb(REG::SP)();
-  as_.andWordDcDaConst9zx(helperReg, helperReg, SafeUInt<9U>::fromConst<0b11'1111U>());
+  as_.andWordDcDaConst9zx(helperReg, helperReg, SafeUInt<9U>::fromConst<maxAlignmentPadding>());
   as_.INSTR(MOVA_Aa_Db).setAa(WasmABI::REGS::memSize).setDb(helperReg)();
   as_.INSTR(SUBA_Ac_Aa_Ab).setAc(REG::SP).setAa(REG::SP).setAb(WasmABI::REGS::memSize)();
 
   // Reserve space on stack and spill all volatile registers since we will call a native function
-  as_.INSTR(LEA_Aa_deref_Ab_off16sx)
-      .setAa(REG::SP)
-      .setAb(REG::SP)
-      .setOff16sx(SafeInt<16U>::fromConst<-(16 + (1 * static_cast<int32_t>(NativeABI::contextRegisterSize)))>())();
+  as_.INSTR(LEA_Aa_deref_Ab_off16sx).setAa(REG::SP).setAb(REG::SP).setOff16sx(SafeInt<16U>::fromConst<-static_cast<int32_t>(spillSize)>())();
 
   // Store alignment difference on stack
   as_.storeWordDerefARegDisp16sxDReg(helperReg, REG::SP, SafeInt<16U>::fromConst<8>());
 
-  // We can use REGS::memSize as scratch register since it will be clobbered and re-setup anyway
-  as_.checkStackFence(helperReg, WasmABI::REGS::memSize); // SP change
   as_.INSTR(STLCX_Ab_off10sx).setAb(REG::SP).setOff10sx(SafeInt<10>::fromConst<16>())();
 
   {
@@ -2209,10 +2194,7 @@ void Backend::emitExtensionRequestFunction() {
   as_.INSTR(LDA_Aa_deref_Ab_off16sx).setAa(WasmABI::REGS::memSize).setAb(REG::SP).setOff16sx(SafeInt<16U>::fromConst<8>())();
   as_.INSTR(ADDA_Aa_Ab).setAa(REG::SP).setAb(WasmABI::REGS::memSize)();
 
-  as_.INSTR(LEA_Aa_deref_Ab_off16sx)
-      .setAa(REG::SP)
-      .setAb(REG::SP)
-      .setOff16sx(SafeInt<16U>::fromConst<16 + (1 * static_cast<int32_t>(NativeABI::contextRegisterSize))>())();
+  as_.INSTR(LEA_Aa_deref_Ab_off16sx).setAa(REG::SP).setAb(REG::SP).setOff16sx(SafeInt<16U>::fromConst<static_cast<int32_t>(spillSize)>())();
 
   // Load the actual memory size, maybe it changed
   as_.INSTR(LDA_Aa_deref_Ab_off16sx)
@@ -2448,6 +2430,7 @@ StackElement Backend::executeLinearMemoryLoad(OPCode const opcode, uint32_t cons
         load2PosRef = output_.size();
         // Push register to the stack
         constexpr REG helperReg{REG::D15};
+        static_assert(STACK_HEAD_ROOM > (returnAddrWidth + 4U), "STACK_HEAD_ROOM must exceed the unaligned load helper stack size");
         as_.INSTR(STW_deref_Ab_off10sx_Da_preinc).setAb(REG::SP).setOff10sx(SafeInt<10>::fromConst<-4>()).setDa(helperReg)();
         // --- actual implementation
         as_.loadWordDRegDerefARegDisp16sx(helperReg, WasmABI::REGS::memLdStReg,
@@ -2483,6 +2466,7 @@ StackElement Backend::executeLinearMemoryLoad(OPCode const opcode, uint32_t cons
         RelPatchObj const skip{as_.INSTR(J_disp24sx2).prepJmp()};
         unalignedAccessCodePositions_.load4 = output_.size();
         // Push registers to the stack
+        static_assert(STACK_HEAD_ROOM > (returnAddrWidth + 8U), "STACK_HEAD_ROOM must exceed the unaligned load helper stack size");
         as_.INSTR(STD_deref_Ab_off10sx_Ea_preinc).setAb(REG::SP).setOff10sx(SafeInt<10>::fromConst<-8>()).setEa(REG::D0)();
         // --- actual implementation
         as_.INSTR(LDW_Da_deref_Ab_off10sx_preinc).setDa(REG::D0).setAb(WasmABI::REGS::memLdStReg).setOff10sx(SafeInt<10>::fromConst<-5>())();
@@ -2675,6 +2659,7 @@ void Backend::executeLinearMemoryStore(OPCode const opcode, uint32_t const offse
         unalignedAccessCodePositions_.store2 = output_.size();
         // Push registers to the stack
         REG constexpr helperReg{REG::D0};
+        static_assert(STACK_HEAD_ROOM > (returnAddrWidth + 4U), "STACK_HEAD_ROOM must exceed the unaligned store helper stack size");
         as_.INSTR(STW_deref_Ab_off10sx_Da_preinc).setAb(REG::SP).setOff10sx(SafeInt<10>::fromConst<-4>()).setDa(helperReg)();
         // Retrieve value to store from cmpRes
         as_.INSTR(MOVD_Da_Ab).setDa(helperReg).setAb(WasmABI::REGS::cmpRes)();
@@ -2707,6 +2692,7 @@ void Backend::executeLinearMemoryStore(OPCode const opcode, uint32_t const offse
         unalignedAccessCodePositions_.store4 = output_.size();
         REG constexpr helperReg{REG::D0};
         // Push registers to the stack
+        static_assert(STACK_HEAD_ROOM > (returnAddrWidth + 4U), "STACK_HEAD_ROOM must exceed the unaligned store helper stack size");
         as_.INSTR(STW_deref_Ab_off10sx_Da_preinc).setAb(REG::SP).setOff10sx(SafeInt<10>::fromConst<-4>()).setDa(helperReg)();
         // Retrieve value to store from cmpRes
         as_.INSTR(MOVD_Da_Ab).setDa(helperReg).setAb(WasmABI::REGS::cmpRes)();
@@ -2740,6 +2726,7 @@ void Backend::executeLinearMemoryStore(OPCode const opcode, uint32_t const offse
         RelPatchObj const skip{as_.INSTR(J_disp24sx2).prepJmp()};
         unalignedAccessCodePositions_.store8 = output_.size();
         // Push registers to the stack
+        static_assert(STACK_HEAD_ROOM > (8U + returnAddrWidth + 16U), "STACK_HEAD_ROOM must exceed the unaligned store helper stack size");
         as_.INSTR(STD_deref_Ab_off10sx_Ea_preinc).setAb(REG::SP).setOff10sx(SafeInt<10>::fromConst<-8>()).setEa(REG::D0)();
         as_.INSTR(STD_deref_Ab_off10sx_Ea_preinc).setAb(REG::SP).setOff10sx(SafeInt<10>::fromConst<-8>()).setEa(REG::D2)();
         // Retrieve value to store from stack (we pushed 16 bytes and 4 bytes were pushed by FCALL)
@@ -4819,7 +4806,12 @@ void Backend::simpleNativeFncCall(REG const destReg, bool const destIs64, REG co
                                   bool const arg1Is64, aux::MappedFncs const mappedFnc) const {
   assert((arg1Reg != REG::NONE || !arg1Is64) && "REG::NONE cannot be 64b");
   constexpr int32_t extraForSPAlignmentDiff{8};
-  SafeInt<5U> const extraForDest{(destReg == REG::NONE) ? SafeInt<5U>::fromConst<0>() : SafeInt<5U>::fromConst<8>()};
+  constexpr int32_t maxExtraForDest{8};
+  constexpr uint32_t maxAlignmentPadding{0b11'1111U};
+  constexpr uint32_t maxStackUsage{NativeABI::contextRegisterSize + static_cast<uint32_t>(extraForSPAlignmentDiff + maxExtraForDest) +
+                                   maxAlignmentPadding};
+  static_assert(STACK_HEAD_ROOM > maxStackUsage, "STACK_HEAD_ROOM must exceed the native helper call stack size");
+  SafeInt<5U> const extraForDest{(destReg == REG::NONE) ? SafeInt<5U>::fromConst<0>() : SafeInt<5U>::fromConst<maxExtraForDest>()};
   SafeInt<10U> const unalignedIncreaseStackSize{
       SafeInt<9U>::fromConst<(1 * static_cast<int32_t>(NativeABI::contextRegisterSize)) + extraForSPAlignmentDiff>() + extraForDest};
 
@@ -4829,15 +4821,10 @@ void Backend::simpleNativeFncCall(REG const destReg, bool const destIs64, REG co
   constexpr REG helperReg{REG::D15};
   as_.INSTR(MOVA_Aa_Db).setAa(WasmABI::REGS::addrScrReg[0]).setDb(helperReg)();
   as_.INSTR(MOVD_Da_Ab).setDa(helperReg).setAb(REG::SP)();
-  as_.andWordDcDaConst9zx(helperReg, helperReg, SafeUInt<9U>::fromConst<0b11'1111U>());
+  as_.andWordDcDaConst9zx(helperReg, helperReg, SafeUInt<9U>::fromConst<maxAlignmentPadding>());
   as_.INSTR(MOVA_Aa_Db).setAa(WasmABI::REGS::addrScrReg[1]).setDb(helperReg)();
   as_.INSTR(SUBA_Ac_Aa_Ab).setAc(REG::SP).setAa(REG::SP).setAb(WasmABI::REGS::addrScrReg[1])();
 
-  uint32_t const maxIncreaseStackSize{static_cast<uint32_t>(unalignedIncreaseStackSize.value()) + 0b11'1111U}; // max alignment is 0b11'1111U
-  if (moduleInfo_.currentState.checkedStackFrameSize < (moduleInfo_.fnc.stackFrameSize + maxIncreaseStackSize)) {
-    moduleInfo_.currentState.checkedStackFrameSize = moduleInfo_.fnc.stackFrameSize + static_cast<uint32_t>(unalignedIncreaseStackSize.value());
-    as_.checkStackFence(helperReg, WasmABI::REGS::addrScrReg[2]);
-  }
   as_.INSTR(MOVD_Da_Ab).setDa(helperReg).setAb(WasmABI::REGS::addrScrReg[0])();
 
   // Store context

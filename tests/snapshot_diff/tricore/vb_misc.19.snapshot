@@ -18,15 +18,15 @@ ef 4e 0c 80  jnz.t  d14, #0x14, #0x30
 1d ff f0 ff  j  #0xc
 40 3b  mov.aa  a11, a3
 0d 00 80 01  ret  
-99 2a d8 ff  ld.a  sp, [a2]#-0x28
+99 2a e0 ff  ld.a  sp, [a2]#-0x20
 d4 ac  ld.a  a12, [sp]
 74 c0  st.w  [a12], d0
-99 2b dc ff  ld.a  a11, [a2]#-0x24
+99 2b e4 ff  ld.a  a11, [a2]#-0x1c
 dc 0b  ji  a11
 44 00 00 00  Size of the function body: 68
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 20 84  sub.a  sp, #0x84
-99 2c d8 ef  ld.a  a12, [a2]#-0x68
+99 2c e0 ef  ld.a  a12, [a2]#-0x60
 01 ac 30 e4  ge.a  d14, a12, sp
 6f 0e 06 00  jz.t  d14, #0, #0x5e
 bb d0 00 00  mov.u  d0, #0xd
@@ -35,9 +35,9 @@ bb d0 00 00  mov.u  d0, #0xd
 df 05 05 00  jeq  d5, #0, #0x6c
 02 50  mov  d0, d5
 1d ff f9 ff  j  #0x5a
-99 2c f4 df  ld.a  a12, [a2]#-0x8c
-b5 2c f0 df  st.a  [a2]#-0x90, a12
-19 22 f0 df  ld.w  d2, [a2]#-0x90
+99 2c fc df  ld.a  a12, [a2]#-0x84
+b5 2c f8 df  st.a  [a2]#-0x88, a12
+19 22 f8 df  ld.w  d2, [a2]#-0x88
 d9 aa 04 20  lea  sp, [sp]#0x84
 00 70  fret  
 00 00  nop  

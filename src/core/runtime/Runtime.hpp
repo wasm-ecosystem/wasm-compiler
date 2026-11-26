@@ -471,12 +471,13 @@ public:
 
 #if ACTIVE_STACK_OVERFLOW_CHECK
   ///
-  /// @brief Set the limit of the stack
+  /// @brief Set the hard lower limit of the stack
   ///
-  /// Once the stack has grown beyond this limit, a trap with code STACKFENCEBREACHED is thrown
+  /// Stack checks use this limit plus STACK_HEAD_ROOM, rounded up to ABI alignment.
+  /// Configure before executing Wasm.
   ///
-  /// @param stackFence Limit until which the stack is allowed to grow during execution of the WebAssembly module
-  /// @throws vb::RuntimeError if the stack fence is invalid value
+  /// @param stackFence Lowest usable stack address
+  /// @throws vb::RuntimeError if the resulting boundary is invalid
   void setStackFence(void const *const stackFence) const;
 #endif
 

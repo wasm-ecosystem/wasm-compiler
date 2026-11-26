@@ -78,7 +78,8 @@ constexpr auto sysGlobAddrRegs =
 constexpr REG cmpRes{REG::A14};     ///< Reserved register for holding boolean results of comparison instructions
 constexpr REG memLdStReg{REG::A15}; ///< Reserved register for accesses onto linear memory, will contain the address
 
-constexpr REG trapReg{REG::D0}; ///< Register for internal usage where the trap indicator will be passed
+constexpr REG trapReg{REG::D0};   ///< Register for internal usage where the trap indicator will be passed
+constexpr REG trapSPReg{REG::A7}; ///< Original SP saved at the shared trap entry
 // coverity[autosar_cpp14_m3_4_1_violation]
 constexpr REG indirectCallReg{REG::D0}; ///< Register for internal usage where the indirect call index will be passed
 // coverity[autosar_cpp14_a8_5_2_violation]
@@ -126,6 +127,7 @@ namespace NativeABI {
 /// Upper Context = { PCXI, PSW, A[10:11], D[8:11], A[12:15], D[12:15] }
 /// Lower Context = { PCXI, A[11], A[2:3], D[0:3], A[4:7], D[4:7] }
 ///
+// coverity[autosar_cpp14_m3_4_1_violation]
 constexpr uint32_t contextRegisterSize{64U};
 
 ///

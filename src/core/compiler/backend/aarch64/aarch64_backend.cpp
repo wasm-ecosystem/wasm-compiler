@@ -217,6 +217,20 @@ void Backend::emitStackTraceCollector(uint32_t const stacktraceRecordCount) cons
 }
 
 void Backend::emitTrapHandler() const {
+#if ACTIVE_STACK_OVERFLOW_CHECK
+  // TODO: Enable SP capture and headroom switching when eh_frame stacktrace collection is implemented.
+  // as_.movSPToReg(WasmABI::REGS::trapSPReg);
+  // as_.INSTR(LDUR_xT_deref_xN_unscSImm9_t)
+  //     .setT(callScrRegs[0])
+  //     .setN(WasmABI::REGS::linMem)
+  //     .setUnscSImm9(SafeInt<9U>::fromConst<-BD::FromEnd::stackFence>())();
+  // as_.movRegToSP(callScrRegs[0]);
+#endif
+
+  if (compiler_.isStacktraceEnabled()) {
+    emitStackTraceCollector(compiler_.getStacktraceRecordCount());
+  }
+
   // Restore stack pointer
   as_.INSTR(LDUR_xT_deref_xN_unscSImm9_t)
       .setT(callScrRegs[0])
@@ -365,17 +379,6 @@ void Backend::emitFunctionEntryPoint(uint32_t const fncIndex) {
   // Subtract constant from SP and store it in link data
   as_.MOVimm32(callScrRegs[0], MAX_WASM_STACKSIZE_BEFORE_NATIVE_CALL);
   as_.INSTR(SUB_xD_SP_xM_t).setD(callScrRegs[0]).setM(callScrRegs[0])();
-  as_.INSTR(STUR_xT_deref_xN_unscSImm9_t)
-      .setT(callScrRegs[0])
-      .setN(WasmABI::REGS::linMem)
-      .setUnscSImm9(SafeInt<9U>::fromConst<-BD::FromEnd::nativeStackFence>())();
-#elif STACKSIZE_LEFT_BEFORE_NATIVE_CALL != 0 && ACTIVE_STACK_OVERFLOW_CHECK
-  as_.INSTR(LDUR_xT_deref_xN_unscSImm9_t)
-      .setT(callScrRegs[0])
-      .setN(WasmABI::REGS::linMem)
-      .setUnscSImm9(SafeInt<9U>::fromConst<-Basedata::FromEnd::stackFence>())();
-  as_.addImmToReg(callScrRegs[0], STACKSIZE_LEFT_BEFORE_NATIVE_CALL, true, RegMask::none(), callScrRegs[1]);
-  // Overflow check is performed in Runtime::setStackFence()
   as_.INSTR(STUR_xT_deref_xN_unscSImm9_t)
       .setT(callScrRegs[0])
       .setN(WasmABI::REGS::linMem)
@@ -1612,8 +1615,7 @@ void Backend::emitRawFunctionCall(uint32_t const fncIndex, bool const linkRegist
       return;
     }
 
-#if (MAX_WASM_STACKSIZE_BEFORE_NATIVE_CALL != 0 && !ACTIVE_STACK_OVERFLOW_CHECK) ||                                                                  \
-    (STACKSIZE_LEFT_BEFORE_NATIVE_CALL != 0 && ACTIVE_STACK_OVERFLOW_CHECK)
+#if MAX_WASM_STACKSIZE_BEFORE_NATIVE_CALL != 0 && !ACTIVE_STACK_OVERFLOW_CHECK
     as_.INSTR(LDUR_xT_deref_xN_unscSImm9_t)
         .setT(callScrRegs[0])
         .setN(WasmABI::REGS::linMem)
@@ -2467,14 +2469,10 @@ void Backend::execBuiltinFncCall(BuiltinFunction const builtinFunction) {
                                            !moduleInfo_.getReferenceToLastOccurrenceOnStack(tmpReg2).isEmpty()};
 
     constexpr uint32_t stackSize{8U * 4U};
+    static_assert(STACK_HEAD_ROOM > stackSize, "STACK_HEAD_ROOM must exceed the trace point helper stack size");
     uint32_t const origStackFrameSize{moduleInfo_.fnc.stackFrameSize};
     uint32_t const newAlignedSize{as_.alignStackFrameSize(origStackFrameSize + stackSize)};
     as_.setStackFrameSize(newAlignedSize);
-#if ACTIVE_STACK_OVERFLOW_CHECK
-    RegAllocTracker tempRegAllocTracker{};
-    tempRegAllocTracker.writeProtRegs = mask(tempGPR);
-    checkStackFence(newAlignedSize, tempRegAllocTracker, false);
-#endif
 
     constexpr uint32_t tmpReg3And4Offset{16U};
     constexpr uint32_t tmpReg1And2Offset{tmpReg3And4Offset + 16U};
@@ -3244,20 +3242,17 @@ void Backend::emitLandingPad() {
 
   constexpr uint32_t lrWidth{8U};
   constexpr uint32_t spillSize{roundUpToPow2(static_cast<uint32_t>((NABI::volRegs.size()) * 8U) + lrWidth, 4U)};
+  static_assert(STACK_HEAD_ROOM > spillSize, "STACK_HEAD_ROOM must exceed the landing pad spill size");
 
   // Reserve space on stack and spill all volatile registers since we will call a native function
   as_.INSTR(SUB_xD_xN_imm12zxols12).setD(REG::SP).setN(REG::SP).setImm12zx(SafeUInt<12U>::fromConst<spillSize>())();
-#if ACTIVE_STACK_OVERFLOW_CHECK
-  as_.checkStackFence(WasmABI::REGS::landingPadHelper); // SP change
-#endif
   as_.INSTR(STR_xT_deref_xN_imm12zxls3_t)
       .setT(REG::LR)
       .setN(REG::SP)
       .setImm12zxls3(SafeUInt<15U>::fromConst<static_cast<uint32_t>(NABI::volRegs.size()) * 8U>())();
   spillRestoreRegsRaw({NABI::volRegs.data(), NABI::volRegs.size()});
 
-#if (MAX_WASM_STACKSIZE_BEFORE_NATIVE_CALL != 0 && !ACTIVE_STACK_OVERFLOW_CHECK) ||                                                                  \
-    (defined(STACKSIZE_LEFT_BEFORE_NATIVE_CALL) && ACTIVE_STACK_OVERFLOW_CHECK)
+#if MAX_WASM_STACKSIZE_BEFORE_NATIVE_CALL != 0 && !ACTIVE_STACK_OVERFLOW_CHECK
   constexpr REG scratchReg{NABI::volRegs[0]};
   as_.INSTR(LDUR_xT_deref_xN_unscSImm9_t)
       .setT(scratchReg)
@@ -3308,11 +3303,8 @@ void Backend::emitExtensionRequestFunction() {
   // Reserve space on stack and spill all volatile registers since we will call a native function
   uint32_t const lrWidth = 8U;
   uint32_t const spillSize = roundUpToPow2((static_cast<uint32_t>(NABI::volRegs.size()) * 8U) + lrWidth, 4U);
+  static_assert(STACK_HEAD_ROOM > spillSize, "STACK_HEAD_ROOM must exceed the extension helper spill size");
   as_.INSTR(SUB_xD_xN_imm12zxols12).setD(REG::SP).setN(REG::SP).setImm12zx(SafeUInt<12U>::fromConst<spillSize>())();
-#if ACTIVE_STACK_OVERFLOW_CHECK
-  // We can use REGS::memSize as scratch register since it will be clobbered and re-setup anyway
-  as_.checkStackFence(WasmABI::REGS::memSize); // SP change
-#endif
   as_.INSTR(STR_xT_deref_xN_imm12zxls3_t)
       .setT(REG::LR)
       .setN(REG::SP)
@@ -3838,12 +3830,10 @@ void Backend::executeMemGrow() {
   // Notify the allocator of the memory growth
   constexpr uint32_t lrWidth{8U};
   constexpr uint32_t spillSize{roundUpToPow2(static_cast<uint32_t>((NABI::volRegs.size()) * 8U) + lrWidth, 4U)};
+  static_assert(STACK_HEAD_ROOM > spillSize, "STACK_HEAD_ROOM must exceed the memory growth helper spill size");
 
   // Reserve space on stack and spill all volatile registers since we will call a native function
   as_.INSTR(SUB_xD_xN_imm12zxols12).setD(REG::SP).setN(REG::SP).setImm12zx(SafeUInt<12>::fromConst<spillSize>())();
-#if ACTIVE_STACK_OVERFLOW_CHECK
-  as_.checkStackFence(intermReg); // SP change
-#endif
   as_.INSTR(STR_xT_deref_xN_imm12zxls3_t)
       .setT(REG::LR)
       .setN(REG::SP)

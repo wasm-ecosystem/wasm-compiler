@@ -72,8 +72,7 @@ constexpr int32_t linMemWasmSize{cont0 + 4};
 ///
 constexpr int32_t actualLinMemByteSize{linMemWasmSize + 4};
 
-#if (MAX_WASM_STACKSIZE_BEFORE_NATIVE_CALL != 0 && !ACTIVE_STACK_OVERFLOW_CHECK) ||                                                                  \
-    (STACKSIZE_LEFT_BEFORE_NATIVE_CALL != 0 && ACTIVE_STACK_OVERFLOW_CHECK)
+#if MAX_WASM_STACKSIZE_BEFORE_NATIVE_CALL != 0 && !ACTIVE_STACK_OVERFLOW_CHECK
 ///
 /// @brief How many bytes before the start of the linear memory the native stack fence is stored
 ///
@@ -82,7 +81,7 @@ constexpr int32_t nativeStackFence{actualLinMemByteSize + 8};
 constexpr int32_t cont1{nativeStackFence};
 #else
 /// @brief Continuation 1
-constexpr int32_t cont1 = actualLinMemByteSize;
+constexpr int32_t cont1{actualLinMemByteSize};
 #endif
 
 #ifdef JIT_TARGET_TRICORE
@@ -151,8 +150,7 @@ constexpr int32_t memoryHelperPtr{jobMemoryDataPtrPtr + 8};
 
 #if ACTIVE_STACK_OVERFLOW_CHECK
 ///
-/// @brief How many bytes before the start of the linear memory the stack fence for active stack overflow protection is
-/// stored
+/// @brief Offset of the ABI-aligned Wasm stack fence above the runtime headroom.
 ///
 constexpr int32_t stackFence{memoryHelperPtr + 8};
 /// @brief Continuation 3

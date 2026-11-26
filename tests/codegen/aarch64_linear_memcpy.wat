@@ -216,6 +216,7 @@
     ;; Prepare the overlap jump.
     ;; AARCH64-NOT: ld1
     ;; AARCH64-NOT: ldp  q
+    ;; AARCH64: mov  {{w[0-9]+}}, #0x10
     ;; AARCH64: b.lo  0x[[#]]
 
     ;; One 16-byte copy, with no byte tail or counted loop.
@@ -269,6 +270,7 @@
     ;; 16 * 2 + 2: prepare the overlap jump.
     ;; AARCH64-NOT: ld1
     ;; AARCH64-NOT: ldp  q
+    ;; AARCH64: mov  {{w[0-9]+}}, #0x22
     ;; AARCH64: b.lo  0x[[#]]
 
     ;; Two 16-byte copies are unrolled.

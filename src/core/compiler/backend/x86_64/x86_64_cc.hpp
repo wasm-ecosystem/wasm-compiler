@@ -75,8 +75,9 @@ namespace REGS {
 constexpr REG memSize{REG::SI};
 #endif
 
-constexpr REG linMem{REG::B};  ///< Pointer to base of linear memory
-constexpr REG trapReg{REG::A}; ///< Register for internal usage where the trap indicator will be passed
+constexpr REG linMem{REG::B};    ///< Pointer to base of linear memory
+constexpr REG trapReg{REG::A};   ///< Register for internal usage where the trap indicator will be passed
+constexpr REG trapSPReg{REG::D}; ///< Original SP saved at the shared trap entry
 // coverity[autosar_cpp14_m3_4_1_violation]
 constexpr REG trapPosReg{REG::C}; ///< Register indicating where trap happened as position in bytecode (set only in debug mode)
 // coverity[autosar_cpp14_m3_4_1_violation]

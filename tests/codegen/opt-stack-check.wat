@@ -1,3 +1,12 @@
+;; CHECK-LABEL: GenericTrapHandler Body
+;; X86_64:      mov rsp, qword ptr
+;; X86_64-NEXT: mov r13, qword ptr [rsp
+;; AARCH64:      ldur x9,
+;; AARCH64-NEXT: mov sp, x9
+;; AARCH64-NEXT: ldr x9, [sp
+;; TRICORE:      ld.a sp,
+;; TRICORE-NEXT: ld.a a[[#]], [sp]
+
 (module
   (memory 1)
   (func $callee/0)

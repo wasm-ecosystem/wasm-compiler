@@ -137,10 +137,10 @@ static_assert(false, "JIT_TARGET is not set");
 #define MAX_WASM_STACKSIZE_BEFORE_NATIVE_CALL 0
 #endif
 
-// NOTE: Should only be set for active stack overflow protection
-#ifndef STACKSIZE_LEFT_BEFORE_NATIVE_CALL
-// Set to zero to not reserve stack space before calling C++ functions from Wasm
-#define STACKSIZE_LEFT_BEFORE_NATIVE_CALL 0
+// Runtime/native stack headroom reserved with active stack overflow protection.
+// Must exceed the fixed or worst-case stack usage of each emitted internal helper.
+#ifndef STACK_HEAD_ROOM
+#define STACK_HEAD_ROOM 1024U
 #endif
 
 #ifdef JIT_TARGET_TRICORE
@@ -226,15 +226,8 @@ static_assert(false, "This target must enable active stack overflow check.");
 #define MAX_WASM_STACKSIZE_BEFORE_NATIVE_CALL 1000000U
 #endif
 
-#if ACTIVE_STACK_OVERFLOW_CHECK && STACKSIZE_LEFT_BEFORE_NATIVE_CALL == 0
-#undef STACKSIZE_LEFT_BEFORE_NATIVE_CALL
-#define STACKSIZE_LEFT_BEFORE_NATIVE_CALL 4096U
-#endif
-
 #if MAX_WASM_STACKSIZE_BEFORE_NATIVE_CALL != 0 && ACTIVE_STACK_OVERFLOW_CHECK
 #warning "MAX_WASM_STACKSIZE_BEFORE_NATIVE_CALL is set but will not be used (Active stack overflow protection is enabled)"
-#elif STACKSIZE_LEFT_BEFORE_NATIVE_CALL != 0 && !ACTIVE_STACK_OVERFLOW_CHECK
-#warning "STACKSIZE_LEFT_BEFORE_NATIVE_CALL is set but will not be used (Active stack overflow protection is disabled)"
 #endif
 
 // ----------------------------------------------------------------------------

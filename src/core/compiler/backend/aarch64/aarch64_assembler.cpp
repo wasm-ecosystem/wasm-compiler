@@ -346,9 +346,7 @@ void Assembler::checkStackFence(REG const scratchReg) {
       .setN(WasmABI::REGS::linMem)
       .setUnscSImm9(SafeInt<9>::fromConst<-Basedata::FromEnd::stackFence>())();
   INSTR(CMP_SP_xM_t).setM(scratchReg)();
-  RelPatchObj const inRange = prepareJMP(CC::HS);
-  TRAP(TrapCode::STACKFENCEBREACHED);
-  inRange.linkToHere();
+  cTRAP(TrapCode::STACKFENCEBREACHED, CC::LO);
 }
 #endif
 

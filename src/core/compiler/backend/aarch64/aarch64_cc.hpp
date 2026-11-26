@@ -76,9 +76,10 @@ constexpr REG memSize{REG::R27};
 constexpr REG landingPadHelper{REG::R27};
 #endif
 
-constexpr REG jobMem{REG::R28}; ///< Pointer to base of job memory
-constexpr REG linMem{REG::FP};  ///< Pointer to base of linear memory
-constexpr REG trapReg{REG::R0}; ///< Register for internal usage where the trap indicator will be passed
+constexpr REG jobMem{REG::R28};    ///< Pointer to base of job memory
+constexpr REG linMem{REG::FP};     ///< Pointer to base of linear memory
+constexpr REG trapReg{REG::R0};    ///< Register for internal usage where the trap indicator will be passed
+constexpr REG trapSPReg{REG::R13}; ///< Original SP saved at the shared trap entry
 // coverity[autosar_cpp14_m3_4_1_violation]
 constexpr REG trapPosReg{REG::R1}; ///< Register indicating where trap happened as position in bytecode (set only in debug mode)
 // coverity[autosar_cpp14_m3_4_1_violation]
