@@ -3852,9 +3852,8 @@ void Backend::executeMemGrow() {
       .setUnscSImm9(SafeInt<9>::fromConst<-BD::FromEnd::memoryHelperPtr>())();
   as_.INSTR(BLR_xN_t).setN(NABI::gpParams[2])();
 
-  // Check return value
+  // Preserve the result in flags while restoring the volatile registers and SP.
   as_.INSTR(CMP_wN_wM).setN(NABI::gpRetReg).setM(REG::ZR)();
-  as_.cTRAP(TrapCode::LINMEM_COULDNOTEXTEND, CC::EQ);
 
   // Restore the link register and all other previously spilled registers, then unwind the stack
   as_.INSTR(LDR_xT_deref_xN_imm12zxls3_t)
@@ -3863,6 +3862,7 @@ void Backend::executeMemGrow() {
       .setImm12zxls3(SafeUInt<15>::fromConst<static_cast<uint32_t>(NABI::volRegs.size()) * 8U>())();
   spillRestoreRegsRaw({NABI::volRegs.data(), NABI::volRegs.size()}, true);
   as_.INSTR(ADD_xD_xN_imm12zxols12).setD(REG::SP).setN(REG::SP).setImm12zx(SafeUInt<12>::fromConst<spillSize>())();
+  as_.cTRAP(TrapCode::LINMEM_COULDNOTEXTEND, CC::EQ);
 #endif
 
   as_.INSTR(LDUR_wT_deref_xN_unscSImm9_t)
