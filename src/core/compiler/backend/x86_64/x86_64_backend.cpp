@@ -2762,11 +2762,6 @@ void Backend::emitLandingPad() {
   as_.INSTR(SUB_rm64_imm32sx).setR4RM(REG::SP).setImm32(NABI::shadowSpaceSize + volRegsSpillSize + retWidth)();
   spillRestoreRegsRaw({NABI::volRegs.data(), NABI::volRegs.size()}, false, NABI::shadowSpaceSize);
 
-#if MAX_WASM_STACKSIZE_BEFORE_NATIVE_CALL != 0 && !ACTIVE_STACK_OVERFLOW_CHECK
-  as_.INSTR(CMP_r64_rm64).setM4RM(WasmABI::REGS::linMem, -BD::FromEnd::nativeStackFence).setR(REG::SP)(); // Compare stack pointer to stack fence
-  as_.cTRAP(TrapCode::STACKFENCEBREACHED, CC::LE);
-#endif
-
   // Check if stack pointer is properly aligned, we can use NABI::gpParams[0] as a volatile scratch register
   as_.INSTR(MOV_rm64_r64).setR4RM(NABI::gpParams[0]).setR(REG::SP)();
   as_.INSTR(AND_rm64_imm8sx).setR4RM(NABI::gpParams[0]).setImm8(maxAlignmentPadding)();

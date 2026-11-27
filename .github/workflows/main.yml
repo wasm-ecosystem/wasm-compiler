@@ -437,8 +437,10 @@ jobs:
       - name: Install dependencies
         run: |
           export HOMEBREW_NO_AUTO_UPDATE=1
-          brew install cmake googletest llvm
+          brew install cmake googletest llvm openssl@3
           echo "/opt/homebrew/opt/llvm/bin" >> $GITHUB_PATH
+          wat2wasm --version
+          wast2json --version
       - name: Build and test
         run: |
           set -ex

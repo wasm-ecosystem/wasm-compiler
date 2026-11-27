@@ -34,10 +34,6 @@ f2 44 0f 11 a4 24 a8 00 00 00  movsd  qword ptr [rsp + 0xa8], xmm12
 f2 44 0f 11 ac 24 b0 00 00 00  movsd  qword ptr [rsp + 0xb0], xmm13
 f2 44 0f 11 b4 24 b8 00 00 00  movsd  qword ptr [rsp + 0xb8], xmm14
 f2 44 0f 11 bc 24 c0 00 00 00  movsd  qword ptr [rsp + 0xc0], xmm15
-48 3b 63 e8  cmp  rsp, qword ptr [rbx - 0x18]
-7f 0a  jg  0xe2
-b8 0d 00 00 00  mov  eax, 0xd
-e9 24 ff ff ff  jmp  6
 48 89 e7  mov  rdi, rsp
 48 83 e7 0f  and  rdi, 0xf
 48 29 fc  sub  rsp, rdi
@@ -73,13 +69,13 @@ f2 44 0f 10 b4 24 b8 00 00 00  movsd  xmm14, qword ptr [rsp + 0xb8]
 f2 44 0f 10 bc 24 c0 00 00 00  movsd  xmm15, qword ptr [rsp + 0xc0]
 48 81 c4 c8 00 00 00  add  rsp, 0xc8
 c3  ret  
-9d 01 00 00  Size of the function body: 413
+8d 01 00 00  Size of the function body: 397
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0x1d7
+74 09  je  0x1c7
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 2f fe ff ff  jmp  6
+e9 3f fe ff ff  jmp  6
 48 8d 64 24 40  lea  rsp, [rsp + 0x40]
 48 c7 04 24 00 02 00 00  mov  qword ptr [rsp], 0x200
 f2 44 0f 10 7b b8  movsd  xmm15, qword ptr [rbx - 0x48]
@@ -87,92 +83,92 @@ f2 44 0f 11 7c 24 08  movsd  qword ptr [rsp + 8], xmm15
 bf 20 00 00 00  mov  edi, 0x20
 be 40 00 00 00  mov  esi, 0x40
 ba 20 00 00 00  mov  edx, 0x20
-eb 08  jmp  0x20a
+eb 08  jmp  0x1fa
 29 5c 8f c2  byte[c28f5c29]  
 f5 28 50 40  byte[405028f5]  
 f2 0f 10 05 f0 ff ff ff  movsd  xmm0, qword ptr [rip - 0x10]
-eb 04  jmp  0x218
+eb 04  jmp  0x208
 ae 47 01 42  byte[420147ae]  
 f3 0f 10 0d f4 ff ff ff  movss  xmm1, dword ptr [rip - 0xc]
 b9 80 00 00 00  mov  ecx, 0x80
-eb 08  jmp  0x22f
+eb 08  jmp  0x21f
 00 00 00 00  byte[0]  
 00 10 60 40  byte[40601000]  
 f2 0f 10 15 f0 ff ff ff  movsd  xmm2, qword ptr [rip - 0x10]
 41 b8 80 00 00 00  mov  r8d, 0x80
 41 b9 00 01 00 00  mov  r9d, 0x100
 b8 0e 00 00 00  mov  eax, 0xe
-e9 b9 fd ff ff  jmp  6
+e9 c9 fd ff ff  jmp  6
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0x25c
+74 09  je  0x24c
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 aa fd ff ff  jmp  6
+e9 ba fd ff ff  jmp  6
 89 44 24 40  mov  dword ptr [rsp + 0x40], eax
 48 89 4c 24 08  mov  qword ptr [rsp + 8], rcx
 f2 0f 11 04 24  movsd  qword ptr [rsp], xmm0
 48 8d 64 24 d0  lea  rsp, [rsp - 0x30]
 f3 0f 11 4c 24 28  movss  dword ptr [rsp + 0x28], xmm1
 48 81 7c 24 68 0a 02 00 00  cmp  qword ptr [rsp + 0x68], 0x20a
-0f 84 0b 00 00 00  je  0x28f
+0f 84 0b 00 00 00  je  0x27f
 b8 0a 00 00 00  mov  eax, 0xa
 48 8d 64 24 78  lea  rsp, [rsp + 0x78]
 c3  ret  
 81 7c 24 60 09 01 00 00  cmp  dword ptr [rsp + 0x60], 0x109
-0f 84 0b 00 00 00  je  0x2a8
+0f 84 0b 00 00 00  je  0x298
 b8 09 00 00 00  mov  eax, 9
 48 8d 64 24 78  lea  rsp, [rsp + 0x78]
 c3  ret  
 81 7c 24 58 88 00 00 00  cmp  dword ptr [rsp + 0x58], 0x88
-0f 84 0b 00 00 00  je  0x2c1
+0f 84 0b 00 00 00  je  0x2b1
 b8 08 00 00 00  mov  eax, 8
 48 8d 64 24 78  lea  rsp, [rsp + 0x78]
 c3  ret  
-eb 08  jmp  0x2cb
+eb 08  jmp  0x2bb
 00 00 00 00  byte[0]  
 00 00 61 40  byte[40610000]  
 f2 0f 10 25 f0 ff ff ff  movsd  xmm4, qword ptr [rip - 0x10]
 66 0f 2e 64 24 50  ucomisd  xmm4, qword ptr [rsp + 0x50]
-7a 06  jp  0x2e1
-0f 84 0b 00 00 00  je  0x2ec
+7a 06  jp  0x2d1
+0f 84 0b 00 00 00  je  0x2dc
 b8 07 00 00 00  mov  eax, 7
 48 8d 64 24 78  lea  rsp, [rsp + 0x78]
 c3  ret  
 48 81 7c 24 48 86 00 00 00  cmp  qword ptr [rsp + 0x48], 0x86
-0f 84 0b 00 00 00  je  0x306
+0f 84 0b 00 00 00  je  0x2f6
 b8 06 00 00 00  mov  eax, 6
 48 8d 64 24 78  lea  rsp, [rsp + 0x78]
 c3  ret  
-eb 04  jmp  0x30c
+eb 04  jmp  0x2fc
 ae 47 17 42  byte[421747ae]  
 f3 0f 10 25 f4 ff ff ff  movss  xmm4, dword ptr [rip - 0xc]
 0f 2e 64 24 28  ucomiss  xmm4, dword ptr [rsp + 0x28]
-7a 06  jp  0x321
-0f 84 0b 00 00 00  je  0x32c
+7a 06  jp  0x311
+0f 84 0b 00 00 00  je  0x31c
 b8 05 00 00 00  mov  eax, 5
 48 8d 64 24 78  lea  rsp, [rsp + 0x78]
 c3  ret  
-eb 08  jmp  0x336
+eb 08  jmp  0x326
 c3 f5 28 5c  byte[5c28f5c3]  
 8f 42 51 40  byte[4051428f]  
 f2 0f 10 25 f0 ff ff ff  movsd  xmm4, qword ptr [rip - 0x10]
 66 0f 2e 64 24 30  ucomisd  xmm4, qword ptr [rsp + 0x30]
-7a 06  jp  0x34c
-0f 84 0b 00 00 00  je  0x357
+7a 06  jp  0x33c
+0f 84 0b 00 00 00  je  0x347
 b8 04 00 00 00  mov  eax, 4
 48 8d 64 24 78  lea  rsp, [rsp + 0x78]
 c3  ret  
 83 7c 24 40 23  cmp  dword ptr [rsp + 0x40], 0x23
-0f 84 0b 00 00 00  je  0x36d
+0f 84 0b 00 00 00  je  0x35d
 b8 03 00 00 00  mov  eax, 3
 48 8d 64 24 78  lea  rsp, [rsp + 0x78]
 c3  ret  
 48 83 7c 24 38 42  cmp  qword ptr [rsp + 0x38], 0x42
-0f 84 0b 00 00 00  je  0x384
+0f 84 0b 00 00 00  je  0x374
 b8 02 00 00 00  mov  eax, 2
 48 8d 64 24 78  lea  rsp, [rsp + 0x78]
 c3  ret  
 83 7c 24 70 21  cmp  dword ptr [rsp + 0x70], 0x21
-0f 84 0b 00 00 00  je  0x39a
+0f 84 0b 00 00 00  je  0x38a
 b8 01 00 00 00  mov  eax, 1
 48 8d 64 24 78  lea  rsp, [rsp + 0x78]
 c3  ret  
@@ -222,17 +218,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x431
+75 1b  jne  0x421
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 8a fd ff ff  call  0x1c0
+e8 8a fd ff ff  call  0x1b0
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x454
+75 10  jne  0x444
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -265,8 +261,8 @@ WebAssembly Table
 
 More Info
 00 00 00 00  Size of link data: 0
-a0 04 00 00  Offset from here for the landing pad function body (0xFFFF'FFFF = undefined, pos: 1c): 1184
+90 04 00 00  Offset from here for the landing pad function body (0xFFFF'FFFF = undefined, pos: 1c): 1168
 00 00 00 00  Stacktrace records 0, debugMode: 0
 03 00 00 00  Version of this binary module: 3
-c8 04 00 00  Module binary size (excl. this value): 1224
+b8 04 00 00  Module binary size (excl. this value): 1208
 

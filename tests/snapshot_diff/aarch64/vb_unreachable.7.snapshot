@@ -34,11 +34,6 @@ f8 e7 11 6d  stp  d24, d25, [sp, #0x118]
 fa ef 12 6d  stp  d26, d27, [sp, #0x128]
 fc f7 13 6d  stp  d28, d29, [sp, #0x138]
 fe ff 14 6d  stp  d30, d31, [sp, #0x148]
-a0 83 5e f8  ldur  x0, [x29, #-0x18]
-ff 63 20 eb  cmp  sp, x0
-68 00 00 54  b.hi  0x98
-a0 01 80 52  mov  w0, #0xd
-dd ff ff 17  b  8
 a0 03 58 f8  ldur  x0, [x29, #-0x80]
 00 00 3f d6  blr  x0
 fe af 40 f9  ldr  x30, [sp, #0x158]
@@ -67,19 +62,19 @@ fe ff 54 6d  ldp  d30, d31, [sp, #0x148]
 ff 83 05 91  add  sp, sp, #0x160
 bb 83 58 f8  ldur  x27, [x29, #-0x78]
 60 03 5f d6  ret  x27
-e4 00 00 00  Size of the function body: 228
+d0 00 00 00  Size of the function body: 208
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 ff 03 02 d1  sub  sp, sp, #0x80
 ab 83 5f 38  ldurb  w11, [x29, #-8]
-6b 00 00 34  cbz  w11, 0x120
+6b 00 00 34  cbz  w11, 0x10c
 e0 03 0b 2a  mov  w0, w11
-de ff ff 17  b  0x94
+c0 ff ff 17  b  8
 20 00 80 52  mov  w0, #1
-b9 ff ff 17  b  8
+be ff ff 17  b  8
 ab 83 5f 38  ldurb  w11, [x29, #-8]
-6b 00 00 34  cbz  w11, 0x138
+6b 00 00 34  cbz  w11, 0x124
 e0 03 0b 2a  mov  w0, w11
-fc ff ff 17  b  0x124
+fc ff ff 17  b  0x110
 2c 00 00 00  Size of the function body: 44
 
 Initial Linear Memory Data
@@ -121,8 +116,8 @@ WebAssembly Table
 
 More Info
 00 00 00 00  Size of link data: 0
-5c 01 00 00  Offset from here for the landing pad function body (0xFFFF'FFFF = undefined, pos: 24): 348
+48 01 00 00  Offset from here for the landing pad function body (0xFFFF'FFFF = undefined, pos: 24): 328
 00 00 00 00  Stacktrace records 0, debugMode: 0
 03 00 00 00  Version of this binary module: 3
-8c 01 00 00  Module binary size (excl. this value): 396
+78 01 00 00  Module binary size (excl. this value): 376
 

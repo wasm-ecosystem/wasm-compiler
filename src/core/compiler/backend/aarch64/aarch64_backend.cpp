@@ -3252,16 +3252,6 @@ void Backend::emitLandingPad() {
       .setImm12zxls3(SafeUInt<15U>::fromConst<static_cast<uint32_t>(NABI::volRegs.size()) * 8U>())();
   spillRestoreRegsRaw({NABI::volRegs.data(), NABI::volRegs.size()});
 
-#if MAX_WASM_STACKSIZE_BEFORE_NATIVE_CALL != 0 && !ACTIVE_STACK_OVERFLOW_CHECK
-  constexpr REG scratchReg{NABI::volRegs[0]};
-  as_.INSTR(LDUR_xT_deref_xN_unscSImm9_t)
-      .setT(scratchReg)
-      .setN(WasmABI::REGS::linMem)
-      .setUnscSImm9(SafeInt<9>::fromConst<-BD::FromEnd::nativeStackFence>())();
-  as_.INSTR(CMP_SP_xM_t).setM(scratchReg)();
-  as_.cTRAP(TrapCode::STACKFENCEBREACHED, CC::LS);
-#endif
-
   // Call the target of the landing pad, stack pointer on AArch64 is always 16-byte aligned
   as_.INSTR(LDUR_xT_deref_xN_unscSImm9_t)
       .setT(NABI::gpParams[0])

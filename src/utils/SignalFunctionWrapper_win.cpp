@@ -95,10 +95,31 @@ static void *getContextPC(PEXCEPTION_POINTERS &pExceptionInfo) VB_NOEXCEPT {
   static_assert(false, "Architecture not supported");
 #endif
 }
+
+#if !LINEAR_MEMORY_BOUNDS_CHECKS
+///
+/// @brief Get the stack pointer from the exception context
+///
+/// @param pExceptionInfo Exception context
+/// @return Stack pointer value
+///
+static uintptr_t getContextSP(PEXCEPTION_POINTERS const &pExceptionInfo) VB_NOEXCEPT {
+#if CXX_TARGET == ISA_X86_64
+  return static_cast<uintptr_t>(pExceptionInfo->ContextRecord->Rsp);
+#elif CXX_TARGET == ISA_AARCH64
+  return static_cast<uintptr_t>(pExceptionInfo->ContextRecord->Sp);
+#else
+  static_assert(false, "Architecture not supported");
+#endif
+}
+
+thread_local void *SignalFunctionWrapperWin::stackTop_{nullptr};
+#endif
+
 thread_local SignalWrapperErrorCode SignalFunctionWrapperWin::error_ = SignalWrapperErrorCode::NONE;
+thread_local bool SignalFunctionWrapperWin::stackTopIsVolatile_ = false;
 
 #if !ACTIVE_STACK_OVERFLOW_CHECK
-thread_local bool SignalFunctionWrapperWin::stackTopIsVolatile_ = false;
 thread_local bool SignalFunctionWrapperWin::stackGuaranteeSet_ = false;
 #endif
 
@@ -165,6 +186,8 @@ long SignalFunctionWrapperWin::memorySignalHandler(PEXCEPTION_POINTERS pExceptio
           (static_cast<uint64_t>(WasmConstants::wasmPageSize) * SignalFunctionWrapper::pRuntime_->getLinearMemorySizeInPages())) {
         // Out of bounds of Wasm linear memory
         trapCode = static_cast<uint32_t>(TrapCode::LINMEM_OUTOFBOUNDSACCESS);
+      } else if (!SignalFunctionWrapper::hasSufficientStackForLandingPad(getContextSP(pExceptionInfo), pToNum(stackTop_))) {
+        trapCode = static_cast<uint32_t>(TrapCode::STACKFENCEBREACHED);
       } else {
         // Fault lies in non-commited memory portion, so we try to commit it via a landing pad
         SignalFunctionWrapper::landingPadData_ = static_cast<uint32_t>(offsetInLinMemAllocation);

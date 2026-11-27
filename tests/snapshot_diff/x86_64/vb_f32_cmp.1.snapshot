@@ -34,10 +34,6 @@ f2 44 0f 11 a4 24 a8 00 00 00  movsd  qword ptr [rsp + 0xa8], xmm12
 f2 44 0f 11 ac 24 b0 00 00 00  movsd  qword ptr [rsp + 0xb0], xmm13
 f2 44 0f 11 b4 24 b8 00 00 00  movsd  qword ptr [rsp + 0xb8], xmm14
 f2 44 0f 11 bc 24 c0 00 00 00  movsd  qword ptr [rsp + 0xc0], xmm15
-48 3b 63 e8  cmp  rsp, qword ptr [rbx - 0x18]
-7f 0a  jg  0xe2
-b8 0d 00 00 00  mov  eax, 0xd
-e9 24 ff ff ff  jmp  6
 48 89 e7  mov  rdi, rsp
 48 83 e7 0f  and  rdi, 0xf
 48 29 fc  sub  rsp, rdi
@@ -73,26 +69,26 @@ f2 44 0f 10 b4 24 b8 00 00 00  movsd  xmm14, qword ptr [rsp + 0xb8]
 f2 44 0f 10 bc 24 c0 00 00 00  movsd  xmm15, qword ptr [rsp + 0xc0]
 48 81 c4 c8 00 00 00  add  rsp, 0xc8
 c3  ret  
-9d 01 00 00  Size of the function body: 413
+8d 01 00 00  Size of the function body: 397
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0x1d7
+74 09  je  0x1c7
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 2f fe ff ff  jmp  6
+e9 3f fe ff ff  jmp  6
 0f 57 e4  xorps  xmm4, xmm4
-eb 04  jmp  0x1e0
+eb 04  jmp  0x1d0
 00 00 c8 42  byte[42c80000]  
 f3 0f 10 2d f4 ff ff ff  movss  xmm5, dword ptr [rip - 0xc]
 0f 2e ec  ucomiss  xmm5, xmm4
-7b 0e  jnp  0x1fb
+7b 0e  jnp  0x1eb
 f3 0f 10 2d 02 00 00 00  movss  xmm5, dword ptr [rip + 2]
-eb 11  jmp  0x208
+eb 11  jmp  0x1f8
 00 00 c0 7f  byte[7fc00000]  
-75 05  jne  0x202
+75 05  jne  0x1f2
 0f 56 ec  orps  xmm5, xmm4
-eb 06  jmp  0x208
-76 04  jbe  0x208
+eb 06  jmp  0x1f8
+76 04  jbe  0x1f8
 f3 0f 10 ec  movss  xmm5, xmm4
 f3 0f 10 e5  movss  xmm4, xmm5
 f3 0f 10 c4  movss  xmm0, xmm4
@@ -141,17 +137,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x2a5
+75 1b  jne  0x295
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1f 00 00 00  lea  r13, [rip + 0x1f]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 16 ff ff ff  call  0x1c0
+e8 16 ff ff ff  call  0x1b0
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 f3 41 0f 11 06  movss  dword ptr [r14], xmm0
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x2ca
+75 10  jne  0x2ba
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -182,8 +178,8 @@ WebAssembly Table
 
 More Info
 00 00 00 00  Size of link data: 0
-08 03 00 00  Offset from here for the landing pad function body (0xFFFF'FFFF = undefined, pos: 1c): 776
+f8 02 00 00  Offset from here for the landing pad function body (0xFFFF'FFFF = undefined, pos: 1c): 760
 00 00 00 00  Stacktrace records 0, debugMode: 0
 03 00 00 00  Version of this binary module: 3
-30 03 00 00  Module binary size (excl. this value): 816
+20 03 00 00  Module binary size (excl. this value): 800
 

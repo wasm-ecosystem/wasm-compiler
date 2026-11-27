@@ -178,6 +178,32 @@ static void *getContextPC(ucontext_t const *const uc) VB_NOEXCEPT {
 }
 #endif
 
+#if !LINEAR_MEMORY_BOUNDS_CHECKS
+///
+/// @brief Get the stack pointer from the signal context
+///
+/// @param uc Signal context
+/// @return Stack pointer value
+///
+static uintptr_t getContextSP(ucontext_t const *const uc) VB_NOEXCEPT {
+#if defined(__APPLE__) && CXX_TARGET == ISA_X86_64
+  return static_cast<uintptr_t>(uc->uc_mcontext->__ss.__rsp);
+#elif defined(__APPLE__) && CXX_TARGET == ISA_AARCH64
+  return static_cast<uintptr_t>(uc->uc_mcontext->__ss.__sp);
+#elif defined(__linux__) && CXX_TARGET == ISA_X86_64
+  return static_cast<uintptr_t>(uc->uc_mcontext.gregs[REG_RSP]);
+#elif defined(__linux__) && CXX_TARGET == ISA_AARCH64
+  return static_cast<uintptr_t>(uc->uc_mcontext.sp);
+#elif defined(__QNX__) && CXX_TARGET == ISA_X86_64
+  return static_cast<uintptr_t>(uc->uc_mcontext.cpu.rsp);
+#elif defined(__QNX__) && CXX_TARGET == ISA_AARCH64
+  return static_cast<uintptr_t>(uc->uc_mcontext.cpu.sp);
+#else
+  static_assert(false, "OS or architecture not supported");
+#endif
+}
+#endif
+
 #if !ACTIVE_STACK_OVERFLOW_CHECK
 bool SignalFunctionWrapperUnix::isStackoverflow(ucontext_t const *const uc) VB_NOEXCEPT {
 #ifdef __APPLE__
@@ -207,16 +233,13 @@ bool SignalFunctionWrapperUnix::isStackoverflow(ucontext_t const *const uc) VB_N
 thread_local sigset_t SignalFunctionWrapperUnix::sigMask_{};
 thread_local bool SignalFunctionWrapperUnix::sigMaskInitialized_{false};
 thread_local bool SignalFunctionWrapperUnix::sigMaskIsVolatile_{false};
+thread_local bool SignalFunctionWrapperUnix::stackTopIsVolatile_{false};
+thread_local void *SignalFunctionWrapperUnix::stackTop_{nullptr};
 
 #if !ACTIVE_STACK_OVERFLOW_CHECK
 // coverity[autosar_cpp14_a8_5_2_violation]
 thread_local SecondaryStack SignalFunctionWrapperUnix::secondaryStack_{};
 thread_local uint32_t SecondaryStack::secondaryStackSize_{0U};
-
-thread_local bool SignalFunctionWrapperUnix::stackTopIsVolatile_{false};
-#ifdef __linux__
-thread_local void *SignalFunctionWrapperUnix::stackTop_{nullptr};
-#endif //__linux__
 
 void SecondaryStack::init() {
   uint32_t const secondaryStackSize{static_cast<uint32_t>(SIGSTKSZ)};
@@ -291,6 +314,8 @@ void SignalFunctionWrapperUnix::memorySignalHandler(int32_t const signalId, sigi
           (static_cast<uint64_t>(WasmConstants::wasmPageSize) * SignalFunctionWrapper::pRuntime_->getLinearMemorySizeInPages())) {
         // Out of bounds of Wasm linear memory
         trapCode = static_cast<uint32_t>(TrapCode::LINMEM_OUTOFBOUNDSACCESS);
+      } else if (!SignalFunctionWrapper::hasSufficientStackForLandingPad(getContextSP(uc), pToNum(stackTop_))) {
+        trapCode = static_cast<uint32_t>(TrapCode::STACKFENCEBREACHED);
       } else {
         // Fault lies in non-commited memory portion, so we try to commit it via a landing pad
         SignalFunctionWrapper::setLandingPad(static_cast<uint32_t>(offsetInLinMemAllocation));

@@ -115,12 +115,11 @@ public:
   static inline void setSigMaskVolatile(bool const isVolatile) VB_NOEXCEPT {
     sigMaskIsVolatile_ = isVolatile;
   }
-#endif
 
-#if !ACTIVE_STACK_OVERFLOW_CHECK
   ///
   /// @brief Set If stack top of current thread is volatile
   ///
+  /// @param isVolatile Whether the stack boundary may change between calls
   /// @note The stack top is assumed not volatile by default to avoid get stack top by OS API before each Wasm function
   /// call
   ///
@@ -135,6 +134,7 @@ public:
   /// @tparam FunctionArguments The argument types of wrapped function
   /// @param function The wrapped function
   /// @param args The arguments of wrapped function
+  /// @throws vb::RuntimeError if querying the current stack bounds fails
   ///
   template <class FunctionType, typename... FunctionArguments>
   // coverity[autosar_cpp14_a8_4_7_violation]
@@ -165,14 +165,12 @@ public:
       // coverity[autosar_cpp14_a15_0_2_violation]
       secondaryStack_.init();
     }
-#ifdef __linux__
+#endif
     if ((stackTop_ == nullptr) || stackTopIsVolatile_) {
       // coverity[autosar_cpp14_a15_0_2_violation]
       MemUtils::StackInfo const stackInfo{MemUtils::getStackInfo()};
       stackTop_ = stackInfo.stackTop;
     }
-#endif
-#endif
 
 #endif
     return function(std::forward<FunctionArguments>(args)...);
@@ -186,6 +184,7 @@ public:
   /// @tparam FunctionArguments The argument types of wrapped function
   /// @param function The wrapped function
   /// @param args The arguments of wrapped function
+  /// @throws vb::RuntimeError if querying the current stack bounds fails
   ///
   template <size_t NumReturnValue, class FunctionType, typename... FunctionArguments>
   // coverity[autosar_cpp14_a14_1_1_violation]
@@ -217,14 +216,12 @@ public:
       // coverity[autosar_cpp14_a15_0_2_violation]
       secondaryStack_.init();
     }
-#ifdef __linux__
+#endif
     if ((stackTop_ == nullptr) || stackTopIsVolatile_) {
       // coverity[autosar_cpp14_a15_0_2_violation]
       MemUtils::StackInfo const stackInfo{MemUtils::getStackInfo()};
       stackTop_ = stackInfo.stackTop;
     }
-#endif
-#endif
 
 #endif
     // coverity[autosar_cpp14_a15_0_2_violation]
@@ -249,6 +246,8 @@ private:
   thread_local static sigset_t sigMask_;        ///< Signal mask of current thread
   thread_local static bool sigMaskInitialized_; ///< If signal mask is initialized_
   thread_local static bool sigMaskIsVolatile_;  ///< If signal mask of current thread is volatile
+  thread_local static bool stackTopIsVolatile_; ///< Whether the current thread's stack boundary may change between calls
+  thread_local static void *stackTop_;          ///< Cached lower usable stack address of the current thread
   /**
    * @brief Handles a Wasm trap triggered by a Unix signal, setting the return address and trap parameters in the context.
    * @param uc Pointer to the signal handler context (ucontext_t*), used to modify the return address and parameters.
@@ -277,11 +276,6 @@ private:
 
 #if !ACTIVE_STACK_OVERFLOW_CHECK
   thread_local static SecondaryStack secondaryStack_; ///< Secondary stack of current thread
-  thread_local static bool stackTopIsVolatile_;       ///< If stack stop is volatile
-#ifdef __linux__
-  thread_local static void *stackTop_; ///< Top of current stack
-
-#endif //__linux__
 
   ///
   /// @brief check if current signal is current by stack overflow

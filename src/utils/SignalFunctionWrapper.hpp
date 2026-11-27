@@ -200,6 +200,16 @@ private:
   ///
   static int64_t getOffsetInLinearMemoryAllocation(void *const addr) VB_NOEXCEPT;
   ///
+  /// @brief Check whether the interrupted SP leaves the configured landing-pad headroom
+  ///
+  /// @param sp Interrupted stack pointer
+  /// @param stackTop Lowest usable stack address
+  /// @return true if the configured headroom is available
+  ///
+  static inline bool hasSufficientStackForLandingPad(uintptr_t const sp, uintptr_t const stackTop) VB_NOEXCEPT {
+    return (sp >= stackTop) && ((sp - stackTop) >= static_cast<uintptr_t>(STACK_HEAD_ROOM));
+  }
+  ///
   /// @brief probe if landingPadData_ is a valid offset in linear memory
   ///
   static void probeLinearMemoryOffset() VB_NOEXCEPT;

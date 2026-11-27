@@ -21,6 +21,7 @@
 
 #include <cstdint>
 
+#include "MemUtils.hpp"
 #include "OSAPIChecker.hpp"
 #include "RAIISignalHandler.hpp"
 
@@ -42,17 +43,20 @@ enum class SignalWrapperErrorCode : uint8_t {
 ///
 class SignalFunctionWrapperWin final {
 public:
-#if !ACTIVE_STACK_OVERFLOW_CHECK
+#if !LINEAR_MEMORY_BOUNDS_CHECKS || !ACTIVE_STACK_OVERFLOW_CHECK
   ///
   /// @brief Set If stack top of current thread is volatile
   ///
+  /// @param isVolatile Whether the stack boundary may change between calls
   /// @note The stack top is assumed not volatile by default to avoid get stack top by OS API before each Wasm function
   /// call
   ///
   static inline void setStackTopVolatile(bool isVolatile) VB_NOEXCEPT {
     stackTopIsVolatile_ = isVolatile;
   }
+#endif
 
+#if !ACTIVE_STACK_OVERFLOW_CHECK
   ///
   /// @brief Get the error code
   ///
@@ -69,6 +73,7 @@ public:
   /// @tparam FunctionArguments The argument types of wrapped function
   /// @param function The wrapped function
   /// @param args The arguments of wrapped function
+  /// @throws vb::RuntimeError if querying the current stack bounds fails
   ///
   template <class FunctionType, typename... FunctionArguments>
   static void call_raw(FunctionType const &function, FunctionArguments &&...args) VB_THROW {
@@ -92,6 +97,13 @@ public:
     }
 #endif
 
+#if !LINEAR_MEMORY_BOUNDS_CHECKS
+    if ((stackTop_ == nullptr) || stackTopIsVolatile_) {
+      MemUtils::StackInfo const stackInfo{MemUtils::getStackInfo()};
+      stackTop_ = stackInfo.stackTop;
+    }
+#endif
+
 #endif
     return function(args...);
   }
@@ -104,6 +116,7 @@ public:
   /// @tparam FunctionArguments The argument types of wrapped function
   /// @param function The wrapped function
   /// @param args The arguments of wrapped function
+  /// @throws vb::RuntimeError if querying the current stack bounds fails
   ///
   template <size_t NumReturnValue, class FunctionType, typename... FunctionArguments>
   static std::array<WasmValue, NumReturnValue> call_raw(FunctionType const &function, FunctionArguments &&...args) VB_THROW {
@@ -127,6 +140,13 @@ public:
     }
 #endif
 
+#if !LINEAR_MEMORY_BOUNDS_CHECKS
+    if ((stackTop_ == nullptr) || stackTopIsVolatile_) {
+      MemUtils::StackInfo const stackInfo{MemUtils::getStackInfo()};
+      stackTop_ = stackInfo.stackTop;
+    }
+#endif
+
 #endif
     return function(args...);
   }
@@ -143,9 +163,12 @@ public:
 private:
 #if !LINEAR_MEMORY_BOUNDS_CHECKS
   thread_local static SignalWrapperErrorCode error_; ///< Error code of Wasm function call catch by signal handler
+  thread_local static void *stackTop_;               ///< Cached lower usable stack address of the current thread
 #endif
 
 #if !LINEAR_MEMORY_BOUNDS_CHECKS || !ACTIVE_STACK_OVERFLOW_CHECK
+  thread_local static bool stackTopIsVolatile_; ///< Whether the current thread's stack boundary may change between calls
+
   /**
    * @brief Handles a Wasm trap triggered by a Windows exception, setting the return address and trap parameters in the exception context.
    * @param pExceptionInfo Pointer to the Windows exception context (PEXCEPTION_POINTERS), used to modify the return address and parameters.
@@ -162,7 +185,6 @@ private:
   static long divSignalHandler(PEXCEPTION_POINTERS pExceptionInfo) VB_NOEXCEPT; ///< Windows div signal handler function
 
 #if !ACTIVE_STACK_OVERFLOW_CHECK
-  thread_local static bool stackTopIsVolatile_; ///< If stack stop is volatile
   ///
   /// @brief If stack guarantee of current stack is already set,
   /// to reduce calling set stack guarantee OS API multi times

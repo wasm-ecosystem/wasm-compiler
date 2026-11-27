@@ -50,8 +50,10 @@
 
 #include "src/utils/ExecutableMemory.hpp"
 #include "src/utils/MemUtils.hpp"
+#ifdef VB_NEED_SIGNAL_HANDLER
 #include "src/utils/RAIISignalHandler.hpp"
 #include "src/utils/SignalFunctionWrapper.hpp"
+#endif
 #endif
 
 #if LINEAR_MEMORY_BOUNDS_CHECKS && !(defined JIT_TARGET_TRICORE)

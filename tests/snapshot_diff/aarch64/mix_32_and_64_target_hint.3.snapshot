@@ -34,11 +34,6 @@ f8 e7 11 6d  stp  d24, d25, [sp, #0x118]
 fa ef 12 6d  stp  d26, d27, [sp, #0x128]
 fc f7 13 6d  stp  d28, d29, [sp, #0x138]
 fe ff 14 6d  stp  d30, d31, [sp, #0x148]
-a0 83 5e f8  ldur  x0, [x29, #-0x18]
-ff 63 20 eb  cmp  sp, x0
-68 00 00 54  b.hi  0x98
-a0 01 80 52  mov  w0, #0xd
-dd ff ff 17  b  8
 a0 03 58 f8  ldur  x0, [x29, #-0x80]
 00 00 3f d6  blr  x0
 fe af 40 f9  ldr  x30, [sp, #0x158]
@@ -67,13 +62,13 @@ fe ff 54 6d  ldp  d30, d31, [sp, #0x148]
 ff 83 05 91  add  sp, sp, #0x160
 bb 83 58 f8  ldur  x27, [x29, #-0x78]
 60 03 5f d6  ret  x27
-e4 00 00 00  Size of the function body: 228
+d0 00 00 00  Size of the function body: 208
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 ff 03 03 d1  sub  sp, sp, #0xc0
 ab 83 5f 38  ldurb  w11, [x29, #-8]
-6b 00 00 34  cbz  w11, 0x120
+6b 00 00 34  cbz  w11, 0x10c
 e0 03 0b 2a  mov  w0, w11
-de ff ff 17  b  0x94
+c0 ff ff 17  b  8
 c1 6e 8f d2  mov  x1, #0x7b76
 21 c1 ac f2  movk  x1, #0x6609, lsl #16
 e3 cb 88 52  mov  w3, #0x465f
@@ -87,26 +82,26 @@ e1 53 00 f9  str  x1, [sp, #0xa0]
 e2 9b 00 b9  str  w2, [sp, #0x98]
 e3 93 00 b9  str  w3, [sp, #0x90]
 e4 8b 00 b9  str  w4, [sp, #0x88]
-60 00 00 54  b.eq  0x160
+60 00 00 54  b.eq  0x14c
 00 10 2e 1e  fmov  s0, #1.00000000
-02 00 00 14  b  0x164
+02 00 00 14  b  0x150
 00 10 20 1e  fmov  s0, #2.00000000
 01 10 3e 1e  fmov  s1, #-1.00000000
 00 20 21 1e  fcmp  s0, s1
 e4 b7 9f 1a  cset  w4, ge
 e5 43 40 f9  ldr  x5, [sp, #0x80]
 9f 00 00 f1  cmp  x4, #0
-61 00 00 54  b.ne  0x184
+61 00 00 54  b.ne  0x170
 20 01 80 52  mov  w0, #9
-a2 ff ff 17  b  8
+a7 ff ff 17  b  8
 06 00 f0 d2  mov  x6, #-0x8000000000000000
 bf 00 06 eb  cmp  x5, x6
-c1 00 00 54  b.ne  0x1a4
+c1 00 00 54  b.ne  0x190
 06 00 80 92  mov  x6, #-1
 9f 00 06 eb  cmp  x4, x6
-61 00 00 54  b.ne  0x1a4
+61 00 00 54  b.ne  0x190
 06 00 80 d2  mov  x6, #0
-03 00 00 14  b  0x1ac
+03 00 00 14  b  0x198
 a6 0c c4 9a  sdiv  x6, x5, x4
 86 94 06 9b  msub  x6, x4, x6, x5
 65 c3 81 d2  mov  x5, #0xe1b
@@ -158,8 +153,8 @@ WebAssembly Table
 
 More Info
 00 00 00 00  Size of link data: 0
-f0 01 00 00  Offset from here for the landing pad function body (0xFFFF'FFFF = undefined, pos: 24): 496
+dc 01 00 00  Offset from here for the landing pad function body (0xFFFF'FFFF = undefined, pos: 24): 476
 00 00 00 00  Stacktrace records 0, debugMode: 0
 03 00 00 00  Version of this binary module: 3
-20 02 00 00  Module binary size (excl. this value): 544
+0c 02 00 00  Module binary size (excl. this value): 524
 

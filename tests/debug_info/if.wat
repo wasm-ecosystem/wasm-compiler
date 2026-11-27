@@ -9,7 +9,7 @@
 ;; AARCH64_PASSIVE:         [[@LINE-1]]: 7f 02 00 71  cmp  w19, #0
 ;; AARCH64_PASSIVE-NEXT:    [[@LINE-2]]: f3 8b 00 b9  str  w19, [sp, #0x88]
 ;; AARCH64_PASSIVE-NEXT:    [[@LINE-3]]: e8 83 00 b9  str  w8, [sp, #0x80]
-;; AARCH64_PASSIVE-NEXT:    [[@LINE-4]]: 60 00 00 54  b.eq  0x16c
+;; AARCH64_PASSIVE-NEXT:    [[@LINE-4]]: 60 00 00 54  b.eq  0x158
 ;; AARCH64_ACTIVE:          [[@LINE-5]]: 7f 02 00 71  cmp  w19, #0
 ;; AARCH64_ACTIVE-NEXT:     [[@LINE-6]]: f3 8b 00 b9  str  w19, [sp, #0x88]
 ;; AARCH64_ACTIVE-NEXT:     [[@LINE-7]]: e8 83 00 b9  str  w8, [sp, #0x80]
@@ -17,7 +17,7 @@
 ;; X86_64_PASSIVE:          [[@LINE-9]]: 83 fd 00  cmp  ebp, 0
 ;; X86_64_PASSIVE-NEXT:     [[@LINE-10]]: 89 ac 24 90 00 00 00  mov  dword ptr [rsp + 0x90], ebp
 ;; X86_64_PASSIVE-NEXT:     [[@LINE-11]]: 89 bc 24 88 00 00 00  mov  dword ptr [rsp + 0x88], edi
-;; X86_64_PASSIVE-NEXT:     [[@LINE-12]]: 0f 84 07 00 00 00  je  0x230
+;; X86_64_PASSIVE-NEXT:     [[@LINE-12]]: 0f 84 07 00 00 00  je  0x220
 ;; X86_64_ACTIVE:           [[@LINE-13]]: 83 fd 00  cmp  ebp, 0
 ;; X86_64_ACTIVE-NEXT:      [[@LINE-14]]: 89 ac 24 90 00 00 00  mov  dword ptr [rsp + 0x90], ebp
 ;; X86_64_ACTIVE-NEXT:      [[@LINE-15]]: 89 bc 24 88 00 00 00  mov  dword ptr [rsp + 0x88], edi
@@ -33,11 +33,11 @@
 
     else
 ;; AARCH64_PASSIVE-NEXT:    [[@LINE-1]]: e0 03 08 2a  mov  w0, w8
-;; AARCH64_PASSIVE-NEXT:    [[@LINE-2]]: 02 00 00 14  b  0x170
+;; AARCH64_PASSIVE-NEXT:    [[@LINE-2]]: 02 00 00 14  b  0x15c
 ;; AARCH64_ACTIVE-NEXT:     [[@LINE-3]]: e0 03 08 2a  mov  w0, w8
 ;; AARCH64_ACTIVE-NEXT:     [[@LINE-4]]: 02 00 00 14  b  0x9c
 ;; X86_64_PASSIVE-NEXT:     [[@LINE-5]]: 8b c7  mov  eax, edi
-;; X86_64_PASSIVE-NEXT:     [[@LINE-6]]: e9 05 00 00 00  jmp  0x235
+;; X86_64_PASSIVE-NEXT:     [[@LINE-6]]: e9 05 00 00 00  jmp  0x225
 ;; X86_64_ACTIVE-NEXT:      [[@LINE-7]]: 8b c7  mov  eax, edi
 ;; X86_64_ACTIVE-NEXT:      [[@LINE-8]]: e9 05 00 00 00  jmp  0xa1
 ;; TRICORE_ACTIVE-NEXT:     [[@LINE-9]]: 02 92  mov  d2, d9
@@ -83,8 +83,8 @@
 ;; DWO_AARCH64_PASSIVE-NEXT: 0x0000000c: DW_TAG_compile_unit
 ;; DWO_AARCH64_PASSIVE-EMPTY:
 ;; DWO_AARCH64_PASSIVE-NEXT: 0x0000000d:   DW_TAG_subprogram
-;; DWO_AARCH64_PASSIVE-NEXT:                 DW_AT_low_pc	(0x0000000000000134)
-;; DWO_AARCH64_PASSIVE-NEXT:                 DW_AT_high_pc	(0x0000000000000178)
+;; DWO_AARCH64_PASSIVE-NEXT:                 DW_AT_low_pc	(0x0000000000000120)
+;; DWO_AARCH64_PASSIVE-NEXT:                 DW_AT_high_pc	(0x0000000000000164)
 ;; DWO_AARCH64_PASSIVE-EMPTY:
 ;; DWO_AARCH64_PASSIVE-NEXT: 0x0000001e:   NULL
 ;; DWO_AARCH64_PASSIVE-EMPTY:
@@ -114,24 +114,24 @@
 ;; DWO_AARCH64_PASSIVE-EMPTY:
 ;; DWO_AARCH64_PASSIVE-NEXT: Address            Line   Column File   ISA Discriminator OpIndex Flags
 ;; DWO_AARCH64_PASSIVE-NEXT: ------------------ ------ ------ ------ --- ------------- ------- -------------
+;; DWO_AARCH64_PASSIVE-NEXT: 0x0000000000000120     26      0      1   0             0       0  is_stmt
+;; DWO_AARCH64_PASSIVE-NEXT: 0x0000000000000124     26      0      1   0             0       0  is_stmt
+;; DWO_AARCH64_PASSIVE-NEXT: 0x0000000000000128     26      0      1   0             0       0  is_stmt
+;; DWO_AARCH64_PASSIVE-NEXT: 0x000000000000012c     26      0      1   0             0       0  is_stmt
+;; DWO_AARCH64_PASSIVE-NEXT: 0x0000000000000130     26      0      1   0             0       0  is_stmt
 ;; DWO_AARCH64_PASSIVE-NEXT: 0x0000000000000134     26      0      1   0             0       0  is_stmt
 ;; DWO_AARCH64_PASSIVE-NEXT: 0x0000000000000138     26      0      1   0             0       0  is_stmt
 ;; DWO_AARCH64_PASSIVE-NEXT: 0x000000000000013c     26      0      1   0             0       0  is_stmt
-;; DWO_AARCH64_PASSIVE-NEXT: 0x0000000000000140     26      0      1   0             0       0  is_stmt
-;; DWO_AARCH64_PASSIVE-NEXT: 0x0000000000000144     26      0      1   0             0       0  is_stmt
-;; DWO_AARCH64_PASSIVE-NEXT: 0x0000000000000148     26      0      1   0             0       0  is_stmt
-;; DWO_AARCH64_PASSIVE-NEXT: 0x000000000000014c     26      0      1   0             0       0  is_stmt
-;; DWO_AARCH64_PASSIVE-NEXT: 0x0000000000000150     26      0      1   0             0       0  is_stmt
-;; DWO_AARCH64_PASSIVE-NEXT: 0x0000000000000154     29      0      1   0             0       0  is_stmt
-;; DWO_AARCH64_PASSIVE-NEXT: 0x0000000000000158     29      0      1   0             0       0  is_stmt
-;; DWO_AARCH64_PASSIVE-NEXT: 0x000000000000015c     29      0      1   0             0       0  is_stmt
-;; DWO_AARCH64_PASSIVE-NEXT: 0x0000000000000160     29      0      1   0             0       0  is_stmt
-;; DWO_AARCH64_PASSIVE-NEXT: 0x0000000000000164     33      0      1   0             0       0  is_stmt
-;; DWO_AARCH64_PASSIVE-NEXT: 0x0000000000000168     33      0      1   0             0       0  is_stmt
-;; DWO_AARCH64_PASSIVE-NEXT: 0x000000000000016c     36      0      1   0             0       0  is_stmt
-;; DWO_AARCH64_PASSIVE-NEXT: 0x0000000000000170     37      0      1   0             0       0  is_stmt
-;; DWO_AARCH64_PASSIVE-NEXT: 0x0000000000000174     37      0      1   0             0       0  is_stmt
-;; DWO_AARCH64_PASSIVE-NEXT: 0x0000000000000174     37      0      1   0             0       0  is_stmt end_sequence
+;; DWO_AARCH64_PASSIVE-NEXT: 0x0000000000000140     29      0      1   0             0       0  is_stmt
+;; DWO_AARCH64_PASSIVE-NEXT: 0x0000000000000144     29      0      1   0             0       0  is_stmt
+;; DWO_AARCH64_PASSIVE-NEXT: 0x0000000000000148     29      0      1   0             0       0  is_stmt
+;; DWO_AARCH64_PASSIVE-NEXT: 0x000000000000014c     29      0      1   0             0       0  is_stmt
+;; DWO_AARCH64_PASSIVE-NEXT: 0x0000000000000150     33      0      1   0             0       0  is_stmt
+;; DWO_AARCH64_PASSIVE-NEXT: 0x0000000000000154     33      0      1   0             0       0  is_stmt
+;; DWO_AARCH64_PASSIVE-NEXT: 0x0000000000000158     36      0      1   0             0       0  is_stmt
+;; DWO_AARCH64_PASSIVE-NEXT: 0x000000000000015c     37      0      1   0             0       0  is_stmt
+;; DWO_AARCH64_PASSIVE-NEXT: 0x0000000000000160     37      0      1   0             0       0  is_stmt
+;; DWO_AARCH64_PASSIVE-NEXT: 0x0000000000000160     37      0      1   0             0       0  is_stmt end_sequence
 ;; DWO_AARCH64_PASSIVE-EMPTY:
 ;; DWO_AARCH64_PASSIVE-EMPTY:
 
@@ -226,8 +226,8 @@
 ;; DWO_X86_64_PASSIVE-NEXT: 0x0000000c: DW_TAG_compile_unit
 ;; DWO_X86_64_PASSIVE-EMPTY:
 ;; DWO_X86_64_PASSIVE-NEXT: 0x0000000d:   DW_TAG_subprogram
-;; DWO_X86_64_PASSIVE-NEXT:                 DW_AT_low_pc	(0x00000000000001ec)
-;; DWO_X86_64_PASSIVE-NEXT:                 DW_AT_high_pc	(0x000000000000023e)
+;; DWO_X86_64_PASSIVE-NEXT:                 DW_AT_low_pc	(0x00000000000001dc)
+;; DWO_X86_64_PASSIVE-NEXT:                 DW_AT_high_pc	(0x000000000000022e)
 ;; DWO_X86_64_PASSIVE-EMPTY:
 ;; DWO_X86_64_PASSIVE-NEXT: 0x0000001e:   NULL
 ;; DWO_X86_64_PASSIVE-EMPTY:
@@ -257,23 +257,23 @@
 ;; DWO_X86_64_PASSIVE-EMPTY:
 ;; DWO_X86_64_PASSIVE-NEXT: Address            Line   Column File   ISA Discriminator OpIndex Flags
 ;; DWO_X86_64_PASSIVE-NEXT: ------------------ ------ ------ ------ --- ------------- ------- -------------
-;; DWO_X86_64_PASSIVE-NEXT: 0x00000000000001ec     26      0      1   0             0       0  is_stmt
-;; DWO_X86_64_PASSIVE-NEXT: 0x00000000000001f4     26      0      1   0             0       0  is_stmt
-;; DWO_X86_64_PASSIVE-NEXT: 0x00000000000001fb     26      0      1   0             0       0  is_stmt
-;; DWO_X86_64_PASSIVE-NEXT: 0x0000000000000203     26      0      1   0             0       0  is_stmt
-;; DWO_X86_64_PASSIVE-NEXT: 0x0000000000000207     26      0      1   0             0       0  is_stmt
-;; DWO_X86_64_PASSIVE-NEXT: 0x0000000000000209     26      0      1   0             0       0  is_stmt
-;; DWO_X86_64_PASSIVE-NEXT: 0x000000000000020d     26      0      1   0             0       0  is_stmt
-;; DWO_X86_64_PASSIVE-NEXT: 0x0000000000000212     29      0      1   0             0       0  is_stmt
-;; DWO_X86_64_PASSIVE-NEXT: 0x0000000000000215     29      0      1   0             0       0  is_stmt
-;; DWO_X86_64_PASSIVE-NEXT: 0x000000000000021c     29      0      1   0             0       0  is_stmt
-;; DWO_X86_64_PASSIVE-NEXT: 0x0000000000000223     29      0      1   0             0       0  is_stmt
-;; DWO_X86_64_PASSIVE-NEXT: 0x0000000000000229     33      0      1   0             0       0  is_stmt
-;; DWO_X86_64_PASSIVE-NEXT: 0x000000000000022b     33      0      1   0             0       0  is_stmt
-;; DWO_X86_64_PASSIVE-NEXT: 0x0000000000000230     36      0      1   0             0       0  is_stmt
-;; DWO_X86_64_PASSIVE-NEXT: 0x0000000000000235     37      0      1   0             0       0  is_stmt
-;; DWO_X86_64_PASSIVE-NEXT: 0x000000000000023d     37      0      1   0             0       0  is_stmt
-;; DWO_X86_64_PASSIVE-NEXT: 0x000000000000023d     37      0      1   0             0       0  is_stmt end_sequence
+;; DWO_X86_64_PASSIVE-NEXT: 0x00000000000001dc     26      0      1   0             0       0  is_stmt
+;; DWO_X86_64_PASSIVE-NEXT: 0x00000000000001e4     26      0      1   0             0       0  is_stmt
+;; DWO_X86_64_PASSIVE-NEXT: 0x00000000000001eb     26      0      1   0             0       0  is_stmt
+;; DWO_X86_64_PASSIVE-NEXT: 0x00000000000001f3     26      0      1   0             0       0  is_stmt
+;; DWO_X86_64_PASSIVE-NEXT: 0x00000000000001f7     26      0      1   0             0       0  is_stmt
+;; DWO_X86_64_PASSIVE-NEXT: 0x00000000000001f9     26      0      1   0             0       0  is_stmt
+;; DWO_X86_64_PASSIVE-NEXT: 0x00000000000001fd     26      0      1   0             0       0  is_stmt
+;; DWO_X86_64_PASSIVE-NEXT: 0x0000000000000202     29      0      1   0             0       0  is_stmt
+;; DWO_X86_64_PASSIVE-NEXT: 0x0000000000000205     29      0      1   0             0       0  is_stmt
+;; DWO_X86_64_PASSIVE-NEXT: 0x000000000000020c     29      0      1   0             0       0  is_stmt
+;; DWO_X86_64_PASSIVE-NEXT: 0x0000000000000213     29      0      1   0             0       0  is_stmt
+;; DWO_X86_64_PASSIVE-NEXT: 0x0000000000000219     33      0      1   0             0       0  is_stmt
+;; DWO_X86_64_PASSIVE-NEXT: 0x000000000000021b     33      0      1   0             0       0  is_stmt
+;; DWO_X86_64_PASSIVE-NEXT: 0x0000000000000220     36      0      1   0             0       0  is_stmt
+;; DWO_X86_64_PASSIVE-NEXT: 0x0000000000000225     37      0      1   0             0       0  is_stmt
+;; DWO_X86_64_PASSIVE-NEXT: 0x000000000000022d     37      0      1   0             0       0  is_stmt
+;; DWO_X86_64_PASSIVE-NEXT: 0x000000000000022d     37      0      1   0             0       0  is_stmt end_sequence
 ;; DWO_X86_64_PASSIVE-EMPTY:
 ;; DWO_X86_64_PASSIVE-EMPTY:
 

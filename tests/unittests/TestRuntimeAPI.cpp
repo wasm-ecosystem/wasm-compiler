@@ -35,6 +35,7 @@
 #include "src/utils/ExecutableMemory.hpp"
 #include "src/utils/MemUtils.hpp"
 #include "src/utils/STDCompilerLogger.hpp"
+#include "src/utils/SignalFunctionWrapper.hpp"
 
 #if LINEAR_MEMORY_BOUNDS_CHECKS
 #include "src/core/runtime/ActiveMemoryManager.hpp"
@@ -113,6 +114,52 @@ TEST(TestRuntimeAPI, CallWithFuncIndex) {
   EXPECT_THROW((runtime.getFunctionByExportedTableIndex<1, int32_t>(0U)), vb::RuntimeError);
   EXPECT_THROW((runtime.getFunctionByExportedTableIndex<2, int32_t, int64_t>(0U)), vb::RuntimeError);
 }
+
+#if !LINEAR_MEMORY_BOUNDS_CHECKS
+TEST(TestRuntimeAPI, landingPadCommitsMemoryAndPreservesFaultingFrame) {
+  std::vector<uint8_t> const wasmFileContent{vb::test::WabtCmd::loadWasmFromWat(R"(
+    (module
+      (memory 1 2)
+      (func (export "grow") (result i32)
+        i32.const 1
+        memory.grow)
+      (func (export "store") (param i32)
+        local.get 0
+        i32.const 42
+        i32.store)
+      (func (export "load") (param i32) (result i32)
+        local.get 0
+        i32.load))
+  )")};
+  vb::Compiler compiler(memoryFnc, allocFnc, freeFnc, nullptr, memoryFnc);
+  compiler.setStacktraceRecordCount(2U);
+  vb::ManagedBinary const binaryModule{compiler.compile({wasmFileContent.data(), wasmFileContent.size()})};
+  vb::ExecutableMemory const executableMemory{vb::ExecutableMemory::make_executable_copy(binaryModule)};
+  auto runtime = vb::test::createRuntime(executableMemory);
+#if ACTIVE_STACK_OVERFLOW_CHECK
+  runtime.setStackFence(nullptr);
+#endif
+  vb::SignalFunctionWrapper::start(runtime);
+  auto const grow{runtime.getExportedFunctionByName<1>("grow")};
+  ASSERT_EQ(vb::SignalFunctionWrapper::call(grow)[0].i32, 1);
+  auto const store{runtime.getExportedFunctionByName<0, int32_t>("store")};
+  auto const load{runtime.getExportedFunctionByName<1, int32_t>("load")};
+  EXPECT_NO_THROW(vb::SignalFunctionWrapper::call(store, 65536));
+  EXPECT_EQ(vb::SignalFunctionWrapper::call(load, 65536)[0].i32, 42);
+  try {
+    vb::SignalFunctionWrapper::call(store, 131072);
+    FAIL() << "Access beyond the declared memory must trap";
+  } catch (vb::TrapException const &exception) {
+    EXPECT_EQ(exception.getTrapCode(), vb::TrapCode::LINMEM_OUTOFBOUNDSACCESS);
+  }
+  std::vector<uint32_t> stacktrace;
+  runtime.iterateStacktraceRecords(vb::FunctionRef<void(uint32_t)>([&stacktrace](uint32_t const fncIndex) {
+    stacktrace.push_back(fncIndex);
+  }));
+  EXPECT_EQ(stacktrace, (std::vector<uint32_t>{1U}));
+  EXPECT_EQ(vb::SignalFunctionWrapper::call(load, 65536)[0].i32, 42);
+}
+#endif
 
 #if ACTIVE_STACK_OVERFLOW_CHECK
 TEST(TestRuntimeAPI, stackFenceReservesAlignedHeadroom) {

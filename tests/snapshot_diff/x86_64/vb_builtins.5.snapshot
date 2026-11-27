@@ -34,10 +34,6 @@ f2 44 0f 11 a4 24 a8 00 00 00  movsd  qword ptr [rsp + 0xa8], xmm12
 f2 44 0f 11 ac 24 b0 00 00 00  movsd  qword ptr [rsp + 0xb0], xmm13
 f2 44 0f 11 b4 24 b8 00 00 00  movsd  qword ptr [rsp + 0xb8], xmm14
 f2 44 0f 11 bc 24 c0 00 00 00  movsd  qword ptr [rsp + 0xc0], xmm15
-48 3b 63 e8  cmp  rsp, qword ptr [rbx - 0x18]
-7f 0a  jg  0xe2
-b8 0d 00 00 00  mov  eax, 0xd
-e9 24 ff ff ff  jmp  6
 48 89 e7  mov  rdi, rsp
 48 83 e7 0f  and  rdi, 0xf
 48 29 fc  sub  rsp, rdi
@@ -73,54 +69,54 @@ f2 44 0f 10 b4 24 b8 00 00 00  movsd  xmm14, qword ptr [rsp + 0xb8]
 f2 44 0f 10 bc 24 c0 00 00 00  movsd  xmm15, qword ptr [rsp + 0xc0]
 48 81 c4 c8 00 00 00  add  rsp, 0xc8
 c3  ret  
-9d 01 00 00  Size of the function body: 413
+8d 01 00 00  Size of the function body: 397
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 58 ff ff ff  lea  rsp, [rsp - 0xa8]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0x1d7
+74 09  je  0x1c7
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 2f fe ff ff  jmp  6
+e9 3f fe ff ff  jmp  6
 44 8b d6  mov  r10d, esi
 44 8b df  mov  r11d, edi
 44 8b e5  mov  r12d, ebp
 45 01 d4  add  r12d, r10d
-73 0a  jae  0x1ef
+73 0a  jae  0x1df
 b8 03 00 00 00  mov  eax, 3
-e9 17 fe ff ff  jmp  6
+e9 27 fe ff ff  jmp  6
 45 29 d4  sub  r12d, r10d
 4c 03 e3  add  r12, rbx
 41 80 3c 24 00  cmp  byte ptr [r12], 0
 44 8b 6b d0  mov  r13d, dword ptr [rbx - 0x30]
 45 29 d5  sub  r13d, r10d
-72 05  jb  0x208
+72 05  jb  0x1f8
 45 39 eb  cmp  r11d, r13d
-76 0a  jbe  0x212
+76 0a  jbe  0x202
 b8 07 00 00 00  mov  eax, 7
-e9 f4 fd ff ff  jmp  6
+e9 04 fe ff ff  jmp  6
 4c 03 5b c8  add  r11, qword ptr [rbx - 0x38]
 41 83 fa 08  cmp  r10d, 8
-72 10  jb  0x22c
+72 10  jb  0x21c
 4f 8b 6c 13 f8  mov  r13, qword ptr [r11 + r10 - 8]
 4f 89 6c 14 f8  mov  qword ptr [r12 + r10 - 8], r13
 41 83 ea 08  sub  r10d, 8
-eb ea  jmp  0x216
+eb ea  jmp  0x206
 41 83 fa 01  cmp  r10d, 1
-72 10  jb  0x242
+72 10  jb  0x232
 47 8a 6c 13 ff  mov  r13b, byte ptr [r11 + r10 - 1]
 47 88 6c 14 ff  mov  byte ptr [r12 + r10 - 1], r13b
 41 83 ea 01  sub  r10d, 1
-75 f0  jne  0x232
+75 f0  jne  0x222
 41 b9 00 00 00 00  mov  r9d, 0
 89 ac 24 a0 00 00 00  mov  dword ptr [rsp + 0xa0], ebp
 89 bc 24 98 00 00 00  mov  dword ptr [rsp + 0x98], edi
 89 b4 24 90 00 00 00  mov  dword ptr [rsp + 0x90], esi
 44 89 8c 24 88 00 00 00  mov  dword ptr [rsp + 0x88], r9d
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0x274
+74 09  je  0x264
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 92 fd ff ff  jmp  6
+e9 a2 fd ff ff  jmp  6
 83 fe 00  cmp  esi, 0
-0f 84 33 00 00 00  je  0x2b0
+0f 84 33 00 00 00  je  0x2a0
 44 0f b6 14 2b  movzx  r10d, byte ptr [rbx + rbp]
 45 01 d1  add  r9d, r10d
 83 c5 01  add  ebp, 1
@@ -130,7 +126,7 @@ e9 92 fd ff ff  jmp  6
 89 bc 24 98 00 00 00  mov  dword ptr [rsp + 0x98], edi
 89 b4 24 90 00 00 00  mov  dword ptr [rsp + 0x90], esi
 44 89 8c 24 88 00 00 00  mov  dword ptr [rsp + 0x88], r9d
-e9 b5 ff ff ff  jmp  0x265
+e9 b5 ff ff ff  jmp  0x255
 41 8b c1  mov  eax, r9d
 48 8d a4 24 a8 00 00 00  lea  rsp, [rsp + 0xa8]
 c3  ret  
@@ -138,28 +134,28 @@ fc 00 00 00  Size of the function body: 252
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 68 ff ff ff  lea  rsp, [rsp - 0x98]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0x2d7
+74 09  je  0x2c7
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 2f fd ff ff  jmp  6
+e9 3f fd ff ff  jmp  6
 89 ac 24 90 00 00 00  mov  dword ptr [rsp + 0x90], ebp
 89 bc 24 88 00 00 00  mov  dword ptr [rsp + 0x88], edi
 89 b4 24 80 00 00 00  mov  dword ptr [rsp + 0x80], esi
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
-e8 c7 fe ff ff  call  0x1c0
+e8 c7 fe ff ff  call  0x1b0
 48 8d 64 24 18  lea  rsp, [rsp + 0x18]
 c3  ret  
 40 00 00 00  Size of the function body: 64
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0x31b
+74 09  je  0x30b
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 eb fc ff ff  jmp  6
+e9 fb fc ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd 00 00 00 00  mov  ebp, 0
 bf 00 00 00 00  mov  edi, 0
 be 32 00 00 00  mov  esi, 0x32
-e8 89 fe ff ff  call  0x1c0
+e8 89 fe ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -167,14 +163,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0x35b
+74 09  je  0x34b
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 ab fc ff ff  jmp  6
+e9 bb fc ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd 00 00 00 00  mov  ebp, 0
 bf 2c 01 00 00  mov  edi, 0x12c
 be 32 00 00 00  mov  esi, 0x32
-e8 49 fe ff ff  call  0x1c0
+e8 49 fe ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -182,14 +178,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0x39b
+74 09  je  0x38b
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 6b fc ff ff  jmp  6
+e9 7b fc ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd 00 00 00 00  mov  ebp, 0
 bf c2 01 00 00  mov  edi, 0x1c2
 be 32 00 00 00  mov  esi, 0x32
-e8 09 fe ff ff  call  0x1c0
+e8 09 fe ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -197,14 +193,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0x3db
+74 09  je  0x3cb
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 2b fc ff ff  jmp  6
+e9 3b fc ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd 00 00 00 00  mov  ebp, 0
 bf ce 01 00 00  mov  edi, 0x1ce
 be 32 00 00 00  mov  esi, 0x32
-e8 c9 fd ff ff  call  0x1c0
+e8 c9 fd ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -212,14 +208,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0x41b
+74 09  je  0x40b
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 eb fb ff ff  jmp  6
+e9 fb fb ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd 00 00 00 00  mov  ebp, 0
 bf cf 01 00 00  mov  edi, 0x1cf
 be 32 00 00 00  mov  esi, 0x32
-e8 89 fd ff ff  call  0x1c0
+e8 89 fd ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -227,14 +223,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0x45b
+74 09  je  0x44b
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 ab fb ff ff  jmp  6
+e9 bb fb ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd 00 00 00 00  mov  ebp, 0
 bf ff ff ff ff  mov  edi, 0xffffffff
 be 32 00 00 00  mov  esi, 0x32
-e8 49 fd ff ff  call  0x1c0
+e8 49 fd ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -242,14 +238,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0x49b
+74 09  je  0x48b
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 6b fb ff ff  jmp  6
+e9 7b fb ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd ca 3f 00 00  mov  ebp, 0x3fca
 bf 00 00 00 00  mov  edi, 0
 be 32 00 00 00  mov  esi, 0x32
-e8 09 fd ff ff  call  0x1c0
+e8 09 fd ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -257,14 +253,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0x4db
+74 09  je  0x4cb
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 2b fb ff ff  jmp  6
+e9 3b fb ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd ca 3f 00 00  mov  ebp, 0x3fca
 bf 2c 01 00 00  mov  edi, 0x12c
 be 32 00 00 00  mov  esi, 0x32
-e8 c9 fc ff ff  call  0x1c0
+e8 c9 fc ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -272,14 +268,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0x51b
+74 09  je  0x50b
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 eb fa ff ff  jmp  6
+e9 fb fa ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd ca 3f 00 00  mov  ebp, 0x3fca
 bf c2 01 00 00  mov  edi, 0x1c2
 be 32 00 00 00  mov  esi, 0x32
-e8 89 fc ff ff  call  0x1c0
+e8 89 fc ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -287,14 +283,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0x55b
+74 09  je  0x54b
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 ab fa ff ff  jmp  6
+e9 bb fa ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd ca 3f 00 00  mov  ebp, 0x3fca
 bf ce 01 00 00  mov  edi, 0x1ce
 be 32 00 00 00  mov  esi, 0x32
-e8 49 fc ff ff  call  0x1c0
+e8 49 fc ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -302,14 +298,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0x59b
+74 09  je  0x58b
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 6b fa ff ff  jmp  6
+e9 7b fa ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd ca 3f 00 00  mov  ebp, 0x3fca
 bf cf 01 00 00  mov  edi, 0x1cf
 be 32 00 00 00  mov  esi, 0x32
-e8 09 fc ff ff  call  0x1c0
+e8 09 fc ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -317,14 +313,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0x5db
+74 09  je  0x5cb
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 2b fa ff ff  jmp  6
+e9 3b fa ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd ca 3f 00 00  mov  ebp, 0x3fca
 bf ff ff ff ff  mov  edi, 0xffffffff
 be 32 00 00 00  mov  esi, 0x32
-e8 c9 fb ff ff  call  0x1c0
+e8 c9 fb ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -332,14 +328,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0x61b
+74 09  je  0x60b
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 eb f9 ff ff  jmp  6
+e9 fb f9 ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd fc 3f 00 00  mov  ebp, 0x3ffc
 bf 00 00 00 00  mov  edi, 0
 be 32 00 00 00  mov  esi, 0x32
-e8 89 fb ff ff  call  0x1c0
+e8 89 fb ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -347,14 +343,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0x65b
+74 09  je  0x64b
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 ab f9 ff ff  jmp  6
+e9 bb f9 ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd fc 3f 00 00  mov  ebp, 0x3ffc
 bf 2c 01 00 00  mov  edi, 0x12c
 be 32 00 00 00  mov  esi, 0x32
-e8 49 fb ff ff  call  0x1c0
+e8 49 fb ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -362,14 +358,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0x69b
+74 09  je  0x68b
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 6b f9 ff ff  jmp  6
+e9 7b f9 ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd fc 3f 00 00  mov  ebp, 0x3ffc
 bf c2 01 00 00  mov  edi, 0x1c2
 be 32 00 00 00  mov  esi, 0x32
-e8 09 fb ff ff  call  0x1c0
+e8 09 fb ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -377,14 +373,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0x6db
+74 09  je  0x6cb
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 2b f9 ff ff  jmp  6
+e9 3b f9 ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd fc 3f 00 00  mov  ebp, 0x3ffc
 bf ce 01 00 00  mov  edi, 0x1ce
 be 32 00 00 00  mov  esi, 0x32
-e8 c9 fa ff ff  call  0x1c0
+e8 c9 fa ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -392,14 +388,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0x71b
+74 09  je  0x70b
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 eb f8 ff ff  jmp  6
+e9 fb f8 ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd fc 3f 00 00  mov  ebp, 0x3ffc
 bf cf 01 00 00  mov  edi, 0x1cf
 be 32 00 00 00  mov  esi, 0x32
-e8 89 fa ff ff  call  0x1c0
+e8 89 fa ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -407,14 +403,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0x75b
+74 09  je  0x74b
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 ab f8 ff ff  jmp  6
+e9 bb f8 ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd fc 3f 00 00  mov  ebp, 0x3ffc
 bf ff ff ff ff  mov  edi, 0xffffffff
 be 32 00 00 00  mov  esi, 0x32
-e8 49 fa ff ff  call  0x1c0
+e8 49 fa ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -422,14 +418,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0x79b
+74 09  je  0x78b
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 6b f8 ff ff  jmp  6
+e9 7b f8 ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd 00 40 00 00  mov  ebp, 0x4000
 bf 00 00 00 00  mov  edi, 0
 be 32 00 00 00  mov  esi, 0x32
-e8 09 fa ff ff  call  0x1c0
+e8 09 fa ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -437,14 +433,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0x7db
+74 09  je  0x7cb
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 2b f8 ff ff  jmp  6
+e9 3b f8 ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd 00 40 00 00  mov  ebp, 0x4000
 bf 2c 01 00 00  mov  edi, 0x12c
 be 32 00 00 00  mov  esi, 0x32
-e8 c9 f9 ff ff  call  0x1c0
+e8 c9 f9 ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -452,14 +448,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0x81b
+74 09  je  0x80b
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 eb f7 ff ff  jmp  6
+e9 fb f7 ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd 00 40 00 00  mov  ebp, 0x4000
 bf c2 01 00 00  mov  edi, 0x1c2
 be 32 00 00 00  mov  esi, 0x32
-e8 89 f9 ff ff  call  0x1c0
+e8 89 f9 ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -467,14 +463,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0x85b
+74 09  je  0x84b
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 ab f7 ff ff  jmp  6
+e9 bb f7 ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd 00 40 00 00  mov  ebp, 0x4000
 bf ce 01 00 00  mov  edi, 0x1ce
 be 32 00 00 00  mov  esi, 0x32
-e8 49 f9 ff ff  call  0x1c0
+e8 49 f9 ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -482,14 +478,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0x89b
+74 09  je  0x88b
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 6b f7 ff ff  jmp  6
+e9 7b f7 ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd 00 40 00 00  mov  ebp, 0x4000
 bf cf 01 00 00  mov  edi, 0x1cf
 be 32 00 00 00  mov  esi, 0x32
-e8 09 f9 ff ff  call  0x1c0
+e8 09 f9 ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -497,14 +493,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0x8db
+74 09  je  0x8cb
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 2b f7 ff ff  jmp  6
+e9 3b f7 ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd 00 40 00 00  mov  ebp, 0x4000
 bf ff ff ff ff  mov  edi, 0xffffffff
 be 32 00 00 00  mov  esi, 0x32
-e8 c9 f8 ff ff  call  0x1c0
+e8 c9 f8 ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -512,14 +508,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0x91b
+74 09  je  0x90b
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 eb f6 ff ff  jmp  6
+e9 fb f6 ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd 00 80 00 00  mov  ebp, 0x8000
 bf 00 00 00 00  mov  edi, 0
 be 10 00 00 00  mov  esi, 0x10
-e8 89 f8 ff ff  call  0x1c0
+e8 89 f8 ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -527,14 +523,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0x95b
+74 09  je  0x94b
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 ab f6 ff ff  jmp  6
+e9 bb f6 ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd 00 80 00 00  mov  ebp, 0x8000
 bf 2c 01 00 00  mov  edi, 0x12c
 be 10 00 00 00  mov  esi, 0x10
-e8 49 f8 ff ff  call  0x1c0
+e8 49 f8 ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -542,14 +538,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0x99b
+74 09  je  0x98b
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 6b f6 ff ff  jmp  6
+e9 7b f6 ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd 00 80 00 00  mov  ebp, 0x8000
 bf c2 01 00 00  mov  edi, 0x1c2
 be 10 00 00 00  mov  esi, 0x10
-e8 09 f8 ff ff  call  0x1c0
+e8 09 f8 ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -557,14 +553,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0x9db
+74 09  je  0x9cb
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 2b f6 ff ff  jmp  6
+e9 3b f6 ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd 00 80 00 00  mov  ebp, 0x8000
 bf f0 01 00 00  mov  edi, 0x1f0
 be 10 00 00 00  mov  esi, 0x10
-e8 c9 f7 ff ff  call  0x1c0
+e8 c9 f7 ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -572,14 +568,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0xa1b
+74 09  je  0xa0b
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 eb f5 ff ff  jmp  6
+e9 fb f5 ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd 00 80 00 00  mov  ebp, 0x8000
 bf f1 01 00 00  mov  edi, 0x1f1
 be 10 00 00 00  mov  esi, 0x10
-e8 89 f7 ff ff  call  0x1c0
+e8 89 f7 ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -587,14 +583,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0xa5b
+74 09  je  0xa4b
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 ab f5 ff ff  jmp  6
+e9 bb f5 ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd 00 80 00 00  mov  ebp, 0x8000
 bf ff ff ff ff  mov  edi, 0xffffffff
 be 10 00 00 00  mov  esi, 0x10
-e8 49 f7 ff ff  call  0x1c0
+e8 49 f7 ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -602,14 +598,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0xa9b
+74 09  je  0xa8b
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 6b f5 ff ff  jmp  6
+e9 7b f5 ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd c2 01 00 00  mov  ebp, 0x1c2
 bf 00 00 00 00  mov  edi, 0
 be 32 00 00 00  mov  esi, 0x32
-e8 09 f7 ff ff  call  0x1c0
+e8 09 f7 ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -617,14 +613,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0xadb
+74 09  je  0xacb
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 2b f5 ff ff  jmp  6
+e9 3b f5 ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd c2 01 00 00  mov  ebp, 0x1c2
 bf 2c 01 00 00  mov  edi, 0x12c
 be 32 00 00 00  mov  esi, 0x32
-e8 c9 f6 ff ff  call  0x1c0
+e8 c9 f6 ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -632,14 +628,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0xb1b
+74 09  je  0xb0b
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 eb f4 ff ff  jmp  6
+e9 fb f4 ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd c2 01 00 00  mov  ebp, 0x1c2
 bf c2 01 00 00  mov  edi, 0x1c2
 be 32 00 00 00  mov  esi, 0x32
-e8 89 f6 ff ff  call  0x1c0
+e8 89 f6 ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -647,14 +643,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0xb5b
+74 09  je  0xb4b
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 ab f4 ff ff  jmp  6
+e9 bb f4 ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd c2 01 00 00  mov  ebp, 0x1c2
 bf ce 01 00 00  mov  edi, 0x1ce
 be 32 00 00 00  mov  esi, 0x32
-e8 49 f6 ff ff  call  0x1c0
+e8 49 f6 ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -662,14 +658,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0xb9b
+74 09  je  0xb8b
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 6b f4 ff ff  jmp  6
+e9 7b f4 ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd c2 01 00 00  mov  ebp, 0x1c2
 bf cf 01 00 00  mov  edi, 0x1cf
 be 32 00 00 00  mov  esi, 0x32
-e8 09 f6 ff ff  call  0x1c0
+e8 09 f6 ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -677,14 +673,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0xbdb
+74 09  je  0xbcb
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 2b f4 ff ff  jmp  6
+e9 3b f4 ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd c2 01 00 00  mov  ebp, 0x1c2
 bf ff ff ff ff  mov  edi, 0xffffffff
 be 32 00 00 00  mov  esi, 0x32
-e8 c9 f5 ff ff  call  0x1c0
+e8 c9 f5 ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -692,14 +688,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0xc1b
+74 09  je  0xc0b
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 eb f3 ff ff  jmp  6
+e9 fb f3 ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd ce ff 00 00  mov  ebp, 0xffce
 bf 00 00 00 00  mov  edi, 0
 be 32 00 00 00  mov  esi, 0x32
-e8 89 f5 ff ff  call  0x1c0
+e8 89 f5 ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -707,14 +703,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0xc5b
+74 09  je  0xc4b
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 ab f3 ff ff  jmp  6
+e9 bb f3 ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd ce ff 00 00  mov  ebp, 0xffce
 bf 2c 01 00 00  mov  edi, 0x12c
 be 32 00 00 00  mov  esi, 0x32
-e8 49 f5 ff ff  call  0x1c0
+e8 49 f5 ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -722,14 +718,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0xc9b
+74 09  je  0xc8b
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 6b f3 ff ff  jmp  6
+e9 7b f3 ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd ce ff 00 00  mov  ebp, 0xffce
 bf c2 01 00 00  mov  edi, 0x1c2
 be 32 00 00 00  mov  esi, 0x32
-e8 09 f5 ff ff  call  0x1c0
+e8 09 f5 ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -737,14 +733,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0xcdb
+74 09  je  0xccb
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 2b f3 ff ff  jmp  6
+e9 3b f3 ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd ce ff 00 00  mov  ebp, 0xffce
 bf ce 01 00 00  mov  edi, 0x1ce
 be 32 00 00 00  mov  esi, 0x32
-e8 c9 f4 ff ff  call  0x1c0
+e8 c9 f4 ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -752,14 +748,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0xd1b
+74 09  je  0xd0b
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 eb f2 ff ff  jmp  6
+e9 fb f2 ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd ce ff 00 00  mov  ebp, 0xffce
 bf cf 01 00 00  mov  edi, 0x1cf
 be 32 00 00 00  mov  esi, 0x32
-e8 89 f4 ff ff  call  0x1c0
+e8 89 f4 ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -767,14 +763,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0xd5b
+74 09  je  0xd4b
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 ab f2 ff ff  jmp  6
+e9 bb f2 ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd ce ff 00 00  mov  ebp, 0xffce
 bf ff ff ff ff  mov  edi, 0xffffffff
 be 32 00 00 00  mov  esi, 0x32
-e8 49 f4 ff ff  call  0x1c0
+e8 49 f4 ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -782,14 +778,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0xd9b
+74 09  je  0xd8b
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 6b f2 ff ff  jmp  6
+e9 7b f2 ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd cf ff 00 00  mov  ebp, 0xffcf
 bf 00 00 00 00  mov  edi, 0
 be 32 00 00 00  mov  esi, 0x32
-e8 09 f4 ff ff  call  0x1c0
+e8 09 f4 ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -797,14 +793,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0xddb
+74 09  je  0xdcb
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 2b f2 ff ff  jmp  6
+e9 3b f2 ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd cf ff 00 00  mov  ebp, 0xffcf
 bf 2c 01 00 00  mov  edi, 0x12c
 be 32 00 00 00  mov  esi, 0x32
-e8 c9 f3 ff ff  call  0x1c0
+e8 c9 f3 ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -812,14 +808,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0xe1b
+74 09  je  0xe0b
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 eb f1 ff ff  jmp  6
+e9 fb f1 ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd cf ff 00 00  mov  ebp, 0xffcf
 bf c2 01 00 00  mov  edi, 0x1c2
 be 32 00 00 00  mov  esi, 0x32
-e8 89 f3 ff ff  call  0x1c0
+e8 89 f3 ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -827,14 +823,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0xe5b
+74 09  je  0xe4b
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 ab f1 ff ff  jmp  6
+e9 bb f1 ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd cf ff 00 00  mov  ebp, 0xffcf
 bf ce 01 00 00  mov  edi, 0x1ce
 be 32 00 00 00  mov  esi, 0x32
-e8 49 f3 ff ff  call  0x1c0
+e8 49 f3 ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -842,14 +838,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0xe9b
+74 09  je  0xe8b
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 6b f1 ff ff  jmp  6
+e9 7b f1 ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd cf ff 00 00  mov  ebp, 0xffcf
 bf cf 01 00 00  mov  edi, 0x1cf
 be 32 00 00 00  mov  esi, 0x32
-e8 09 f3 ff ff  call  0x1c0
+e8 09 f3 ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -857,14 +853,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0xedb
+74 09  je  0xecb
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 2b f1 ff ff  jmp  6
+e9 3b f1 ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd cf ff 00 00  mov  ebp, 0xffcf
 bf ff ff ff ff  mov  edi, 0xffffffff
 be 32 00 00 00  mov  esi, 0x32
-e8 c9 f2 ff ff  call  0x1c0
+e8 c9 f2 ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -872,14 +868,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0xf1b
+74 09  je  0xf0b
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 eb f0 ff ff  jmp  6
+e9 fb f0 ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd ff ff ff ff  mov  ebp, 0xffffffff
 bf 00 00 00 00  mov  edi, 0
 be 32 00 00 00  mov  esi, 0x32
-e8 89 f2 ff ff  call  0x1c0
+e8 89 f2 ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -887,14 +883,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0xf5b
+74 09  je  0xf4b
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 ab f0 ff ff  jmp  6
+e9 bb f0 ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd ff ff ff ff  mov  ebp, 0xffffffff
 bf 2c 01 00 00  mov  edi, 0x12c
 be 32 00 00 00  mov  esi, 0x32
-e8 49 f2 ff ff  call  0x1c0
+e8 49 f2 ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -902,14 +898,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0xf9b
+74 09  je  0xf8b
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 6b f0 ff ff  jmp  6
+e9 7b f0 ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd ff ff ff ff  mov  ebp, 0xffffffff
 bf c2 01 00 00  mov  edi, 0x1c2
 be 32 00 00 00  mov  esi, 0x32
-e8 09 f2 ff ff  call  0x1c0
+e8 09 f2 ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -917,14 +913,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0xfdb
+74 09  je  0xfcb
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 2b f0 ff ff  jmp  6
+e9 3b f0 ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd ff ff ff ff  mov  ebp, 0xffffffff
 bf ce 01 00 00  mov  edi, 0x1ce
 be 32 00 00 00  mov  esi, 0x32
-e8 c9 f1 ff ff  call  0x1c0
+e8 c9 f1 ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -932,14 +928,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0x101b
+74 09  je  0x100b
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 eb ef ff ff  jmp  6
+e9 fb ef ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd ff ff ff ff  mov  ebp, 0xffffffff
 bf cf 01 00 00  mov  edi, 0x1cf
 be 32 00 00 00  mov  esi, 0x32
-e8 89 f1 ff ff  call  0x1c0
+e8 89 f1 ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -947,14 +943,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0x105b
+74 09  je  0x104b
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 ab ef ff ff  jmp  6
+e9 bb ef ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd ff ff ff ff  mov  ebp, 0xffffffff
 bf ff ff ff ff  mov  edi, 0xffffffff
 be 32 00 00 00  mov  esi, 0x32
-e8 49 f1 ff ff  call  0x1c0
+e8 49 f1 ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -962,14 +958,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0x109b
+74 09  je  0x108b
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 6b ef ff ff  jmp  6
+e9 7b ef ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd 00 00 00 00  mov  ebp, 0
 bf 00 00 00 00  mov  edi, 0
 be 00 00 00 00  mov  esi, 0
-e8 09 f1 ff ff  call  0x1c0
+e8 09 f1 ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -977,14 +973,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0x10db
+74 09  je  0x10cb
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 2b ef ff ff  jmp  6
+e9 3b ef ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd 00 00 00 00  mov  ebp, 0
 bf 00 00 00 00  mov  edi, 0
 be ff ff ff ff  mov  esi, 0xffffffff
-e8 c9 f0 ff ff  call  0x1c0
+e8 c9 f0 ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -992,14 +988,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0x111b
+74 09  je  0x110b
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 eb ee ff ff  jmp  6
+e9 fb ee ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd ff ff ff ff  mov  ebp, 0xffffffff
 bf ff ff ff ff  mov  edi, 0xffffffff
 be 00 00 00 00  mov  esi, 0
-e8 89 f0 ff ff  call  0x1c0
+e8 89 f0 ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -1007,14 +1003,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0x115b
+74 09  je  0x114b
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 ab ee ff ff  jmp  6
+e9 bb ee ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd ff ff ff ff  mov  ebp, 0xffffffff
 bf ff ff ff ff  mov  edi, 0xffffffff
 be ff ff ff ff  mov  esi, 0xffffffff
-e8 49 f0 ff ff  call  0x1c0
+e8 49 f0 ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -1022,14 +1018,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0x119b
+74 09  je  0x118b
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 6b ee ff ff  jmp  6
+e9 7b ee ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd 04 00 00 00  mov  ebp, 4
 bf 04 00 00 00  mov  edi, 4
 be 01 00 00 00  mov  esi, 1
-e8 09 f0 ff ff  call  0x1c0
+e8 09 f0 ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -1037,14 +1033,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0x11db
+74 09  je  0x11cb
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 2b ee ff ff  jmp  6
+e9 3b ee ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd 03 00 00 00  mov  ebp, 3
 bf 04 00 00 00  mov  edi, 4
 be 01 00 00 00  mov  esi, 1
-e8 c9 ef ff ff  call  0x1c0
+e8 c9 ef ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -1052,14 +1048,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0x121b
+74 09  je  0x120b
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 eb ed ff ff  jmp  6
+e9 fb ed ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd 04 00 00 00  mov  ebp, 4
 bf 03 00 00 00  mov  edi, 3
 be 01 00 00 00  mov  esi, 1
-e8 89 ef ff ff  call  0x1c0
+e8 89 ef ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -1067,14 +1063,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0x125b
+74 09  je  0x124b
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 ab ed ff ff  jmp  6
+e9 bb ed ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd 03 00 00 00  mov  ebp, 3
 bf 03 00 00 00  mov  edi, 3
 be 01 00 00 00  mov  esi, 1
-e8 49 ef ff ff  call  0x1c0
+e8 49 ef ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -1082,14 +1078,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0x129b
+74 09  je  0x128b
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 6b ed ff ff  jmp  6
+e9 7b ed ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd 04 00 00 00  mov  ebp, 4
 bf 04 00 00 00  mov  edi, 4
 be 0f 00 00 00  mov  esi, 0xf
-e8 09 ef ff ff  call  0x1c0
+e8 09 ef ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -1097,14 +1093,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0x12db
+74 09  je  0x12cb
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 2b ed ff ff  jmp  6
+e9 3b ed ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd 03 00 00 00  mov  ebp, 3
 bf 04 00 00 00  mov  edi, 4
 be 0f 00 00 00  mov  esi, 0xf
-e8 c9 ee ff ff  call  0x1c0
+e8 c9 ee ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -1112,14 +1108,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0x131b
+74 09  je  0x130b
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 eb ec ff ff  jmp  6
+e9 fb ec ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd 04 00 00 00  mov  ebp, 4
 bf 03 00 00 00  mov  edi, 3
 be 0f 00 00 00  mov  esi, 0xf
-e8 89 ee ff ff  call  0x1c0
+e8 89 ee ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -1127,14 +1123,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0x135b
+74 09  je  0x134b
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 ab ec ff ff  jmp  6
+e9 bb ec ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd 03 00 00 00  mov  ebp, 3
 bf 03 00 00 00  mov  edi, 3
 be 0f 00 00 00  mov  esi, 0xf
-e8 49 ee ff ff  call  0x1c0
+e8 49 ee ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -1142,14 +1138,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0x139b
+74 09  je  0x138b
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 6b ec ff ff  jmp  6
+e9 7b ec ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd 04 00 00 00  mov  ebp, 4
 bf 04 00 00 00  mov  edi, 4
 be 10 00 00 00  mov  esi, 0x10
-e8 09 ee ff ff  call  0x1c0
+e8 09 ee ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -1157,14 +1153,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0x13db
+74 09  je  0x13cb
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 2b ec ff ff  jmp  6
+e9 3b ec ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd 03 00 00 00  mov  ebp, 3
 bf 04 00 00 00  mov  edi, 4
 be 10 00 00 00  mov  esi, 0x10
-e8 c9 ed ff ff  call  0x1c0
+e8 c9 ed ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -1172,14 +1168,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0x141b
+74 09  je  0x140b
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 eb eb ff ff  jmp  6
+e9 fb eb ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd 04 00 00 00  mov  ebp, 4
 bf 03 00 00 00  mov  edi, 3
 be 10 00 00 00  mov  esi, 0x10
-e8 89 ed ff ff  call  0x1c0
+e8 89 ed ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -1187,14 +1183,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0x145b
+74 09  je  0x144b
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 ab eb ff ff  jmp  6
+e9 bb eb ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd 03 00 00 00  mov  ebp, 3
 bf 03 00 00 00  mov  edi, 3
 be 10 00 00 00  mov  esi, 0x10
-e8 49 ed ff ff  call  0x1c0
+e8 49 ed ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -1202,14 +1198,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0x149b
+74 09  je  0x148b
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 6b eb ff ff  jmp  6
+e9 7b eb ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd 04 00 00 00  mov  ebp, 4
 bf 04 00 00 00  mov  edi, 4
 be 11 00 00 00  mov  esi, 0x11
-e8 09 ed ff ff  call  0x1c0
+e8 09 ed ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -1217,14 +1213,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0x14db
+74 09  je  0x14cb
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 2b eb ff ff  jmp  6
+e9 3b eb ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd 03 00 00 00  mov  ebp, 3
 bf 04 00 00 00  mov  edi, 4
 be 11 00 00 00  mov  esi, 0x11
-e8 c9 ec ff ff  call  0x1c0
+e8 c9 ec ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -1232,14 +1228,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0x151b
+74 09  je  0x150b
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 eb ea ff ff  jmp  6
+e9 fb ea ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd 04 00 00 00  mov  ebp, 4
 bf 03 00 00 00  mov  edi, 3
 be 11 00 00 00  mov  esi, 0x11
-e8 89 ec ff ff  call  0x1c0
+e8 89 ec ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -1247,14 +1243,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0x155b
+74 09  je  0x154b
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 ab ea ff ff  jmp  6
+e9 bb ea ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd 03 00 00 00  mov  ebp, 3
 bf 03 00 00 00  mov  edi, 3
 be 11 00 00 00  mov  esi, 0x11
-e8 49 ec ff ff  call  0x1c0
+e8 49 ec ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -1262,14 +1258,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0x159b
+74 09  je  0x158b
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 6b ea ff ff  jmp  6
+e9 7b ea ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd 04 00 00 00  mov  ebp, 4
 bf 04 00 00 00  mov  edi, 4
 be ff ff ff ff  mov  esi, 0xffffffff
-e8 09 ec ff ff  call  0x1c0
+e8 09 ec ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -1277,14 +1273,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0x15db
+74 09  je  0x15cb
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 2b ea ff ff  jmp  6
+e9 3b ea ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd 03 00 00 00  mov  ebp, 3
 bf 04 00 00 00  mov  edi, 4
 be ff ff ff ff  mov  esi, 0xffffffff
-e8 c9 eb ff ff  call  0x1c0
+e8 c9 eb ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -1292,14 +1288,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0x161b
+74 09  je  0x160b
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 eb e9 ff ff  jmp  6
+e9 fb e9 ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd 04 00 00 00  mov  ebp, 4
 bf 03 00 00 00  mov  edi, 3
 be ff ff ff ff  mov  esi, 0xffffffff
-e8 89 eb ff ff  call  0x1c0
+e8 89 eb ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -1307,14 +1303,14 @@ c3  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 48 8d a4 24 78 ff ff ff  lea  rsp, [rsp - 0x88]
 80 7b f8 00  cmp  byte ptr [rbx - 8], 0
-74 09  je  0x165b
+74 09  je  0x164b
 0f b6 43 f8  movzx  eax, byte ptr [rbx - 8]
-e9 ab e9 ff ff  jmp  6
+e9 bb e9 ff ff  jmp  6
 48 8d a4 24 80 00 00 00  lea  rsp, [rsp + 0x80]
 bd 03 00 00 00  mov  ebp, 3
 bf 03 00 00 00  mov  edi, 3
 be ff ff ff ff  mov  esi, 0xffffffff
-e8 49 eb ff ff  call  0x1c0
+e8 49 eb ff ff  call  0x1b0
 48 8d 64 24 08  lea  rsp, [rsp + 8]
 c3  ret  
 00 00  add  byte ptr [rax], al
@@ -1360,7 +1356,7 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x1709
+75 1b  jne  0x16f9
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 28 00 00 00  lea  r13, [rip + 0x28]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
@@ -1369,11 +1365,11 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 41 8b 2f  mov  ebp, dword ptr [r15]
 41 8b 7f 08  mov  edi, dword ptr [r15 + 8]
 41 8b 77 10  mov  esi, dword ptr [r15 + 0x10]
-e8 a7 eb ff ff  call  0x2c0
+e8 a7 eb ff ff  call  0x2b0
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x1737
+75 10  jne  0x1727
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -1406,17 +1402,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x17e5
+75 1b  jne  0x17d5
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 1a eb ff ff  call  0x304
+e8 1a eb ff ff  call  0x2f4
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x1808
+75 10  jne  0x17f8
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -1449,17 +1445,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x18b9
+75 1b  jne  0x18a9
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 86 ea ff ff  call  0x344
+e8 86 ea ff ff  call  0x334
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x18dc
+75 10  jne  0x18cc
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -1492,17 +1488,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x198d
+75 1b  jne  0x197d
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 f2 e9 ff ff  call  0x384
+e8 f2 e9 ff ff  call  0x374
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x19b0
+75 10  jne  0x19a0
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -1535,17 +1531,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x1a65
+75 1b  jne  0x1a55
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 5a e9 ff ff  call  0x3c4
+e8 5a e9 ff ff  call  0x3b4
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x1a88
+75 10  jne  0x1a78
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -1578,17 +1574,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x1b3d
+75 1b  jne  0x1b2d
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 c2 e8 ff ff  call  0x404
+e8 c2 e8 ff ff  call  0x3f4
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x1b60
+75 10  jne  0x1b50
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -1621,17 +1617,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x1c15
+75 1b  jne  0x1c05
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 2a e8 ff ff  call  0x444
+e8 2a e8 ff ff  call  0x434
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x1c38
+75 10  jne  0x1c28
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -1664,17 +1660,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x1ce9
+75 1b  jne  0x1cd9
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 96 e7 ff ff  call  0x484
+e8 96 e7 ff ff  call  0x474
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x1d0c
+75 10  jne  0x1cfc
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -1707,17 +1703,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x1dc1
+75 1b  jne  0x1db1
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 fe e6 ff ff  call  0x4c4
+e8 fe e6 ff ff  call  0x4b4
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x1de4
+75 10  jne  0x1dd4
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -1750,17 +1746,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x1e99
+75 1b  jne  0x1e89
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 66 e6 ff ff  call  0x504
+e8 66 e6 ff ff  call  0x4f4
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x1ebc
+75 10  jne  0x1eac
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -1793,17 +1789,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x1f71
+75 1b  jne  0x1f61
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 ce e5 ff ff  call  0x544
+e8 ce e5 ff ff  call  0x534
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x1f94
+75 10  jne  0x1f84
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -1836,17 +1832,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x204d
+75 1b  jne  0x203d
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 32 e5 ff ff  call  0x584
+e8 32 e5 ff ff  call  0x574
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x2070
+75 10  jne  0x2060
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -1879,17 +1875,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x2129
+75 1b  jne  0x2119
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 96 e4 ff ff  call  0x5c4
+e8 96 e4 ff ff  call  0x5b4
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x214c
+75 10  jne  0x213c
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -1922,17 +1918,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x2201
+75 1b  jne  0x21f1
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 fe e3 ff ff  call  0x604
+e8 fe e3 ff ff  call  0x5f4
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x2224
+75 10  jne  0x2214
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -1965,17 +1961,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x22d9
+75 1b  jne  0x22c9
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 66 e3 ff ff  call  0x644
+e8 66 e3 ff ff  call  0x634
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x22fc
+75 10  jne  0x22ec
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -2008,17 +2004,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x23b1
+75 1b  jne  0x23a1
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 ce e2 ff ff  call  0x684
+e8 ce e2 ff ff  call  0x674
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x23d4
+75 10  jne  0x23c4
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -2051,17 +2047,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x2489
+75 1b  jne  0x2479
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 36 e2 ff ff  call  0x6c4
+e8 36 e2 ff ff  call  0x6b4
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x24ac
+75 10  jne  0x249c
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -2094,17 +2090,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x2565
+75 1b  jne  0x2555
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 9a e1 ff ff  call  0x704
+e8 9a e1 ff ff  call  0x6f4
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x2588
+75 10  jne  0x2578
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -2137,17 +2133,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x2641
+75 1b  jne  0x2631
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 fe e0 ff ff  call  0x744
+e8 fe e0 ff ff  call  0x734
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x2664
+75 10  jne  0x2654
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -2180,17 +2176,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x2719
+75 1b  jne  0x2709
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 66 e0 ff ff  call  0x784
+e8 66 e0 ff ff  call  0x774
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x273c
+75 10  jne  0x272c
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -2223,17 +2219,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x27f1
+75 1b  jne  0x27e1
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 ce df ff ff  call  0x7c4
+e8 ce df ff ff  call  0x7b4
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x2814
+75 10  jne  0x2804
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -2266,17 +2262,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x28c9
+75 1b  jne  0x28b9
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 36 df ff ff  call  0x804
+e8 36 df ff ff  call  0x7f4
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x28ec
+75 10  jne  0x28dc
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -2309,17 +2305,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x29a1
+75 1b  jne  0x2991
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 9e de ff ff  call  0x844
+e8 9e de ff ff  call  0x834
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x29c4
+75 10  jne  0x29b4
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -2352,17 +2348,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x2a7d
+75 1b  jne  0x2a6d
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 02 de ff ff  call  0x884
+e8 02 de ff ff  call  0x874
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x2aa0
+75 10  jne  0x2a90
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -2395,17 +2391,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x2b59
+75 1b  jne  0x2b49
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 66 dd ff ff  call  0x8c4
+e8 66 dd ff ff  call  0x8b4
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x2b7c
+75 10  jne  0x2b6c
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -2438,17 +2434,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x2c31
+75 1b  jne  0x2c21
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 ce dc ff ff  call  0x904
+e8 ce dc ff ff  call  0x8f4
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x2c54
+75 10  jne  0x2c44
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -2481,17 +2477,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x2d09
+75 1b  jne  0x2cf9
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 36 dc ff ff  call  0x944
+e8 36 dc ff ff  call  0x934
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x2d2c
+75 10  jne  0x2d1c
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -2524,17 +2520,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x2de1
+75 1b  jne  0x2dd1
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 9e db ff ff  call  0x984
+e8 9e db ff ff  call  0x974
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x2e04
+75 10  jne  0x2df4
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -2567,17 +2563,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x2eb9
+75 1b  jne  0x2ea9
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 06 db ff ff  call  0x9c4
+e8 06 db ff ff  call  0x9b4
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x2edc
+75 10  jne  0x2ecc
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -2610,17 +2606,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x2f95
+75 1b  jne  0x2f85
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 6a da ff ff  call  0xa04
+e8 6a da ff ff  call  0x9f4
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x2fb8
+75 10  jne  0x2fa8
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -2653,17 +2649,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x3071
+75 1b  jne  0x3061
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 ce d9 ff ff  call  0xa44
+e8 ce d9 ff ff  call  0xa34
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x3094
+75 10  jne  0x3084
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -2696,17 +2692,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x3149
+75 1b  jne  0x3139
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 36 d9 ff ff  call  0xa84
+e8 36 d9 ff ff  call  0xa74
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x316c
+75 10  jne  0x315c
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -2739,17 +2735,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x3221
+75 1b  jne  0x3211
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 9e d8 ff ff  call  0xac4
+e8 9e d8 ff ff  call  0xab4
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x3244
+75 10  jne  0x3234
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -2782,17 +2778,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x32f9
+75 1b  jne  0x32e9
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 06 d8 ff ff  call  0xb04
+e8 06 d8 ff ff  call  0xaf4
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x331c
+75 10  jne  0x330c
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -2825,17 +2821,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x33d1
+75 1b  jne  0x33c1
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 6e d7 ff ff  call  0xb44
+e8 6e d7 ff ff  call  0xb34
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x33f4
+75 10  jne  0x33e4
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -2868,17 +2864,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x34ad
+75 1b  jne  0x349d
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 d2 d6 ff ff  call  0xb84
+e8 d2 d6 ff ff  call  0xb74
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x34d0
+75 10  jne  0x34c0
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -2911,17 +2907,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x3589
+75 1b  jne  0x3579
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 36 d6 ff ff  call  0xbc4
+e8 36 d6 ff ff  call  0xbb4
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x35ac
+75 10  jne  0x359c
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -2954,17 +2950,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x3661
+75 1b  jne  0x3651
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 9e d5 ff ff  call  0xc04
+e8 9e d5 ff ff  call  0xbf4
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x3684
+75 10  jne  0x3674
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -2997,17 +2993,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x3739
+75 1b  jne  0x3729
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 06 d5 ff ff  call  0xc44
+e8 06 d5 ff ff  call  0xc34
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x375c
+75 10  jne  0x374c
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -3040,17 +3036,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x3811
+75 1b  jne  0x3801
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 6e d4 ff ff  call  0xc84
+e8 6e d4 ff ff  call  0xc74
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x3834
+75 10  jne  0x3824
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -3083,17 +3079,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x38ed
+75 1b  jne  0x38dd
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 d2 d3 ff ff  call  0xcc4
+e8 d2 d3 ff ff  call  0xcb4
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x3910
+75 10  jne  0x3900
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -3126,17 +3122,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x39c9
+75 1b  jne  0x39b9
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 36 d3 ff ff  call  0xd04
+e8 36 d3 ff ff  call  0xcf4
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x39ec
+75 10  jne  0x39dc
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -3169,17 +3165,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x3aa5
+75 1b  jne  0x3a95
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 9a d2 ff ff  call  0xd44
+e8 9a d2 ff ff  call  0xd34
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x3ac8
+75 10  jne  0x3ab8
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -3212,17 +3208,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x3b7d
+75 1b  jne  0x3b6d
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 02 d2 ff ff  call  0xd84
+e8 02 d2 ff ff  call  0xd74
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x3ba0
+75 10  jne  0x3b90
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -3255,17 +3251,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x3c55
+75 1b  jne  0x3c45
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 6a d1 ff ff  call  0xdc4
+e8 6a d1 ff ff  call  0xdb4
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x3c78
+75 10  jne  0x3c68
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -3298,17 +3294,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x3d2d
+75 1b  jne  0x3d1d
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 d2 d0 ff ff  call  0xe04
+e8 d2 d0 ff ff  call  0xdf4
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x3d50
+75 10  jne  0x3d40
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -3341,17 +3337,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x3e09
+75 1b  jne  0x3df9
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 36 d0 ff ff  call  0xe44
+e8 36 d0 ff ff  call  0xe34
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x3e2c
+75 10  jne  0x3e1c
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -3384,17 +3380,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x3ee5
+75 1b  jne  0x3ed5
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 9a cf ff ff  call  0xe84
+e8 9a cf ff ff  call  0xe74
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x3f08
+75 10  jne  0x3ef8
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -3427,17 +3423,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x3fc1
+75 1b  jne  0x3fb1
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 fe ce ff ff  call  0xec4
+e8 fe ce ff ff  call  0xeb4
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x3fe4
+75 10  jne  0x3fd4
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -3470,17 +3466,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x4099
+75 1b  jne  0x4089
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 66 ce ff ff  call  0xf04
+e8 66 ce ff ff  call  0xef4
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x40bc
+75 10  jne  0x40ac
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -3513,17 +3509,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x416d
+75 1b  jne  0x415d
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 d2 cd ff ff  call  0xf44
+e8 d2 cd ff ff  call  0xf34
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x4190
+75 10  jne  0x4180
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -3556,17 +3552,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x4241
+75 1b  jne  0x4231
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 3e cd ff ff  call  0xf84
+e8 3e cd ff ff  call  0xf74
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x4264
+75 10  jne  0x4254
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -3599,17 +3595,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x4319
+75 1b  jne  0x4309
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 a6 cc ff ff  call  0xfc4
+e8 a6 cc ff ff  call  0xfb4
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x433c
+75 10  jne  0x432c
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -3642,17 +3638,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x43f1
+75 1b  jne  0x43e1
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 0e cc ff ff  call  0x1004
+e8 0e cc ff ff  call  0xff4
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x4414
+75 10  jne  0x4404
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -3685,17 +3681,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x44c9
+75 1b  jne  0x44b9
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 76 cb ff ff  call  0x1044
+e8 76 cb ff ff  call  0x1034
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x44ec
+75 10  jne  0x44dc
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -3728,17 +3724,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x459d
+75 1b  jne  0x458d
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 e2 ca ff ff  call  0x1084
+e8 e2 ca ff ff  call  0x1074
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x45c0
+75 10  jne  0x45b0
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -3771,17 +3767,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x466d
+75 1b  jne  0x465d
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 52 ca ff ff  call  0x10c4
+e8 52 ca ff ff  call  0x10b4
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x4690
+75 10  jne  0x4680
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -3814,17 +3810,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x4741
+75 1b  jne  0x4731
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 be c9 ff ff  call  0x1104
+e8 be c9 ff ff  call  0x10f4
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x4764
+75 10  jne  0x4754
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -3857,17 +3853,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x4811
+75 1b  jne  0x4801
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 2e c9 ff ff  call  0x1144
+e8 2e c9 ff ff  call  0x1134
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x4834
+75 10  jne  0x4824
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -3900,17 +3896,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x48e5
+75 1b  jne  0x48d5
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 9a c8 ff ff  call  0x1184
+e8 9a c8 ff ff  call  0x1174
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x4908
+75 10  jne  0x48f8
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -3943,17 +3939,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x49bd
+75 1b  jne  0x49ad
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 02 c8 ff ff  call  0x11c4
+e8 02 c8 ff ff  call  0x11b4
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x49e0
+75 10  jne  0x49d0
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -3986,17 +3982,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x4a99
+75 1b  jne  0x4a89
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 66 c7 ff ff  call  0x1204
+e8 66 c7 ff ff  call  0x11f4
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x4abc
+75 10  jne  0x4aac
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -4029,17 +4025,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x4b75
+75 1b  jne  0x4b65
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 ca c6 ff ff  call  0x1244
+e8 ca c6 ff ff  call  0x1234
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x4b98
+75 10  jne  0x4b88
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -4072,17 +4068,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x4c51
+75 1b  jne  0x4c41
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 2e c6 ff ff  call  0x1284
+e8 2e c6 ff ff  call  0x1274
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x4c74
+75 10  jne  0x4c64
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -4115,17 +4111,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x4d2d
+75 1b  jne  0x4d1d
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 92 c5 ff ff  call  0x12c4
+e8 92 c5 ff ff  call  0x12b4
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x4d50
+75 10  jne  0x4d40
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -4158,17 +4154,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x4e09
+75 1b  jne  0x4df9
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 f6 c4 ff ff  call  0x1304
+e8 f6 c4 ff ff  call  0x12f4
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x4e2c
+75 10  jne  0x4e1c
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -4201,17 +4197,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x4ee5
+75 1b  jne  0x4ed5
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 5a c4 ff ff  call  0x1344
+e8 5a c4 ff ff  call  0x1334
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x4f08
+75 10  jne  0x4ef8
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -4244,17 +4240,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x4fc5
+75 1b  jne  0x4fb5
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 ba c3 ff ff  call  0x1384
+e8 ba c3 ff ff  call  0x1374
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x4fe8
+75 10  jne  0x4fd8
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -4287,17 +4283,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x50a1
+75 1b  jne  0x5091
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 1e c3 ff ff  call  0x13c4
+e8 1e c3 ff ff  call  0x13b4
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x50c4
+75 10  jne  0x50b4
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -4330,17 +4326,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x517d
+75 1b  jne  0x516d
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 82 c2 ff ff  call  0x1404
+e8 82 c2 ff ff  call  0x13f4
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x51a0
+75 10  jne  0x5190
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -4373,17 +4369,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x5259
+75 1b  jne  0x5249
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 e6 c1 ff ff  call  0x1444
+e8 e6 c1 ff ff  call  0x1434
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x527c
+75 10  jne  0x526c
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -4416,17 +4412,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x5339
+75 1b  jne  0x5329
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 46 c1 ff ff  call  0x1484
+e8 46 c1 ff ff  call  0x1474
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x535c
+75 10  jne  0x534c
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -4459,17 +4455,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x5415
+75 1b  jne  0x5405
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 aa c0 ff ff  call  0x14c4
+e8 aa c0 ff ff  call  0x14b4
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x5438
+75 10  jne  0x5428
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -4502,17 +4498,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x54f1
+75 1b  jne  0x54e1
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 0e c0 ff ff  call  0x1504
+e8 0e c0 ff ff  call  0x14f4
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x5514
+75 10  jne  0x5504
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -4545,17 +4541,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x55cd
+75 1b  jne  0x55bd
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 72 bf ff ff  call  0x1544
+e8 72 bf ff ff  call  0x1534
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x55f0
+75 10  jne  0x55e0
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -4588,17 +4584,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x56ad
+75 1b  jne  0x569d
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 d2 be ff ff  call  0x1584
+e8 d2 be ff ff  call  0x1574
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x56d0
+75 10  jne  0x56c0
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -4631,17 +4627,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x5789
+75 1b  jne  0x5779
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 36 be ff ff  call  0x15c4
+e8 36 be ff ff  call  0x15b4
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x57ac
+75 10  jne  0x579c
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -4674,17 +4670,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x5865
+75 1b  jne  0x5855
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 9a bd ff ff  call  0x1604
+e8 9a bd ff ff  call  0x15f4
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x5888
+75 10  jne  0x5878
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -4717,17 +4713,17 @@ vv vv vv vv vv vv vv vv vv vv  Function wrapper, translates C++ ABI to Wasm ABI,
 48 89 14 24  mov  qword ptr [rsp], rdx
 48 89 4c 24 20  mov  qword ptr [rsp + 0x20], rcx
 48 83 7b d8 00  cmp  qword ptr [rbx - 0x28], 0
-75 1b  jne  0x5941
+75 1b  jne  0x5931
 48 89 63 d8  mov  qword ptr [rbx - 0x28], rsp
 4c 8d 2d 1d 00 00 00  lea  r13, [rip + 0x1d]
 4c 89 6b e0  mov  qword ptr [rbx - 0x20], r13
 48 89 63 e8  mov  qword ptr [rbx - 0x18], rsp
 48 81 6b e8 40 42 0f 00  sub  qword ptr [rbx - 0x18], 0xf4240
-e8 fe bc ff ff  call  0x1644
+e8 fe bc ff ff  call  0x1634
 4c 8b 74 24 20  mov  r14, qword ptr [rsp + 0x20]
 41 89 06  mov  dword ptr [r14], eax
 48 3b 63 d8  cmp  rsp, qword ptr [rbx - 0x28]
-75 10  jne  0x5964
+75 10  jne  0x5954
 48 c7 43 d8 00 00 00 00  mov  qword ptr [rbx - 0x28], 0
 48 c7 43 e0 00 00 00 00  mov  qword ptr [rbx - 0x20], 0
 48 83 c4 28  add  rsp, 0x28
@@ -4761,8 +4757,8 @@ WebAssembly Table
 
 More Info
 00 00 00 00  Size of link data: 0
-c8 59 00 00  Offset from here for the landing pad function body (0xFFFF'FFFF = undefined, pos: 1c): 22984
+b8 59 00 00  Offset from here for the landing pad function body (0xFFFF'FFFF = undefined, pos: 1c): 22968
 00 00 00 00  Stacktrace records 0, debugMode: 0
 03 00 00 00  Version of this binary module: 3
-f0 59 00 00  Module binary size (excl. this value): 23024
+e0 59 00 00  Module binary size (excl. this value): 23008
 

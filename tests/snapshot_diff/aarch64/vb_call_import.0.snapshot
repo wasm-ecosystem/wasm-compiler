@@ -34,11 +34,6 @@ f8 e7 11 6d  stp  d24, d25, [sp, #0x118]
 fa ef 12 6d  stp  d26, d27, [sp, #0x128]
 fc f7 13 6d  stp  d28, d29, [sp, #0x138]
 fe ff 14 6d  stp  d30, d31, [sp, #0x148]
-a0 83 5e f8  ldur  x0, [x29, #-0x18]
-ff 63 20 eb  cmp  sp, x0
-68 00 00 54  b.hi  0x98
-a0 01 80 52  mov  w0, #0xd
-dd ff ff 17  b  8
 a0 03 58 f8  ldur  x0, [x29, #-0x80]
 00 00 3f d6  blr  x0
 fe af 40 f9  ldr  x30, [sp, #0x158]
@@ -67,13 +62,13 @@ fe ff 54 6d  ldp  d30, d31, [sp, #0x148]
 ff 83 05 91  add  sp, sp, #0x160
 bb 83 58 f8  ldur  x27, [x29, #-0x78]
 60 03 5f d6  ret  x27
-e4 00 00 00  Size of the function body: 228
+d0 00 00 00  Size of the function body: 208
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 ff 83 03 d1  sub  sp, sp, #0xe0
 ab 83 5f 38  ldurb  w11, [x29, #-8]
-6b 00 00 34  cbz  w11, 0x120
+6b 00 00 34  cbz  w11, 0x10c
 e0 03 0b 2a  mov  w0, w11
-de ff ff 17  b  0x94
+c0 ff ff 17  b  8
 e8 6b 00 f9  str  x8, [sp, #0xd0]
 e1 67 00 f9  str  x1, [sp, #0xc8]
 e2 63 00 f9  str  x2, [sp, #0xc0]
@@ -84,11 +79,11 @@ fe 03 00 f9  str  x30, [sp]
 e0 03 13 aa  mov  x0, x19
 81 33 40 f9  ldr  x1, [x28, #0x60]
 c0 01 80 52  mov  w0, #0xe
-b0 ff ff 17  b  8
+b5 ff ff 17  b  8
 a9 83 5f 38  ldurb  w9, [x29, #-8]
-69 00 00 34  cbz  w9, 0x15c
+69 00 00 34  cbz  w9, 0x148
 e0 03 09 2a  mov  w0, w9
-fc ff ff 17  b  0x148
+fc ff ff 17  b  0x134
 fe 03 40 f9  ldr  x30, [sp]
 00 00 80 d2  mov  x0, #0
 ff 83 01 91  add  sp, sp, #0x60
@@ -97,9 +92,9 @@ c0 03 5f d6  ret
 vv vv vv vv vv vv vv vv vv vv  Function or wrapper body, padded to 4B 
 ff 03 02 d1  sub  sp, sp, #0x80
 ab 83 5f 38  ldurb  w11, [x29, #-8]
-6b 00 00 34  cbz  w11, 0x184
+6b 00 00 34  cbz  w11, 0x170
 e0 03 0b 2a  mov  w0, w11
-f2 ff ff 17  b  0x148
+f2 ff ff 17  b  0x134
 ff c3 01 91  add  sp, sp, #0x70
 fe 03 00 f9  str  x30, [sp]
 33 00 80 d2  mov  x19, #1
@@ -108,7 +103,7 @@ fe 03 00 f9  str  x30, [sp]
 22 00 80 d2  mov  x2, #1
 23 00 80 d2  mov  x3, #1
 24 00 80 d2  mov  x4, #1
-da ff ff 97  bl  0x10c
+da ff ff 97  bl  0xf8
 fe 03 40 f9  ldr  x30, [sp]
 ff 43 00 91  add  sp, sp, #0x10
 c0 03 5f d6  ret  
@@ -161,21 +156,21 @@ e2 03 00 f9  str  x2, [sp]
 e3 13 00 f9  str  x3, [sp, #0x20]
 aa 83 5d f8  ldur  x10, [x29, #-0x28]
 5f 01 1f eb  cmp  x10, xzr
-21 01 00 54  b.ne  0x258
+21 01 00 54  b.ne  0x244
 e9 03 00 91  mov  x9, sp
 a9 83 1d f8  stur  x9, [x29, #-0x28]
-29 01 00 10  adr  x9, 0x264
+29 01 00 10  adr  x9, 0x250
 a9 03 1e f8  stur  x9, [x29, #-0x20]
 09 48 88 52  mov  w9, #0x4240
 e9 01 a0 72  movk  w9, #0xf, lsl #16
 e9 63 29 cb  sub  x9, sp, x9
 a9 83 1e f8  stur  x9, [x29, #-0x18]
-c6 ff ff 97  bl  0x170
+c6 ff ff 97  bl  0x15c
 ea 13 40 f9  ldr  x10, [sp, #0x20]
 40 01 00 f9  str  x0, [x10]
 aa 83 5d f8  ldur  x10, [x29, #-0x28]
 ff 63 2a eb  cmp  sp, x10
-61 00 00 54  b.ne  0x278
+61 00 00 54  b.ne  0x264
 bf 83 1d f8  stur  xzr, [x29, #-0x28]
 bf 03 1e f8  stur  xzr, [x29, #-0x20]
 ff c3 00 91  add  sp, sp, #0x30
@@ -212,8 +207,8 @@ WebAssembly Table
 
 More Info
 00 00 00 00  Size of link data: 0
-c4 02 00 00  Offset from here for the landing pad function body (0xFFFF'FFFF = undefined, pos: 24): 708
+b0 02 00 00  Offset from here for the landing pad function body (0xFFFF'FFFF = undefined, pos: 24): 688
 00 00 00 00  Stacktrace records 0, debugMode: 0
 03 00 00 00  Version of this binary module: 3
-f4 02 00 00  Module binary size (excl. this value): 756
+e0 02 00 00  Module binary size (excl. this value): 736
 
